@@ -15,12 +15,15 @@ The engine builds on stable. Optional coverage-guided fuzzing uses nightly and
 rustup toolchain install nightly --profile minimal
 cargo install cargo-fuzz --locked
 cargo +nightly fuzz run file_format -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
+cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 ```
 
 The target checks raw headers, pages and pages with a repaired checksum to reach
 structural validation. Add valid synthetic header/page seeds to
 `fuzz/corpus/file_format` for better coverage. Corpus and crash artifacts are
 ignored. A bounded smoke run is not a complete fuzz campaign or a security audit.
+The catalog target checks schema, row and relational-event codecs and round trips
+accepted records. Synthetic `ESCH`, `EROW` and `ETBL` seeds improve its coverage.
 
 ## Pending acceptance tests
 

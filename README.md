@@ -11,6 +11,9 @@ CLI. It creates a versioned database file, stores compactable records in 4096-by
 slotted pages, validates CRC32 and page structure, and locks files exclusively.
 It supports physical record create/read/update/delete and detects corrupt or
 truncated files. Tables and transactions are not implemented.
+The next layer now includes validated schemas, boolean/integer/float/text/bytes
+values and original bounded binary codecs. Table persistence is still pending;
+these codecs do not turn page writes into transactions.
 
 **Synced page writes are not crash-safe transactions.** There is no WAL or
 automatic repair. This is an initial part of stage 1, not a completed database

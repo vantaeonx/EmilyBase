@@ -19,6 +19,19 @@ impl Pager {
     /// Publish a fully initialized header without replacing an existing path.
     /// Requires local hard-link and directory-sync support.
     pub fn create(path: impl AsRef<Path>) -> Result<Self> {
+        Self::create_with_pages(path, &[])
+    }
+
+    /// Initialize all supplied pages before atomic no-clobber publication.
+    pub fn create_with_pages(path: impl AsRef<Path>, pages: &[Page]) -> Result<Self> {
+        if pages.len() as u64 > MAX_PAGES {
+            return Err(Error::PageLimit);
+        }
+        for (index, page) in pages.iter().enumerate() {
+            if page.id() != index as u64 + 1 {
+                return Err(Error::PageId(page.id()));
+            }
+        }
         let path = path.as_ref();
         let parent = path
             .parent()
@@ -27,6 +40,9 @@ impl Pager {
         let (mut file, mut pending) = temporary_file(parent)?;
         lock(&file)?;
         file.write_all(&header::encode())?;
+        for page in pages {
+            file.write_all(&page.encode())?;
+        }
         file.sync_all()?;
         fs::hard_link(&pending.path, path)?;
         fs::remove_file(&pending.path)?;
@@ -34,7 +50,7 @@ impl Pager {
         File::open(parent)?.sync_all()?;
         Ok(Self {
             file,
-            pages: 0,
+            pages: pages.len() as u64,
             poisoned: false,
         })
     }

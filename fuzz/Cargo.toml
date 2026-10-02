@@ -12,10 +12,19 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 crc32fast = "1.5"
 emilybase-storage = { path = "../crates/storage" }
+emilybase-catalog = { path = "../crates/catalog" }
+emilybase-database = { path = "../crates/database" }
 
 [[bin]]
 name = "file_format"
 path = "fuzz_targets/file_format.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "catalog_records"
+path = "fuzz_targets/catalog_records.rs"
 test = false
 doc = false
 bench = false
