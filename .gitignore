@@ -1,0 +1,14 @@
+/target/
+/fuzz/target/
+/fuzz/artifacts/
+/fuzz/corpus/
+node_modules/
+dist/
+.env
+.env.*
+*.emily
+*.wal
+*.key
+*.pem
+*.backup
+proptest-regressions/
