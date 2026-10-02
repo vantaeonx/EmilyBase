@@ -2,9 +2,11 @@
 mod error;
 pub mod header;
 mod page;
+mod pager;
 
 pub use error::{Error, Result};
 pub use page::{MAX_RECORD_SIZE, Page, SlotId};
+pub use pager::{MAX_PAGES, Pager};
 
 pub const PAGE_SIZE: usize = 4096;
 pub const FORMAT_VERSION: u16 = 1;
