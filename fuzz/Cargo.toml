@@ -1,0 +1,24 @@
+[package]
+name = "emilybase-format-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "Apache-2.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+crc32fast = "1.5"
+emilybase-storage = { path = "../crates/storage" }
+
+[[bin]]
+name = "file_format"
+path = "fuzz_targets/file_format.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+members = ["."]

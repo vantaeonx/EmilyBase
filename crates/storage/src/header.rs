@@ -65,4 +65,15 @@ mod tests {
         assert!(matches!(decode(&bytes), Err(Error::Checksum)));
         assert!(decode(&bytes[..100]).is_err());
     }
+
+    #[test]
+    fn unknown_format_and_reserved_fields_fail_closed() {
+        for (offset, value) in [(8, 2), (10, 1), (12, 1)] {
+            let mut bytes = encode();
+            bytes[offset] = value;
+            let crc = crc32fast::hash(&bytes[..CHECKSUM_OFFSET]);
+            bytes[CHECKSUM_OFFSET..].copy_from_slice(&crc.to_le_bytes());
+            assert!(decode(&bytes).is_err());
+        }
+    }
 }

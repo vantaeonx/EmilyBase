@@ -113,7 +113,7 @@ impl Page {
         bytes
     }
 
-    /// Validate all ranges before copying payload from an untrusted page.
+    /// Validate bounded ranges and packed layout before returning an untrusted page.
     pub fn decode(bytes: &[u8], expected_id: u64) -> Result<Self> {
         if bytes.len() != PAGE_SIZE {
             return Err(Error::Layout("page length"));
@@ -240,6 +240,29 @@ mod tests {
     fn recomputed_checksum_does_not_hide_invalid_layout() {
         let mut bytes = Page::new(1).unwrap().encode();
         put_u16(&mut bytes, 16, u16::MAX);
+        let crc = checksum(&bytes);
+        bytes[28..32].copy_from_slice(&crc.to_le_bytes());
+        assert!(matches!(Page::decode(&bytes, 1), Err(Error::Layout(_))));
+    }
+
+    #[test]
+    fn empty_records_exhaust_slots_without_exhausting_payload() {
+        let mut page = Page::new(1).unwrap();
+        for slot in 0..MAX_SLOTS {
+            assert_eq!(page.insert(b"").unwrap(), slot as SlotId);
+        }
+        assert!(matches!(page.insert(b""), Err(Error::PageFull)));
+        assert_eq!(Page::decode(&page.encode(), 1).unwrap(), page);
+    }
+
+    #[test]
+    fn overlapping_slots_are_rejected_with_a_valid_checksum() {
+        let mut page = Page::new(1).unwrap();
+        page.insert(b"one").unwrap();
+        page.insert(b"two").unwrap();
+        let mut bytes = page.encode();
+        let offset = u16_at(&bytes, HEADER_SIZE);
+        put_u16(&mut bytes, HEADER_SIZE + SLOT_SIZE, offset);
         let crc = checksum(&bytes);
         bytes[28..32].copy_from_slice(&crc.to_le_bytes());
         assert!(matches!(Page::decode(&bytes, 1), Err(Error::Layout(_))));
