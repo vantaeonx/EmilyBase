@@ -19,6 +19,7 @@ emilybase-database = { path = "../crates/database" }
 emilybase-wal = { path = "../crates/wal" }
 emilybase-transactions = { path = "../crates/transactions" }
 emilybase-index = { path = "../crates/index" }
+emilybase-query = { path = "../crates/query" }
 
 [[bin]]
 name = "file_format"
@@ -68,6 +69,13 @@ bench = false
 [[bin]]
 name = "index_operations"
 path = "fuzz_targets/index_operations.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sql_parser"
+path = "fuzz_targets/sql_parser.rs"
 test = false
 doc = false
 bench = false

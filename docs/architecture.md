@@ -10,7 +10,7 @@ flowchart TD
   CLI --> Database[Database: table coordination and event replay]
   Database --> Catalog[Catalog: schemas and typed records]
   Database --> Storage
-  HTTP[Future Axum server] --> Query[Future parser / planner / executor]
+  HTTP[Future Axum server] --> Query[SQL parser: execution pending]
   Query --> Transactions[Serialized transaction coordinator]
   Transactions --> WAL[Synced full-page WAL]
   Transactions --> Database
@@ -24,7 +24,8 @@ flowchart TD
   Backup --> Transactions
 ```
 
-Storage, catalog, database, WAL, transactions, backup, CLI and a separate index foundation are implemented. Add other crates when they contain
+Storage, catalog, database, WAL, transactions, backup, CLI, a separate index and
+the original SQL lexer/parser/AST are implemented. Add other crates when they contain
 working behavior, instead of declaring an implemented platform with empty modules.
 The future network layer will call the synchronous engine through bounded workers;
 blocking filesystem work must not run on Tokio reactor threads.
@@ -81,6 +82,14 @@ boundary, payload size, SHA-256 and header CRC. Verification performs strict tab
 replay. Restore opens and checks a privately staged engine before atomic no-replace
 publication. Original identity is preserved; this does not create a separate
 project. See [ADR 0007](adr/0007-verified-backups.md).
+
+## Query boundary
+
+The synchronous `query` crate parses bounded SQL into a typed AST, retaining
+parameters separately from SQL text. Parsing performs no filesystem operations.
+Schema resolution, typed binding, bounded plans and execution through managed
+transactions follow. See [SQL subset](sql.md) and
+[ADR 0011](adr/0011-bounded-sql.md).
 
 ## Platform boundary (planned)
 

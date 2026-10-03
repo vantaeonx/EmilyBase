@@ -294,3 +294,23 @@ inputs. The short operation run has limited throughput and is not a long campaig
 Deletion may renumber index arena IDs; external row pointers are unchanged.
 Table/WAL integration, durable root publication, concurrent readers and power-loss
 acceptance remain open. See [ADR 0010](adr/0010-index-maintenance.md).
+
+## Original SQL parser: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 212 main
+tests passed; six subprocess helpers remain outside the main count. This increment
+adds 1044 physical Rust lines; total source size is 13005. No storage codec changes.
+
+Eight new tests cover the accepted script/AST, boolean precedence and qualified
+joins, all literals/parameter positions, malformed/unsupported syntax, offsets
+without secret contents, and byte/token/statement/column/tuple/depth boundaries.
+Two 64-case properties check arbitrary Unicode/truncations and escaped text with
+signed-i64 values and separate parameter references. A failing regression first
+reproduced an overdeep AST from flat AND followed by OR, then passed after checking
+the actual combined tree depth during construction.
+
+The `sql_parser` AddressSanitizer smoke run completed 906624 executions in 16
+seconds with a configured 15-second budget, without a crash. Six synthetic seeds
+cover valid DDL/CRUD, joins, transactions, quoted injection-like text, extreme
+integers and depth boundaries. Parsing is not execution; planner, executor and
+durable-index integration gates remain open. This is a smoke run, not a security audit.

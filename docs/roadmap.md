@@ -8,7 +8,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 0 | design, threats, format, ADRs | documents reviewed against implementation | initial documents |
 | 1 | pages, tables, types, primary keys, CRUD, CLI | unit/integration tests and reopen round trips | implemented; normal reopen and validation tests pass |
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
-| 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | B+ tree library foundation tested; table/WAL integration and SQL pending |
+| 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | B+ tree and SQL lexer/parser tested; executor and durable index integration pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | not started |
 | 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation implemented; other platform features not started |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | not started |
@@ -16,7 +16,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 ## Not supported
 
 Durable table indexes, background journal rotation and history vacuuming,
-SQL, joins, project isolation, server, authentication, row policies,
+SQL execution, project isolation, server, authentication, row policies,
 file uploads, realtime, migrations, incremental/encrypted backups, SDKs, web dashboard and deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
@@ -25,7 +25,16 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
-4. Implement the original query layer with documented limits.
+4. Execute the parsed SQL subset through the existing managed transactions.
+
+## SQL parser increment
+
+The original bounded lexer/parser/AST accepts DDL, CRUD, predicates, ordering,
+limits, one inner join and transaction control. It enforces input/token/statement,
+literal/identifier/parameter and expression-depth bounds, without echoing input.
+Two 64-case properties and bounded ASan fuzzing execute. Parsing is not execution;
+the planner/executor and CLI follow. See [SQL grammar](sql.md) and
+[ADR 0011](adr/0011-bounded-sql.md).
 
 ## Index foundation
 

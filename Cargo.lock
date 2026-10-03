@@ -245,6 +245,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "emilybase-query"
+version = "0.1.0"
+dependencies = [
+ "emilybase-catalog",
+ "proptest",
+ "thiserror",
+]
+
+[[package]]
 name = "emilybase-storage"
 version = "0.1.0"
 dependencies = [

@@ -119,6 +119,7 @@ dependencies = [
  "emilybase-catalog",
  "emilybase-database",
  "emilybase-index",
+ "emilybase-query",
  "emilybase-storage",
  "emilybase-transactions",
  "emilybase-wal",
@@ -133,6 +134,14 @@ dependencies = [
  "crc32fast",
  "emilybase-catalog",
  "emilybase-storage",
+ "thiserror",
+]
+
+[[package]]
+name = "emilybase-query"
+version = "0.1.0"
+dependencies = [
+ "emilybase-catalog",
  "thiserror",
 ]
 
