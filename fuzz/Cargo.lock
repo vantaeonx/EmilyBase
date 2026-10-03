@@ -10,9 +10,9 @@ checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
 
 [[package]]
 name = "cc"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f360145194ee8e21db5ee7f3fcd4fe52210864c75c985dae33218202c8bbe040"
+checksum = "f74872d07caf508b30a21f6836e7d7016a2eaf7d9ff4f48deaa58cd8a0407630"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -60,6 +60,7 @@ dependencies = [
  "emilybase-catalog",
  "emilybase-database",
  "emilybase-storage",
+ "emilybase-wal",
  "libfuzzer-sys",
 ]
 
@@ -68,6 +69,15 @@ name = "emilybase-storage"
 version = "0.1.0"
 dependencies = [
  "crc32fast",
+ "thiserror",
+]
+
+[[package]]
+name = "emilybase-wal"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "emilybase-storage",
  "thiserror",
 ]
 
@@ -100,9 +110,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.189"
+version = "0.2.190"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
+checksum = "ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78"
 
 [[package]]
 name = "libfuzzer-sys"

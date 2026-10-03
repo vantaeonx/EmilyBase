@@ -13,8 +13,10 @@ and reconstructs tables on reopen. Values include boolean, signed i64, finite
 f64, UTF-8 text, bytes and nullable columns. Pages are 4096-byte slotted pages with
 CRC32 and strict structure validation. Database files are locked exclusively.
 
-**Synced page writes are not crash-safe transactions.** There is no WAL or
-automatic repair. The minimal stage-1 core is implemented and tested; recovery,
+**Synced page writes are not crash-safe transactions.** The current table CLI
+uses direct page writes without automatic table repair. A separate WAL crate implements synced commit records,
+bounded full-page redo and standalone recovery, with process-kill tests. It is not
+yet wired to these table commands. The minimal stage-1 core is implemented; recovery,
 concurrent transactions and the backend platform remain future work. Follow
 [the roadmap](docs/roadmap.md) for acceptance status.
 

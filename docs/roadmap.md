@@ -7,7 +7,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | --- | --- | --- | --- |
 | 0 | design, threats, format, ADRs | documents reviewed against implementation | initial documents |
 | 1 | pages, tables, types, primary keys, CRUD, CLI | unit/integration tests and reopen round trips | implemented; normal reopen and validation tests pass |
-| 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | not started |
+| 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | standalone WAL tested; table transactions and checkpoint pending |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | not started |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | not started |
 | 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | not started |
@@ -15,14 +15,14 @@ open; a table engine is not a completed transaction engine or backend platform.
 
 ## Not supported
 
-Transactions, WAL, checkpointing, B+ tree,
+Table transactions, checkpointing, B+ tree,
 SQL, joins, indexes, project isolation, server, authentication, row policies,
 file uploads, realtime, migrations, backups, SDKs, web dashboard and deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
 ## Next increments
 
-1. WAL before making any transactional durability claim.
+1. Integrate the tested WAL with table transactions before claiming table durability.
 2. Crash harness: termination before/after WAL sync, page sync and checkpoint.
 3. Corruption, concurrent-process and backup/restore acceptance matrices.
 

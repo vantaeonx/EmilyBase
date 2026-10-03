@@ -16,6 +16,7 @@ rustup toolchain install nightly --profile minimal
 cargo install cargo-fuzz --locked
 cargo +nightly fuzz run file_format -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
+cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 ```
 
 The target checks raw headers, pages and pages with a repaired checksum to reach
@@ -66,4 +67,20 @@ On 2026-10-03, on Linux with Rust stable 1.99.0:
 
 These are normal-reopen, validation and bounded fuzz checks. They do not prove
 durability under process termination, power loss or torn page writes. Stage 2
-remains open; no WAL, commit/rollback, checkpoint or transactional recovery exists.
+remains open; this table increment has no integrated transactional recovery.
+
+## Standalone WAL increment: executed checks
+
+On 2026-10-03, workspace formatting, Clippy with warnings denied, build and all
+76 tests passed. The new block contains 998 physical Rust lines. It exercises
+every byte cut within a two-page batch, valid checksums with invalid semantics,
+64-case properties, bounded allocations, owner-only permissions, lock ownership,
+explicit rollback and dropped pending batches. A subprocess is forcibly killed
+after a synced commit and after synced uncommitted page frames; reopen preserves
+the former and excludes the latter. The process tests use a separate executable
+to avoid transient file-lock inheritance by another test's fork/exec.
+
+The WAL AddressSanitizer smoke run completed 1,554,154 executions in 16 seconds
+without a crash (configured budget: 15 seconds). Total Rust source size is now
+3990 physical lines. Table integration, checkpoint crashes, concurrent transaction
+sequencing, backup/restore and real power-loss testing remain open.

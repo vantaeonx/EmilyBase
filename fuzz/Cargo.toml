@@ -14,6 +14,7 @@ crc32fast = "1.5"
 emilybase-storage = { path = "../crates/storage" }
 emilybase-catalog = { path = "../crates/catalog" }
 emilybase-database = { path = "../crates/database" }
+emilybase-wal = { path = "../crates/wal" }
 
 [[bin]]
 name = "file_format"
@@ -31,3 +32,10 @@ bench = false
 
 [workspace]
 members = ["."]
+
+[[bin]]
+name = "wal_records"
+path = "fuzz_targets/wal_records.rs"
+test = false
+doc = false
+bench = false

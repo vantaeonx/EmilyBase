@@ -185,6 +185,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "emilybase-wal"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "emilybase-storage",
+ "proptest",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
