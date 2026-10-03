@@ -13,3 +13,4 @@ dist/
 *.backup
 .emilybase-backup-*
 proptest-regressions/
+/emilybase-data/

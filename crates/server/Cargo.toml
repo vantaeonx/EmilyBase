@@ -1,0 +1,25 @@
+[package]
+name = "emilybase-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+emilybase-auth = { path = "../auth" }
+emilybase-catalog = { path = "../catalog" }
+emilybase-query = { path = "../query" }
+emilybase-transactions = { path = "../transactions" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+crc32fast = "1.5"
+rustix = { version = "1", features = ["fs"] }
+tempfile = "3"
+thiserror = "2"
+
+[dev-dependencies]
+proptest = "1"
+
+[lints]
+workspace = true

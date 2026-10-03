@@ -42,6 +42,13 @@ Dedicated SQL process-kill, both-version backup/restore, actual work/output boun
 and independent read/join models execute. The pure read API accepts one SELECT
 over a validated snapshot. Wider crash/fault campaigns and durable indexes remain open.
 
+The synchronous project registry creates private isolated database directories,
+issues scoped high-entropy API keys and rotates them with atomic metadata publication.
+Only key digests are stored. Cross-project keys, traversal IDs and unsafe symlinks/
+permissions are rejected; requests for each project serialize. The HTTP transport
+and administrative authentication are the next increment. Accounts/roles are future
+work. See [project registry](docs/projects.md).
+
 ```sh
 cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT id,title FROM items WHERE id=$1 LIMIT 10' --parameters '[{"type":"integer","value":7}]'
 cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT * FROM items WHERE id=7' --explain

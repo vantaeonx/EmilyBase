@@ -26,7 +26,8 @@ flowchart TD
 ```
 
 Storage, catalog, database, WAL, transactions, backup, CLI, a separate index and
-the original SQL lexer/parser/planner/executor are implemented. Add other crates when they contain
+the original SQL lexer/parser/planner/executor, isolated project registry and
+scoped API-key primitives are implemented. Add other crates when they contain
 working behavior, instead of declaring an implemented platform with empty modules.
 The future network layer will call the synchronous engine through bounded workers;
 blocking filesystem work must not run on Tokio reactor threads.
@@ -102,3 +103,10 @@ operation, subscription and object access to a project. The dashboard uses
 React/TypeScript/Vite; REST uses Axum, Serde and OpenAPI; realtime uses WebSocket.
 TypeScript and Kotlin SDKs will use the documented API. Docker and Compose follow
 once a runnable server exists. No external paid service is required.
+
+The synchronous registry portion now lives in `server`, with key primitives in
+`auth`. Server-issued IDs select private project directories; display names never
+form paths. Scoped one-shot capabilities retain ownership and a per-project gate
+while executing through the existing WAL engine. Project metadata has a separate
+bounded version/checksum contract. The HTTP/authentication/worker boundary remains
+the next increment. See [ADR 0012](adr/0012-isolated-projects.md).

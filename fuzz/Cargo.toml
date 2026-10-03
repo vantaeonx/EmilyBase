@@ -12,6 +12,7 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 crc32fast = "1.5"
 sha2 = "0.10"
+serde_json = "1"
 emilybase-backup = { path = "../crates/backup" }
 emilybase-storage = { path = "../crates/storage" }
 emilybase-catalog = { path = "../crates/catalog" }
@@ -20,6 +21,7 @@ emilybase-wal = { path = "../crates/wal" }
 emilybase-transactions = { path = "../crates/transactions" }
 emilybase-index = { path = "../crates/index" }
 emilybase-query = { path = "../crates/query" }
+emilybase-server = { path = "../crates/server" }
 
 [[bin]]
 name = "file_format"
@@ -83,6 +85,13 @@ bench = false
 [[bin]]
 name = "sql_execution"
 path = "fuzz_targets/sql_execution.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "project_metadata"
+path = "fuzz_targets/project_metadata.rs"
 test = false
 doc = false
 bench = false

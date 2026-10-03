@@ -179,6 +179,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "emilybase-auth"
+version = "0.1.0"
+dependencies = [
+ "getrandom 0.3.4",
+ "proptest",
+ "serde",
+ "serde_json",
+ "sha2",
+ "subtle",
+ "thiserror",
+]
+
+[[package]]
 name = "emilybase-backup"
 version = "0.1.0"
 dependencies = [
@@ -255,6 +268,23 @@ dependencies = [
  "emilybase-transactions",
  "proptest",
  "serde",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "emilybase-server"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "emilybase-auth",
+ "emilybase-catalog",
+ "emilybase-query",
+ "emilybase-transactions",
+ "proptest",
+ "rustix",
+ "serde",
+ "serde_json",
  "tempfile",
  "thiserror",
 ]
@@ -599,6 +629,12 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+
+[[package]]
+name = "subtle"
+version = "2.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "syn"

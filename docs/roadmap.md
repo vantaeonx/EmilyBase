@@ -9,14 +9,14 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 1 | pages, tables, types, primary keys, CRUD, CLI | unit/integration tests and reopen round trips | implemented; normal reopen and validation tests pass |
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | bounded SQL subset/CLI and standalone B+ tree tested; durable index integration and wider query checks pending |
-| 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | not started |
+| 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | isolated registry/scoped key rotation tested; HTTP transport and administrative authentication pending |
 | 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation implemented; other platform features not started |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | not started |
 
 ## Not supported
 
 Durable table indexes, background journal rotation and history vacuuming,
-Extended SQL, project isolation, server, authentication, row policies,
+Extended SQL, HTTP server, user/session authentication, row policies,
 file uploads, realtime, migrations, incremental/encrypted backups, SDKs, web dashboard and deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
@@ -25,8 +25,18 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
-4. Add the isolated-project server with strict authorization, bounded worker calls
-   and synthetic-data-only deployment; continue wider recovery/query campaigns.
+4. Add HTTP transport/administrative authentication over the isolated registry,
+   bounded workers and synthetic-data-only deployment; continue wider campaigns.
+
+## Isolated registry and API keys
+
+The synchronous server library publishes independent managed project directories,
+persists checked version-1 metadata and hashes for 256-bit random keys, and rotates
+credentials atomically. Single-use request capabilities preserve root ownership
+and serialize same-project operations. Scope, traversal, symlink, permissions,
+real capacity, concurrent request and metadata bounds execute. Passwords/sessions,
+administrative HTTP authentication, network limits and transport remain pending.
+See [project registry](projects.md) and [ADR 0012](adr/0012-isolated-projects.md).
 
 ## SQL parser increment
 

@@ -383,3 +383,31 @@ on fixed validated synthetic snapshots and compares generated parameterized rang
 queries with an independent numeric model. No filesystem writes occur in this
 target. Wider fault/crash/fuzz campaigns, durable index integration, server/project
 authorization and production gates remain open.
+
+## Isolated projects and scoped API keys: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 248 main
+tests passed; eight subprocess helpers remain outside the main count. This block
+adds 897 physical Rust lines, total 15997. No database/WAL/index codec changes.
+
+Fourteen new tests cover 256-bit key issuance and fixed-size digest comparison,
+redacted debug/errors, 128-bit IDs, cross-project key denial, independent SQL data,
+atomic rotation/reopen, private modes, traversal IDs/labels and symlink rejection.
+Actual capacity reaches 128 projects and refuses the next without a new directory.
+Thirty-two same-project requests complete without lost inserts. A failing regression
+first reproduced root ownership release while a request remained; capabilities
+now retain the root inode owner until execution/drop. A 24-case rotation/reopen
+property preserves rows and refuses all former keys.
+
+Metadata tests reject every truncation of a synthetic envelope and repaired-CRC
+unknown versions, wrong IDs, bad names, hash lengths, zero epochs and extra fields.
+Epoch overflow preserves bytes; metadata symlinks cannot change outside targets.
+Incomplete staging is ignored/preserved; unrecognized committed entries fail.
+Two 64-case properties exercise generated semantic boundaries and arbitrary bounded
+bytes. The new `project_metadata` ASan smoke completed 818421 executions in 16
+seconds (configured budget 15 seconds), without a crash, including repaired CRCs.
+
+This is a synchronous registry/key library. HTTP transport, administrative network
+authentication, network limits, registry publication kill/fault tests and complete
+platform backups are still pending. User/password/session/role and production gates
+remain open; the local private filesystem owner is trusted.
