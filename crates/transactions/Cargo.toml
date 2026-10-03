@@ -11,14 +11,16 @@ emilybase-storage = { path = "../storage" }
 emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }
 emilybase-wal = { path = "../wal" }
+emilybase-index = { path = "../index" }
 getrandom = "0.3"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+crc32fast = "1.5"
 
 [dev-dependencies]
 tempfile = "3"
 proptest = "1"
-sha2 = "0.10"
 
 [lints]
 workspace = true

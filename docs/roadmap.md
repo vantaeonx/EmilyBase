@@ -94,6 +94,15 @@ contracts include primary_range. Text ranges, ordering pushdown, secondary DDL
 and independently durable index pages remain open. See
 [ADR 0022](adr/0022-integer-primary-range-plans.md).
 
+Explicit EBTI primary-tree images bind persistent database/table identity,
+acknowledged transaction and exact relational history. Full live-key/pointer
+verification precedes derived-cell installation. Foreign, stale and structurally
+valid forged projections are rejected; capacity, generated mutation/replay and
+both-WAL verified restore checks execute. Private filesystem publication and
+automatic optional-cache adoption remain pending, along with durable table/index
+WAL allocation. See [image format](table-index-image-format.md) and
+[ADR 0023](adr/0023-bound-primary-tree-images.md).
+
 ## Implemented first increment
 
 - Original versioned header and 4096-byte slotted pages with CRC32.

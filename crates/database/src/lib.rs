@@ -3,6 +3,7 @@ mod engine;
 mod event;
 mod location;
 mod primary;
+mod projection;
 mod range;
 mod snapshot;
 mod state;

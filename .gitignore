@@ -11,6 +11,7 @@ dist/
 *.key
 *.pem
 *.backup
+*.table-index
 .emilybase-backup-*
 .emilybase-registry-backup-*
 .emilybase-registry-restore-*

@@ -1,6 +1,7 @@
 //! Serialized table transactions backed by the mandatory authoritative redo log.
 mod compaction;
 mod database;
+mod index_image;
 mod location;
 mod ownership;
 mod replay;
@@ -8,6 +9,10 @@ mod transaction;
 
 pub use compaction::Compaction;
 pub use database::Database;
+pub use index_image::{
+    INDEX_IMAGE_HEADER, INDEX_IMAGE_VERSION, IndexImageReport, MAX_INDEX_IMAGE_BYTES,
+    inspect_primary_index_image,
+};
 pub use location::BoundRowLocation;
 pub use transaction::Transaction;
 pub const MAX_TRANSACTION_EVENTS: usize = 256;
@@ -55,6 +60,8 @@ pub fn recover_image(
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("invalid table index image: {0}")]
+    IndexImage(&'static str),
     #[error(transparent)]
     Database(#[from] emilybase_database::Error),
     #[error(transparent)]

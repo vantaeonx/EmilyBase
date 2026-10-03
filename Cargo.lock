@@ -384,8 +384,10 @@ dependencies = [
 name = "emilybase-transactions"
 version = "0.1.0"
 dependencies = [
+ "crc32fast",
  "emilybase-catalog",
  "emilybase-database",
+ "emilybase-index",
  "emilybase-storage",
  "emilybase-wal",
  "getrandom 0.3.4",

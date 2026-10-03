@@ -49,6 +49,13 @@ range lookup for SELECT/UPDATE/DELETE, with checked i64 boundaries and unchanged
 null/rollback semantics. Explain reports `primary_range`. Text ranges, joins and
 other predicates retain their existing paths. See [ADR 0022](docs/adr/0022-integer-primary-range-plans.md).
 
+Explicit bound primary-tree images now validate persistent database/table identity,
+acknowledged transaction, exact relational history and every eligible live pointer
+before installing a derived cache. Checkpoint, compaction and verified restore
+preserve matching images. The library writes no sidecar and recovery still
+reconstructs caches. See [image format](docs/table-index-image-format.md) and
+[ADR 0023](docs/adr/0023-bound-primary-tree-images.md).
+
 Validated live row-image locations now bind table/key to an actual slotted-page
 position and event fingerprint. Managed locations also bind the persistent
 database identity. Updates/deletes retire previous images; discarded staged

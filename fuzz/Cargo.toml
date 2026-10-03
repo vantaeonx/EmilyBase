@@ -123,3 +123,10 @@ path = "fuzz_targets/primary_lookup.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "table_index_image"
+path = "fuzz_targets/table_index_image.rs"
+test = false
+doc = false
+bench = false

@@ -773,3 +773,34 @@ Totals: 25278 Rust (24062 without blank/comment-only lines), 1207 SDK, 664 Pytho
 the client contract/tests by 18 (combined net 930), near the requested logical
 1000-line checkpoint. File formats are unchanged. Durable secondary/index WAL,
 broader fault/load/security and production gates remain open.
+
+## Bound primary-tree images: executed increment
+
+On 2026-10-03, all 382 main workspace tests pass; eleven subprocess helpers are
+excluded. Workspace/fuzz formatting, warning-denied Clippy and locked workspace
+build pass. Thirteen new tests cover exact EBTI/EBIF headers, foreign database and
+table binding, rollback/no-op versus sibling commits, repaired-hash missing/extra/
+wrong-pointer trees, every byte cut and single-bit byte mutation, header/reserved/
+revision/length corruption, and arbitrary 32-case bounded decoder input.
+
+A real 10000-row managed table exports a 768-page tree; load resolves every key
+and preserves WAL, exact relational pages and directory entries. Empty tables and
+256/257/3072-byte UTF-8 boundaries retain full table compatibility. Installed
+stable trees pass split/merge/root-collapse/pointer maintenance and independent
+48-case mutation/export/decode/install/replay models. Both WAL versions survive
+checkpoint/reopen/compaction and actual verified backup/restore with matching
+images; independently mutating the restored clone retires its image only.
+
+The new table_index_image ASan target completes 535880 executions in 16 seconds
+(15-second budget, 32768-byte inputs and 512-MiB RSS limit), with ignored synthetic
+EBTI and both-version integer/text WAL seeds. Raw/repaired envelopes reach nested
+structural checks; recovered relational snapshots exercise export, full projection
+validation and installation without page mutation. This is a smoke campaign.
+The rebuilt release container and current SDK/crash/corruption/restore campaign
+pass. No real user data is used.
+
+The increment adds 1041 physical Rust lines. Totals: 26319 Rust (25067 excluding
+blank/comment-only lines), 1207 SDK and 664 Python; 28190 combined source lines,
+including tests. Images are explicit private library artifacts, not automatic
+sidecars or independently durable table/WAL participants. Broader recovery,
+load/security, format stability and production gates remain open.

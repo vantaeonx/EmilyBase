@@ -43,6 +43,9 @@ pub(crate) fn eligible(key: &Key) -> bool {
 }
 
 impl PrimaryIndexes {
+    pub(crate) fn install(&mut self, table_id: u64, tree: BPlusTree) {
+        self.apply(IndexChange::Ready(table_id, tree));
+    }
     pub(crate) fn from_tables(ids: impl Iterator<Item = u64>) -> Self {
         Self(ids.map(|id| (id, Arc::new(OnceLock::new()))).collect())
     }
