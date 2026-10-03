@@ -135,3 +135,15 @@ index, hardware power-loss or concurrent-reader acceptance gate closes.
 These checks cover the current registry, including plaintext metadata/digests and
 mandatory histories. Unimplemented object/session services and unrelated standalone
 indexes are outside the archive; broad failing-media and production gates remain open.
+
+## Directory identity regression
+
+Two failing cases first reproduced project creation following a replaced root and
+accepted capabilities following replacement directories. Pinned no-follow handles
+now reject root/project/data device/inode changes. Nine accepted-capability cases
+cover status, explain and execution at all three levels. A real TCP/binary matrix
+checks generic 503s for SQL/explain/status, listing and rotation, rejected creation
+on a replaced root, preserved old/replacement bytes and healthy sibling access.
+Stopping/reopening intentionally moved directories works. Digest authorization
+remains filesystem-free; synchronous checks run on blocking workers. This does
+not sandbox a malicious privileged administrator or close the wider audit gate.

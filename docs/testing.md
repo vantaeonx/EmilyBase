@@ -656,3 +656,23 @@ with retained scoped credentials and independent writes; all existing SDK,
 container restart/crash/corruption checks pass. The parser is unchanged from its
 recorded 1111844-run ASan smoke. Broader failing media, physical power loss,
 encryption/streaming, stable upgrades, load/security and production gates stay open.
+
+## Pinned registry/project/data directories: executed regression
+
+On 2026-10-03, two failing regressions reproduced a moved registry root redirecting
+creation and an accepted capability following replacement directories. Retained
+no-follow directory handles and private-mode/device/inode checks fix both defects.
+Nine capability combinations cover root/project/data replacement with status,
+explain and writes. Actual HTTP tests verify generic failures, protected listing/
+rotation/creation, unchanged old/replacement WALs, available healthy siblings and
+intentional reopen. Existing creation/rotation kills, recovery/models, actual
+128-project capacity, reactor responsiveness and cancellation/ownership checks pass.
+
+Rust format, warning-denied workspace/fuzz Clippy, locked build and all 327 main
+tests pass; eleven subprocess helpers are excluded. A rebuilt release-image probe
+with SDK, independent restored HTTP, restart/crash/corruption also passes. Storage,
+WAL, archive and metadata formats are unchanged. This increment adds 312 Rust
+lines and removes 21 (net 291). Totals: 22246 Rust (21144 excluding blank/comment-only
+lines), 1189 SDK, 637 Python; combined 24072 source lines. This targeted integrity
+repair is a small separate logical commit. Broader hostile-admin filesystem
+mutation, security/load, physical power loss and production gates remain open.

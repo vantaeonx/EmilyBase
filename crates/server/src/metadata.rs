@@ -3,7 +3,7 @@ use emilybase_auth::KeyDigest;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::{MetadataExt, PermissionsExt};
 use std::path::Path;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -37,6 +37,33 @@ pub(crate) fn directory(path: &Path) -> Result<()> {
     if !metadata.is_dir()
         || metadata.file_type().is_symlink()
         || metadata.permissions().mode() & 0o077 != 0
+    {
+        return Err(Error::Path);
+    }
+    Ok(())
+}
+pub(crate) fn open_directory(path: &Path) -> Result<File> {
+    directory(path)?;
+    let fd = rustix::fs::open(
+        path,
+        rustix::fs::OFlags::RDONLY
+            | rustix::fs::OFlags::CLOEXEC
+            | rustix::fs::OFlags::NOFOLLOW
+            | rustix::fs::OFlags::DIRECTORY,
+        rustix::fs::Mode::empty(),
+    )
+    .map_err(std::io::Error::from)?;
+    let file: File = fd.into();
+    owned_directory(path, &file)?;
+    Ok(file)
+}
+pub(crate) fn owned_directory(path: &Path, owner: &File) -> Result<()> {
+    directory(path)?;
+    let current = std::fs::symlink_metadata(path)?;
+    let owned = owner.metadata()?;
+    if !owned.is_dir()
+        || owned.permissions().mode() & 0o077 != 0
+        || (current.dev(), current.ino()) != (owned.dev(), owned.ino())
     {
         return Err(Error::Path);
     }

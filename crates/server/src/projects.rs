@@ -7,7 +7,7 @@ use emilybase_transactions::Database;
 use std::collections::BTreeMap;
 use std::fs::{File, TryLockError};
 use std::io::Write;
-use std::os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt};
+use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -25,6 +25,8 @@ pub struct CreatedProject {
 struct Project {
     metadata: Metadata,
     gate: Arc<Mutex<()>>,
+    directory_owner: Arc<File>,
+    data_owner: Arc<File>,
 }
 pub struct ProjectStore {
     root: PathBuf,
@@ -34,9 +36,12 @@ pub struct ProjectStore {
 }
 /// Per-request capability. It is consumed by execution and cannot be cloned or reused.
 pub struct AuthorizedProject {
+    root: PathBuf,
     directory: PathBuf,
     gate: Arc<Mutex<()>>,
     _owner: Arc<File>,
+    directory_owner: Arc<File>,
+    data_owner: Arc<File>,
 }
 #[derive(serde::Serialize)]
 pub struct ProjectStatus {
@@ -64,13 +69,14 @@ impl ProjectStore {
             Err(error) => return Err(error.into()),
         }
         metadata::directory(root)?;
-        let owner = File::open(root)?;
+        let owner = metadata::open_directory(root)?;
         match owner.try_lock() {
             Ok(()) => (),
             Err(TryLockError::WouldBlock) => return Err(Error::Busy),
             Err(TryLockError::Error(e)) => return Err(e.into()),
         }
         let root = root.canonicalize()?;
+        metadata::owned_directory(&root, &owner)?;
         let mut projects = BTreeMap::new();
         for entry in std::fs::read_dir(&root)? {
             let entry = entry?;
@@ -86,12 +92,16 @@ impl ProjectStore {
             }
             metadata::directory(&entry.path())?;
             metadata::directory(&entry.path().join("data"))?;
+            let directory_owner = Arc::new(metadata::open_directory(&entry.path())?);
+            let data_owner = Arc::new(metadata::open_directory(&entry.path().join("data"))?);
             let project = metadata::read(&entry.path().join("project.json"), &id)?;
             projects.insert(
                 id,
                 Project {
                     metadata: project,
                     gate: Arc::new(Mutex::new(())),
+                    directory_owner,
+                    data_owner,
                 },
             );
         }
@@ -111,6 +121,10 @@ impl ProjectStore {
     }
     pub fn list(&self) -> Result<Vec<ProjectInfo>> {
         self.ready()?;
+        metadata::owned_directory(&self.root, &self.owner)?;
+        for (id, project) in &self.projects {
+            self.check_project_directory(id, project)?;
+        }
         Ok(self.projects.values().map(|p| info(&p.metadata)).collect())
     }
     /// Offline consistent registry image. Contains private digests and plaintext data.
@@ -169,12 +183,7 @@ impl ProjectStore {
         crate::registry_files::publish(&bytes, target.as_ref())
     }
     fn check_backup_source(&self) -> Result<()> {
-        metadata::directory(&self.root)?;
-        let current = std::fs::symlink_metadata(&self.root)?;
-        let owned = self.owner.metadata()?;
-        if (current.dev(), current.ino()) != (owned.dev(), owned.ino()) {
-            return Err(Error::Path);
-        }
+        metadata::owned_directory(&self.root, &self.owner)?;
         let mut found = 0;
         for entry in std::fs::read_dir(&self.root)? {
             let entry = entry?;
@@ -183,7 +192,7 @@ impl ProjectStore {
                 continue;
             }
             let project = self.projects.get(&id).ok_or(Error::Metadata)?;
-            metadata::directory(&entry.path())?;
+            self.check_project_directory(&id, project)?;
             let current = metadata::read(&entry.path().join("project.json"), &id)?;
             if metadata::encoded(&current)? != metadata::encoded(&project.metadata)? {
                 return Err(Error::Metadata);
@@ -197,6 +206,7 @@ impl ProjectStore {
     }
     pub fn create(&mut self, name: &str) -> Result<CreatedProject> {
         self.ready()?;
+        metadata::owned_directory(&self.root, &self.owner)?;
         metadata::validate_name(name)?;
         if self.projects.len() >= MAX_PROJECTS {
             return Err(Error::Limit);
@@ -216,14 +226,16 @@ impl ProjectStore {
         std::fs::set_permissions(pending.path(), std::fs::Permissions::from_mode(0o700))?;
         let data = pending.path().join("data");
         drop(Database::create(&data)?);
+        let data_owner = Arc::new(metadata::open_directory(&data)?);
+        let directory_owner = Arc::new(metadata::open_directory(pending.path())?);
         std::fs::set_permissions(&data, std::fs::Permissions::from_mode(0o700))?;
-        directory_sync(&File::open(&data)?, "create_data_sync")?;
+        directory_sync(&data_owner, "create_data_sync")?;
         #[cfg(test)]
         crate::durability::checkpoint("create_data_synced");
         metadata::write_new(&pending.path().join("project.json"), &project)?;
         #[cfg(test)]
         crate::durability::checkpoint("create_metadata_synced");
-        directory_sync(&File::open(pending.path())?, "create_stage_sync")?;
+        directory_sync(&directory_owner, "create_stage_sync")?;
         #[cfg(test)]
         crate::durability::checkpoint("create_stage_synced");
         rustix::fs::renameat_with(
@@ -252,6 +264,8 @@ impl ProjectStore {
             Project {
                 metadata: project,
                 gate: Arc::new(Mutex::new(())),
+                directory_owner,
+                data_owner,
             },
         );
         Ok(response)
@@ -266,15 +280,20 @@ impl ProjectStore {
             return Err(Error::Denied);
         }
         Ok(AuthorizedProject {
+            root: self.root.clone(),
             directory: self.root.join(id),
             gate: Arc::clone(&project.gate),
             _owner: Arc::clone(&self.owner),
+            directory_owner: Arc::clone(&project.directory_owner),
+            data_owner: Arc::clone(&project.data_owner),
         })
     }
     /// Privileged operation; HTTP transport requires its administrative credential.
     pub fn rotate(&mut self, id: &str) -> Result<CreatedProject> {
         self.ready()?;
+        metadata::owned_directory(&self.root, &self.owner)?;
         let project = self.projects.get(id).ok_or(Error::Denied)?;
+        self.check_project_directory(id, project)?;
         let mut changed = project.metadata.clone();
         changed.epoch = changed.epoch.checked_add(1).ok_or(Error::Limit)?;
         let api_key = issue_key()?;
@@ -293,9 +312,7 @@ impl ProjectStore {
         }
         #[cfg(test)]
         crate::durability::checkpoint("rotate_renamed");
-        if let Err(error) = File::open(&path)
-            .and_then(|directory| directory_sync(&directory, "rotate_directory_sync"))
-        {
+        if let Err(error) = directory_sync(&project.directory_owner, "rotate_directory_sync") {
             self.poisoned = true;
             return Err(Error::PublicationUnknown(error));
         }
@@ -308,6 +325,11 @@ impl ProjectStore {
         self.projects.get_mut(id).ok_or(Error::Denied)?.metadata = changed;
         Ok(response)
     }
+    fn check_project_directory(&self, id: &str, project: &Project) -> Result<()> {
+        let path = self.root.join(id);
+        metadata::owned_directory(&path, &project.directory_owner)?;
+        metadata::owned_directory(&path.join("data"), &project.data_owner)
+    }
 }
 fn directory_sync(file: &File, _boundary: &str) -> std::io::Result<()> {
     #[cfg(test)]
@@ -315,10 +337,14 @@ fn directory_sync(file: &File, _boundary: &str) -> std::io::Result<()> {
     file.sync_all()
 }
 impl AuthorizedProject {
+    fn check_directory(&self) -> Result<()> {
+        metadata::owned_directory(&self.root, &self._owner)?;
+        metadata::owned_directory(&self.directory, &self.directory_owner)?;
+        metadata::owned_directory(&self.directory.join("data"), &self.data_owner)
+    }
     pub fn execute(self, sql: &str, parameters: &[Value]) -> Result<Report> {
         let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;
-        metadata::directory(&self.directory)?;
-        metadata::directory(&self.directory.join("data"))?;
+        self.check_directory()?;
         let mut database = Database::open(self.directory.join("data"))?;
         Ok(emilybase_query::execute(&mut database, sql, parameters)?)
     }
@@ -328,15 +354,13 @@ impl AuthorizedProject {
         parameters: &[Value],
     ) -> Result<emilybase_query::PlanDescription> {
         let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;
-        metadata::directory(&self.directory)?;
-        metadata::directory(&self.directory.join("data"))?;
+        self.check_directory()?;
         let database = Database::open(self.directory.join("data"))?;
         Ok(emilybase_query::explain(database.view()?, sql, parameters)?)
     }
     pub fn status(self) -> Result<ProjectStatus> {
         let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;
-        metadata::directory(&self.directory)?;
-        metadata::directory(&self.directory.join("data"))?;
+        self.check_directory()?;
         let database = Database::open(self.directory.join("data"))?;
         Ok(ProjectStatus {
             transaction: database.last_transaction(),

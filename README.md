@@ -48,6 +48,8 @@ over a validated snapshot. Wider crash/fault campaigns and durable indexes remai
 
 The synchronous project registry creates private isolated database directories,
 issues scoped high-entropy API keys and rotates them with atomic metadata publication.
+Live capabilities pin registry/project/data directory identities; replacement
+paths fail before scoped execution instead of redirecting requests.
 Only key digests are stored. Cross-project keys, traversal IDs and unsafe symlinks/
 permissions are rejected; requests for each project serialize. The Axum server
 adds separate administrator/project scopes, bounded blocking workers, strict JSON,

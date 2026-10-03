@@ -35,6 +35,13 @@ local owner; they do not sandbox a malicious administrator who can modify privat
 filesystem entries. The root inode has one exclusive advisory owner. Each project
 has an independent request gate; same-project requests serialize before database
 open. Database ownership/recovery/sync remains in the original engine.
+Live controllers and accepted capabilities pin root/project/data directory handles
+and verify device/inode identity and private modes on synchronous operations.
+Replacing a pathname cannot redirect them to another directory; reopen explicitly
+after intentional movement. Authorization itself does no filesystem work, so
+HTTP checks stay on blocking workers. Each project adds two shared directory
+handles; journal/checkpoint inode replacement inside a pinned data directory works.
+See [ADR 0019](adr/0019-pin-project-directory-identities.md).
 
 ```text
 emilybase-data/

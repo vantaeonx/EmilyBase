@@ -681,3 +681,144 @@ fn restored_registry_serves_real_http_with_preserved_keys_and_independent_rotati
         }
     }
 }
+
+#[test]
+fn real_http_refuses_replaced_registry_project_or_data_namespaces_and_preserves_both() {
+    let _serial = PROCESS_TESTS.lock().unwrap();
+    for level in ["root", "project", "data"] {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("source");
+        let mut store = ProjectStore::open(&root).unwrap();
+        let a = store.create("synthetic pinned HTTP").unwrap();
+        let b = store.create("synthetic healthy sibling").unwrap();
+        for created in [&a, &b] {
+            store
+                .authorize(&created.project.id, &created.api_key)
+                .unwrap()
+                .execute(
+                    "CREATE TABLE t(id INT PRIMARY KEY); INSERT INTO t VALUES(1)",
+                    &[],
+                )
+                .unwrap();
+        }
+        let archive = temp.path().join("projects.backup");
+        store.backup(&archive).unwrap();
+        let copy = temp.path().join("copy");
+        emilybase_server::restore_registry_backup(&archive, &copy).unwrap();
+        drop(store);
+        let master = issue_key().unwrap();
+        let server = support::Server::start(&root, &master);
+        let original = match level {
+            "root" => root.clone(),
+            "project" => root.join(&a.project.id),
+            _ => root.join(&a.project.id).join("data"),
+        };
+        let replacement = match level {
+            "root" => copy.clone(),
+            "project" => copy.join(&a.project.id),
+            _ => copy.join(&a.project.id).join("data"),
+        };
+        let saved = temp.path().join("saved");
+        std::fs::rename(&original, &saved).unwrap();
+        std::fs::rename(&replacement, &original).unwrap();
+        let wal = match level {
+            "root" => root.join(&a.project.id).join("data/redo.wal"),
+            "project" => original.join("data/redo.wal"),
+            _ => original.join("redo.wal"),
+        };
+        let old_wal = match level {
+            "root" => saved.join(&a.project.id).join("data/redo.wal"),
+            "project" => saved.join("data/redo.wal"),
+            _ => saved.join("redo.wal"),
+        };
+        let before = std::fs::read(&wal).unwrap();
+        let moved_before = std::fs::read(&old_wal).unwrap();
+        for suffix in ["sql", "explain", "status"] {
+            let path = format!("/v1/projects/{}/{suffix}", a.project.id);
+            let method = if suffix == "status" { "GET" } else { "POST" };
+            let sql = if suffix == "explain" {
+                "SELECT * FROM t"
+            } else {
+                "INSERT INTO t VALUES(2)"
+            };
+            let (status, problem) = support::call(
+                server.address,
+                method,
+                &path,
+                &a.api_key,
+                &json!({"sql":sql}),
+            )
+            .unwrap();
+            assert_eq!(status, 503);
+            assert_eq!(problem, json!({"code":"storage_unavailable"}));
+        }
+        let rotate = format!("/v1/projects/{}/keys/rotate", a.project.id);
+        assert_eq!(
+            support::call(server.address, "POST", &rotate, &master, &json!({}))
+                .unwrap()
+                .0,
+            503
+        );
+        assert_eq!(
+            support::call(server.address, "GET", "/v1/projects", &master, &json!({}))
+                .unwrap()
+                .0,
+            503
+        );
+        if level == "root" {
+            assert_eq!(
+                support::call(
+                    server.address,
+                    "POST",
+                    "/v1/projects",
+                    &master,
+                    &json!({"name":"must not create"})
+                )
+                .unwrap()
+                .0,
+                503
+            );
+        } else {
+            let sibling = format!("/v1/projects/{}/status", b.project.id);
+            let (status, state) =
+                support::call(server.address, "GET", &sibling, &b.api_key, &json!({})).unwrap();
+            assert_eq!(status, 200);
+            assert_eq!(state["rows"], 1);
+        }
+        let log = server.stop();
+        for private in [
+            &master,
+            &a.api_key,
+            &b.api_key,
+            &a.project.id,
+            &b.project.id,
+            "must not create",
+        ] {
+            assert!(!log.contains(private));
+        }
+        assert_eq!(std::fs::read(&wal).unwrap(), before);
+        assert_eq!(std::fs::read(&old_wal).unwrap(), moved_before);
+        let reopened = ProjectStore::open_existing(&root).unwrap();
+        assert_eq!(
+            reopened
+                .authorize(&a.project.id, &a.api_key)
+                .unwrap()
+                .status()
+                .unwrap()
+                .rows,
+            1
+        );
+        if level == "root" {
+            let moved = ProjectStore::open_existing(&saved).unwrap();
+            assert_eq!(
+                moved
+                    .authorize(&a.project.id, &a.api_key)
+                    .unwrap()
+                    .status()
+                    .unwrap()
+                    .rows,
+                1
+            );
+        }
+    }
+}

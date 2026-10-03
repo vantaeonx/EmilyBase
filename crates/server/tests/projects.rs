@@ -76,6 +76,105 @@ fn outstanding_request_capability_keeps_registry_ownership_until_consumed_or_dro
 }
 
 #[test]
+fn moved_registry_namespace_cannot_redirect_create_or_rotation_to_a_new_root() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("source");
+    let mut store = ProjectStore::open(&root).unwrap();
+    let project = store.create("synthetic pinned owner").unwrap();
+    let moved = temp.path().join("moved");
+    std::fs::rename(&root, &moved).unwrap();
+    use std::os::unix::fs::DirBuilderExt;
+    std::fs::DirBuilder::new()
+        .mode(0o700)
+        .create(&root)
+        .unwrap();
+    assert!(matches!(store.create("must refuse"), Err(Error::Path)));
+    assert!(matches!(
+        store.rotate(&project.project.id),
+        Err(Error::Path)
+    ));
+    assert!(matches!(store.list(), Err(Error::Path)));
+    assert_eq!(std::fs::read_dir(&root).unwrap().count(), 0);
+    assert_eq!(std::fs::read_dir(&moved).unwrap().count(), 1);
+}
+
+#[test]
+fn moved_project_or_data_namespace_cannot_redirect_an_accepted_capability() {
+    for level in ["root", "project", "data"] {
+        for action in ["status", "explain", "execute"] {
+            let temp = tempfile::tempdir().unwrap();
+            let root = temp.path().join("source");
+            let mut store = ProjectStore::open(&root).unwrap();
+            let project = store.create("synthetic pinned capability").unwrap();
+            store
+                .authorize(&project.project.id, &project.api_key)
+                .unwrap()
+                .execute(
+                    "CREATE TABLE t(id INT PRIMARY KEY); INSERT INTO t VALUES(1)",
+                    &[],
+                )
+                .unwrap();
+            let archive = temp.path().join("private.backup");
+            store.backup(&archive).unwrap();
+            let clone = temp.path().join("clone");
+            emilybase_server::restore_registry_backup(&archive, &clone).unwrap();
+            let original = root.join(&project.project.id);
+            let copied = clone.join(&project.project.id);
+            let replacement = if level == "root" {
+                clone
+            } else if level == "data" {
+                copied.join("data")
+            } else {
+                copied
+            };
+            let selected = if level == "root" {
+                root
+            } else if level == "data" {
+                original.join("data")
+            } else {
+                original
+            };
+            let saved = temp.path().join("saved");
+            let request = store
+                .authorize(&project.project.id, &project.api_key)
+                .unwrap();
+            std::fs::rename(&selected, &saved).unwrap();
+            std::fs::rename(&replacement, &selected).unwrap();
+            let selected_wal = if level == "root" {
+                selected.join(&project.project.id).join("data/redo.wal")
+            } else if level == "data" {
+                selected.join("redo.wal")
+            } else {
+                selected.join("data/redo.wal")
+            };
+            let saved_wal = if level == "root" {
+                saved.join(&project.project.id).join("data/redo.wal")
+            } else if level == "data" {
+                saved.join("redo.wal")
+            } else {
+                saved.join("data/redo.wal")
+            };
+            let before = std::fs::read(&selected_wal).unwrap();
+            let saved_before = std::fs::read(&saved_wal).unwrap();
+            let rejected = match action {
+                "status" => matches!(request.status(), Err(Error::Path)),
+                "explain" => matches!(request.explain("SELECT * FROM t", &[]), Err(Error::Path)),
+                _ => matches!(
+                    request.execute("INSERT INTO t VALUES(2)", &[]),
+                    Err(Error::Path)
+                ),
+            };
+            assert!(
+                rejected,
+                "accepted capability followed a replacement directory"
+            );
+            assert_eq!(std::fs::read(selected_wal).unwrap(), before);
+            assert_eq!(std::fs::read(saved_wal).unwrap(), saved_before);
+        }
+    }
+}
+
+#[test]
 fn path_traversal_labels_never_become_paths_and_symlinks_or_broad_permissions_fail() {
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().join("projects");

@@ -17,6 +17,7 @@ can ignore them. Hardware power-loss guarantees are not assumed from unit tests.
 | Injection / privilege escalation | original bounded parser, separate parameters, separate administrator/project scopes | user roles and row policies |
 | Secret disclosure | random scoped keys, SHA-256 digests, fixed-size timing-safe checks, verified log redaction with static method labels | passwords/sessions, secret encryption and wider audit |
 | Archive disclosure or substitution | private no-follow single-link registry archives, strict bounds and complete replay | plaintext archives require trusted storage; CRC/SHA do not authenticate malicious rewrites; encryption remains open |
+| Accidental live directory replacement | pinned no-follow root/project/data handles, private-mode and device/inode checks before synchronous operations | trusted local operator; no sandbox against malicious privileged namespace mutation |
 | Unrecoverable backup | bounded archive, SHA-256/CRC, strict replay, verified staged restore | upgrades, encrypted/incremental backups |
 
 The CLI accepts trusted local paths; it does not provide a sandbox against a

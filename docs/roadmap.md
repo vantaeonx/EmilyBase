@@ -164,3 +164,13 @@ restorers, generated cross-project histories, real capacity and restored binary/
 container HTTP checks now execute. Wider failing-media/backup, power-loss,
 security/load and stable-release acceptance remain open.
 See [format](registry-backup-format.md) and [ADR 0018](adr/0018-offline-project-registry-backups.md).
+
+## Live directory-identity repair
+
+Failing regressions reproduced a moved root redirecting project creation and an
+accepted capability following a replaced directory. Controllers/capabilities now
+pin root/project/data handles and check private modes/device/inode identity during
+synchronous work. Authorization remains free of filesystem operations. Actual HTTP
+tests verify generic refusal, preserved old/replacement data, healthy siblings and
+explicit reopen. Formats are unchanged; broader hostile-admin filesystem/audit
+and production gates remain open. See [ADR 0019](adr/0019-pin-project-directory-identities.md).
