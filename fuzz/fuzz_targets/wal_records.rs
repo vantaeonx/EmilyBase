@@ -1,4 +1,5 @@
 #![no_main]
+#![forbid(unsafe_code)]
 use emilybase_wal::{encode_header, recover};
 use libfuzzer_sys::fuzz_target;
 

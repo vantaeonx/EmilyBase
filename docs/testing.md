@@ -17,6 +17,7 @@ cargo install cargo-fuzz --locked
 cargo +nightly fuzz run file_format -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
+cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 ```
 
 The target checks raw headers, pages and pages with a repaired checksum to reach
@@ -28,10 +29,9 @@ accepted records. Synthetic `ESCH`, `EROW` and `ETBL` seeds improve its coverage
 
 ## Pending acceptance tests
 
-Forced termination during WAL and page writes, committed versus uncommitted
-recovery, torn-write repair, checkpoint crashes, database-level concurrency,
-backup/restore and cross-project authorization require their implementations.
-None of those acceptance gates is satisfied by the current tests.
+Core process-kill, byte-cut, checkpoint and competing-writer checks now execute.
+Broader I/O fault injection, power-loss, backup/restore and cross-project
+authorization remain open. See the [current matrix](recovery-matrix.md).
 
 ## First increment: executed checks
 
@@ -100,3 +100,22 @@ batches against an independent map and reopens after each batch. Checkpoint dama
 and leftover temporary files cannot alter committed rows. These tests do not yet
 cover killing the integrated table engine during commit/checkpoint or a full
 concurrency, backup/restore and power-loss matrix.
+
+## Integrated recovery and CLI increment: executed checks
+
+On 2026-10-03, workspace/fuzz formatting, Clippy with warnings denied, build and
+all 105 main tests passed. Four subprocess helpers are ignored in the parent
+runner and invoked by real kill/concurrency tests. This block adds 976 physical
+Rust lines; the total is 5962. CLI tests execute managed CRUD, every batch operation,
+rollback, abort, limits, value-redacted errors and explicit legacy compatibility.
+
+Integrated recovery checks all 12480 cut positions inside a two-page transaction.
+The process matrix kills staged writes, synced uncommitted frames, acknowledged
+commits, continuous writers at four thresholds, and checkpointing before/after
+rename. Four competing processes restore all 80 increments without lost updates.
+Missing/corrupt WAL fails closed even when a stale checkpoint exists.
+
+The managed-recovery AddressSanitizer smoke run completed 587,298 executions in
+16 seconds without a crash (configured budget: 15 seconds). The target also repairs
+nested checksums and commit digests to reach relational validation. The full
+reliability and security gates remain open; see the recovery matrix.

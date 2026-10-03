@@ -7,6 +7,14 @@ pub use database::Database;
 pub use transaction::Transaction;
 pub const MAX_TRANSACTION_EVENTS: usize = 256;
 
+/// Pure, bounded recovery for verification, offline inspection and fuzzing.
+pub fn recover_snapshot(
+    bytes: &[u8],
+    expected_id: Option<emilybase_wal::DatabaseId>,
+) -> Result<emilybase_database::Snapshot> {
+    replay::replay(emilybase_wal::recover(bytes, expected_id)?)
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]

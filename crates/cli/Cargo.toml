@@ -15,6 +15,7 @@ clap = { version = "4", features = ["derive"] }
 emilybase-storage = { path = "../storage" }
 emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }
+emilybase-transactions = { path = "../transactions" }
 serde = "1"
 serde_json = "1"
 

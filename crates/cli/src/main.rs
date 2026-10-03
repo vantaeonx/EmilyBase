@@ -5,11 +5,13 @@ use clap::{Parser, Subcommand};
 use emilybase_catalog::{Key, Row, Schema};
 use emilybase_database::{DATABASE_MARKER, Database};
 use emilybase_storage::{Error, FORMAT_VERSION, PAGE_SIZE, Page, Pager, SlotId};
+mod tables;
+use tables::Tables;
 
 #[derive(Parser)]
 #[command(
     version,
-    about = "Experimental EmilyBase database; no transactions yet"
+    about = "Experimental EmilyBase database; synthetic data only"
 )]
 struct Arguments {
     #[command(subcommand)]
@@ -19,7 +21,21 @@ struct Arguments {
 #[derive(Subcommand)]
 enum Command {
     /// Atomically create an initialized table database.
-    DbInit { path: PathBuf },
+    DbInit {
+        path: PathBuf,
+        /// Create a managed directory with mandatory WAL and transaction support.
+        #[arg(long)]
+        durable: bool,
+    },
+    /// Execute a bounded JSON operation array as one transaction.
+    Tx {
+        path: PathBuf,
+        operations: String,
+        #[arg(long)]
+        rollback: bool,
+    },
+    /// Materialize committed pages while retaining the full journal.
+    Checkpoint { path: PathBuf },
     /// Create a table from an explicit JSON schema.
     TableCreate { path: PathBuf, schema: String },
     /// Print validated table schemas as JSON.
@@ -100,31 +116,47 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
-        Command::DbInit { path } => {
-            Database::create(path)?;
-            println!("created experimental table database");
+        Command::DbInit { path, durable } => {
+            if durable {
+                emilybase_transactions::Database::create(path)?;
+                println!("created experimental managed database with WAL");
+            } else {
+                Database::create(path)?;
+                println!("created experimental legacy table database without WAL");
+            }
+        }
+        Command::Tx {
+            path,
+            operations,
+            rollback,
+        } => {
+            tables::batch(&path, parse_json(&operations)?, rollback)?;
+        }
+        Command::Checkpoint { path } => {
+            emilybase_transactions::Database::open(path)?.checkpoint()?;
+            println!("checkpoint synced; journal retained");
         }
         Command::TableCreate { path, schema } => {
             let schema: Schema = parse_json(&schema)?;
-            let mut db = Database::open(path)?;
+            let mut db = Tables::open(path)?;
             println!("table_id={}", db.create_table(schema)?);
         }
         Command::TableList { path } => {
-            let db = Database::open(path)?;
+            let db = Tables::open(path)?;
             println!("{}", serde_json::to_string(&db.schemas()?)?);
         }
         Command::TableDrop { path, table } => {
-            Database::open(path)?.drop_table(&table)?;
+            Tables::open(path)?.drop_table(&table)?;
             println!("dropped");
         }
         Command::RowInsert { path, table, row } => {
             let row: Row = parse_json(&row)?;
-            let key = Database::open(path)?.insert(&table, row)?;
+            let key = Tables::open(path)?.insert(&table, row)?;
             println!("{}", serde_json::to_string(&key)?);
         }
         Command::RowGet { path, table, key } => {
             let key: Key = parse_json(&key)?;
-            let db = Database::open(path)?;
+            let db = Tables::open(path)?;
             println!("{}", serde_json::to_string(&db.get(&table, &key)?)?);
         }
         Command::RowUpdate {
@@ -135,16 +167,16 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         } => {
             let key: Key = parse_json(&key)?;
             let row: Row = parse_json(&row)?;
-            Database::open(path)?.update(&table, &key, row)?;
+            Tables::open(path)?.update(&table, &key, row)?;
             println!("updated");
         }
         Command::RowDelete { path, table, key } => {
             let key: Key = parse_json(&key)?;
-            Database::open(path)?.delete(&table, &key)?;
+            Tables::open(path)?.delete(&table, &key)?;
             println!("deleted");
         }
         Command::RowScan { path, table, limit } => {
-            let db = Database::open(path)?;
+            let db = Tables::open(path)?;
             println!("{}", serde_json::to_string(&db.scan(&table, limit)?)?);
         }
         Command::Init { path } => {

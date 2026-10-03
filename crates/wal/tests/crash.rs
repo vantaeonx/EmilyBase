@@ -20,6 +20,7 @@ impl Drop for Worker {
 }
 
 #[test]
+#[ignore = "subprocess helper, invoked by its parent test"]
 fn crash_worker() {
     let Ok(path) = std::env::var("EMILYBASE_WAL_TEST_PATH") else {
         return;
@@ -48,7 +49,7 @@ fn process_kill_preserves_acknowledged_and_excludes_uncommitted_batches() {
         drop(wal);
         let mut worker = Worker(
             Command::new(std::env::current_exe().unwrap())
-                .args(["--exact", "crash_worker", "--nocapture"])
+                .args(["--exact", "crash_worker", "--nocapture", "--ignored"])
                 .env("EMILYBASE_WAL_TEST_PATH", &path)
                 .env("EMILYBASE_WAL_TEST_PHASE", phase)
                 .stdin(Stdio::piped())

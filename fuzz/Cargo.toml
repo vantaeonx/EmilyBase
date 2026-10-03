@@ -15,6 +15,7 @@ emilybase-storage = { path = "../crates/storage" }
 emilybase-catalog = { path = "../crates/catalog" }
 emilybase-database = { path = "../crates/database" }
 emilybase-wal = { path = "../crates/wal" }
+emilybase-transactions = { path = "../crates/transactions" }
 
 [[bin]]
 name = "file_format"
@@ -36,6 +37,13 @@ members = ["."]
 [[bin]]
 name = "wal_records"
 path = "fuzz_targets/wal_records.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "managed_recovery"
+path = "fuzz_targets/managed_recovery.rs"
 test = false
 doc = false
 bench = false

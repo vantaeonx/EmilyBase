@@ -7,7 +7,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | --- | --- | --- | --- |
 | 0 | design, threats, format, ADRs | documents reviewed against implementation | initial documents |
 | 1 | pages, tables, types, primary keys, CRUD, CLI | unit/integration tests and reopen round trips | implemented; normal reopen and validation tests pass |
-| 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | WAL and managed transactions implemented; table crash matrix pending |
+| 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | not started |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | not started |
 | 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | not started |
@@ -22,9 +22,9 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 ## Next increments
 
-1. Expose managed-directory transactions through CLI; preserve explicit legacy mode.
-2. Crash harness: termination before/after WAL sync, page sync and checkpoint.
-3. Corruption, concurrent-process and backup/restore acceptance matrices.
+1. Extend I/O fault injection to short writes, disk exhaustion and sync failures.
+2. Design checkpoint reuse / journal rotation with durable metadata and crash tests.
+3. Implement backup/restore and verify upgrades before real workloads.
 
 ## Implemented first increment
 
@@ -40,7 +40,16 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 - Reopen-after-each-operation property tests against an independent row model.
 - CLI protection against raw mutations of managed table databases.
 
-Lock and creation-race tests cover initial file ownership. They do not satisfy
-the concurrent-transaction or forced-termination recovery gates in stage 2.
+## Implemented reliability increments
+
+- Bounded full-page WAL with transaction/sequence IDs, commit digest and sync ordering.
+- Staged table transactions, commit/rollback and abort-on-write-error.
+- Mandatory retained WAL with strict append-only relational recovery.
+- Atomic checkpoint cache; damaged caches are regenerated from WAL.
+- Managed CLI mode, transaction batches and explicit legacy compatibility.
+- Process kills before/after commit, streaming writes and checkpoint rename.
+- Four competing processes, byte-cut matrix, OS write failures and recovery fuzzing.
+
+Remaining gates are listed in the [recovery matrix](recovery-matrix.md).
 
 Only update a gate to complete when its full criteria have executed successfully.
