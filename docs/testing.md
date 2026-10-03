@@ -314,3 +314,31 @@ seconds with a configured 15-second budget, without a crash. Six synthetic seeds
 cover valid DDL/CRUD, joins, transactions, quoted injection-like text, extreme
 integers and depth boundaries. Parsing is not execution; planner, executor and
 durable-index integration gates remain open. This is a smoke run, not a security audit.
+
+## Managed SQL execution and CLI: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 219 main
+tests passed; six subprocess helpers remain outside the main count. This increment
+adds 1145 physical Rust lines and replaces one, a net increase of 1144. Total:
+14149 physical Rust lines, or 13286 excluding blanks and comment-only lines.
+
+Seven new tests execute real SQL DDL/CRUD, qualified joins, projections, multi-key
+ordering, limits, separate typed bindings and transaction control. Three-valued
+null truth tables and explicit null placement execute. Failed scripts and explicit
+rollback preserve exact committed WAL bytes and state, including errors after a
+staged insert/update. Semantic resolution runs even on empty/LIMIT-0 input.
+Alias hiding, ambiguous/self-join qualifiers, missing bindings, wrong types,
+nonfinite/oversize bindings and unsupported primary-key assignments fail safely.
+
+A real 400-row join exceeds the work budget and rolls back earlier staged changes;
+multirow writes exceed the existing transaction event cap without durable changes.
+Plans resolve direct primary-key equality, scans and bounded nested-loop joins.
+Checkpoint/compaction reopen preserves SQL-created rows and transaction numbers.
+A 32-case independent committed-map property generates SQL batches, duplicate
+errors and rollback, reopening after each batch. The actual CLI executes, binds,
+explains, rolls back, emits no result on failure and refuses unchanged legacy files.
+
+Parser code is unchanged from its recorded ASan smoke run. New executor modules
+compile under the fuzz manifest but do not yet have an execution fuzz campaign.
+Retained-output budget boundaries, dedicated SQL process-kill/backup tests and
+wider semantic/fault checks follow; durable index and production gates remain open.

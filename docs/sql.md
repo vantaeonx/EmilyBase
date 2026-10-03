@@ -1,8 +1,9 @@
 # Experimental SQL subset
 
-The original `query` crate currently provides a lexer, typed AST and parser.
-It does not yet execute statements or expose a SQL CLI. Parser acceptance alone
-does not guarantee that schemas, names or row values are valid in a database.
+The original `query` crate provides a lexer, typed AST, parser, schema-resolved
+plans and bounded execution through managed transactions. Parser acceptance alone
+does not guarantee that schemas, names or row values are valid in a database;
+the planner/executor validate them before reading or publishing results.
 No PostgreSQL compatibility is promised.
 
 ## Accepted syntax
@@ -39,18 +40,57 @@ Literals are signed-i64 integers, finite-f64 decimal/exponent values, booleans,
 `NULL`, single-quoted UTF-8 text with doubled quote escaping, and `X'00ff'` bytes.
 Backslashes have no escape meaning. Numbered parameters `$1`..`$256` are AST
 references to a separate binding array, never substituted into the SQL string.
-This parser does not implement binding/execution yet.
+Bindings use catalog values with strict types; there are no implicit casts.
 
 Predicates support column/literal/parameter operands, `=`, `<>`/`!=`, `<`, `<=`,
 `>`, `>=`, `IS [NOT] NULL`, boolean operands, parentheses, `NOT`, `AND`, `OR`.
 Precedence is NOT, then AND, then OR. UPDATE assignments and INSERT values accept
 literals/parameters only. LIMIT accepts an integer 0..10000 or a parameter whose
 value will need executor validation. ORDER BY uses source columns and optional
-ASC/DESC, NULLS FIRST/LAST; sorting/null semantics follow in the executor.
+ASC/DESC and NULLS FIRST/LAST. Default null placement is LAST in both directions.
+Ties retain primary-key scan/join order. Text sorts by UTF-8 bytes without collation
+or normalization. ORDER BY names source columns, not output aliases.
 
 Statements require separating semicolons; the final semicolon is optional.
 Empty statements/scripts are rejected. Line `--` and non-nested `/* */` comments
 are accepted outside quoted strings. Comments have no runtime behavior.
+
+## Execution and transactions
+
+Every submitted script is one atomic managed transaction, even without BEGIN.
+Explicit control requires BEGIN first and COMMIT/ROLLBACK last, with no nested
+or intermediate control statements. There is no interactive transaction session.
+The complete script is parsed before staging. Any semantic, binding, execution
+or write error discards all its staged changes, including earlier statements.
+Commit uses the existing WAL sync/unknown-outcome protocol. Successful read-only
+scripts preserve the transaction number. WAL/file format bytes are unchanged.
+
+`execute` returns a report with transaction number, `committed` and per-statement
+results. SELECT has column labels and catalog-typed rows. INSERT/UPDATE/DELETE have
+an affected count; DDL has no row results. ROLLBACK returns `committed:false` and
+may include reads of discarded staged data; these are not commit acknowledgments.
+Updating the primary-key column is unsupported. Named INSERT columns may omit
+nullable fields, filled with NULL. Duplicate named columns/assignments fail.
+
+Expressions use three-valued boolean logic: comparison with NULL yields unknown,
+only TRUE passes WHERE/ON, and IS [NOT] NULL is definite. Type errors and unknown/
+ambiguous columns are checked even on empty input or LIMIT 0. An alias hides its
+original table qualifier; self joins require distinct aliases.
+
+The planner selects direct primary-key lookup for a usable equality conjunct;
+otherwise it scans. Joins use a bounded nested loop. `explain` resolves one SELECT
+without reading rows. These access paths use current table maps; this does not
+enable durable B+ tree pages. Joins with large products can fail their work bound.
+
+```sh
+cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT * FROM items WHERE id=$1' --parameters '[{"type":"integer","value":7}]'
+cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT * FROM items WHERE id=7' --explain
+```
+
+CLI SQL accepts managed directories only; legacy files are rejected. The optional
+parameters array is bounded typed JSON, never logged or inserted into SQL text.
+Results are printed only after execution succeeds. Existing local database paths
+remain trusted operator input; network authorization is a future server boundary.
 
 ## Bounds and unsupported behavior
 
@@ -61,6 +101,15 @@ Decoded quoted text: at most 3072 bytes; hex-literal content has the same bound,
 so an inline byte literal currently carries at most 1536 bytes. Identifiers and
 schema validation impose additional catalog limits. SQL errors report an offset
 and generic expected category, without SQL, literals or parameter contents.
+
+Execution: 100000 combined scan/join-candidate and predicate-node visits per script;
+10000 intermediate rows per SELECT. Estimated retained intermediate row bytes are
+capped at 8 MiB per SELECT; returned rows across the script share another 8 MiB cap.
+This is a row-memory estimate, not a JSON/wire-byte limit. Full input scans still
+use bounded existing table snapshots. Sorting is separately bounded by row/column
+limits. ORDER BY can hit intermediate limits despite a small final LIMIT; without
+sorting, selection stops at LIMIT. Writes share the existing 256-event/256-page
+normal transaction limit; overflow rolls back the entire script.
 
 Arithmetic, functions, aggregates, DISTINCT, GROUP BY, subqueries, RETURNING,
 OFFSET, UNION, outer/cross joins, indexes, ALTER, implicit casts and PostgreSQL

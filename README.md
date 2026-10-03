@@ -17,7 +17,7 @@ strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
 process-kill, checkpoint-crash and competing-writer checks execute. The WAL is
 capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
-The full stage-2 acceptance gate remains open. SQL execution, persistent table indexes, server, project
+The full stage-2 acceptance gate remains open. Persistent table indexes, server, project
 isolation, authentication, dashboard and SDKs are future work.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
@@ -33,10 +33,16 @@ index files remain future work. Deletion may renumber index page IDs while prese
 external row pointers. See [index format and limits](docs/index-format.md) and
 [the integration boundary](docs/adr/0010-index-maintenance.md).
 
-The original `query` crate now parses a bounded SQL subset into typed ASTs:
-table DDL, CRUD, predicates, ordering, limits, one inner join and transaction
-commands. Separate numbered parameters are supported. Execution/CLI integration
-is the next increment; parsing alone changes no data. See [SQL subset](docs/sql.md).
+The original `query` crate implements a bounded SQL lexer, parser, typed AST,
+schema-resolved plans and execution through managed WAL transactions: table DDL,
+CRUD, predicates, ordering, limits, one inner join and whole-script transaction
+control. Separate numbered parameters are supported. CLI SQL errors discard the
+entire staged script; commit results follow WAL sync. See [SQL subset](docs/sql.md).
+
+```sh
+cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT id,title FROM items WHERE id=$1 LIMIT 10' --parameters '[{"type":"integer","value":7}]'
+cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT * FROM items WHERE id=7' --explain
+```
 
 ## Try typed tables
 

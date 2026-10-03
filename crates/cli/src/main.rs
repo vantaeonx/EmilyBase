@@ -20,6 +20,17 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Execute the documented SQL subset as one managed transaction.
+    Sql {
+        path: PathBuf,
+        sql: String,
+        /// Separate JSON array of tagged typed values for $1, $2, ...
+        #[arg(long, default_value = "[]")]
+        parameters: String,
+        /// Resolve one SELECT and print its plan without executing it.
+        #[arg(long)]
+        explain: bool,
+    },
     /// Atomically create an initialized table database.
     DbInit {
         path: PathBuf,
@@ -124,6 +135,22 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::Sql {
+            path,
+            sql,
+            parameters,
+            explain,
+        } => {
+            let parameters: Row = parse_json(&parameters)?;
+            let mut database = emilybase_transactions::Database::open(path)?;
+            if explain {
+                let plan = emilybase_query::explain(database.view()?, &sql, &parameters)?;
+                println!("{}", serde_json::to_string(&plan)?);
+            } else {
+                let report = emilybase_query::execute(&mut database, &sql, &parameters)?;
+                println!("{}", serde_json::to_string(&report)?);
+            }
+        }
         Command::DbInit { path, durable } => {
             if durable {
                 emilybase_transactions::Database::create(path)?;

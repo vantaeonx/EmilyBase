@@ -142,6 +142,9 @@ name = "emilybase-query"
 version = "0.1.0"
 dependencies = [
  "emilybase-catalog",
+ "emilybase-database",
+ "emilybase-transactions",
+ "serde",
  "thiserror",
 ]
 

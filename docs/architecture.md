@@ -10,7 +10,8 @@ flowchart TD
   CLI --> Database[Database: table coordination and event replay]
   Database --> Catalog[Catalog: schemas and typed records]
   Database --> Storage
-  HTTP[Future Axum server] --> Query[SQL parser: execution pending]
+  HTTP[Future Axum server] --> Query[Bounded SQL parser / planner / executor]
+  CLI --> Query
   Query --> Transactions[Serialized transaction coordinator]
   Transactions --> WAL[Synced full-page WAL]
   Transactions --> Database
@@ -25,7 +26,7 @@ flowchart TD
 ```
 
 Storage, catalog, database, WAL, transactions, backup, CLI, a separate index and
-the original SQL lexer/parser/AST are implemented. Add other crates when they contain
+the original SQL lexer/parser/planner/executor are implemented. Add other crates when they contain
 working behavior, instead of declaring an implemented platform with empty modules.
 The future network layer will call the synchronous engine through bounded workers;
 blocking filesystem work must not run on Tokio reactor threads.
@@ -86,9 +87,11 @@ project. See [ADR 0007](adr/0007-verified-backups.md).
 ## Query boundary
 
 The synchronous `query` crate parses bounded SQL into a typed AST, retaining
-parameters separately from SQL text. Parsing performs no filesystem operations.
-Schema resolution, typed binding, bounded plans and execution through managed
-transactions follow. See [SQL subset](sql.md) and
+parameters separately from SQL text. Schema resolution precedes row evaluation;
+strict typed predicates implement three-valued null logic. Plans use existing
+primary-key lookup, scans or bounded nested-loop joins. Script writes stage in
+managed transactions and results follow commit; errors discard all staged work.
+Legacy raw files are not SQL write targets. See [SQL subset](sql.md) and
 [ADR 0011](adr/0011-bounded-sql.md).
 
 ## Platform boundary (planned)

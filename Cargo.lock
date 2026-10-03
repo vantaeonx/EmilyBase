@@ -214,6 +214,7 @@ dependencies = [
  "emilybase-backup",
  "emilybase-catalog",
  "emilybase-database",
+ "emilybase-query",
  "emilybase-storage",
  "emilybase-transactions",
  "serde",
@@ -249,7 +250,11 @@ name = "emilybase-query"
 version = "0.1.0"
 dependencies = [
  "emilybase-catalog",
+ "emilybase-database",
+ "emilybase-transactions",
  "proptest",
+ "serde",
+ "tempfile",
  "thiserror",
 ]
 

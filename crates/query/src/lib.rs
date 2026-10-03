@@ -1,8 +1,16 @@
-//! Original bounded SQL lexer, AST and parser. Execution is a separate next increment.
+//! Original bounded SQL parser, schema-resolved plans and managed transaction execution.
 pub mod ast;
+mod execute;
 mod lexer;
 mod parser;
+mod plan;
+mod predicate;
+mod select;
+pub use execute::{
+    ExecutionError, MAX_OUTPUT_BYTES, MAX_QUERY_WORK, Report, ResultSet, RunResult, execute,
+};
 pub use parser::parse;
+pub use plan::{PlanDescription, explain};
 
 pub const MAX_SQL_BYTES: usize = 16_384;
 pub const MAX_TOKENS: usize = 4096;
