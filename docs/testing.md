@@ -84,3 +84,19 @@ The WAL AddressSanitizer smoke run completed 1,554,154 executions in 16 seconds
 without a crash (configured budget: 15 seconds). Total Rust source size is now
 3990 physical lines. Table integration, checkpoint crashes, concurrent transaction
 sequencing, backup/restore and real power-loss testing remain open.
+
+## Managed transaction increment: executed checks
+
+On 2026-10-03, formatting, Clippy with warnings denied, build and all 93 tests
+passed. This block adds 996 physical Rust lines; the source total is 4986.
+Multi-table batches, strict abort-on-write-error, rollback/drop, no-op commits,
+page spill, checkpoint replacement, owner-only permissions and identity checks
+are exercised. Recovery rejects rewritten history and invalid relational events
+even when journal and page CRCs are valid. Read-only OS handles reproduce real
+write failures and verify poisoned writers and unknown commit outcomes.
+
+A 32-case persistent transaction property compares generated committed/rolled-back
+batches against an independent map and reopens after each batch. Checkpoint damage
+and leftover temporary files cannot alter committed rows. These tests do not yet
+cover killing the integrated table engine during commit/checkpoint or a full
+concurrency, backup/restore and power-loss matrix.

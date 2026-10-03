@@ -224,3 +224,44 @@ fn lock(file: &File) -> Result<()> {
         Err(TryLockError::Error(error)) => Err(error.into()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn failed_page_write_poisons_the_writer_without_a_commit() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("redo.wal");
+        let mut wal = Wal::create(&path, [7; 16]).unwrap();
+        let mut page = Page::new(1).unwrap();
+        page.insert(b"synthetic").unwrap();
+        // Use a real OS write failure, without altering persisted test bytes.
+        wal.file = File::open(&path).unwrap();
+        assert!(matches!(wal.begin(&[page.clone()]), Err(Error::Io(_))));
+        assert!(matches!(wal.begin(&[page]), Err(Error::Poisoned)));
+        drop(wal);
+        let (_, recovered) = Wal::open(path, None).unwrap();
+        assert!(recovered.committed.is_empty());
+    }
+
+    #[test]
+    fn failed_commit_write_reports_unknown_outcome_and_requires_reopen() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("redo.wal");
+        let mut wal = Wal::create(&path, [7; 16]).unwrap();
+        let mut page = Page::new(1).unwrap();
+        page.insert(b"synthetic").unwrap();
+        let pending = wal.begin(&[page.clone()]).unwrap();
+        pending.wal.file = File::open(&path).unwrap();
+        assert!(matches!(
+            pending.commit(),
+            Err(Error::OutcomeUnknown { transaction: 1, .. })
+        ));
+        assert!(matches!(wal.append(&[page]), Err(Error::Poisoned)));
+        drop(wal);
+        let (_, recovered) = Wal::open(path, None).unwrap();
+        assert!(recovered.committed.is_empty());
+        assert_eq!(recovered.discarded_bytes, FRAME_SIZE);
+    }
+}

@@ -1,6 +1,6 @@
 # ADR 0006: Retained authoritative journal for the first transaction engine
 
-Status: accepted; integration follows the independently tested WAL increment.
+Status: implemented; wider recovery and backup acceptance remains open.
 
 Use a new managed directory with a mandatory `redo.wal` and an optional
 `checkpoint.emily` page snapshot. Its first committed transaction contains the

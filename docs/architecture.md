@@ -11,8 +11,8 @@ flowchart TD
   Database --> Catalog[Catalog: schemas and typed records]
   Database --> Storage
   HTTP[Future Axum server] --> Query[Future parser / planner / executor]
-  Query --> Transactions[Future transaction coordinator]
-  Transactions --> WAL[Future WAL]
+  Query --> Transactions[Serialized transaction coordinator]
+  Transactions --> WAL[Synced full-page WAL]
   Transactions --> Database
   Catalog --> Index[Future B+ tree]
   Index --> Storage
@@ -23,7 +23,7 @@ flowchart TD
   Backup[Future backup service] --> Transactions
 ```
 
-Storage, catalog, database and CLI crates are implemented. Add other crates when they contain
+Storage, catalog, database, WAL, transactions and CLI crates are implemented. Add other crates when they contain
 working behavior, instead of declaring an implemented platform with empty modules.
 The future network layer will call the synchronous engine through bounded workers;
 blocking filesystem work must not run on Tokio reactor threads.
@@ -38,13 +38,16 @@ are physical, not public row IDs. See [typed record format](catalog-format.md).
 One open pager owns an exclusive advisory file lock. Writes require mutable
 access. Checksums detect accidental corruption; they do not authenticate data.
 
-## Transaction boundary (planned)
+## Transaction boundary
 
-Start with a single serialized writer and strict locking. A commit will append
-bounded redo records and a commit marker to WAL, sync WAL, and only then
-acknowledge success. No page becomes durable before its corresponding WAL.
-Recovery replays complete committed transactions; checkpoint completion must be
-durable before WAL truncation. MVCC is deferred until the baseline is proven.
+The managed-directory transaction API holds one exclusive journal owner. A
+transaction stages a bounded state copy and shared immutable pages. Commit writes
+changed full pages and a commit marker, syncs WAL, then publishes committed state.
+Rollback/drop discard staged memory; a failed write aborts the transaction.
+Recovery checks that redo never rewrites older history, then reconstructs tables.
+A checkpoint atomically materializes the current page cache; the complete WAL
+remains authoritative and is never truncated. Recovery ignores this cache.
+See [ADR 0006](adr/0006-retained-journal.md). MVCC and journal rotation are pending.
 
 ## Platform boundary (planned)
 

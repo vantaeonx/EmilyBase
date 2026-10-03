@@ -4,11 +4,13 @@ use emilybase_catalog::{Key, Row, Schema};
 
 use crate::{Error, Event, EventKind, MAX_EVENTS, MAX_ROWS, MAX_TABLES, Result};
 
+#[derive(Clone)]
 pub(crate) struct Table {
     pub schema: Schema,
     pub rows: BTreeMap<Key, Row>,
 }
 
+#[derive(Clone)]
 pub(crate) struct State {
     pub tables: BTreeMap<u64, Table>,
     pub next_id: u64,

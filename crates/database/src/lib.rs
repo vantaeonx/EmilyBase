@@ -1,10 +1,12 @@
 //! Relational file records built on the original EmilyBase page engine.
 mod engine;
 mod event;
+mod snapshot;
 mod state;
 
 pub use engine::Database;
 pub use event::{DATABASE_MARKER, Event, EventKind};
+pub use snapshot::Snapshot;
 
 pub const MAX_TABLES: usize = 128;
 pub const MAX_ROWS: usize = 10000;
