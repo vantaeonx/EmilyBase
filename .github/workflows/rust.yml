@@ -16,6 +16,8 @@ jobs:
         run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
       - name: Format
         run: cargo fmt --all -- --check
+      - name: Format fuzz targets
+        run: cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
       - name: Lint
         run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - name: Test

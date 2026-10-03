@@ -2,12 +2,14 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Parser, Subcommand};
+use emilybase_catalog::{Key, Row, Schema};
+use emilybase_database::{DATABASE_MARKER, Database};
 use emilybase_storage::{Error, FORMAT_VERSION, PAGE_SIZE, Page, Pager, SlotId};
 
 #[derive(Parser)]
 #[command(
     version,
-    about = "Experimental EmilyBase page storage; no transactions yet"
+    about = "Experimental EmilyBase database; no transactions yet"
 )]
 struct Arguments {
     #[command(subcommand)]
@@ -16,6 +18,46 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Atomically create an initialized table database.
+    DbInit { path: PathBuf },
+    /// Create a table from an explicit JSON schema.
+    TableCreate { path: PathBuf, schema: String },
+    /// Print validated table schemas as JSON.
+    TableList { path: PathBuf },
+    /// Drop a table and its current rows.
+    TableDrop { path: PathBuf, table: String },
+    /// Insert a JSON array of typed values, checking primary-key uniqueness.
+    RowInsert {
+        path: PathBuf,
+        table: String,
+        row: String,
+    },
+    /// Read by a typed JSON key; print null when absent.
+    RowGet {
+        path: PathBuf,
+        table: String,
+        key: String,
+    },
+    /// Replace a row while preserving its primary key.
+    RowUpdate {
+        path: PathBuf,
+        table: String,
+        key: String,
+        row: String,
+    },
+    /// Delete by a typed JSON primary key.
+    RowDelete {
+        path: PathBuf,
+        table: String,
+        key: String,
+    },
+    /// Print a bounded set of rows in primary-key order.
+    RowScan {
+        path: PathBuf,
+        table: String,
+        #[arg(long, default_value_t = 100)]
+        limit: usize,
+    },
     /// Create an empty database without overwriting an existing file.
     Init { path: PathBuf },
     /// Validate the header and print basic file information.
@@ -58,6 +100,53 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::DbInit { path } => {
+            Database::create(path)?;
+            println!("created experimental table database");
+        }
+        Command::TableCreate { path, schema } => {
+            let schema: Schema = parse_json(&schema)?;
+            let mut db = Database::open(path)?;
+            println!("table_id={}", db.create_table(schema)?);
+        }
+        Command::TableList { path } => {
+            let db = Database::open(path)?;
+            println!("{}", serde_json::to_string(&db.schemas()?)?);
+        }
+        Command::TableDrop { path, table } => {
+            Database::open(path)?.drop_table(&table)?;
+            println!("dropped");
+        }
+        Command::RowInsert { path, table, row } => {
+            let row: Row = parse_json(&row)?;
+            let key = Database::open(path)?.insert(&table, row)?;
+            println!("{}", serde_json::to_string(&key)?);
+        }
+        Command::RowGet { path, table, key } => {
+            let key: Key = parse_json(&key)?;
+            let db = Database::open(path)?;
+            println!("{}", serde_json::to_string(&db.get(&table, &key)?)?);
+        }
+        Command::RowUpdate {
+            path,
+            table,
+            key,
+            row,
+        } => {
+            let key: Key = parse_json(&key)?;
+            let row: Row = parse_json(&row)?;
+            Database::open(path)?.update(&table, &key, row)?;
+            println!("updated");
+        }
+        Command::RowDelete { path, table, key } => {
+            let key: Key = parse_json(&key)?;
+            Database::open(path)?.delete(&table, &key)?;
+            println!("deleted");
+        }
+        Command::RowScan { path, table, limit } => {
+            let db = Database::open(path)?;
+            println!("{}", serde_json::to_string(&db.scan(&table, limit)?)?);
+        }
         Command::Init { path } => {
             Pager::create(path)?;
             println!("created experimental database");
@@ -76,6 +165,7 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         }
         Command::Append { path, text } => {
             let mut db = Pager::open(path)?;
+            ensure_raw(&mut db)?;
             let mut page = if db.page_count() == 0 {
                 Page::new(1)?
             } else {
@@ -104,6 +194,7 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
             text,
         } => {
             let mut db = Pager::open(path)?;
+            ensure_raw(&mut db)?;
             let mut page = db.read_page(page)?;
             page.update(slot, text.as_bytes())?;
             db.write_page(&page)?;
@@ -111,11 +202,37 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         }
         Command::Delete { path, page, slot } => {
             let mut db = Pager::open(path)?;
+            ensure_raw(&mut db)?;
             let mut page = db.read_page(page)?;
             page.delete(slot)?;
             db.write_page(&page)?;
             println!("deleted");
         }
+    }
+    Ok(())
+}
+
+fn parse_json<T: serde::de::DeserializeOwned>(text: &str) -> Result<T, Box<dyn std::error::Error>> {
+    if text.len() > 16384 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "JSON input exceeds 16384 bytes",
+        )
+        .into());
+    }
+    serde_json::from_str(text).map_err(|_| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "invalid typed JSON input").into()
+    })
+}
+
+fn ensure_raw(pager: &mut Pager) -> Result<(), Box<dyn std::error::Error>> {
+    if pager.page_count() > 0 && pager.read_page(1)?.get(0).ok() == Some(DATABASE_MARKER.as_slice())
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "raw mutation is disabled for table databases; use table/row commands",
+        )
+        .into());
     }
     Ok(())
 }

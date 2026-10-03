@@ -155,7 +155,11 @@ name = "emilybase-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "emilybase-catalog",
+ "emilybase-database",
  "emilybase-storage",
+ "serde",
+ "serde_json",
  "tempfile",
 ]
 

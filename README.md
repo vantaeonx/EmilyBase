@@ -6,20 +6,46 @@ is used as internal storage or a required runtime dependency.
 
 **Early development. Not production-ready. Do not store real user data.**
 
-The first increment includes an original synchronous page engine and a working
-CLI. It creates a versioned database file, stores compactable records in 4096-byte
-slotted pages, validates CRC32 and page structure, and locks files exclusively.
-It supports physical record create/read/update/delete and detects corrupt or
-truncated files. Tables and transactions are not implemented.
-The next layer now includes validated schemas, boolean/integer/float/text/bytes
-values and original bounded binary codecs. Table persistence is still pending;
-these codecs do not turn page writes into transactions.
+The current synchronous engine persists named tables, validated schemas and typed
+rows in an original versioned page file. It enforces primary-key uniqueness,
+nullability and types; supports create/read/update/delete through a working CLI;
+and reconstructs tables on reopen. Values include boolean, signed i64, finite
+f64, UTF-8 text, bytes and nullable columns. Pages are 4096-byte slotted pages with
+CRC32 and strict structure validation. Database files are locked exclusively.
 
 **Synced page writes are not crash-safe transactions.** There is no WAL or
-automatic repair. This is an initial part of stage 1, not a completed database
-or backend platform. Follow [the roadmap](docs/roadmap.md) for acceptance status.
+automatic repair. The minimal stage-1 core is implemented and tested; recovery,
+concurrent transactions and the backend platform remain future work. Follow
+[the roadmap](docs/roadmap.md) for acceptance status.
 
-## Try the CLI
+## Try typed tables
+
+Use synthetic data and a disposable file:
+
+```sh
+cargo run -p emilybase-cli -- db-init /tmp/tables.emily
+cargo run -p emilybase-cli -- table-create /tmp/tables.emily '{"name":"items","columns":[{"name":"id","data_type":"integer","nullable":false},{"name":"title","data_type":"text","nullable":true}],"primary_key":0}'
+cargo run -p emilybase-cli -- row-insert /tmp/tables.emily items '[{"type":"integer","value":7},{"type":"text","value":"synthetic example"}]'
+cargo run -p emilybase-cli -- row-get /tmp/tables.emily items '{"type":"integer","value":7}'
+cargo run -p emilybase-cli -- row-scan /tmp/tables.emily items --limit 10
+cargo run -p emilybase-cli -- row-update /tmp/tables.emily items '{"type":"integer","value":7}' '[{"type":"integer","value":7},{"type":"null"}]'
+cargo run -p emilybase-cli -- row-delete /tmp/tables.emily items '{"type":"integer","value":7}'
+cargo run -p emilybase-cli -- table-list /tmp/tables.emily
+cargo run -p emilybase-cli -- table-drop /tmp/tables.emily items
+```
+
+JSON uses explicitly tagged values. Unknown fields and inputs over 16384 bytes
+are rejected without printing the input. An absent row prints `null`; updating or
+deleting an absent row is an error. Updates retain the primary key. Keys are
+integer or text; table/column names are case-sensitive ASCII identifiers.
+
+Current bounds: 128 live tables, 10000 live rows across all tables, 100000 total
+history records including the root marker, 64 columns, 3072 bytes per text/byte
+value and 4000 encoded bytes per schema/row. Primary-key maps live in memory and
+are rebuilt from page events; they are not the planned on-disk B+ tree. There is
+no compaction of table history. A last-page cache is bounded to one page.
+
+## Raw page diagnostics
 
 Use a disposable file with synthetic data:
 
@@ -36,7 +62,9 @@ cargo run -p emilybase-cli -- delete /tmp/demo.emily 1 0
 addresses; deleted slots may be reused. A record is bounded to 4058 bytes.
 The CLI stores UTF-8 text; the storage library supports opaque bytes. The initial
 filesystem target is Linux; hard links, directory sync and advisory locks are
-required. The CLI accepts trusted local paths.
+required. The CLI accepts trusted local paths. `init` creates a raw-page file;
+`db-init` creates a table database. Raw append/replace/delete commands refuse to
+mutate table databases. No silent conversion between the formats is performed.
 
 ## Development
 

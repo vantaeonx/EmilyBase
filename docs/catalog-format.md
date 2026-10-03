@@ -36,10 +36,19 @@ ID, followed by the payload. Envelope plus payload is at most 4058 bytes.
 | 4 | replace row | row |
 | 5 | delete row | one-value row containing an integer/text key |
 
-All non-root events require a nonzero table ID. The planned table engine will
-validate event ordering, table existence and uniqueness when replaying the file.
+All non-root events require a nonzero table ID. The table engine validates event
+ordering, table existence and uniqueness when replaying the file. Root must be
+the first record (page 1, slot 0) and cannot recur. History slots cannot be deleted
+or empty. New table IDs are sequential and are never reused after drop. Table
+names may be reused with a new ID. Insert requires a new key; replace/delete
+require an existing key. Every row is checked against its current schema.
 This is a table history in data pages, **not WAL**: rewriting its last page can
 still tear on a crash. No transaction or recovery guarantee is introduced.
+
+The live state is bounded to 128 tables and 10000 rows globally. History is bounded
+to 100000 events including root. Scans are in primary-key order with an explicit
+limit of at most 10000 rows. A failed validation writes no event. A storage write
+failure poisons the handle; close it and inspect the file rather than retrying.
 
 Golden byte fixtures are synthetic Rust test literals. Any incompatible codec
 change must increment its version and provide an explicit converter that keeps
