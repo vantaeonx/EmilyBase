@@ -1,10 +1,9 @@
 # Experimental B+ tree images, version 1
 
-This is a standalone page-image codec, not the current database-file layout or a
-durable table index. No file header, root catalog or managed-WAL integration exists
-yet. `BPlusTree::page_images` exports dense pages ordered by ID; `from_pages` also
-requires an explicit root ID. Persisting images without transaction/root metadata
-is not a supported crash-safe database operation.
+This standalone codec is separate from the current database-file layout. Dense
+`page_images` exports pages ordered by ID; `from_pages` also requires a root ID.
+Opt-in stable arenas and a canonical EBIF snapshot envelope now exist. Filesystem
+publication, table root catalog and managed-WAL integration remain pending.
 
 All integers use little-endian encoding. Every image is exactly 4096 bytes.
 
@@ -37,7 +36,8 @@ The 14-key cap fits maximum-size keys and leaf pointers in one page.
 
 ## Whole-tree rules
 
-At most 1024 dense pages and 10000 entries; depth at most eight. Except for the
+At most 1024 pages and 10000 entries; depth at most eight. Dense imports require
+1..N IDs; stable imports allow holes within 1..1024. Except for the
 root, every node has at least seven keys. A leaf root can be empty; a branch root
 requires a key and at least two children. All pages must be reachable exactly
 once. Leaves have equal depth, disjoint ordered key ranges and successor links
@@ -61,6 +61,46 @@ child links and leaf successors. Opaque external row page/slot pointers never
 change. Export all images with the current root; previously remembered index IDs
 are not stable handles across deletion. This bounded in-memory arena is not a
 durable page allocator or an incremental WAL write set.
+
+That renumbering applies to dense mode. `new_stable`, `from_sorted_stable` and
+`from_stable_pages` explicitly retain surviving IDs; allocation chooses the lowest
+free ID. Retired IDs can later be reused. Sparse imports require increasing encoded
+IDs and all whole-tree rules. Empty/root-collapse operations retain the selected
+leaf/child ID. Dense APIs and frozen EBIX-1 bytes remain unchanged.
+
+## Canonical EBIF snapshot envelope, version 1
+
+`IndexSnapshot` contains a nonzero local revision and stable tree. Its byte codec
+has one 4096-byte header followed by sparse EBIX-1 images in increasing ID order.
+Exact size is `(page_count + 1) * 4096`, at most 4198400 bytes. Decode checks bounds
+before allocating and verifies complete tree/count agreement.
+
+| Offset | Bytes | Meaning |
+| --- | ---: | --- |
+| 0 | 8 | `EBIF` followed by four zero bytes |
+| 8 | 2 | snapshot version 1 |
+| 10 | 2 | reserved zero |
+| 12 | 4 | page size 4096 |
+| 16 | 8 | nonzero local revision |
+| 24 | 8 | root page ID |
+| 32 | 4 | page count, 1..1024 |
+| 36 | 4 | reserved zero |
+| 40 | 8 | entry count, 0..10000 |
+| 48 | 12 | reserved zero |
+| 60 | 4 | header CRC32 over 0..60 and 64..4096 |
+| 64 | 4032 | reserved zero |
+
+The revision is independent of table/WAL transaction IDs. The envelope does not
+include project/table identity or authenticate row targets. No automatic converter,
+file publisher or acknowledged snapshot durability is implemented yet.
+
+`SnapshotDelta` is a validated in-memory write set without a wire/WAL codec yet.
+It binds exact canonical base bytes using SHA-256 plus base/next revisions,
+contains the final root/entry count, sorted changed/new images and sorted retired
+IDs. Application rejects stale/different bases, repeated/reordered/overlapping
+IDs, unchanged upserts, invalid topology/counts and revision overflow. It returns
+a new snapshot after full validation; an empty delta can increment revision.
+Retired handles need a future lifetime protocol. See [ADR 0016](adr/0016-stable-index-snapshots.md).
 
 `from_sorted` accepts at most 10000 strictly ascending, unique, validated entries.
 It balances leaves and then child groups bottom-up; non-root occupancy remains

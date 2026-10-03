@@ -31,6 +31,9 @@ maps still use the earlier in-memory representation. WAL integration and durable
 index files remain future work. Deletion may renumber index page IDs while preserving
 external row pointers. See [index format and limits](docs/index-format.md) and
 [the integration boundary](docs/adr/0010-index-maintenance.md).
+An opt-in stable-ID arena preserves surviving page addresses and reuses holes.
+Canonical snapshots and exact-base-bound atomic write sets validate root/counts
+and complete topology. Their file publisher and table/WAL integration remain pending.
 
 The original `query` crate implements a bounded SQL lexer, parser, typed AST,
 schema-resolved plans and execution through managed WAL transactions: table DDL,

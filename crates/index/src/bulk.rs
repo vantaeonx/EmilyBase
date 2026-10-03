@@ -36,6 +36,7 @@ impl BPlusTree {
             pages: BTreeMap::new(),
             root: 1,
             len: entries.len(),
+            stable_ids: false,
         };
         let mut level = Vec::with_capacity(groups.len());
         for (position, range) in groups.iter().enumerate() {
@@ -66,6 +67,12 @@ impl BPlusTree {
         if tree.validate()? != entries.len() {
             return Err(Error::Layout("bulk entry count"));
         }
+        Ok(tree)
+    }
+    /// Balanced bulk build with stable IDs for later mutation/snapshot publication.
+    pub fn from_sorted_stable(entries: &[(Key, RecordPointer)]) -> Result<Self> {
+        let mut tree = Self::from_sorted(entries)?;
+        tree.stable_ids = true;
         Ok(tree)
     }
 }

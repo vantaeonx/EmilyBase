@@ -10,11 +10,11 @@ repository.workspace = true
 emilybase-catalog = { path = "../catalog" }
 emilybase-storage = { path = "../storage" }
 crc32fast = "1.5"
+sha2 = "0.10"
 thiserror = "2"
 
 [dev-dependencies]
 proptest = "1"
-sha2 = "0.10"
 
 [lints]
 workspace = true

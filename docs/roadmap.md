@@ -66,6 +66,11 @@ renumber index arena IDs; external row pointers remain unchanged. See
 [ADR 0009](adr/0009-bounded-index-foundation.md) and
 [ADR 0010](adr/0010-index-maintenance.md).
 
+An explicit stable arena now retains survivor IDs, reuses holes and exports
+canonical root/revision/count snapshots. Bound atomic in-memory deltas validate
+full resulting topology. Both modes pass exact compatibility, capacity and model
+checks. Standalone file publication and table/WAL participation remain pending.
+
 ## Implemented first increment
 
 - Original versioned header and 4096-byte slotted pages with CRC32.

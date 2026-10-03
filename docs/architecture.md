@@ -77,6 +77,12 @@ transactional split publication. No database-file format changes occur in this
 increment. See [ADR 0009](adr/0009-bounded-index-foundation.md) and
 [ADR 0010](adr/0010-index-maintenance.md).
 
+The opt-in stable arena now retains surviving IDs and reuses holes. Canonical
+EBIF snapshots bind root/revision/counts, while in-memory deltas bind their exact
+base and validate the whole resulting tree. Dense EBIX-1 remains compatible.
+Standalone file publication and managed table/WAL participation stay pending.
+See [ADR 0016](adr/0016-stable-index-snapshots.md).
+
 ## Backup boundary
 
 The archive contains a bounded verified committed-WAL prefix, not filesystem

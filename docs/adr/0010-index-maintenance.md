@@ -56,3 +56,7 @@ Frozen digests from published d75751b preserve original version-1 images. Bounde
 ASan fuzzing compares operation sequences with an independent model and exercises
 raw/checksum-repaired images. These checks do not establish durable index recovery,
 concurrent readers, power-loss behavior or production readiness.
+
+Follow-up [ADR 0016](0016-stable-index-snapshots.md) implements opt-in stable IDs,
+canonical envelopes and exact-base-bound in-memory write sets. Dense callers keep
+this original contract; table/WAL publication remains pending.

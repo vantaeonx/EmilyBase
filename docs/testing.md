@@ -520,3 +520,31 @@ controls container restart. The prior native seven-case suite remains recorded
 above. All 270 Rust main tests/nine helpers are unchanged by this packaging step.
 CI now runs the real container probe. Arbitrary version upgrades, full platform
 backups, remote TLS, broad load, physical power loss and production audit stay open.
+
+## Stable index snapshots and write sets: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 287 main
+tests passed; nine subprocess helpers remain outside that count. The block adds
+988 physical Rust lines and removes/replaces three, net 985. Rust total is 19031,
+or 18046 excluding blanks/comment-only lines. SDK remains 1189 and Python probe
+511; combined source is 20731. Config/docs/dependencies/generated output are excluded.
+
+Seventeen new tests verify stable survivor IDs, sparse root collapse/empty leaf,
+actual 1024-page arena exhaustion and hole reuse, largest Unicode keys, exact
+canonical snapshots and old dense/frozen-image compatibility. Every cut and byte
+mutation of an 8192-byte snapshot fails. Repaired header/page CRCs cannot hide
+wrong sizes, counts, reserved bytes, roots, separators or missing targets.
+
+Exact-base fingerprint/revision-bound deltas replay point replacement, splits,
+merges, retirement and root changes. Stale/different bases, repeated/overlapping
+changes, oversized sets and forged final topology refuse without changing the
+base. Two 48-case properties exercise mixed operations against an independent map
+and bounded arbitrary snapshot input. A test-case correction changed the page-size
+mutation to actually modify its original zero low byte; no engine defect was masked.
+
+The new ASan `index_snapshot` smoke completed 324086 executions in 16 seconds
+(configured budget 15 seconds), without a crash. Three canonical synthetic seeds
+reach empty, branch and sparse multilevel trees; the target repairs nested CRCs
+and checks whole snapshot/delta replay. This increment is a codec/arena API with
+in-memory atomic write sets. File publication, row ownership/key limits, managed
+WAL participation, power-loss and production gates remain pending.

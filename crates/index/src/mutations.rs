@@ -26,7 +26,7 @@ impl BPlusTree {
     }
 
     /// Delete a key with sibling rotations/merges. Any failure preserves all old images.
-    /// Successful deletion may renumber index arena IDs; external row pointers never change.
+    /// Dense mode renumbers arena IDs; stable mode preserves every surviving page ID.
     pub fn remove(&mut self, key: &Key) -> Result<RecordPointer> {
         validate_key(key)?;
         let old = self.get(key)?.ok_or(Error::NoKey)?;
@@ -40,7 +40,9 @@ impl BPlusTree {
             staged.root = children[0];
         }
         staged.len -= 1;
-        staged.densify()?;
+        if !staged.stable_ids {
+            staged.densify()?;
+        }
         if staged.validate()? != staged.len {
             return Err(Error::Layout("delete entry count"));
         }

@@ -95,3 +95,10 @@ path = "fuzz_targets/project_metadata.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "index_snapshot"
+path = "fuzz_targets/index_snapshot.rs"
+test = false
+doc = false
+bench = false

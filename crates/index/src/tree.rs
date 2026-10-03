@@ -11,6 +11,7 @@ pub struct BPlusTree {
     pub(crate) pages: BTreeMap<u64, IndexPage>,
     pub(crate) root: u64,
     pub(crate) len: usize,
+    pub(crate) stable_ids: bool,
 }
 
 impl Default for BPlusTree {
@@ -32,7 +33,17 @@ impl BPlusTree {
             pages: BTreeMap::from([(1, root)]),
             root: 1,
             len: 0,
+            stable_ids: false,
         }
+    }
+    /// Retain surviving arena IDs across deletion; freed IDs can be reused by later inserts.
+    pub fn new_stable() -> Self {
+        let mut tree = Self::new();
+        tree.stable_ids = true;
+        tree
+    }
+    pub fn has_stable_ids(&self) -> bool {
+        self.stable_ids
     }
     pub fn len(&self) -> usize {
         self.len
@@ -54,7 +65,13 @@ impl BPlusTree {
         if self.pages.len() == MAX_INDEX_PAGES {
             return Err(Error::Limit);
         }
-        let id = self.pages.len() as u64 + 1;
+        let id = if self.stable_ids {
+            (1..=MAX_INDEX_PAGES as u64)
+                .find(|id| !self.pages.contains_key(id))
+                .ok_or(Error::Limit)?
+        } else {
+            self.pages.len() as u64 + 1
+        };
         self.pages.insert(id, IndexPage { id, keys, body });
         Ok(id)
     }
@@ -240,6 +257,31 @@ impl BPlusTree {
             pages,
             root,
             len: 0,
+            stable_ids: false,
+        };
+        tree.len = tree.validate()?;
+        Ok(tree)
+    }
+    /// Import canonical sparse images whose embedded IDs are bounded and strictly increasing.
+    pub fn from_stable_pages(root: u64, images: &[[u8; PAGE_SIZE]]) -> Result<Self> {
+        if images.is_empty() || images.len() > MAX_INDEX_PAGES {
+            return Err(Error::Limit);
+        }
+        let mut pages = BTreeMap::new();
+        let mut previous = 0;
+        for image in images {
+            let id = u64::from_le_bytes(image[8..16].try_into().map_err(|_| Error::PageId)?);
+            if id <= previous || id > MAX_INDEX_PAGES as u64 {
+                return Err(Error::PageId);
+            }
+            pages.insert(id, IndexPage::decode(image, id)?);
+            previous = id;
+        }
+        let mut tree = Self {
+            pages,
+            root,
+            len: 0,
+            stable_ids: true,
         };
         tree.len = tree.validate()?;
         Ok(tree)
