@@ -8,9 +8,9 @@ use std::collections::{BTreeMap, BTreeSet};
 /// Bounded original tree with linked leaves. Mutations stage a copy; persistence is external.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BPlusTree {
-    pages: BTreeMap<u64, IndexPage>,
-    root: u64,
-    len: usize,
+    pub(crate) pages: BTreeMap<u64, IndexPage>,
+    pub(crate) root: u64,
+    pub(crate) len: usize,
 }
 
 impl Default for BPlusTree {
@@ -47,10 +47,10 @@ impl BPlusTree {
         self.pages.len()
     }
 
-    fn page(&self, id: u64) -> Result<&IndexPage> {
+    pub(crate) fn page(&self, id: u64) -> Result<&IndexPage> {
         self.pages.get(&id).ok_or(Error::Layout("missing child"))
     }
-    fn allocate(&mut self, keys: Vec<Key>, body: Body) -> Result<u64> {
+    pub(crate) fn allocate(&mut self, keys: Vec<Key>, body: Body) -> Result<u64> {
         if self.pages.len() == MAX_INDEX_PAGES {
             return Err(Error::Limit);
         }
@@ -58,7 +58,7 @@ impl BPlusTree {
         self.pages.insert(id, IndexPage { id, keys, body });
         Ok(id)
     }
-    fn find_leaf(&self, key: Option<&Key>) -> Result<u64> {
+    pub(crate) fn find_leaf(&self, key: Option<&Key>) -> Result<u64> {
         let mut id = self.root;
         for _ in 0..MAX_TREE_HEIGHT {
             let page = self.page(id)?;

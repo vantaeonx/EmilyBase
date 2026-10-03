@@ -1,4 +1,6 @@
 //! Original bounded B+ tree, with versioned page images. Not yet a table/WAL index.
+mod bulk;
+mod mutations;
 mod page;
 mod tree;
 
@@ -33,6 +35,8 @@ pub enum Error {
     KeySize,
     #[error("duplicate index key")]
     Duplicate,
+    #[error("index key does not exist")]
+    NoKey,
     #[error("index capacity exceeded")]
     Limit,
 }

@@ -55,19 +55,23 @@ MVCC, history vacuuming and background rotation are pending.
 
 ## Index boundary
 
-The `index` crate implements original B+ tree routing, leaf/internal splits and
-linked-leaf scans over a bounded arena of page IDs. The standard map addresses
+The `index` crate implements original B+ tree routing, leaf/internal splits,
+replacement, deletion with rotations/merges/root collapse, sorted bulk loading
+and linked-leaf scans over a bounded arena of page IDs. The standard map addresses
 pages by ID; it does not perform key lookup or replace the tree's routing logic.
-Mutations stage a tree copy so duplicate, invalid-key and capacity failures keep
-the exact previous images. This correctness-first foundation is not a throughput
-claim. Fixed-size images have an independent `EBIX` codec and whole-tree validation.
+Insertion/deletion stage a tree copy; replacement validates a cloned leaf before
+publication. Errors keep the exact previous images. Deletion renumbers remaining
+arena pages densely without changing opaque row pointers. This bounded foundation
+is not a throughput claim or stable durable allocator. Fixed-size images have an
+independent `EBIX` codec and whole-tree validation.
 
 The index currently has no file publisher, root catalog entry or WAL participation;
 the relational engine still uses its existing primary-key map. Its 256-byte text
 key bound is separate from the catalog's 3072-byte text limit. Future integration
 must explicitly reconcile those limits, page allocation, pointer lifetime and
 transactional split publication. No database-file format changes occur in this
-increment. See [ADR 0009](adr/0009-bounded-index-foundation.md).
+increment. See [ADR 0009](adr/0009-bounded-index-foundation.md) and
+[ADR 0010](adr/0010-index-maintenance.md).
 
 ## Backup boundary
 

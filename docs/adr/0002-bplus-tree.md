@@ -10,4 +10,6 @@ not serve ordered range scans. Do not implement tree mutation before recovery.
 The first bounded page codec/tree implementation follows the managed recovery
 foundation. It does not yet publish index pages through WAL or replace table key
 maps. Its interim bounds and integration gates are documented in
-[ADR 0009](0009-bounded-index-foundation.md).
+[ADR 0009](0009-bounded-index-foundation.md). The unchanged-codec maintenance
+extension and remaining durable allocation requirements follow
+[ADR 0010](0010-index-maintenance.md).

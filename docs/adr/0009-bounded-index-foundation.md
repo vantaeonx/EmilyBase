@@ -38,10 +38,12 @@ to a live table row. Table integration must validate their ownership and lifetim
 ## Consequences and remaining acceptance
 
 The library performs insertion, exact lookup, ranges and page-image export/import.
+Its maintenance extension adds replacement, deletion/merges and sorted bulk
+loading under the unchanged codec; see [ADR 0010](0010-index-maintenance.md).
 It is not a durable table index. It does not change existing database/WAL formats,
 silently index existing keys or reject existing table text values over 256 bytes.
-Deletion, replacement, merges, durable root metadata and concurrent readers remain
-pending. A catalog/page-kind compatibility decision and atomic WAL replay of
+Durable root metadata and concurrent readers remain pending.
+A catalog/page-kind compatibility decision and atomic WAL replay of
 splits/root changes are required before enabling real table index mutations.
 
 Tests compare generated operations against an independent sorted map, exercise

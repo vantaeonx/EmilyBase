@@ -24,11 +24,14 @@ the committed WAL; restore publishes a fully replayed new directory. Process-kil
 and competing-publication tests execute. Broader power-loss and upgrade checks
 remain open.
 
-The original B+ tree foundation supports unique insertion, leaf/internal splits,
-point lookup, ordered ranges and verified fixed-size page-image round trips.
-It is a separate bounded library; table primary-key maps still use the earlier
-in-memory representation. WAL integration, deletion and durable index files remain
-future work. See [index format and limits](docs/index-format.md).
+The original B+ tree supports unique insertion, leaf/internal splits, pointer
+replacement, deletion with sibling rotations/merges and root collapse, sorted
+bulk loading, point lookup and ordered ranges. Fixed-size page-image round trips
+validate the complete topology. It is a separate bounded library; table primary-key
+maps still use the earlier in-memory representation. WAL integration and durable
+index files remain future work. Deletion may renumber index page IDs while preserving
+external row pointers. See [index format and limits](docs/index-format.md) and
+[the integration boundary](docs/adr/0010-index-maintenance.md).
 
 ## Try typed tables
 

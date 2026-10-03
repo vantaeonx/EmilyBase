@@ -258,4 +258,39 @@ pages and complete bounded trees, seeded with three synthetic valid trees.
 It completed 328695 executions in 16 seconds with a configured 15-second budget
 and no crash. This is a smoke check, not a sustained fuzz campaign. Index mutation
 has no table/WAL publisher yet; existing crash tests do not establish durable
-index guarantees. SQL, deletion/merges and integration acceptance remain pending.
+index guarantees. At that increment, SQL, deletion/merges and integration
+acceptance remained pending; maintenance follows below.
+
+## Index maintenance and version-1 compatibility: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 204 main
+tests passed; six subprocess helpers remain outside the main count. This block
+adds 991 physical Rust lines and removes/replaces six, a net increase of 985.
+The total is 11961 physical Rust lines, including tests and fuzz targets.
+No database/WAL codec or table primary-key behavior changes in this increment.
+
+Fifteen new tests cover bulk boundary sizes through 10000 keys, 256-byte UTF-8
+keys, rejected inputs, pointer-only replacement, leaf and internal rotations in
+both directions, cascading merges and root collapse. Complete deletion in three
+orders over 1200 keys ends at the canonical empty tree and permits new insertion.
+Actual arena exhaustion followed by deletion/reopen permits fresh splits; a full
+10000-entry bulk tree permits replacement and recovers entry capacity after deletion.
+Two 48-case properties check mixed CRUD/ranges/reopen and bulk versus incremental
+construction against an independent sorted map.
+
+Frozen SHA-256 digests obtained by executing the published d75751b implementation
+cover root metadata and exact pages of empty, 256-key multi-level and mixed
+Unicode trees. The current implementation reproduces those bytes and can import,
+replace and delete their entries. This is synthetic byte compatibility, not a
+database-file upgrade policy or stable durable index format declaration.
+
+AddressSanitizer smoke runs completed 433 `index_operations` executions and
+374641 `index_pages` executions, each in 16 seconds (configured budget: 15 seconds),
+without a crash. Operation seeds cover full ascending/descending/interleaved
+deletion, replacement/reinsertion and text keys; an independent model checks each
+operation and periodic image import. The page target covers raw and repaired-CRC
+inputs. The short operation run has limited throughput and is not a long campaign.
+
+Deletion may renumber index arena IDs; external row pointers are unchanged.
+Table/WAL integration, durable root publication, concurrent readers and power-loss
+acceptance remain open. See [ADR 0010](adr/0010-index-maintenance.md).

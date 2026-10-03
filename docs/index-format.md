@@ -49,6 +49,27 @@ create a new root. A rejected operation changes no prior page image. Scans inclu
 the start key, exclude the end key and return at most the requested bounded limit.
 Page capacity may be reached before the entry cap for unfavorable insertion order.
 
+`replace` changes only an existing key's row pointer, preserving the root and
+index page IDs. Invalid keys/pointers or missing keys leave all images unchanged.
+`remove` stages a bounded copy, rotates entries/child links from a sufficiently
+populated sibling or merges adjacent nodes, recomputes exact separators, and
+collapses a one-child root. It then validates the complete tree before publication.
+Missing keys and failed operations preserve the original tree exactly.
+
+Successful deletion remaps remaining arena IDs to dense 1..N, including the root,
+child links and leaf successors. Opaque external row page/slot pointers never
+change. Export all images with the current root; previously remembered index IDs
+are not stable handles across deletion. This bounded in-memory arena is not a
+durable page allocator or an incremental WAL write set.
+
+`from_sorted` accepts at most 10000 strictly ascending, unique, validated entries.
+It balances leaves and then child groups bottom-up; non-root occupancy remains
+at least seven keys even at group boundaries. A 10000-entry build uses 768 pages,
+including with 256-byte text keys. It does not alter the borrowed source. These
+operations keep the version-1 codec unchanged. Frozen digests obtained from the
+published d75751b implementation cover empty, multi-level and Unicode images.
+
 Version changes fail closed; there is no automatic converter. CRC detects
 accidental damage and does not authenticate an index. Record targets, schema key
 types, project ownership and pointer lifetime require future table-layer checks.
+See [ADR 0010](adr/0010-index-maintenance.md) for costs and integration requirements.

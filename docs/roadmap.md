@@ -15,8 +15,8 @@ open; a table engine is not a completed transaction engine or backend platform.
 
 ## Not supported
 
-Durable table indexes and index deletion, background journal rotation and history vacuuming,
-SQL, joins, indexes, project isolation, server, authentication, row policies,
+Durable table indexes, background journal rotation and history vacuuming,
+SQL, joins, project isolation, server, authentication, row policies,
 file uploads, realtime, migrations, incremental/encrypted backups, SDKs, web dashboard and deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
@@ -25,17 +25,21 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
-4. Implement index deletion/merges and the original query layer with documented limits.
+4. Implement the original query layer with documented limits.
 
 ## Index foundation
 
 The original `index` crate has versioned 4096-byte leaf/internal images, checksums,
-numeric/UTF-8 keys, unique insertion, recursive splits, point lookup and linked-leaf
-range scans. Imports validate complete topology, exact separators, occupancy,
+numeric/UTF-8 keys, unique insertion, recursive splits, pointer replacement,
+deletion with rotations/merges/root collapse, sorted bulk loading, point lookup
+and linked-leaf range scans. Imports validate complete topology, exact separators, occupancy,
 balanced leaf depth, reachability and successor links. Errors preserve staged tree
 state. Boundary, capacity, independent-model property and parser fuzz checks execute.
 This library does not yet persist through the managed transaction engine. Existing
-table files and their primary-key maps are unchanged. See [ADR 0009](adr/0009-bounded-index-foundation.md).
+table files and their primary-key maps are unchanged. Successful deletion can
+renumber index arena IDs; external row pointers remain unchanged. See
+[ADR 0009](adr/0009-bounded-index-foundation.md) and
+[ADR 0010](adr/0010-index-maintenance.md).
 
 ## Implemented first increment
 

@@ -64,3 +64,10 @@ path = "fuzz_targets/index_pages.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "index_operations"
+path = "fuzz_targets/index_operations.rs"
+test = false
+doc = false
+bench = false

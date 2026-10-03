@@ -240,6 +240,7 @@ dependencies = [
  "emilybase-catalog",
  "emilybase-storage",
  "proptest",
+ "sha2",
  "thiserror",
 ]
 
