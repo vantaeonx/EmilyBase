@@ -455,8 +455,33 @@ class Probe:
         )
         require(self.status(first) == before, "healthy sibling remains available")
 
+    def check_method_labels(self):
+        phase("Send private HTTP extension methods to accepted and denied requests")
+        private_method = "SYNTHETIC_PRIVATE_METHOD_" + secrets.token_hex(16)
+        self.private.append(private_method)
+        for method, key, expected in [
+            (private_method, self.master, 405),
+            (self.master, self.master, 405),
+            (private_method, "invalid", 401),
+        ]:
+            request = urllib.request.Request(
+                self.url + "/v1/projects",
+                headers={"authorization": "Bearer " + key},
+                method=method,
+            )
+            try:
+                response = self.opener.open(request, timeout=15)
+            except urllib.error.HTTPError as response_error:
+                response = response_error
+            with response:
+                require(response.status == expected, "extension method response")
+                require(
+                    len(response.read(MAX_RESPONSE + 1)) <= MAX_RESPONSE,
+                    "extension method response bound",
+                )
+
     def check_logs(self):
-        phase("Check credential, project identifier and SQL redaction")
+        phase("Check credential, project identifier, SQL and method redaction")
         logs = self.compose("logs", "--no-color", "server").stdout.decode(
             errors="replace"
         )
@@ -465,6 +490,7 @@ class Probe:
             "container logs disclose private request content",
         )
         require("experimental_server_listening" in logs, "structured startup log")
+        require(logs.count('"method":"OTHER"') >= 3, "static method labels")
 
     def cleanup(self):
         # The project name is random and created solely by this probe. Its volume
@@ -495,6 +521,7 @@ def main():
         probe.backup_recreate(first, second)
         probe.killed_writer(first, second)
         probe.journal_damage(first, second)
+        probe.check_method_labels()
         probe.check_logs()
         phase("All real-container checks passed")
     except (CheckFailed, OSError, ValueError, KeyError, KeyboardInterrupt) as error:

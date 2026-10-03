@@ -15,7 +15,7 @@ can ignore them. Hardware power-loss guarantees are not assumed from unit tests.
 | Malicious local file replacement | private file mode on Unix | trusted directory ownership |
 | Project escape / path traversal | server-issued fixed IDs, private directories, scoped capabilities, negative HTTP/path tests | malicious local-owner races, broader audits |
 | Injection / privilege escalation | original bounded parser, separate parameters, separate administrator/project scopes | user roles and row policies |
-| Secret disclosure | random scoped keys, SHA-256 digests, fixed-size timing-safe checks, verified log redaction | passwords/sessions, secret encryption and wider audit |
+| Secret disclosure | random scoped keys, SHA-256 digests, fixed-size timing-safe checks, verified log redaction with static method labels | passwords/sessions, secret encryption and wider audit |
 | Unrecoverable backup | bounded archive, SHA-256/CRC, strict replay, verified staged restore | upgrades, encrypted/incremental backups |
 
 The CLI accepts trusted local paths; it does not provide a sandbox against a

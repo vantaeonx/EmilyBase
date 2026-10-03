@@ -51,7 +51,7 @@ issues scoped high-entropy API keys and rotates them with atomic metadata public
 Only key digests are stored. Cross-project keys, traversal IDs and unsafe symlinks/
 permissions are rejected; requests for each project serialize. The Axum server
 adds separate administrator/project scopes, bounded blocking workers, strict JSON,
-peer attempt limits, structured logs and graceful shutdown. Actual TCP and binary
+peer attempt limits, structured logs with static HTTP-method labels and graceful shutdown. Actual TCP and binary
 checks execute, including both-version writer kills, concurrent projects, accepted
 request drain and damaged-journal isolation. Accounts/roles remain future work. See [HTTP server](docs/server.md),
 [OpenAPI](docs/openapi.json) and [project registry](docs/projects.md).

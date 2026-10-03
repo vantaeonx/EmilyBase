@@ -129,6 +129,10 @@ concurrency, cancellation/drain and journal-loss isolation now execute. These
 checks preserve ACKs but do not close physical-power-loss, full platform backup,
 load or security acceptance gates.
 
+A real TCP regression first reproduced private extension-method text entering
+logs. Static standard/OTHER labels now pass accepted/denied token-shaped method
+checks in both the actual server binary and rebuilt release container.
+
 ## TypeScript SDK increment
 
 A dependency-free project client performs SQL/explain/status with strict runtime

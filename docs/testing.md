@@ -578,3 +578,20 @@ resolved it. No passing container run was claimed for the failed build.
 The existing snapshot codec is unchanged from its recorded ASan run. This is a
 standalone full-snapshot publisher; table/WAL root publication, longer table
 keys, row-pointer lifetime, media/power-loss and production gates remain open.
+
+## HTTP extension-method redaction: executed regression
+
+On 2026-10-03, a failing actual TCP regression reproduced arbitrary extension
+methods entering structured logs, including a synthetic 64-character credential
+used as a method. A static whitelist now emits standard method labels or OTHER.
+Both authorized 405s and denied 401s are covered; route-pattern/status logging
+remains useful while private method text is absent. This preserves HTTP method
+handling; only log labels change.
+
+Rust format, warning-denied workspace Clippy, build and all 302 main tests pass
+(ten subprocess helpers excluded). Ruff format/lint and a rebuilt release-image
+probe with SDK, restart, crash recovery and private method checks also pass.
+The increment adds 48 physical Rust and 27 Python lines. Totals: 20096 Rust
+(19066 excluding blanks/comment-only lines), 1189 SDK, 547 Python; combined
+21832 source lines. This security repair is intentionally a small logical commit.
+The broader security audit and production acceptance gates remain open.

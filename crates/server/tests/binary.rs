@@ -69,7 +69,7 @@ fn binary_logs_only_route_patterns_and_sigterm_stops_cleanly() {
             panic!("startup: {error}");
         }
     };
-    let mut socket = TcpStream::connect(address).unwrap();
+    let mut socket = TcpStream::connect(&address).unwrap();
     socket
         .set_read_timeout(Some(Duration::from_secs(5)))
         .unwrap();
@@ -78,6 +78,24 @@ fn binary_logs_only_route_patterns_and_sigterm_stops_cleanly() {
     let mut response = String::new();
     socket.read_to_string(&mut response).unwrap();
     assert!(response.starts_with("HTTP/1.1 401"));
+    // HTTP extension methods are peer-controlled text, including valid token-shaped secrets.
+    for (method, key, status) in [
+        ("SYNTHETIC_PRIVATE_METHOD", master.as_str(), 405),
+        (master.as_str(), master.as_str(), 405),
+        ("SYNTHETIC_DENIED_METHOD", "invalid", 401),
+    ] {
+        let mut socket = TcpStream::connect(&address).unwrap();
+        socket
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .unwrap();
+        socket
+            .set_write_timeout(Some(Duration::from_secs(5)))
+            .unwrap();
+        write!(socket,"{method} /v1/projects HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {key}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").unwrap();
+        let mut response = String::new();
+        socket.read_to_string(&mut response).unwrap();
+        assert!(response.starts_with(&format!("HTTP/1.1 {status}")));
+    }
     assert!(
         Command::new("kill")
             .args(["-TERM", &child.id().to_string()])
@@ -101,9 +119,24 @@ fn binary_logs_only_route_patterns_and_sigterm_stops_cleanly() {
     let log = reader.join().unwrap();
     assert!(log.contains("/v1/projects/{id}/sql"));
     assert!(log.contains("graceful_shutdown_requested"));
-    for private in [master.as_str(), id.as_str(), "private_query", "hidden"] {
+    for private in [
+        master.as_str(),
+        id.as_str(),
+        "private_query",
+        "hidden",
+        "SYNTHETIC_PRIVATE_METHOD",
+        "SYNTHETIC_DENIED_METHOD",
+    ] {
         assert!(!log.contains(private));
     }
+    let methods: Vec<_> = log
+        .lines()
+        .filter_map(|line| {
+            let value: serde_json::Value = serde_json::from_str(line).unwrap();
+            value["fields"]["method"].as_str().map(str::to_owned)
+        })
+        .collect();
+    assert_eq!(methods, ["POST", "OTHER", "OTHER", "OTHER"]);
     let mut errors = String::new();
     child
         .stderr

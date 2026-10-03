@@ -2,7 +2,7 @@ use crate::projects::ProjectStatus;
 use crate::rate::Rate;
 use crate::{AuthorizedProject, CreatedProject, Error, ProjectInfo, ProjectStore};
 use axum::extract::{ConnectInfo, FromRequestParts, MatchedPath, Path, Request, State};
-use axum::http::{StatusCode, header};
+use axum::http::{Method, StatusCode, header};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -135,7 +135,7 @@ pub async fn serve(
 
 async fn guard(State(app): State<App>, request: Request, next: Next) -> Response {
     let started = Instant::now();
-    let method = request.method().clone();
+    let method = method_label(request.method());
     let route = request
         .extensions()
         .get::<MatchedPath>()
@@ -145,9 +145,24 @@ async fn guard(State(app): State<App>, request: Request, next: Next) -> Response
         Ok(request) => next.run(request).await,
         Err(error) => error.into_response(),
     };
-    // Route patterns exclude IDs/query strings. Never record headers, tokens, SQL or bodies.
+    // Static labels exclude extension-method text, IDs and query strings.
+    // Never record headers, tokens, SQL or bodies.
     tracing::info!(method=%method,route=%route,status=response.status().as_u16(),elapsed_ms=started.elapsed().as_millis() as u64,"request");
     response
+}
+fn method_label(method: &Method) -> &'static str {
+    match method.as_str() {
+        "GET" => "GET",
+        "POST" => "POST",
+        "PUT" => "PUT",
+        "PATCH" => "PATCH",
+        "DELETE" => "DELETE",
+        "HEAD" => "HEAD",
+        "OPTIONS" => "OPTIONS",
+        "CONNECT" => "CONNECT",
+        "TRACE" => "TRACE",
+        _ => "OTHER",
+    }
 }
 async fn authorize(app: &App, request: Request) -> ApiResult<Request> {
     let peer = request

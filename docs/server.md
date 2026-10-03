@@ -83,6 +83,9 @@ limits remain an acceptance gate.
 SIGINT/SIGTERM stop accepting new connections and drain accepted requests. Logs
 contain method, static route pattern, status and elapsed time. They exclude paths
 with project IDs, query strings, headers, bodies, SQL, tokens and returned rows.
+Method labels are static: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, CONNECT,
+TRACE, or OTHER. Extension methods, including token-shaped or lowercase names,
+are never copied into logs. This applies to authentication failures and 405s.
 
 ## Failure responses
 
