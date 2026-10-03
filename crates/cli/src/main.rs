@@ -20,6 +20,19 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Inspect an experimental row-image location bound to a managed database identity.
+    RowLocation {
+        path: PathBuf,
+        table: String,
+        key: String,
+    },
+    /// Resolve only a current matching row-image location; never authorize through a locator.
+    RowResolve {
+        path: PathBuf,
+        table: String,
+        key: String,
+        location: String,
+    },
     /// Offline private backup of every isolated project, including current key digests.
     ProjectsBackup { path: PathBuf, target: PathBuf },
     /// Replay and verify every project in a private registry archive.
@@ -156,6 +169,28 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::RowLocation { path, table, key } => {
+            let key: Key = parse_json(&key)?;
+            let database = emilybase_transactions::Database::open(path)?;
+            println!(
+                "{}",
+                serde_json::to_string(&database.row_location(&table, &key)?)?
+            );
+        }
+        Command::RowResolve {
+            path,
+            table,
+            key,
+            location,
+        } => {
+            let key: Key = parse_json(&key)?;
+            let location: emilybase_transactions::BoundRowLocation = parse_json(&location)?;
+            let database = emilybase_transactions::Database::open(path)?;
+            println!(
+                "{}",
+                serde_json::to_string(database.resolve_row_location(&table, &key, location)?)?
+            );
+        }
         Command::ProjectsBackup { path, target } => {
             let report = emilybase_server::ProjectStore::open_existing(path)?.backup(target)?;
             print_registry_backup(&report);

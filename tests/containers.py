@@ -381,6 +381,27 @@ class Probe:
             result["transaction"] == before["transaction"],
             "restored transaction number",
         )
+        key = json.dumps({"type": "integer", "value": 1})
+        location = self.cli("row-location", source, "t", key).stdout.strip()
+        require(
+            self.cli("row-location", restored, "t", key).stdout.strip() == location,
+            "restored row keeps its bound physical location",
+        )
+        resolved = json.loads(
+            self.cli("row-resolve", restored, "t", key, location).stdout
+        )
+        require(
+            resolved == expected["rows"][0], "physical location resolves the exact row"
+        )
+        forged = json.loads(location)
+        forged["row"]["page_id"] = 18446744073709551615
+        require(
+            self.cli(
+                "row-resolve", restored, "t", key, json.dumps(forged), ok=False
+            ).returncode
+            != 0,
+            "forged row location is refused",
+        )
         added = json.loads(
             self.cli("sql", restored, "INSERT INTO t VALUES (8,'restored-only')").stdout
         )

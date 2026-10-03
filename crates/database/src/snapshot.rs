@@ -3,8 +3,10 @@ use std::sync::Arc;
 use emilybase_catalog::{Key, Row, Schema};
 use emilybase_storage::{Error as StorageError, MAX_PAGES, Page};
 
+use crate::location::{Change, Locations};
 use crate::state::State;
 use crate::{DATABASE_MARKER, Error, Event, MAX_ROWS, Result};
+use crate::{EventKind, RowLocation};
 
 /// Validated in-memory relational history. Clones share immutable page images.
 /// Mutating a snapshot alone provides no persistence or commit acknowledgment.
@@ -12,6 +14,7 @@ use crate::{DATABASE_MARKER, Error, Event, MAX_ROWS, Result};
 pub struct Snapshot {
     state: State,
     pages: Vec<Arc<Page>>,
+    locations: Locations,
 }
 
 impl Snapshot {
@@ -21,6 +24,7 @@ impl Snapshot {
         Ok(Self {
             state: State::new(),
             pages: vec![Arc::new(root)],
+            locations: Locations::default(),
         })
     }
 
@@ -29,6 +33,7 @@ impl Snapshot {
             return Err(Error::NotTableFile);
         }
         let mut state = State::new();
+        let mut locations = Locations::default();
         for (index, page) in pages.iter().enumerate() {
             if page.id() != index as u64 + 1 {
                 return Err(Error::Event("nonsequential snapshot page IDs"));
@@ -43,13 +48,19 @@ impl Snapshot {
                         return Err(Error::NotTableFile);
                     }
                 } else {
-                    state.apply(Event::decode(bytes)?)?;
+                    let event = Event::decode(bytes)?;
+                    state.validate(&event)?;
+                    let location = RowLocation::from_record(&event, page.id(), slot as u16, bytes);
+                    let change = Change::prepare(&state, &event, location)?;
+                    state.apply(event)?;
+                    locations.apply(change);
                 }
             }
         }
         Ok(Self {
             state,
             pages: pages.into_iter().map(Arc::new).collect(),
+            locations,
         })
     }
 
@@ -59,18 +70,19 @@ impl Snapshot {
         let bytes = event.encode()?;
         let last = self.pages.last().ok_or(Error::NotTableFile)?;
         let mut page = last.as_ref().clone();
-        let append = match page.insert(&bytes) {
-            Ok(_) => false,
+        let (append, slot) = match page.insert(&bytes) {
+            Ok(slot) => (false, slot),
             Err(StorageError::PageFull) => {
                 if self.pages.len() as u64 >= MAX_PAGES {
                     return Err(StorageError::PageLimit.into());
                 }
                 page = Page::new(self.pages.len() as u64 + 1)?;
-                page.insert(&bytes)?;
-                true
+                (true, page.insert(&bytes)?)
             }
             Err(error) => return Err(error.into()),
         };
+        let location = RowLocation::from_record(&event, page.id(), slot, &bytes);
+        let change = Change::prepare(&self.state, &event, location)?;
         self.state.apply(event)?;
         if append {
             self.pages.push(Arc::new(page));
@@ -78,6 +90,7 @@ impl Snapshot {
             let last = self.pages.last_mut().ok_or(Error::NotTableFile)?;
             *last = Arc::new(page);
         }
+        self.locations.apply(change);
         Ok(())
     }
 
@@ -105,6 +118,56 @@ impl Snapshot {
         let table = self.state.table(name)?;
         table.schema.validate_key(key)?;
         Ok(table.rows.get(key))
+    }
+
+    /// Return the last live insert/replace image, never an obsolete historical row.
+    pub fn row_location(&self, name: &str, key: &Key) -> Result<Option<RowLocation>> {
+        let table = self.state.table(name)?;
+        table.schema.validate_key(key)?;
+        Ok(self.locations.get(self.table_id(name)?, key))
+    }
+
+    /// Resolve only a current matching table/key/position/image in this snapshot.
+    /// Locations are scoped to the caller-selected database; bind its ID separately.
+    pub fn resolve_row_location(
+        &self,
+        name: &str,
+        key: &Key,
+        location: RowLocation,
+    ) -> Result<&Row> {
+        if self.row_location(name, key)? != Some(location) {
+            return Err(Error::StaleLocation);
+        }
+        let index = location
+            .page_id
+            .checked_sub(1)
+            .and_then(|id| usize::try_from(id).ok())
+            .ok_or(Error::StaleLocation)?;
+        let page = self.pages.get(index).ok_or(Error::StaleLocation)?;
+        let bytes = page
+            .get(location.slot_id)
+            .map_err(|_| Error::StaleLocation)?;
+        if !location.matches_record(bytes) {
+            return Err(Error::StaleLocation);
+        }
+        let event = Event::decode(bytes)?;
+        let row = match event.kind {
+            EventKind::Insert(row) | EventKind::Replace(row)
+                if event.table_id == location.table_id =>
+            {
+                row
+            }
+            _ => return Err(Error::StaleLocation),
+        };
+        let table = self.state.table(name)?;
+        if table.schema.key(&row)? != *key {
+            return Err(Error::StaleLocation);
+        }
+        let current = table.rows.get(key).ok_or(Error::StaleLocation)?;
+        if current != &row {
+            return Err(Error::StaleLocation);
+        }
+        Ok(current)
     }
 
     pub fn scan(&self, name: &str, limit: usize) -> Result<Vec<Row>> {

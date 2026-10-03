@@ -19,6 +19,7 @@ cargo +nightly fuzz run file_format -- -max_total_time=30 -max_len=4096 -rss_lim
 cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
+cargo +nightly fuzz run row_locations -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run backup_archive -- -max_total_time=30 -max_len=32768 -rss_limit_mb=512
 ```
 
@@ -676,3 +677,33 @@ lines and removes 21 (net 291). Totals: 22246 Rust (21144 excluding blank/commen
 lines), 1189 SDK, 637 Python; combined 24072 source lines. This targeted integrity
 repair is a small separate logical commit. Broader hostile-admin filesystem
 mutation, security/load, physical power loss and production gates remain open.
+
+## Validated row-image locations: executed increment
+
+On 2026-10-03, workspace/fuzz formatting and warning-denied Clippy, locked build
+and all 342 main tests pass; eleven subprocess helpers are invoked by parents
+and excluded. Fifteen new tests cover actual slotted positions across pages,
+updates/deletes/reinsert/drop/recreated tables, divergent staged images sharing
+one position, failed writes, strict JSON, extreme/forged locations, all column
+types and maximum 3072-byte UTF-8 primary keys. A 48-case independent live-row
+model verifies current/retired locations and reconstruction after every operation.
+
+Managed tests bind independent byte-identical databases to different persistent
+IDs, verify rollback/drop and aborted-read behavior, and preserve locations over
+checkpoint loss, reopen and both WAL versions. Verified backup/restore preserves
+current locations; subsequent independent copy writes retire only its own image.
+Actual CLI subprocesses test resolution, compaction, stale/foreign/forged addresses,
+absent rows and bounded non-echoing parse errors.
+
+The new ASan row_locations target completed 1279930 executions in 16 seconds
+(15-second budget, 20000-byte input bound, 512 MiB RSS limit), using two ignored
+synthetic version-1/version-2 WAL seeds. It checks raw/repaired recovery, accepted
+image reconstruction, bounded current-row samples and forged address rejection.
+A rebuilt release container with SDK, restart/crash/corruption and independent
+restored HTTP checks also verifies physical locations and forged-address denial.
+
+This increment adds 1147 physical Rust lines and removes five (net 1142), plus
+21 Python lines; combined net source growth is 1163. Totals: 23388 Rust (22246
+without blank/comment-only lines), 1189 SDK and 658 Python; 25235 combined.
+No stored formats change. Table primary-key maps still use BTreeMap; durable
+table/index WAL integration, wider fuzz/security/load and production gates stay open.

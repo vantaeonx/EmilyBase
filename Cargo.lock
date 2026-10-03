@@ -308,6 +308,9 @@ dependencies = [
  "emilybase-catalog",
  "emilybase-storage",
  "proptest",
+ "serde",
+ "serde_json",
+ "sha2",
  "tempfile",
  "thiserror",
 ]
@@ -386,6 +389,7 @@ dependencies = [
  "emilybase-wal",
  "getrandom 0.3.4",
  "proptest",
+ "serde",
  "sha2",
  "tempfile",
  "thiserror",

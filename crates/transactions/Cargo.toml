@@ -13,6 +13,7 @@ emilybase-database = { path = "../database" }
 emilybase-wal = { path = "../wal" }
 getrandom = "0.3"
 thiserror = "2"
+serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 tempfile = "3"

@@ -109,3 +109,10 @@ path = "fuzz_targets/registry_archive.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "row_locations"
+path = "fuzz_targets/row_locations.rs"
+test = false
+doc = false
+bench = false

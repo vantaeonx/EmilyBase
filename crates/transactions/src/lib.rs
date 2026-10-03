@@ -1,12 +1,14 @@
 //! Serialized table transactions backed by the mandatory authoritative redo log.
 mod compaction;
 mod database;
+mod location;
 mod ownership;
 mod replay;
 mod transaction;
 
 pub use compaction::Compaction;
 pub use database::Database;
+pub use location::BoundRowLocation;
 pub use transaction::Transaction;
 pub const MAX_TRANSACTION_EVENTS: usize = 256;
 
@@ -65,6 +67,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("transaction limit reached")]
     Limit,
+    #[error("row location belongs to a different database identity")]
+    LocationDatabase,
     #[error("transaction is aborted; rollback or drop it")]
     Aborted,
     #[error("malformed committed history: {0}")]

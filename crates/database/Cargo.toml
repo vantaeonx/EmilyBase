@@ -10,10 +10,13 @@ repository.workspace = true
 emilybase-storage = { path = "../storage" }
 emilybase-catalog = { path = "../catalog" }
 thiserror = "2"
+sha2 = "0.10"
+serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 tempfile = "3"
 proptest = "1"
+serde_json = "1"
 
 [lints]
 workspace = true

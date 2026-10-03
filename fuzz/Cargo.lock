@@ -182,6 +182,8 @@ version = "0.1.0"
 dependencies = [
  "emilybase-catalog",
  "emilybase-storage",
+ "serde",
+ "sha2",
  "thiserror",
 ]
 
@@ -268,6 +270,7 @@ dependencies = [
  "emilybase-storage",
  "emilybase-wal",
  "getrandom 0.3.4",
+ "serde",
  "thiserror",
 ]
 

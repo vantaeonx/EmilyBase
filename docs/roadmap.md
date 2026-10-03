@@ -26,7 +26,7 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
 4. Add Kotlin client SDK, then extend
-   random network/media/publication campaigns and complete registry backup.
+   random network/media/publication campaigns and registry backup streaming/encryption.
 
 ## Isolated registry and API keys
 
@@ -35,7 +35,8 @@ persists checked version-1 metadata and hashes for 256-bit random keys, and rota
 credentials atomically. Single-use request capabilities preserve root ownership
 and serialize same-project operations. Scope, traversal, symlink, permissions,
 real capacity, concurrent request and metadata bounds execute. Passwords/sessions,
-granular row authorization and complete registry backups remain pending.
+granular row authorization remain pending. Offline complete current-registry
+backups now execute; future object/session data remains outside that archive.
 See [project registry](projects.md) and [ADR 0012](adr/0012-isolated-projects.md).
 
 ## SQL parser increment
@@ -71,6 +72,13 @@ canonical root/revision/count snapshots. Bound atomic in-memory deltas validate
 full resulting topology. Both modes pass exact compatibility, capacity and model
 checks. Standalone private snapshot publication/CLI now passes sync, process-kill,
 ownership and competing-writer checks. Table/WAL participation remains pending.
+
+Current live row-image locations now validate actual page/slot, event fingerprint,
+table/key and persistent managed database identity. Old images retire on mutation;
+rollback, reopen, both WAL versions and verified restore are covered. Existing
+formats and 3072-byte table text keys are preserved. The B+ tree adapter and
+atomic table/index WAL participation remain pending. See
+[ADR 0020](adr/0020-validated-live-row-locations.md).
 
 ## Implemented first increment
 

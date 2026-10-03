@@ -37,6 +37,12 @@ and complete topology. A private standalone snapshot publisher and developer CLI
 now survive tested creation/replacement kills and competing writers. Atomic
 table/WAL integration remains pending.
 
+Validated live row-image locations now bind table/key to an actual slotted-page
+position and event fingerprint. Managed locations also bind the persistent
+database identity. Updates/deletes retire previous images; discarded staged
+changes publish none. Reopen, baseline compaction and verified restore retain
+current locations. See [ADR 0020](docs/adr/0020-validated-live-row-locations.md).
+
 The original `query` crate implements a bounded SQL lexer, parser, typed AST,
 schema-resolved plans and execution through managed WAL transactions: table DDL,
 CRUD, predicates, ordering, limits, one inner join and whole-script transaction
@@ -94,6 +100,11 @@ JSON uses tagged values. Unknown fields and inputs over 16384 bytes are rejected
 without echoing input. An absent row prints `null`; updating/deleting it is an
 error. Updates preserve the primary key. Names are case-sensitive ASCII identifiers;
 primary keys are integer or text.
+
+For managed databases, `row-location PATH TABLE KEY_JSON` prints a bound location
+or `null`. `row-resolve PATH TABLE KEY_JSON LOCATION_JSON` checks its identity and
+current row image before printing the row. These development commands require
+ordinary local data access; locations are not credentials or transaction IDs.
 
 Current limits: 128 tables, 10000 live rows in total, 100000 history records,
 64 columns, 3072 bytes per text/blob and 4000 encoded bytes per schema/row.

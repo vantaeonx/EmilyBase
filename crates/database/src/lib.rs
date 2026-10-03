@@ -1,11 +1,13 @@
 //! Relational file records built on the original EmilyBase page engine.
 mod engine;
 mod event;
+mod location;
 mod snapshot;
 mod state;
 
 pub use engine::Database;
 pub use event::{DATABASE_MARKER, Event, EventKind};
+pub use location::RowLocation;
 pub use snapshot::Snapshot;
 
 pub const MAX_TABLES: usize = 128;
@@ -32,6 +34,8 @@ pub enum Error {
     DuplicateKey,
     #[error("row does not exist")]
     NoRow,
+    #[error("row location is stale or does not identify the current row image")]
+    StaleLocation,
     #[error("updates cannot change a primary key")]
     PrimaryKeyChange,
     #[error("database limit reached: {0}")]
