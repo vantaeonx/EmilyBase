@@ -479,3 +479,18 @@ unrelated file descriptions until exec. Parallel harness failures first reproduc
 this ownership interference; strict engine locks remain unchanged. Production
 builds contain no kill/fault environment hooks. Wider random disconnect/load,
 publication I/O/media failures and complete platform backup gates remain open.
+
+## TypeScript SDK: executed checks
+
+Strict TypeScript 7.0.2 compilation, Prettier checks and 11 unit tests pass.
+Seven actual HTTP/WAL integration cases (including the parent) pass without skips:
+SQL types/NULLs/literal parameters, CRUD, rollback, independent project keys,
+rotation, unsafe i64 unknown commit outcome and process restart. Three failing
+regressions first reproduced arbitrary peer-code reflection, uncancelled declared
+oversized bodies and valid 127-byte join labels, then passed after fixes.
+
+The SDK adds 1189 physical TypeScript/JavaScript source lines, including tests.
+Rust remains 18046 physical lines; combined source is 19235. Manifests, lockfiles,
+docs, installed dependencies and generated dist are excluded. The prior 270 Rust
+main tests/nine helpers remain unchanged. SDK checks execute in GitHub Actions;
+no npm release, browser verification or production claim is made.

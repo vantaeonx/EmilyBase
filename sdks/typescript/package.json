@@ -1,0 +1,28 @@
+{
+  "name": "emilybase-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Experimental project-scoped client for EmilyBase",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "test:integration": "npm run build && node --test tests/live.integration.mjs",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/*.mjs\" \"*.json\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/*.mjs\" \"*.json\""
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "prettier": "3.9.9",
+    "typescript": "7.0.2"
+  }
+}

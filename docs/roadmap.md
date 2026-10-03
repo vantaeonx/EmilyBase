@@ -17,7 +17,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 
 Durable table indexes, background journal rotation and history vacuuming,
 Extended SQL, user/session authentication, row policies,
-file uploads, realtime, migrations, incremental/encrypted backups, SDKs, web dashboard and deployment.
+file uploads, realtime, migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
 ## Next increments
@@ -25,7 +25,7 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
-4. Add synthetic-data-only Docker deployment and client SDKs, then extend
+4. Add synthetic-data-only Docker deployment and Kotlin client SDK, then extend
    random network/media/publication campaigns and complete registry backup.
 
 ## Isolated registry and API keys
@@ -122,3 +122,10 @@ Registry publication kills/injected sync errors and actual HTTP writer kills,
 concurrency, cancellation/drain and journal-loss isolation now execute. These
 checks preserve ACKs but do not close physical-power-loss, full platform backup,
 load or security acceptance gates.
+
+## TypeScript SDK increment
+
+A dependency-free project client performs SQL/explain/status with strict runtime
+validation, byte/shape bounds, exact safe integers and unknown-outcome errors.
+Eleven unit and seven live server/restart cases run. It neither persists credentials
+nor retries writes. npm publication, browser/CORS and Kotlin remain pending.

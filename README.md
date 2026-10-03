@@ -17,7 +17,7 @@ strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
 process-kill, checkpoint-crash and competing-writer checks execute. The WAL is
 capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
-The full stage-2 acceptance gate remains open. Persistent table indexes, user authentication, dashboard and SDKs are future work.
+The full stage-2 acceptance gate remains open. Persistent table indexes, user authentication, dashboard and Kotlin SDK are future work.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks
@@ -180,3 +180,8 @@ See [architecture](docs/architecture.md), [page format](docs/file-format.md),
 [recovery matrix](docs/recovery-matrix.md), [testing](docs/testing.md),
 [roadmap](docs/roadmap.md), [size estimate](docs/size-estimate.md) and
 [contributing](CONTRIBUTING.md).
+
+The [TypeScript SDK](sdks/typescript/README.md) executes scoped SQL/explain/status
+with runtime validation, bounded response reads and explicit unknown write outcomes.
+Node unit and actual server/restart checks run in CI. It is a local experimental
+package, not an npm release; browser/CORS and Kotlin work remain open.
