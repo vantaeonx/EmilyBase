@@ -85,6 +85,25 @@ impl Database {
         self.wal.last_transaction()
     }
 
+    /// Export a stable acknowledged prefix, excluding any abandoned WAL tail.
+    pub fn committed_wal(&mut self) -> Result<Vec<u8>> {
+        self.ready()?;
+        let result = (|| {
+            let bytes = self.wal.committed_bytes()?;
+            let recovered = crate::recover_image(&bytes, Some(self.database_id()))?;
+            if recovered.last_transaction != self.last_transaction()
+                || !recovered.snapshot.pages().eq(self.snapshot.pages())
+            {
+                return Err(Error::History("committed snapshot changed externally"));
+            }
+            Ok(bytes)
+        })();
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
+    }
+
     /// Materialize a synced, atomically replaced cache. WAL is deliberately retained.
     pub fn checkpoint(&mut self) -> Result<()> {
         self.checkpoint_with(|| {}, || {})

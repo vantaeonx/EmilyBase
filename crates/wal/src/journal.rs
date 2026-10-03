@@ -88,6 +88,28 @@ impl Wal {
         self.valid_bytes
     }
 
+    /// Read only acknowledged frames while retaining exclusive ownership.
+    pub fn committed_bytes(&mut self) -> Result<Vec<u8>> {
+        self.ready()?;
+        let result = (|| {
+            if self.file.metadata()?.len() < self.valid_bytes {
+                return Err(Error::Format("committed journal was externally truncated"));
+            }
+            self.file.seek(SeekFrom::Start(0))?;
+            let mut bytes = vec![0; self.valid_bytes as usize];
+            self.file.read_exact(&mut bytes)?;
+            let recovered = recover(&bytes, Some(self.id))?;
+            if recovered.discarded_bytes != 0
+                || recovered.committed.len() as u64 != self.last_transaction()
+                || recovered.next_sequence != self.next_sequence
+            {
+                return Err(Error::Format("committed journal metadata changed"));
+            }
+            Ok(bytes)
+        })();
+        self.finish_io(result)
+    }
+
     /// Write uncommitted page images. Mutable borrowing serializes pending work.
     pub fn begin(&mut self, pages: &[Page]) -> Result<Pending<'_>> {
         self.ready()?;

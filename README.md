@@ -17,7 +17,9 @@ strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
 process-kill, checkpoint-crash and competing-writer checks execute. The full WAL
 is retained and capped at 64 MiB; checkpoint reuse and log rotation are pending.
 The full stage-2 acceptance gate remains open. SQL, B+ tree, server, project
-isolation, authentication, dashboard, SDKs and verified backups are future work.
+isolation, authentication, dashboard and SDKs are future work.
+The backup library now creates and verifies committed-WAL archives and restores
+them into a fully replayed new directory; its CLI and interruption tests follow.
 
 ## Try typed tables
 
@@ -101,6 +103,7 @@ contents. Never commit real data, passwords, tokens, signing keys or `.env` file
 
 See [architecture](docs/architecture.md), [page format](docs/file-format.md),
 [journal format](docs/wal-format.md), [threat model](docs/threat-model.md),
+[backup format](docs/backup-format.md),
 [recovery matrix](docs/recovery-matrix.md), [testing](docs/testing.md),
 [roadmap](docs/roadmap.md), [size estimate](docs/size-estimate.md) and
 [contributing](CONTRIBUTING.md).

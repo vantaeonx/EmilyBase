@@ -119,3 +119,18 @@ The managed-recovery AddressSanitizer smoke run completed 587,298 executions in
 16 seconds without a crash (configured budget: 15 seconds). The target also repairs
 nested checksums and commit digests to reach relational validation. The full
 reliability and security gates remain open; see the recovery matrix.
+
+## Backup library increment: executed checks
+
+On 2026-10-03, workspace/fuzz formatting, Clippy with warnings denied, workspace
+build and all 122 main tests passed. This block adds 983 physical Rust lines;
+the total is 6945. Verification rejects every single-byte mutation and every
+truncation of a valid archive. Tests cover CRC-preserving invalid headers,
+recomputed outer hashes with invalid WAL, rejected uncommitted tails, bounded
+reads, owner-only permissions and no-clobber outputs including symlinks.
+
+Restore compares schemas and rows, all supported types, Unicode text primary
+keys, nulls, binary values, schema identity history and new commits after reopen.
+Source/backup bytes remain unchanged. External source corruption/truncation
+prevents export and poisons the live owner. Two properties run 32 cases each.
+Interrupted backup/restore publication, CLI and a backup fuzz target follow.

@@ -12,7 +12,34 @@ pub fn recover_snapshot(
     bytes: &[u8],
     expected_id: Option<emilybase_wal::DatabaseId>,
 ) -> Result<emilybase_database::Snapshot> {
-    replay::replay(emilybase_wal::recover(bytes, expected_id)?)
+    Ok(recover_image(bytes, expected_id)?.snapshot)
+}
+
+pub struct RecoveredImage {
+    pub snapshot: emilybase_database::Snapshot,
+    pub database_id: emilybase_wal::DatabaseId,
+    pub last_transaction: u64,
+    pub committed_bytes: usize,
+    pub discarded_bytes: usize,
+}
+
+/// Recover state and its durable boundary using the same strict replay protocol.
+pub fn recover_image(
+    bytes: &[u8],
+    expected_id: Option<emilybase_wal::DatabaseId>,
+) -> Result<RecoveredImage> {
+    let recovery = emilybase_wal::recover(bytes, expected_id)?;
+    let database_id = recovery.database_id;
+    let last_transaction = recovery.committed.len() as u64;
+    let committed_bytes = recovery.valid_bytes;
+    let discarded_bytes = recovery.discarded_bytes;
+    Ok(RecoveredImage {
+        snapshot: replay::replay(recovery)?,
+        database_id,
+        last_transaction,
+        committed_bytes,
+        discarded_bytes,
+    })
 }
 
 #[derive(Debug, thiserror::Error)]

@@ -17,14 +17,14 @@ open; a table engine is not a completed transaction engine or backend platform.
 
 B+ tree, journal rotation,
 SQL, joins, indexes, project isolation, server, authentication, row policies,
-file uploads, realtime, migrations, backups, SDKs, web dashboard and deployment.
+file uploads, realtime, migrations, incremental/encrypted backups, SDKs, web dashboard and deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
 ## Next increments
 
 1. Extend I/O fault injection to short writes, disk exhaustion and sync failures.
 2. Design checkpoint reuse / journal rotation with durable metadata and crash tests.
-3. Implement backup/restore and verify upgrades before real workloads.
+3. Expose verified backup/restore through CLI, test interrupted publication and upgrades.
 
 ## Implemented first increment
 
@@ -51,5 +51,12 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 - Four competing processes, byte-cut matrix, OS write failures and recovery fuzzing.
 
 Remaining gates are listed in the [recovery matrix](recovery-matrix.md).
+
+## Backup library increment
+
+Committed-WAL archives, bounded format validation, SHA-256 and strict relational
+replay are implemented. Restore stages and verifies a working database before
+atomic no-replace directory publication. Existing outputs are preserved. CLI,
+backup/restore process-kill tests and upgrades remain pending in this increment.
 
 Only update a gate to complete when its full criteria have executed successfully.
