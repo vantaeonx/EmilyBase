@@ -5,8 +5,15 @@ mod http;
 mod metadata;
 mod projects;
 mod rate;
+mod registry_archive;
+mod registry_files;
 pub use http::{router, serve};
 pub use projects::{AuthorizedProject, CreatedProject, ProjectInfo, ProjectStatus, ProjectStore};
+pub use registry_archive::{
+    MAX_REGISTRY_BACKUP_BYTES, REGISTRY_BACKUP_VERSION, RegistryBackupReport,
+    RegistryProjectReport, inspect_registry_backup_bytes,
+};
+pub use registry_files::{inspect_registry_backup, restore_registry_backup};
 
 /// Pure, bounded inspection without credentials, filesystem operations or data access.
 pub fn inspect_project_metadata(id: &str, bytes: &[u8]) -> Result<ProjectInfo> {
@@ -34,6 +41,12 @@ pub enum Error {
     Path,
     #[error("invalid project metadata")]
     Metadata,
+    #[error("invalid registry backup: {0}")]
+    RegistryFormat(&'static str),
+    #[error("unsupported registry backup version: {0}")]
+    RegistryVersion(u16),
+    #[error("registry backup checksum mismatch")]
+    RegistryChecksum,
     #[error("project limit or key epoch limit exceeded")]
     Limit,
     #[error("invalid project display name")]
@@ -44,6 +57,8 @@ pub enum Error {
     Auth(#[from] emilybase_auth::Error),
     #[error(transparent)]
     Transaction(#[from] emilybase_transactions::Error),
+    #[error(transparent)]
+    Backup(#[from] emilybase_backup::Error),
     #[error(transparent)]
     Query(#[from] emilybase_query::ExecutionError),
     #[error("project filesystem error")]

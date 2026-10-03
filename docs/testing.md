@@ -595,3 +595,31 @@ The increment adds 48 physical Rust and 27 Python lines. Totals: 20096 Rust
 (19066 excluding blanks/comment-only lines), 1189 SDK, 547 Python; combined
 21832 source lines. This security repair is intentionally a small logical commit.
 The broader security audit and production acceptance gates remain open.
+
+## Offline whole-registry archives: executed baseline
+
+On 2026-10-03, Rust format, warning-denied workspace/fuzz Clippy, locked build and
+all 315 main tests pass; ten subprocess helpers remain excluded. Twelve new
+registry cases and an actual CLI case cover preserved scopes/rotated epochs,
+database IDs/transactions, mixed WAL versions, independent restored writes,
+outstanding capabilities/direct writers, replaced roots/changed metadata, no-clobber
+destinations, private/no-follow/single-link paths and oversized sparse inputs.
+Every truncation and every single-byte mutation refuses. Repaired outer checksums
+cannot bypass nested replay, metadata canonicality, strict ordering, duplicate
+identities, reserved fields or exact lengths. An independent Python zlib/SHA
+calculation supplies the frozen empty-header CRC. A 64-case property exercises
+arbitrary input and repaired envelopes.
+
+The registry_archive ASan smoke completed 1111844 runs in 16 seconds (15-second
+budget), without a crash. Two private synthetic seeds cover empty and two-project
+images with both WAL versions. A rebuilt release-image probe with the SDK and all
+three registry CLI commands also passes. These are executed baseline checks;
+dedicated publication kills/injected sync failures and physical-power-loss are
+still open at this increment.
+
+The change adds 952 physical Rust and 31 Python lines, 983 source lines overall.
+Totals: 21048 Rust (19966 excluding blanks/comment-only lines), 1189 SDK, 578
+Python; combined 22815. Documents, configuration, locks, private fuzz corpora,
+dependencies and generated artifacts are excluded. The archive captures only the
+currently implemented registry; future objects/sessions and unrelated standalone
+indexes are outside its scope. No production readiness is claimed.

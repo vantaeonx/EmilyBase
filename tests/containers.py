@@ -340,6 +340,37 @@ class Probe:
         require(pointer == {"page": 10, "slot": 3}, "compiled standalone index CLI")
         self.cli("index-delete", index, '{"type":"integer","value":7}')
         self.cli("index-verify", index)
+        registry = "/var/lib/emilybase/projects"
+        registry_archive = "/var/lib/emilybase/registry.backup"
+        registry_copy = "/var/lib/emilybase/restored-projects"
+        self.cli("projects-backup", registry, registry_archive)
+        self.cli("projects-backup-verify", registry_archive)
+        self.cli("projects-restore", registry_archive, registry_copy)
+        require(
+            self.cli("projects-backup", registry, registry_archive, ok=False).returncode
+            != 0,
+            "registry archive does not clobber",
+        )
+        require(
+            self.cli(
+                "projects-restore", registry_archive, registry_copy, ok=False
+            ).returncode
+            != 0,
+            "registry restore does not clobber",
+        )
+        for project, status in [(first, before), (second, sibling)]:
+            copied_data = f"{registry_copy}/{project[0]}/data"
+            restored_result = json.loads(
+                self.cli("sql", copied_data, "SELECT * FROM t").stdout
+            )
+            require(
+                restored_result["transaction"] == status["transaction"],
+                "registry copy preserves transaction",
+            )
+            require(
+                len(restored_result["results"][0]["rows"]) == status["rows"],
+                "registry copy preserves isolated rows",
+            )
         self.up(recreate=True)
         require(
             self.status(first) == before,

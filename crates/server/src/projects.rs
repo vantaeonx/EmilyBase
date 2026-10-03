@@ -7,7 +7,7 @@ use emilybase_transactions::Database;
 use std::collections::BTreeMap;
 use std::fs::{File, TryLockError};
 use std::io::Write;
-use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
+use std::os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -46,6 +46,11 @@ pub struct ProjectStatus {
 }
 
 impl ProjectStore {
+    /// Open a committed registry without creating a missing source path.
+    pub fn open_existing(root: impl AsRef<Path>) -> Result<Self> {
+        metadata::directory(root.as_ref())?;
+        Self::open(root)
+    }
     pub fn open(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref();
         match std::fs::DirBuilder::new().mode(0o700).create(root) {
@@ -107,6 +112,86 @@ impl ProjectStore {
     pub fn list(&self) -> Result<Vec<ProjectInfo>> {
         self.ready()?;
         Ok(self.projects.values().map(|p| info(&p.metadata)).collect())
+    }
+    /// Offline consistent registry image. Contains private digests and plaintext data.
+    /// Refuses outstanding capabilities and holds every database owner until capture finishes.
+    pub fn backup_image(&mut self) -> Result<Vec<u8>> {
+        self.ready()?;
+        if Arc::strong_count(&self.owner) != 1 {
+            return Err(Error::Busy);
+        }
+        self.check_backup_source()?;
+        let mut estimated = crate::registry_archive::HEADER;
+        for (id, project) in &self.projects {
+            let data = self.root.join(id).join("data");
+            metadata::directory(&data)?;
+            let wal = data.join("redo.wal");
+            metadata::file(&wal)?;
+            let wal_bytes =
+                usize::try_from(std::fs::metadata(wal)?.len()).map_err(|_| Error::Limit)?;
+            let metadata_bytes = metadata::encoded(&project.metadata)?.len();
+            estimated = estimated
+                .checked_add(crate::registry_archive::ENTRY_HEADER)
+                .and_then(|size| size.checked_add(metadata_bytes))
+                .and_then(|size| size.checked_add(emilybase_backup::HEADER_SIZE))
+                .and_then(|size| size.checked_add(wal_bytes))
+                .ok_or(Error::Limit)?;
+            if estimated > crate::MAX_REGISTRY_BACKUP_BYTES {
+                return Err(Error::Limit);
+            }
+        }
+        // Take all directory/WAL locks before reading the first acknowledged prefix.
+        let mut databases = Vec::with_capacity(self.projects.len());
+        for id in self.projects.keys() {
+            databases.push(Database::open(self.root.join(id).join("data"))?);
+        }
+        let mut bytes = vec![0; crate::registry_archive::HEADER];
+        for ((_, project), database) in self.projects.iter().zip(&mut databases) {
+            let archive = emilybase_backup::encode(&database.committed_wal()?)?;
+            crate::registry_archive::append(&mut bytes, &project.metadata, &archive)?;
+        }
+        crate::registry_archive::finish(&mut bytes, self.projects.len())?;
+        crate::inspect_registry_backup_bytes(&bytes)?;
+        self.check_backup_source()?;
+        Ok(bytes)
+    }
+    /// Publish a verified private archive outside the registry without replacing any path.
+    pub fn backup(&mut self, target: impl AsRef<Path>) -> Result<crate::RegistryBackupReport> {
+        if crate::registry_files::parent(target.as_ref())
+            .canonicalize()?
+            .starts_with(&self.root)
+        {
+            return Err(Error::Path);
+        }
+        let bytes = self.backup_image()?;
+        crate::registry_files::publish(&bytes, target.as_ref())
+    }
+    fn check_backup_source(&self) -> Result<()> {
+        metadata::directory(&self.root)?;
+        let current = std::fs::symlink_metadata(&self.root)?;
+        let owned = self.owner.metadata()?;
+        if (current.dev(), current.ino()) != (owned.dev(), owned.ino()) {
+            return Err(Error::Path);
+        }
+        let mut found = 0;
+        for entry in std::fs::read_dir(&self.root)? {
+            let entry = entry?;
+            let id = entry.file_name().into_string().map_err(|_| Error::Path)?;
+            if id.starts_with(".creating-") {
+                continue;
+            }
+            let project = self.projects.get(&id).ok_or(Error::Metadata)?;
+            metadata::directory(&entry.path())?;
+            let current = metadata::read(&entry.path().join("project.json"), &id)?;
+            if metadata::encoded(&current)? != metadata::encoded(&project.metadata)? {
+                return Err(Error::Metadata);
+            }
+            found += 1;
+        }
+        if found != self.projects.len() {
+            return Err(Error::Metadata);
+        }
+        Ok(())
     }
     pub fn create(&mut self, name: &str) -> Result<CreatedProject> {
         self.ready()?;

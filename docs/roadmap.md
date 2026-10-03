@@ -149,3 +149,16 @@ same-volume recreation, SIGKILL ACK preservation and journal-damage isolation
 execute through the container. Full platform backups, arbitrary cross-version
 upgrade, remote TLS, load/security and physical-power-loss gates stay open.
 See [deployment](deployment.md) and [ADR 0015](adr/0015-experimental-containers.md).
+
+## Offline registry-backup increment
+
+Version-1 EMILYREG images include canonical project metadata and independently
+verified database backups, preserving identities, rotated digests/epochs and both
+WAL versions. Capture holds every database owner and refuses active capabilities.
+Private no-clobber archive publication and whole-registry verified restore are
+implemented through the CLI. Basic corruption, identity, format/bounds, ownership,
+rejected-output preservation, properties and binary checks execute. This covers
+the current registry, not unimplemented object/session services or unrelated
+standalone indexes. Dedicated publication kills/injected faults and wider backup,
+power-loss, security/load and stable-release acceptance remain open.
+See [format](registry-backup-format.md) and [ADR 0018](adr/0018-offline-project-registry-backups.md).

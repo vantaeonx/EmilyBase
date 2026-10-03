@@ -20,6 +20,12 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Offline private backup of every isolated project, including current key digests.
+    ProjectsBackup { path: PathBuf, target: PathBuf },
+    /// Replay and verify every project in a private registry archive.
+    ProjectsBackupVerify { path: PathBuf },
+    /// Restore all projects into a new registry without overwriting existing paths.
+    ProjectsRestore { backup: PathBuf, target: PathBuf },
     /// Create a standalone stable B+ tree snapshot, separate from table/WAL storage.
     IndexCreate { path: PathBuf },
     /// Insert an opaque synthetic record pointer into a standalone index.
@@ -150,6 +156,18 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::ProjectsBackup { path, target } => {
+            let report = emilybase_server::ProjectStore::open_existing(path)?.backup(target)?;
+            print_registry_backup(&report);
+        }
+        Command::ProjectsBackupVerify { path } => {
+            let report = emilybase_server::inspect_registry_backup(path)?;
+            print_registry_backup(&report);
+        }
+        Command::ProjectsRestore { backup, target } => {
+            let report = emilybase_server::restore_registry_backup(backup, target)?;
+            print_registry_backup(&report);
+        }
         Command::IndexCreate { path } => {
             emilybase_index::IndexStore::create(path, &emilybase_index::BPlusTree::new_stable())?;
             println!("created standalone experimental index; revision=1");
@@ -358,6 +376,16 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     Ok(())
+}
+
+fn print_registry_backup(report: &emilybase_server::RegistryBackupReport) {
+    println!(
+        "verified registry projects={} tables={} rows={} archive_bytes={}",
+        report.projects.len(),
+        report.projects.iter().map(|p| p.tables).sum::<usize>(),
+        report.projects.iter().map(|p| p.rows).sum::<usize>(),
+        report.archive_bytes,
+    );
 }
 
 fn print_backup(report: emilybase_backup::Report) {

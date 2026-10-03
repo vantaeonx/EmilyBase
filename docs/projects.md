@@ -1,9 +1,9 @@
 # Experimental isolated project registry
 
 The synchronous `server` library provides a local private registry and one-shot
-authorized SQL capabilities. No HTTP server or administrative login exists yet.
-Privileged library callers can create/list projects and rotate their credentials;
-the next transport must enforce administrative authentication around those methods.
+authorized SQL capabilities. The Axum server enforces separate master/project
+credentials around privileged registry and scoped data methods; see [HTTP](server.md).
+Privileged library callers can create/list projects and rotate their credentials.
 User accounts, password hashing, roles, row policies and sessions are future work.
 
 ## Identity and authorization
@@ -76,6 +76,9 @@ Cross-key denial, scoped SQL, rotation/reopen, root ownership, 32 concurrent req
 actual 128-project capacity, path traversal labels/IDs, symlinks and private modes
 are tested. Truncation, repaired-CRC semantic violations, epoch overflow and ignored
 staging execute. Generated rotation and metadata properties and bounded ASan parsing
-execute. Publication crash/fault campaigns, complete project-level backup, HTTP
-administrative authorization, resource limits and deployment are still pending.
+execute. Actual registry publication kills/sync faults, HTTP master authorization,
+worker/peer limits and local container deployment now execute. A bounded offline
+[whole-registry backup](registry-backup-format.md) preserves current metadata and
+committed histories, with verified no-clobber restore. Wider backup crash/fault,
+physical-power-loss, load/security and production acceptance remain pending.
 Use synthetic data only; this is not a production isolation guarantee.

@@ -103,8 +103,10 @@ does not prove rollback. No request-id deduplication is implemented.
 TLS termination, CORS, user auth, row policies, database-wide export/import,
 realtime, objects, dashboard and Kotlin SDK are future increments. The project
 TypeScript client is implemented; see its [usage and bounds](../sdks/typescript/README.md).
-The Rust server can also run through [Docker/Compose](deployment.md). Full registry backups,
-broader publication crash/fault campaigns and production security/load gates remain open.
+The Rust server can also run through [Docker/Compose](deployment.md). Stop it before
+using [offline whole-registry backup/restore](registry-backup-format.md); there is
+no HTTP backup route. Wider backup/publication crash/fault campaigns and production
+security/load gates remain open.
 
 Registry kill/sync-failure tests and actual network writer kills now execute.
 Received SQL responses survive both WAL versions; complete unobserved commits can

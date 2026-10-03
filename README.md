@@ -56,6 +56,12 @@ checks execute, including both-version writer kills, concurrent projects, accept
 request drain and damaged-journal isolation. Accounts/roles remain future work. See [HTTP server](docs/server.md),
 [OpenAPI](docs/openapi.json) and [project registry](docs/projects.md).
 
+Offline whole-registry backup/verify/restore preserves every current project's
+committed history, identities and rotated access digests in a bounded private
+archive. Restore verifies complete replay before no-clobber publication; master
+keys stay external. See [registry backup format](docs/registry-backup-format.md).
+Broader crash/fault and production gates remain open.
+
 ```sh
 cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT id,title FROM items WHERE id=$1 LIMIT 10' --parameters '[{"type":"integer","value":7}]'
 cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT * FROM items WHERE id=7' --explain
