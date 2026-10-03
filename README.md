@@ -53,7 +53,8 @@ Explicit bound primary-tree images now validate persistent database/table identi
 acknowledged transaction, exact relational history and every eligible live pointer
 before installing a derived cache. Checkpoint, compaction and verified restore
 preserve matching images. Explicit private sidecar publication/load is available;
-default recovery still reconstructs caches. See [image format](docs/table-index-image-format.md) and
+recovery now attempts them after mandatory WAL replay within a 16-MiB input budget,
+reconstructing rejected/missing/skipped caches from live rows. See [image format](docs/table-index-image-format.md) and
 [ADR 0023](docs/adr/0023-bound-primary-tree-images.md).
 
 `primary-index-save PATH TABLE` atomically writes a private optional cache;
@@ -62,6 +63,11 @@ Publication holds database ownership and uses descriptor-relative operations,
 file/directory sync and no-clobber creation. Damaged/stale images cannot install;
 cache failures leave confirmed table data usable. Both commands print only counts
 and identifiers. Backups omit disposable sidecars. See [ADR 0024](docs/adr/0024-private-primary-cache-files.md).
+
+`primary-index-cache-status PATH` reports startup counts without exposing keys.
+All 128 tables and 10000 rows fit the tested cache budget. File growth during read,
+stale/foreign images, failed WAL and an ACK-before-cache-refresh kill are covered.
+Confirmed table durability never depends on saving a cache. See [ADR 0025](docs/adr/0025-bounded-primary-cache-startup.md).
 
 Validated live row-image locations now bind table/key to an actual slotted-page
 position and event fingerprint. Managed locations also bind the persistent

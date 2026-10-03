@@ -6,11 +6,13 @@ use sha2::{Digest, Sha256};
 impl Snapshot {
     /// Streaming fingerprint of exact relational pages. Not a credential or database ID.
     pub fn page_fingerprint(&self) -> [u8; 32] {
-        let mut hash = Sha256::new();
-        for page in self.pages() {
-            hash.update(page.encode());
-        }
-        hash.finalize().into()
+        *self.page_digest.get_or_init(|| {
+            let mut hash = Sha256::new();
+            for page in self.pages() {
+                hash.update(page.encode());
+            }
+            hash.finalize().into()
+        })
     }
     /// Export a validated stable-ID copy of the current eligible primary tree.
     pub fn export_primary_tree(&self, name: &str) -> Result<BPlusTree> {

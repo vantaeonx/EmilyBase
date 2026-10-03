@@ -20,6 +20,8 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Inspect count-only optional-cache startup results after authoritative WAL recovery.
+    PrimaryIndexCacheStatus { path: PathBuf },
     /// Save a private optional primary-tree image in the managed directory.
     PrimaryIndexSave { path: PathBuf, table: String },
     /// Explicitly verify and load the optional image; absence prints null.
@@ -175,6 +177,13 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::PrimaryIndexCacheStatus { path } => {
+            let database = emilybase_transactions::Database::open(path)?;
+            println!(
+                "{}",
+                serde_json::to_string(&database.primary_cache_startup()?)?
+            );
+        }
         Command::PrimaryIndexSave { path, table } => {
             let database = emilybase_transactions::Database::open(path)?;
             println!(

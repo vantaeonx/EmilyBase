@@ -12,6 +12,7 @@ mod transaction;
 
 pub use compaction::Compaction;
 pub use database::Database;
+pub use index_cache::{MAX_CACHE_WARMUP_BYTES, PrimaryCacheWarmup};
 pub use index_image::{
     INDEX_IMAGE_HEADER, INDEX_IMAGE_VERSION, IndexImageReport, MAX_INDEX_IMAGE_BYTES,
     inspect_primary_index_image,
@@ -63,6 +64,8 @@ pub fn recover_image(
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("optional cache warmup input budget exhausted")]
+    CacheWarmupBudget,
     #[error("invalid primary index cache: {0}")]
     IndexCache(&'static str),
     #[error(

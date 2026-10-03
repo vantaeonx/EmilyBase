@@ -12,6 +12,7 @@ use std::time::{Duration, Instant};
 thread_local! {
     static FAULT: RefCell<Option<(&'static str, bool)>> = const {RefCell::new(None)};
     static MOVE: RefCell<Option<(PathBuf, PathBuf)>> = const {RefCell::new(None)};
+    static READ_RESIZE: RefCell<Option<(PathBuf, u64)>> = const {RefCell::new(None)};
 }
 pub(crate) fn fail(point: &str, after: bool) -> std::io::Result<()> {
     FAULT.with_borrow_mut(|fault| {
@@ -27,6 +28,18 @@ pub(crate) fn fail(point: &str, after: bool) -> std::io::Result<()> {
     })
 }
 pub(crate) fn boundary(point: &str) {
+    if point == "read_budgeted" {
+        READ_RESIZE.with_borrow_mut(|selected| {
+            if let Some((file, length)) = selected.take() {
+                fs::OpenOptions::new()
+                    .write(true)
+                    .open(file)
+                    .unwrap()
+                    .set_len(length)
+                    .unwrap();
+            }
+        });
+    }
     if point == "file_synced" {
         MOVE.with_borrow_mut(|selected| {
             if let Some((root, moved)) = selected.take() {
@@ -422,7 +435,12 @@ fn cache_worker() {
         }
         return;
     }
-    let database = Database::open(PathBuf::from(path)).unwrap();
+    let mut database = Database::open(PathBuf::from(path)).unwrap();
+    if std::env::var("EMILYBASE_CACHE_TEST_BOUNDARY").as_deref() == Ok("data_ack") {
+        assert_eq!(database.primary_cache_startup().unwrap().loaded, 1);
+        append(&mut database);
+        boundary("data_ack");
+    }
     database.save_primary_index_cache("t").unwrap();
     boundary("ack");
 }
@@ -488,4 +506,54 @@ fn two_processes_publish_current_caches_under_the_same_relational_owner() {
         );
     }
     assert_eq!(staging(&path), 0);
+}
+
+#[test]
+fn growing_or_truncating_an_image_after_budget_reservation_cannot_expand_input_work() {
+    let _serial = crate::PROCESS_TESTS.lock().unwrap();
+    for length in [64, 1024 * 1024 * 1024] {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("db");
+        let mut database = initialized(&path);
+        database.save_primary_index_cache("t").unwrap();
+        let before = fs::metadata(active(&path)).unwrap().len();
+        let wal = database.committed_wal().unwrap();
+        READ_RESIZE.with_borrow_mut(|selected| *selected = Some((active(&path), length)));
+        let report = database.warm_primary_index_caches().unwrap();
+        assert_eq!((report.loaded, report.rejected, report.skipped), (0, 1, 0));
+        assert_eq!(report.bytes_budgeted, before as usize + 1);
+        assert_eq!(fs::metadata(active(&path)).unwrap().len(), length);
+        assert_eq!(database.committed_wal().unwrap(), wal);
+        assert_eq!(database.view().unwrap().row_count(), 1);
+    }
+}
+
+#[test]
+fn killing_after_a_real_table_ack_before_cache_refresh_recovers_the_acknowledged_row() {
+    let _serial = crate::PROCESS_TESTS.lock().unwrap();
+    for compacted in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("db");
+        let mut database = initialized(&path);
+        database.save_primary_index_cache("t").unwrap();
+        if compacted {
+            database.compact().unwrap();
+        }
+        let image = fs::read(active(&path)).unwrap();
+        let base = database.last_transaction();
+        drop(database);
+        kill_at(&path, "data_ack");
+        let database = Database::open(&path).unwrap();
+        assert_eq!(database.last_transaction(), base + 1);
+        assert_eq!(database.primary_cache_startup().unwrap().rejected, 1);
+        assert_eq!(
+            database.view().unwrap().get("t", &Key::Integer(2)).unwrap(),
+            Some(&vec![Value::Integer(2)])
+        );
+        assert_eq!(fs::read(active(&path)).unwrap(), image);
+        database.save_primary_index_cache("t").unwrap();
+        drop(database);
+        let database = Database::open(&path).unwrap();
+        assert_eq!(database.primary_cache_startup().unwrap().loaded, 1);
+    }
 }

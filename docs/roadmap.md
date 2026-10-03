@@ -100,7 +100,7 @@ verification precedes derived-cell installation. Foreign, stale and structurally
 valid forged projections are rejected; capacity, generated mutation/replay and
 both-WAL verified restore checks execute. Explicit private filesystem publication
 and load now pass process-kill/sync/path/concurrent-writer/CLI/restore checks.
-Automatic optional-cache adoption remains pending, along with durable table/index
+Bounded startup adoption is now implemented after mandatory WAL replay; durable table/index
 WAL allocation. See [image format](table-index-image-format.md) and
 [ADR 0023](adr/0023-bound-primary-tree-images.md).
 
@@ -109,8 +109,17 @@ with descriptor-relative staging/rename/cleanup and private bounded reads. Eight
 kill boundaries, eight sync-failure cases, two competing processes, generated
 save/load/reopen histories and actual compiled container commands execute.
 Cache errors leave the relational journal usable; backup omits these files.
-Orphan cleanup, automatic adoption/refresh and table/index WAL remain open. See
+Orphan cleanup, automatic refresh and table/index WAL remain open. See
 [ADR 0024](adr/0024-private-primary-cache-files.md).
+
+Startup adoption tries only current table-ID images with a 16-MiB total input
+budget, full managed/liveness checks and count-only reporting. Missing/rejected/
+skipped images reconstruct from WAL; valid indexes cannot mask WAL loss/damage.
+Exact page-history digests are shared across immutable snapshots and reset on
+accepted events. Capacity, bounded growth/truncation, cold/warm forks, actual
+ACK-before-refresh kills, HTTP project isolation and both-version restore execute.
+Automatic refresh/housekeeping, durable index WAL and production gates stay open.
+See [ADR 0025](adr/0025-bounded-primary-cache-startup.md).
 
 ## Implemented first increment
 

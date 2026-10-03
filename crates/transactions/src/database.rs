@@ -13,6 +13,7 @@ pub struct Database {
     pub(crate) poisoned: bool,
     pub(crate) path: PathBuf,
     pub(crate) ownership: File,
+    pub(crate) cache_startup: crate::PrimaryCacheWarmup,
 }
 
 impl Database {
@@ -44,6 +45,7 @@ impl Database {
             poisoned: false,
             path: path.to_path_buf(),
             ownership,
+            cache_startup: crate::PrimaryCacheWarmup::default(),
         })
     }
 
@@ -57,13 +59,16 @@ impl Database {
         let ownership = crate::ownership::lock_directory(path)?;
         let (wal, recovery) = Wal::open(path.join("redo.wal"), expected_id)?;
         let snapshot = replay(recovery)?;
-        Ok(Self {
+        let mut database = Self {
             wal,
             snapshot,
             poisoned: false,
             path: path.to_path_buf(),
             ownership,
-        })
+            cache_startup: crate::PrimaryCacheWarmup::default(),
+        };
+        database.cache_startup = database.warm_primary_index_caches()?;
+        Ok(database)
     }
 
     pub fn view(&self) -> Result<&Snapshot> {

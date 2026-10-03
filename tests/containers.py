@@ -363,6 +363,13 @@ class Probe:
         archive = "/var/lib/emilybase/synthetic.backup"
         restored = "/var/lib/emilybase/restored-data"
         saved = json.loads(self.cli("primary-index-save", source, "t").stdout)
+        startup = json.loads(self.cli("primary-index-cache-status", source).stdout)
+        require(
+            startup["loaded"] == 1
+            and startup["rejected"] == 0
+            and startup["bytes_budgeted"] <= 16 * 1024 * 1024,
+            "bounded source startup adopts its matching private cache",
+        )
         require(
             saved["entries"] == before["rows"]
             and saved["transaction"] == before["transaction"],

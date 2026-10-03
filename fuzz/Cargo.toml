@@ -130,3 +130,10 @@ path = "fuzz_targets/table_index_image.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "snapshot_fingerprints"
+path = "fuzz_targets/snapshot_fingerprints.rs"
+test = false
+doc = false
+bench = false

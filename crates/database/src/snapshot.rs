@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use emilybase_catalog::{Key, Row, Schema};
 use emilybase_storage::{Error as StorageError, MAX_PAGES, Page};
@@ -17,6 +17,7 @@ pub struct Snapshot {
     pages: Vec<Arc<Page>>,
     pub(crate) locations: Locations,
     pub(crate) primary_indexes: PrimaryIndexes,
+    pub(crate) page_digest: Arc<OnceLock<[u8; 32]>>,
 }
 
 impl Snapshot {
@@ -28,6 +29,7 @@ impl Snapshot {
             pages: vec![Arc::new(root)],
             locations: Locations::default(),
             primary_indexes: PrimaryIndexes::default(),
+            page_digest: Arc::new(OnceLock::new()),
         })
     }
 
@@ -66,6 +68,7 @@ impl Snapshot {
             pages: pages.into_iter().map(Arc::new).collect(),
             locations,
             primary_indexes,
+            page_digest: Arc::new(OnceLock::new()),
         })
     }
 
@@ -100,6 +103,7 @@ impl Snapshot {
         }
         self.locations.apply(change);
         self.primary_indexes.apply(index_change);
+        self.page_digest = Arc::new(OnceLock::new());
         Ok(())
     }
 

@@ -837,3 +837,42 @@ Totals: 27330 Rust (26048 excluding blank/comment-only lines), 1207 SDK and 683
 Python; 29220 source lines including tests. No parser or stored image format changes;
 the existing EBTI ASan target remains the decoder campaign. Automatic adoption/
 refresh, orphan housekeeping, durable table-index WAL and production gates stay open.
+
+## Bounded startup adoption and exact-history digests: executed increment
+
+On 2026-10-03, all 408 main tests pass, with twelve subprocess helpers excluded.
+Workspace/fuzz format and warning-denied Clippy, locked build and Python probe
+lint/format pass. Fifteen new tests cover missing/loaded/stale startup counts,
+historical versus current reports, foreign and repaired-hash wrong projections,
+unsafe optional paths, rejected/skipped candidate sets and independent fallback.
+
+A real 128-table/10000-row database saves and automatically adopts all 128 current
+images within 16 MiB, preserving WAL and resolving every key. A 32-candidate set
+of sparse maximum-size damaged images proves the cumulative budget and continued
+loading of later small valid files. Test-only post-reservation file growth to
+1 GiB and truncation reserve/read only the original length plus one probe byte;
+rejection leaves acknowledged data usable. Raw trusted path semantics stay intact;
+project directory authorization is not bypassed.
+
+Exact encoded-page SHA checks cover cold/initialized historical branches, failed
+events, unchanged cache installation, identical-row replacement, eight shared
+readers and a 48-case independent physical-history mutation/replay model. The new
+snapshot_fingerprints ASan target completes 476521 executions in 16 seconds
+(15-second/20000-byte/512-MiB budgets) from ignored both-version integer/text WAL
+seeds. It verifies raw/repaired recovery, exact digest, old clones, accepted event
+invalidation and replay. This remains a smoke check.
+
+Actual kills after a new table ACK and before cache refresh preserve that row for
+both WAL versions; the old cache is rejected after reopen. Both-version verified
+restore works without files and can adopt an explicitly copied matching clone
+until independent writes retire it. Two new real-binary TCP cases preserve own
+project values, scoped denial, damaged-cache availability and private log redaction;
+a valid cache cannot mask a damaged mandatory WAL (503), while its sibling serves.
+The rebuilt release container/SDK/crash/restore/corruption campaign passes and
+checks count-only startup adoption through the compiled CLI.
+
+Rust grows by 940 physical lines and the Python probe by seven (net 947 source).
+Totals: 28270 Rust (26960 excluding blank/comment-only lines), 1207 SDK and 690
+Python; 30167 source lines including tests. Existing formats and HTTP contracts
+are unchanged. Automatic refresh/housekeeping, independently durable index WAL,
+wider failing-media/load/security and production acceptance remain open.

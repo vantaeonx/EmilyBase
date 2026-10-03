@@ -1,4 +1,4 @@
-//! Explicit private optional caches. Relational commits remain authoritative.
+//! Private optional caches. Relational commits remain authoritative.
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
@@ -7,7 +7,54 @@ use crate::{Database, Error, IndexImageReport, MAX_INDEX_IMAGE_BYTES, Result};
 use emilybase_database::PrimaryIndexInfo;
 use rustix::fs::{AtFlags, Mode, OFlags};
 
+pub const MAX_CACHE_WARMUP_BYTES: usize = 16 * 1024 * 1024;
+
+/// Counts only. Budget includes a one-byte growth probe, reserved before every read.
+/// It bounds cache input work, not total recovery memory or elapsed disk time.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize)]
+pub struct PrimaryCacheWarmup {
+    pub loaded: usize,
+    pub missing: usize,
+    pub rejected: usize,
+    pub skipped: usize,
+    pub bytes_budgeted: usize,
+}
+
 impl Database {
+    /// Try current table caches within a whole-database input budget.
+    /// Optional-file errors become rejected/skipped counts; WAL state is unchanged.
+    pub fn warm_primary_index_caches(&mut self) -> Result<PrimaryCacheWarmup> {
+        let schemas = self.view()?.schemas();
+        let mut remaining = MAX_CACHE_WARMUP_BYTES;
+        let mut report = PrimaryCacheWarmup::default();
+        for schema in schemas {
+            let result = (|| {
+                self.cache_directory()?;
+                let name = self.cache_name(&schema.name)?;
+                let active = self.cache_file_limited(&name, &mut remaining)?;
+                self.cache_directory()?;
+                match active {
+                    Some(active) => self
+                        .load_primary_index_image(&schema.name, &active.bytes)
+                        .map(Some),
+                    None => Ok(None),
+                }
+            })();
+            match result {
+                Ok(Some(_)) => report.loaded += 1,
+                Ok(None) => report.missing += 1,
+                Err(Error::CacheWarmupBudget) => report.skipped += 1,
+                Err(_) => report.rejected += 1,
+            }
+        }
+        report.bytes_budgeted = MAX_CACHE_WARMUP_BYTES - remaining;
+        Ok(report)
+    }
+    /// Historical counts from this owner's startup, not current cache freshness.
+    pub fn primary_cache_startup(&self) -> Result<PrimaryCacheWarmup> {
+        self.ready()?;
+        Ok(self.cache_startup)
+    }
     /// Save the current table image under an ID-derived, private filename.
     /// A stale valid image from this same database/table can be replaced.
     /// Damaged, foreign, linked or unsafe existing files are preserved and rejected.
@@ -98,6 +145,9 @@ impl Database {
         Ok(())
     }
     fn cache_file(&self, name: &str) -> Result<Option<Active>> {
+        self.cache_file_limited(name, &mut (MAX_INDEX_IMAGE_BYTES + 1))
+    }
+    fn cache_file_limited(&self, name: &str, remaining: &mut usize) -> Result<Option<Active>> {
         let descriptor = match rustix::fs::openat(
             &self.ownership,
             name,
@@ -113,7 +163,7 @@ impl Database {
         if metadata.uid() != self.ownership.metadata()?.uid() {
             return Err(Error::IndexCache("file owner mismatch"));
         }
-        let bytes = read(&mut file)?;
+        let bytes = read_limited(&mut file, remaining)?;
         let after = private(&file)?;
         if metadata.len() != after.len() || bytes.len() as u64 != after.len() {
             return Err(Error::IndexCache("file changed during read"));
@@ -204,15 +254,24 @@ fn private(file: &File) -> Result<std::fs::Metadata> {
     Ok(metadata)
 }
 fn read(file: &mut File) -> Result<Vec<u8>> {
-    if private(file)?.len() > MAX_INDEX_IMAGE_BYTES as u64 {
+    read_limited(file, &mut (MAX_INDEX_IMAGE_BYTES + 1))
+}
+fn read_limited(file: &mut File, remaining: &mut usize) -> Result<Vec<u8>> {
+    let length = private(file)?.len();
+    if length > MAX_INDEX_IMAGE_BYTES as u64 {
         return Err(Error::IndexCache("image file limit"));
     }
+    let cost = length as usize + 1;
+    if cost > *remaining {
+        return Err(Error::CacheWarmupBudget);
+    }
+    *remaining -= cost;
+    boundary("read_budgeted");
     file.seek(SeekFrom::Start(0))?;
     let mut bytes = Vec::new();
-    file.take(MAX_INDEX_IMAGE_BYTES as u64 + 1)
-        .read_to_end(&mut bytes)?;
-    if bytes.len() > MAX_INDEX_IMAGE_BYTES {
-        return Err(Error::IndexCache("image file limit"));
+    file.take(cost as u64).read_to_end(&mut bytes)?;
+    if bytes.len() as u64 != length {
+        return Err(Error::IndexCache("image changed during bounded read"));
     }
     Ok(bytes)
 }

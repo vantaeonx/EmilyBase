@@ -26,6 +26,13 @@ fn actual_cli_saves_loads_refreshes_and_rejects_damage_without_changing_wal() {
     let missing = run("primary-index-load", &["t"]);
     assert!(missing.status.success());
     assert_eq!(missing.stdout, b"null\n");
+    let startup = run("primary-index-cache-status", &[]);
+    assert!(startup.status.success());
+    let startup: serde_json::Value = serde_json::from_slice(&startup.stdout).unwrap();
+    assert_eq!(
+        startup,
+        serde_json::json!({"loaded":0,"missing":1,"rejected":0,"skipped":0,"bytes_budgeted":0})
+    );
     let wal = fs::read(path.join("redo.wal")).unwrap();
     let saved = run("primary-index-save", &["t"]);
     assert!(saved.status.success());
@@ -42,6 +49,14 @@ fn actual_cli_saves_loads_refreshes_and_rejects_damage_without_changing_wal() {
     assert!(loaded.status.success());
     let info: serde_json::Value = serde_json::from_slice(&loaded.stdout).unwrap();
     assert_eq!(info["entries"], 1);
+    let startup = run("primary-index-cache-status", &[]);
+    assert!(startup.status.success());
+    let startup: serde_json::Value = serde_json::from_slice(&startup.stdout).unwrap();
+    assert_eq!(startup["loaded"], 1);
+    assert_eq!(
+        startup["bytes_budgeted"],
+        fs::metadata(&active).unwrap().len() + 1
+    );
     assert_eq!(fs::read(path.join("redo.wal")).unwrap(), wal);
     assert!(run("sql", &["INSERT INTO t VALUES (8)"]).status.success());
     assert!(!run("primary-index-load", &["t"]).status.success());
@@ -51,6 +66,11 @@ fn actual_cli_saves_loads_refreshes_and_rejects_damage_without_changing_wal() {
     assert_eq!(fs::read(&active).unwrap(), old);
     let wal = fs::read(path.join("redo.wal")).unwrap();
     fs::write(&active, b"synthetic-cache-contents-must-not-be-reflected").unwrap();
+    let startup = run("primary-index-cache-status", &[]);
+    assert!(startup.status.success());
+    let startup: serde_json::Value = serde_json::from_slice(&startup.stdout).unwrap();
+    assert_eq!(startup["rejected"], 1);
+    assert_eq!(startup["loaded"], 0);
     for action in ["primary-index-load", "primary-index-save"] {
         let denied = run(action, &["t"]);
         assert!(!denied.status.success());

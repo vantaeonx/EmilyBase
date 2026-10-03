@@ -13,6 +13,150 @@ use std::time::Duration;
 static PROCESS_TESTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[test]
+fn actual_http_reads_reject_foreign_or_damaged_caches_without_cross_project_leaks() {
+    let _serial = PROCESS_TESTS.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("projects");
+    let mut store = ProjectStore::open(&root).unwrap();
+    let first = store.create("cache-a").unwrap();
+    let second = store.create("cache-b").unwrap();
+    for (project, value) in [(&first, 11), (&second, 99)] {
+        store
+            .authorize(&project.project.id, &project.api_key)
+            .unwrap()
+            .execute(
+                "CREATE TABLE t(id INT PRIMARY KEY,v INT); INSERT INTO t VALUES (7,$1)",
+                &[Value::Integer(value)],
+            )
+            .unwrap();
+    }
+    let data = |id: &str| root.join(id).join("data");
+    let first_data = data(&first.project.id);
+    let second_data = data(&second.project.id);
+    for path in [&first_data, &second_data] {
+        Database::open(path)
+            .unwrap()
+            .save_primary_index_cache("t")
+            .unwrap();
+    }
+    let foreign = std::fs::read(second_data.join("primary-1.table-index")).unwrap();
+    std::fs::write(first_data.join("primary-1.table-index"), &foreign).unwrap();
+    let original_wal = std::fs::read(first_data.join("redo.wal")).unwrap();
+    drop(store);
+    let master = issue_key().unwrap();
+    let server = support::Server::start(&root, &master);
+    let route = format!("/v1/projects/{}/sql", first.project.id);
+    let source = json!({"sql":"SELECT v FROM t WHERE id >= 7 AND id < 8"});
+    for denied_key in [&master, &second.api_key] {
+        let (status, body) =
+            support::call(server.address, "POST", &route, denied_key, &source).unwrap();
+        assert_eq!(status, 401);
+        assert!(!body.to_string().contains(&first.project.id));
+    }
+    let (status, report) =
+        support::call(server.address, "POST", &route, &first.api_key, &source).unwrap();
+    assert_eq!(status, 200);
+    assert_eq!(
+        report["results"][0]["rows"],
+        json!([[{"type":"integer","value":11}]])
+    );
+    assert_eq!(
+        std::fs::read(first_data.join("primary-1.table-index")).unwrap(),
+        foreign
+    );
+    let marker = b"synthetic-private-cache-input-never-enters-logs";
+    std::fs::write(first_data.join("primary-1.table-index"), marker).unwrap();
+    let (status, report) =
+        support::call(server.address, "POST", &route, &first.api_key, &source).unwrap();
+    assert_eq!(status, 200);
+    assert_eq!(report["results"][0]["rows"][0][0]["value"], 11);
+    let sibling = format!("/v1/projects/{}/sql", second.project.id);
+    let (status, report) =
+        support::call(server.address, "POST", &sibling, &second.api_key, &source).unwrap();
+    assert_eq!(status, 200);
+    assert_eq!(report["results"][0]["rows"][0][0]["value"], 99);
+    assert_eq!(
+        std::fs::read(first_data.join("redo.wal")).unwrap(),
+        original_wal
+    );
+    let log = server.stop();
+    for private in [
+        master.as_str(),
+        first.api_key.as_str(),
+        second.api_key.as_str(),
+        first.project.id.as_str(),
+        second.project.id.as_str(),
+        "synthetic-private-cache",
+        "SELECT v",
+    ] {
+        assert!(!log.contains(private));
+    }
+    let database = Database::open(&first_data).unwrap();
+    assert_eq!(database.primary_cache_startup().unwrap().rejected, 1);
+    let database = Database::open(&second_data).unwrap();
+    assert_eq!(database.primary_cache_startup().unwrap().loaded, 1);
+}
+
+#[test]
+fn actual_http_never_uses_a_valid_index_as_replacement_for_a_damaged_wal() {
+    let _serial = PROCESS_TESTS.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("projects");
+    let mut store = ProjectStore::open(&root).unwrap();
+    let broken = store.create("broken-cache-owner").unwrap();
+    let sibling = store.create("healthy-cache-owner").unwrap();
+    for project in [&broken, &sibling] {
+        store
+            .authorize(&project.project.id, &project.api_key)
+            .unwrap()
+            .execute(
+                "CREATE TABLE t(id INT PRIMARY KEY); INSERT INTO t VALUES (7)",
+                &[],
+            )
+            .unwrap();
+        Database::open(root.join(&project.project.id).join("data"))
+            .unwrap()
+            .save_primary_index_cache("t")
+            .unwrap();
+    }
+    let data = root.join(&broken.project.id).join("data");
+    let image = std::fs::read(data.join("primary-1.table-index")).unwrap();
+    let mut wal = std::fs::read(data.join("redo.wal")).unwrap();
+    wal[0] ^= 1;
+    std::fs::write(data.join("redo.wal"), &wal).unwrap();
+    drop(store);
+    let master = issue_key().unwrap();
+    let server = support::Server::start(&root, &master);
+    for project in [&broken, &sibling] {
+        let route = format!("/v1/projects/{}/sql", project.project.id);
+        let (status, report) = support::call(
+            server.address,
+            "POST",
+            &route,
+            &project.api_key,
+            &json!({"sql":"SELECT * FROM t WHERE id=7"}),
+        )
+        .unwrap();
+        if project.project.id == broken.project.id {
+            assert_eq!(status, 503);
+            assert!(!report.to_string().contains("EBTI"));
+        } else {
+            assert_eq!(status, 200);
+            assert_eq!(
+                report["results"][0]["rows"],
+                json!([[{"type":"integer","value":7}]])
+            );
+        }
+    }
+    server.stop();
+    assert_eq!(
+        std::fs::read(data.join("primary-1.table-index")).unwrap(),
+        image
+    );
+    assert_eq!(std::fs::read(data.join("redo.wal")).unwrap(), wal);
+}
+
+#[test]
 fn killed_http_writer_recovers_every_received_response_and_complete_atomic_prefix() {
     let _serial = PROCESS_TESTS.lock().unwrap();
     for compact in [false, true] {

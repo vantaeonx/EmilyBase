@@ -2,7 +2,7 @@
 
 Experimental optional derived-cache images. The committed relational WAL remains
 authoritative. The library exports/verifies/loads bytes and now provides explicit
-private sidecar save/load; it does not automatically load one during recovery.
+private sidecar save/load and bounded automatic adoption after mandatory WAL replay.
 Existing database, page, catalog, WAL and backup bytes do not change.
 
 All integers are unsigned little-endian. The outer header is exactly 128 bytes.
@@ -61,7 +61,7 @@ Future history vacuuming may invalidate these optional images.
 
 The pure Snapshot export/verify/install APIs validate the row projection but have
 no persistent identity binding. Managed callers use the Database wrapper. No
-automatic cache adoption, independent index commit/root record, secondary-index
+independent index commit/root record, secondary-index
 DDL or recovery performance claim is included. See [ADR 0023](adr/0023-bound-primary-tree-images.md).
 
 ## Explicit private cache files
@@ -85,3 +85,21 @@ protocol through the CLI. The second prints null for absence. Neither command
 prints row keys or writes WAL. Recovery and ordinary SQL remain functional if an
 optional cache is damaged; a trusted operator can remove that private cache file
 and explicitly save a new one. See [ADR 0024](adr/0024-private-primary-cache-files.md).
+
+## Bounded startup adoption
+
+Managed open verifies and replays WAL first, then tries only current table-ID
+files. Absence, stale/foreign/damaged/unsafe images and exhausted budgets are
+optional-cache outcomes; missing/damaged WAL remains fatal. No files are written.
+Each image reserves its initial length plus one growth-probe byte before reading;
+changed lengths are rejected within that reservation. At most 16 MiB is budgeted
+across all tables, including failed reads/decodes. Later small files can still load
+after a large file is skipped. This is an input-work bound, not a full memory/time
+limit. Exact history hashes are shared within immutable snapshots and invalidated
+only by accepted relational events.
+
+`primary-index-cache-status PATH` prints loaded/missing/rejected/skipped and
+bytes_budgeted counts from that owner's startup. It exposes no keys, fingerprints
+or filenames. Explicit warm can return a new current report; startup counts remain
+historical after a later commit. Restore needs no cache file, and image copying
+requires matching preserved IDs/history. See [ADR 0025](adr/0025-bounded-primary-cache-startup.md).
