@@ -362,6 +362,12 @@ class Probe:
         source = f"/var/lib/emilybase/projects/{first[0]}/data"
         archive = "/var/lib/emilybase/synthetic.backup"
         restored = "/var/lib/emilybase/restored-data"
+        saved = json.loads(self.cli("primary-index-save", source, "t").stdout)
+        require(
+            saved["entries"] == before["rows"]
+            and saved["transaction"] == before["transaction"],
+            "private source cache binds acknowledged rows",
+        )
         self.cli("backup", source, archive)
         self.cli("backup-verify", archive)
         require(
@@ -369,6 +375,13 @@ class Probe:
             "backup does not clobber",
         )
         self.cli("restore", archive, restored)
+        require(
+            json.loads(self.cli("primary-index-load", restored, "t").stdout) is None,
+            "verified backup omits disposable cache files",
+        )
+        self.cli("primary-index-save", restored, "t")
+        loaded = json.loads(self.cli("primary-index-load", restored, "t").stdout)
+        require(loaded["entries"] == before["rows"], "restored private cache loads")
         require(
             self.cli("restore", archive, restored, ok=False).returncode != 0,
             "restore does not clobber",
@@ -416,6 +429,12 @@ class Probe:
             "restored database accepts new writes",
         )
         self.cli("compact", source)
+        source_cache = json.loads(self.cli("primary-index-load", source, "t").stdout)
+        require(source_cache["entries"] == before["rows"], "compaction preserves cache")
+        require(
+            self.cli("primary-index-load", restored, "t", ok=False).returncode != 0,
+            "restored mutation retires the old optional cache",
+        )
         index = "/var/lib/emilybase/standalone-index"
         self.cli("index-create", index)
         self.cli("index-insert", index, '{"type":"integer","value":7}', "10", "3")

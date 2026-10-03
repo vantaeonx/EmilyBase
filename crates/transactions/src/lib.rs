@@ -1,6 +1,9 @@
 //! Serialized table transactions backed by the mandatory authoritative redo log.
 mod compaction;
 mod database;
+mod index_cache;
+#[cfg(test)]
+mod index_cache_tests;
 mod index_image;
 mod location;
 mod ownership;
@@ -60,6 +63,12 @@ pub fn recover_image(
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("invalid primary index cache: {0}")]
+    IndexCache(&'static str),
+    #[error(
+        "optional index cache was published but directory sync is uncertain; inspect it before retrying"
+    )]
+    CachePublicationUnknown(#[source] std::io::Error),
     #[error("invalid table index image: {0}")]
     IndexImage(&'static str),
     #[error(transparent)]

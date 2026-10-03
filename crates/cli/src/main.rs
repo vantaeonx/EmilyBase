@@ -20,6 +20,10 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Save a private optional primary-tree image in the managed directory.
+    PrimaryIndexSave { path: PathBuf, table: String },
+    /// Explicitly verify and load the optional image; absence prints null.
+    PrimaryIndexLoad { path: PathBuf, table: String },
     /// Inspect the derived managed primary-key B+ tree without persisting index pages.
     PrimaryIndexInfo { path: PathBuf, table: String },
     /// Inspect an experimental row-image location bound to a managed database identity.
@@ -171,6 +175,20 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::PrimaryIndexSave { path, table } => {
+            let database = emilybase_transactions::Database::open(path)?;
+            println!(
+                "{}",
+                serde_json::to_string(&database.save_primary_index_cache(&table)?)?
+            );
+        }
+        Command::PrimaryIndexLoad { path, table } => {
+            let mut database = emilybase_transactions::Database::open(path)?;
+            println!(
+                "{}",
+                serde_json::to_string(&database.load_primary_index_cache(&table)?)?
+            );
+        }
         Command::PrimaryIndexInfo { path, table } => {
             let database = emilybase_transactions::Database::open(path)?;
             println!(

@@ -98,10 +98,19 @@ Explicit EBTI primary-tree images bind persistent database/table identity,
 acknowledged transaction and exact relational history. Full live-key/pointer
 verification precedes derived-cell installation. Foreign, stale and structurally
 valid forged projections are rejected; capacity, generated mutation/replay and
-both-WAL verified restore checks execute. Private filesystem publication and
-automatic optional-cache adoption remain pending, along with durable table/index
+both-WAL verified restore checks execute. Explicit private filesystem publication
+and load now pass process-kill/sync/path/concurrent-writer/CLI/restore checks.
+Automatic optional-cache adoption remains pending, along with durable table/index
 WAL allocation. See [image format](table-index-image-format.md) and
 [ADR 0023](adr/0023-bound-primary-tree-images.md).
+
+Optional primary-ID.table-index files publish under existing database ownership
+with descriptor-relative staging/rename/cleanup and private bounded reads. Eight
+kill boundaries, eight sync-failure cases, two competing processes, generated
+save/load/reopen histories and actual compiled container commands execute.
+Cache errors leave the relational journal usable; backup omits these files.
+Orphan cleanup, automatic adoption/refresh and table/index WAL remain open. See
+[ADR 0024](adr/0024-private-primary-cache-files.md).
 
 ## Implemented first increment
 

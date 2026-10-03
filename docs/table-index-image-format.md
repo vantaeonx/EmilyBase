@@ -1,8 +1,8 @@
 # Bound primary-tree images (EBTI version 1)
 
 Experimental optional derived-cache images. The committed relational WAL remains
-authoritative. The current library exports/verifies/loads bytes; it neither
-publishes a sidecar nor automatically loads one during database recovery.
+authoritative. The library exports/verifies/loads bytes and now provides explicit
+private sidecar save/load; it does not automatically load one during recovery.
 Existing database, page, catalog, WAL and backup bytes do not change.
 
 All integers are unsigned little-endian. The outer header is exactly 128 bytes.
@@ -61,5 +61,27 @@ Future history vacuuming may invalidate these optional images.
 
 The pure Snapshot export/verify/install APIs validate the row projection but have
 no persistent identity binding. Managed callers use the Database wrapper. No
-filesystem cache adoption, independent index commit/root record, secondary-index
+automatic cache adoption, independent index commit/root record, secondary-index
 DDL or recovery performance claim is included. See [ADR 0023](adr/0023-bound-primary-tree-images.md).
+
+## Explicit private cache files
+
+`save_primary_index_cache` writes primary-ID.table-index under the existing owned
+database directory. Only a 0700 matching directory and 0600 regular single-link
+cache are accepted. Bounded reads open relative to the pinned directory with
+NOFOLLOW/NONBLOCK, so a symlink/FIFO cannot redirect/block parsing. Stage, fsync,
+exact reread, atomic rename and directory fsync precede success. Initial publication
+uses NOREPLACE; replacing requires an intact same-database/table image, which may
+be stale. Damaged/foreign files are refused and preserved.
+
+`load_primary_index_cache` returns None for absence or applies complete binding/
+live-row validation. Errors leave relational data usable. A post-rename directory
+sync failure has a distinct unknown cache-publication result; it does not change
+table commit semantics. Staging leftovers and retired-table files are never loaded
+automatically. Backups intentionally omit all disposable cache files.
+
+`primary-index-save PATH TABLE` and `primary-index-load PATH TABLE` expose the
+protocol through the CLI. The second prints null for absence. Neither command
+prints row keys or writes WAL. Recovery and ordinary SQL remain functional if an
+optional cache is damaged; a trusted operator can remove that private cache file
+and explicitly save a new one. See [ADR 0024](adr/0024-private-primary-cache-files.md).

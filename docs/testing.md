@@ -804,3 +804,36 @@ blank/comment-only lines), 1207 SDK and 664 Python; 28190 combined source lines,
 including tests. Images are explicit private library artifacts, not automatic
 sidecars or independently durable table/WAL participants. Broader recovery,
 load/security, format stability and production gates remain open.
+
+## Explicit private primary-cache publication: executed increment
+
+On 2026-10-03, all 393 main tests pass, with twelve subprocess helpers excluded.
+Workspace/fuzz format and warning-denied Clippy, locked workspace build and Python
+probe lint/format pass. Eleven new tests exercise explicit save/load, absence,
+stale refresh, private permissions, damaged/foreign/oversized-file preservation,
+symlink/hardlink/directory/FIFO denial, moved-root refusal after staging, and cleanup
+through the original owner. FIFO tests return without waiting for a writer.
+
+Eight actual process kills cover file sync, rename, directory sync and cache ACK
+for creation and replacement. Every acknowledged relational row survives; active
+cache files remain absent/old or complete new images, and staging is never adopted.
+Eight before/after file/directory sync failures preserve WAL and permit later table
+commits; post-rename uncertainty uses a distinct optional-cache error. Two actual
+competing processes commit twenty rows and publish the final complete cache under
+the existing database owner. A 24-case independent committed model covers cache
+save/load/reopen with updates, deletes, rollback, rejected writes and no-op commits.
+
+Compiled CLI checks exercise count-only responses, stale refresh, traversal-name
+denial, damaged-output preservation/redaction and unchanged WAL. Both-version
+verified backups omit disposable damaged sidecars; restore reconstructs correct
+rows and can save/load fresh caches. The rebuilt release container runs the same
+new save/load/backup-omission/stale/compaction checks together with its SDK, restart,
+writer kill, corruption isolation and log-redaction campaign. Its first new probe
+comparison mistakenly compared bytes with a string; JSON decoding repairs that
+test, and the complete campaign is rerun against the same rebuilt Rust image.
+
+The increment adds 1011 physical Rust lines and 19 Python lines (net 1030 source).
+Totals: 27330 Rust (26048 excluding blank/comment-only lines), 1207 SDK and 683
+Python; 29220 source lines including tests. No parser or stored image format changes;
+the existing EBTI ASan target remains the decoder campaign. Automatic adoption/
+refresh, orphan housekeeping, durable table-index WAL and production gates stay open.

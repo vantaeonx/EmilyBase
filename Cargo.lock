@@ -392,6 +392,7 @@ dependencies = [
  "emilybase-wal",
  "getrandom 0.3.4",
  "proptest",
+ "rustix",
  "serde",
  "sha2",
  "tempfile",

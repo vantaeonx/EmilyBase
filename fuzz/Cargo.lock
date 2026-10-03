@@ -273,6 +273,7 @@ dependencies = [
  "emilybase-storage",
  "emilybase-wal",
  "getrandom 0.3.4",
+ "rustix",
  "serde",
  "sha2",
  "thiserror",

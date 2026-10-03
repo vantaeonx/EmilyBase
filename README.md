@@ -52,9 +52,16 @@ other predicates retain their existing paths. See [ADR 0022](docs/adr/0022-integ
 Explicit bound primary-tree images now validate persistent database/table identity,
 acknowledged transaction, exact relational history and every eligible live pointer
 before installing a derived cache. Checkpoint, compaction and verified restore
-preserve matching images. The library writes no sidecar and recovery still
-reconstructs caches. See [image format](docs/table-index-image-format.md) and
+preserve matching images. Explicit private sidecar publication/load is available;
+default recovery still reconstructs caches. See [image format](docs/table-index-image-format.md) and
 [ADR 0023](docs/adr/0023-bound-primary-tree-images.md).
+
+`primary-index-save PATH TABLE` atomically writes a private optional cache;
+`primary-index-load PATH TABLE` explicitly verifies and loads it (null if absent).
+Publication holds database ownership and uses descriptor-relative operations,
+file/directory sync and no-clobber creation. Damaged/stale images cannot install;
+cache failures leave confirmed table data usable. Both commands print only counts
+and identifiers. Backups omit disposable sidecars. See [ADR 0024](docs/adr/0024-private-primary-cache-files.md).
 
 Validated live row-image locations now bind table/key to an actual slotted-page
 position and event fingerprint. Managed locations also bind the persistent
