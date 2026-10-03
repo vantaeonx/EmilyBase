@@ -34,7 +34,7 @@ pub(crate) fn checkpoint(boundary: &str) {
         }
     }
 }
-fn inject(boundary: &'static str) {
+pub(crate) fn inject(boundary: &'static str) {
     FAULT.with_borrow_mut(|value| *value = Some(boundary));
 }
 fn seed(path: &Path) -> (String, String) {

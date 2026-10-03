@@ -73,5 +73,8 @@ After publication uncertainty, inspect the destination before retrying.
 
 This backs up the currently implemented project registry. Unrelated standalone
 indexes and future objects/user-session components require separate formats.
-Archive version 1 remains experimental. Wider crash/fault, physical-power-loss,
-streaming, encryption, upgrade and security/load acceptance remain open.
+Archive version 1 remains experimental. Twelve actual process kills, fourteen
+before/after sync failures, synchronized competing restorers, a 24-case independent
+cross-project model, real 128-project capacity and restored binary/container HTTP
+checks execute. Wider failing-media/crash campaigns, physical-power-loss, streaming,
+encryption, upgrade and security/load acceptance remain open.

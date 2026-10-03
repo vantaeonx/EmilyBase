@@ -429,3 +429,255 @@ fn corrupt_optional_checkpoint_is_ignored_by_http_and_replaced_only_by_explicit_
         b"damaged cache"
     );
 }
+
+#[test]
+fn restored_registry_serves_real_http_with_preserved_keys_and_independent_rotation_and_writes() {
+    let _serial = PROCESS_TESTS.lock().unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("source");
+    let mut store = ProjectStore::open(&root).unwrap();
+    let first = store.create("synthetic restored HTTP first").unwrap();
+    let second = store.create("synthetic restored HTTP second").unwrap();
+    for (project, value) in [(&first, 7), (&second, 13)] {
+        store
+            .authorize(&project.project.id, &project.api_key)
+            .unwrap()
+            .execute(
+                "CREATE TABLE t(id INT PRIMARY KEY,v INT); INSERT INTO t VALUES(1,$1)",
+                &[Value::Integer(value)],
+            )
+            .unwrap();
+    }
+    drop(store);
+    Database::open(root.join(&second.project.id).join("data"))
+        .unwrap()
+        .compact()
+        .unwrap();
+    let source_master = issue_key().unwrap();
+    let source = support::Server::start(&root, &source_master);
+    assert!(matches!(
+        ProjectStore::open_existing(&root),
+        Err(Error::Busy)
+    ));
+    let rotation = format!("/v1/projects/{}/keys/rotate", first.project.id);
+    let (status, rotated) = support::call(
+        source.address,
+        "POST",
+        &rotation,
+        &source_master,
+        &json!({}),
+    )
+    .unwrap();
+    assert_eq!(status, 200);
+    let first_key = rotated["api_key"].as_str().unwrap().to_owned();
+    assert_eq!(rotated["project"]["key_epoch"], 2);
+    let paths = [
+        format!("/v1/projects/{}/sql", first.project.id),
+        format!("/v1/projects/{}/sql", second.project.id),
+    ];
+    let keys = [&first_key, &second.api_key];
+    for (path, key) in paths.iter().zip(keys) {
+        let (status, rolled) = support::call(
+            source.address,
+            "POST",
+            path,
+            key,
+            &json!({"sql":"BEGIN; INSERT INTO t VALUES(777,1); ROLLBACK"}),
+        )
+        .unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(rolled["committed"], false);
+        let (status, _) = support::call(
+            source.address,
+            "POST",
+            path,
+            key,
+            &json!({"sql":"INSERT INTO t VALUES(778,1); INSERT INTO t VALUES(778,2)"}),
+        )
+        .unwrap();
+        assert_eq!(status, 400);
+    }
+    let mut expected = Vec::new();
+    for (path, key) in paths.iter().zip(keys) {
+        let (status, report) = support::call(
+            source.address,
+            "POST",
+            path,
+            key,
+            &json!({"sql":"SELECT * FROM t ORDER BY id"}),
+        )
+        .unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["transaction"], 2);
+        expected.push(report);
+    }
+    let source_log = source.stop();
+    let mut source_store = ProjectStore::open_existing(&root).unwrap();
+    let source_image = source_store.backup_image().unwrap();
+    let archive = temp.path().join("registry.backup");
+    source_store.backup(&archive).unwrap();
+    drop(source_store);
+    let restored_root = temp.path().join("restored");
+    emilybase_server::restore_registry_backup(&archive, &restored_root).unwrap();
+    let restored_master = issue_key().unwrap();
+    let restored = support::Server::start(&restored_root, &restored_master);
+    let source = support::Server::start(&root, &source_master);
+    assert_eq!(
+        support::call(
+            restored.address,
+            "GET",
+            "/v1/projects",
+            &source_master,
+            &json!({})
+        )
+        .unwrap()
+        .0,
+        401
+    );
+    let (status, listed) = support::call(
+        restored.address,
+        "GET",
+        "/v1/projects",
+        &restored_master,
+        &json!({}),
+    )
+    .unwrap();
+    assert_eq!(status, 200);
+    assert_eq!(listed.as_array().unwrap().len(), 2);
+    assert_eq!(
+        support::call(
+            restored.address,
+            "POST",
+            &paths[0],
+            &first.api_key,
+            &json!({"sql":"SELECT * FROM t"})
+        )
+        .unwrap()
+        .0,
+        401
+    );
+    for ((path, key), expected) in paths.iter().zip(keys).zip(&expected) {
+        let (status, report) = support::call(
+            restored.address,
+            "POST",
+            path,
+            key,
+            &json!({"sql":"SELECT * FROM t ORDER BY id"}),
+        )
+        .unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(&report, expected);
+    }
+    assert_eq!(
+        support::call(
+            restored.address,
+            "POST",
+            &paths[0],
+            &second.api_key,
+            &json!({"sql":"SELECT * FROM t"})
+        )
+        .unwrap()
+        .0,
+        401
+    );
+    let (status, copy_rotated) = support::call(
+        restored.address,
+        "POST",
+        &rotation,
+        &restored_master,
+        &json!({}),
+    )
+    .unwrap();
+    assert_eq!(status, 200);
+    assert_eq!(copy_rotated["project"]["key_epoch"], 3);
+    let copy_key = copy_rotated["api_key"].as_str().unwrap();
+    assert_eq!(
+        support::call(
+            restored.address,
+            "POST",
+            &paths[0],
+            &first_key,
+            &json!({"sql":"SELECT * FROM t"})
+        )
+        .unwrap()
+        .0,
+        401
+    );
+    assert_eq!(
+        support::call(
+            source.address,
+            "POST",
+            &paths[0],
+            copy_key,
+            &json!({"sql":"SELECT * FROM t"})
+        )
+        .unwrap()
+        .0,
+        401
+    );
+    let (status, write) = support::call(
+        restored.address,
+        "POST",
+        &paths[0],
+        copy_key,
+        &json!({"sql":"INSERT INTO t VALUES(2,31)"}),
+    )
+    .unwrap();
+    assert_eq!(status, 200);
+    assert_eq!(write["transaction"], 3);
+    for ((path, key), expected) in paths.iter().zip(keys).zip(&expected) {
+        let (status, report) = support::call(
+            source.address,
+            "POST",
+            path,
+            key,
+            &json!({"sql":"SELECT * FROM t ORDER BY id"}),
+        )
+        .unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(&report, expected);
+    }
+    let copied_log = restored.kill(); // A received response on restored data must survive too.
+    let resumed = ProjectStore::open_existing(&restored_root).unwrap();
+    let state = resumed
+        .authorize(&first.project.id, copy_key)
+        .unwrap()
+        .status()
+        .unwrap();
+    assert_eq!(state.transaction, 3);
+    assert_eq!(state.rows, 2);
+    assert_eq!(
+        resumed
+            .list()
+            .unwrap()
+            .iter()
+            .find(|p| p.id == first.project.id)
+            .unwrap()
+            .key_epoch,
+        3
+    );
+    drop(resumed);
+    let restarted_source_log = source.stop();
+    assert_eq!(
+        ProjectStore::open_existing(&root)
+            .unwrap()
+            .backup_image()
+            .unwrap(),
+        source_image
+    );
+    for log in [&source_log, &copied_log, &restarted_source_log] {
+        for private in [
+            &source_master,
+            &restored_master,
+            &first.project.id,
+            &second.project.id,
+            &first.api_key,
+            &first_key,
+            &second.api_key,
+            copy_key,
+            "INSERT INTO t",
+        ] {
+            assert!(!log.contains(private));
+        }
+    }
+}

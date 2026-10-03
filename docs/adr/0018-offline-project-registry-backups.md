@@ -41,5 +41,6 @@ it is not a streaming/low-memory archive. Operators need memory for these buffer
 and replay. Source staging, unrelated standalone indexes, object files, sessions
 and unimplemented platform components are outside this format. Existing paths are
 never overwritten. Live snapshots, encryption, cross-version conversion, physical
-power-loss, broader security/load and production gates remain open. Process-kill
-and injected-I/O campaigns are separate acceptance work, not implied by this ADR.
+power-loss, broader security/load and production gates remain open. Dedicated
+process-kill/sync-failure, independent model, capacity and restored HTTP/container
+campaigns now execute; broader failing-media acceptance is still separate work.

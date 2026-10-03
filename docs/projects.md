@@ -79,6 +79,8 @@ staging execute. Generated rotation and metadata properties and bounded ASan par
 execute. Actual registry publication kills/sync faults, HTTP master authorization,
 worker/peer limits and local container deployment now execute. A bounded offline
 [whole-registry backup](registry-backup-format.md) preserves current metadata and
-committed histories, with verified no-clobber restore. Wider backup crash/fault,
+committed histories, with verified no-clobber restore. Dedicated backup publication
+kills/sync faults, full-capacity/model and restored HTTP/container checks execute.
+Wider backup crash/fault,
 physical-power-loss, load/security and production acceptance remain pending.
 Use synthetic data only; this is not a production isolation guarantee.

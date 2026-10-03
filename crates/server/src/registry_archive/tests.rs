@@ -343,6 +343,34 @@ fn corrupt_source_or_committed_metadata_never_publishes_an_archive() {
     assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 1);
 }
 
+#[test]
+fn aggregate_physical_wal_bound_refuses_before_opening_oversized_sources() {
+    let _serial = crate::durability::PROCESS_TESTS.blocking_lock();
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("source");
+    let (mut store, credentials) = seed(&root);
+    for (id, _) in &credentials {
+        let path = root.join(id).join("data/redo.wal");
+        std::fs::File::options()
+            .write(true)
+            .open(path)
+            .unwrap()
+            .set_len((MAX_REGISTRY_BACKUP_BYTES / 2) as u64)
+            .unwrap();
+    }
+    let target = temp.path().join("unpublished.backup");
+    assert!(matches!(store.backup(&target), Err(Error::Limit)));
+    assert!(!target.exists());
+    for (id, _) in &credentials {
+        assert_eq!(
+            std::fs::metadata(root.join(id).join("data/redo.wal"))
+                .unwrap()
+                .len(),
+            (MAX_REGISTRY_BACKUP_BYTES / 2) as u64
+        );
+    }
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(64))]
     #[test]

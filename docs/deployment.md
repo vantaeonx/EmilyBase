@@ -76,8 +76,8 @@ Replace the example query with a known synthetic table. Existing archives and
 restore destinations are preserved; choose a new name for the next backup.
 The restored database is a separate offline managed directory. It is not
 automatically adopted as a project. Archives contain plaintext committed WAL,
-not project names/key metadata or an administrator secret. Full-platform
-backup/restore is still pending. An archive kept only in the source volume
+not project names/key metadata or an administrator secret. The separate
+whole-registry format below includes project names/key digests. An archive kept only in the source volume
 does not protect against loss of that volume: copy it to private independent
 storage and verify the copy using the CLI. No real data is authorized yet.
 
@@ -85,6 +85,39 @@ Do not put backup archives or restored directories under the registry's `project
 root: unknown registry entries correctly prevent startup. Do not copy a live WAL
 as a backup. Do not replace existing project files with restored data manually.
 See [backup verification and limits](backup-format.md).
+
+## Whole-registry backup and independent restore
+
+Stop the server. These commands preserve current project IDs, names, rotated key
+digests/epochs and every committed database history. They never overwrite paths:
+
+```sh
+docker compose stop
+docker compose run --rm --no-deps --entrypoint emilybase server \
+  projects-backup /var/lib/emilybase/projects /var/lib/emilybase/registry.backup
+docker compose run --rm --no-deps --entrypoint emilybase server \
+  projects-backup-verify /var/lib/emilybase/registry.backup
+docker compose run --rm --no-deps --entrypoint emilybase server \
+  projects-restore /var/lib/emilybase/registry.backup /var/lib/emilybase/restored-projects
+```
+
+For a disposable check, serve the independent registry while the original server
+remains stopped. The Compose environment supplies the external master credential:
+
+```sh
+docker compose run --rm --service-ports \
+  --env EMILYBASE_DATA_DIR=/var/lib/emilybase/restored-projects server
+```
+
+Check the scoped HTTP queries with privately retained current project keys.
+Restored credentials remain valid until rotated; administrator rotation on a copy
+does not change the original. Exit the temporary server, then use `docker compose
+up --detach --wait` to resume the original registry. The real container probe
+executes this restored-service check. Copy/verify archives on independent private
+storage; a backup in the original volume alone cannot survive that volume's loss.
+See [archive format and limits](registry-backup-format.md). Future object/session
+storage, unrelated standalone indexes, streaming/encryption and stable upgrades
+remain outside this currently implemented registry backup.
 
 ## Image replacement and compatibility
 
@@ -129,6 +162,8 @@ independent replay/restore, no-clobber destinations, new restored writes, WAL-2
 compaction and same-volume container recreation run through the actual CLI.
 The compiled standalone index CLI also creates, inserts, reads, deletes and verifies
 a separate synthetic index; table/WAL index integration remains pending.
+Whole-registry archive/verify/restore and an independently served copy also check
+retained scoped credentials, isolated rows and new writes without modifying source.
 
 A real SIGKILL writer check restores every fully received SQL response and a
 gapless whole-script prefix. Complete commits whose responses were lost may also
@@ -140,5 +175,5 @@ It respects `DOCKER_HOST`, `DOCKER_CONFIG` and optional `EMILYBASE_DOCKER`.
 For the already installed/compiled project SDK, add `--sdk`; `--no-build` reuses
 `emilybase:local`. The SDK's native-process restart case is skipped in external
 container mode; the Python probe owns and verifies container restart itself.
-No browser UI, TLS, load test, platform backup, physical power-loss experiment
+No browser UI, TLS, load test, future platform-object backup, physical power-loss experiment
 or full security audit is implied by these checks.

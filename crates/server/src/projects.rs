@@ -145,6 +145,8 @@ impl ProjectStore {
         for id in self.projects.keys() {
             databases.push(Database::open(self.root.join(id).join("data"))?);
         }
+        #[cfg(test)]
+        crate::durability::checkpoint("registry_capture_owners_locked");
         let mut bytes = vec![0; crate::registry_archive::HEADER];
         for ((_, project), database) in self.projects.iter().zip(&mut databases) {
             let archive = emilybase_backup::encode(&database.committed_wal()?)?;

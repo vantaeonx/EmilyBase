@@ -153,6 +153,64 @@ class Probe:
         self.compose(*args, timeout=160)
         require(self.request("/health") == {"status": "experimental"}, "liveness")
 
+    def restored_server(self, directory, first, second, expected, before, sibling):
+        phase(
+            "Serve restored projects with preserved credentials and independent writes"
+        )
+        container = (
+            self.compose(
+                "run",
+                "--detach",
+                "--rm",
+                "--service-ports",
+                "--env",
+                "EMILYBASE_DATA_DIR=" + directory,
+                "server",
+            )
+            .stdout.decode()
+            .strip()
+        )
+        require(
+            bool(re.fullmatch("[0-9a-f]{64}", container)), "restored container identity"
+        )
+        try:
+            deadline = time.monotonic() + 30
+            while True:
+                try:
+                    health = self.request("/health")
+                    require(health == {"status": "experimental"}, "restored liveness")
+                    break
+                except (OSError, CheckFailed):
+                    require(time.monotonic() < deadline, "restored startup deadline")
+                    time.sleep(0.1)
+            require(
+                self.status(first) == before, "restored first project scope and counts"
+            )
+            require(
+                self.status(second) == sibling,
+                "restored second project scope and counts",
+            )
+            require(
+                self.sql(first, "SELECT * FROM t ORDER BY id")["results"][0]
+                == expected,
+                "restored container rows",
+            )
+            self.request(f"/v1/projects/{first[0]}/status", second[1], expected=401)
+            changed = self.sql(
+                first, "INSERT INTO t VALUES(99,'restored-registry-only')"
+            )
+            require(
+                changed["transaction"] == before["transaction"] + 1,
+                "restored container accepts independent commits",
+            )
+            logs = self.docker_run("logs", container).stdout.decode(errors="replace")
+            require(
+                all(secret not in logs for secret in self.private),
+                "restored container log redaction",
+            )
+        finally:
+            self.docker_run("stop", "--time", "30", container)
+
     def stop(self):
         self.compose("stop", "--timeout", "30")
 
@@ -371,6 +429,7 @@ class Probe:
                 len(restored_result["results"][0]["rows"]) == status["rows"],
                 "registry copy preserves isolated rows",
             )
+        self.restored_server(registry_copy, first, second, expected, before, sibling)
         self.up(recreate=True)
         require(
             self.status(first) == before,

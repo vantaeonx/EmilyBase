@@ -96,7 +96,7 @@ fixture keys stay in disposable 0600 files and are never printed or committed.
 | Rootless cgroup-v2 runtime limits | actual memory/CPU/process controller files match configuration | live container inspection |
 
 Same-revision recreation is not a future-format upgrade acceptance test. The probe
-deletes only its randomly named synthetic resources. Complete registry backup,
+deletes only its randomly named synthetic resources. Future platform-object backups,
 physical power loss, security and wider load campaigns remain open.
 
 ## Standalone index snapshot publication
@@ -114,3 +114,24 @@ physical power loss, security and wider load campaigns remain open.
 
 The publisher is independent of table/WAL transactions. No integrated durable
 index, hardware power-loss or concurrent-reader acceptance gate closes.
+
+## Whole-registry archives and independent restored service
+
+| Boundary | Observed result | Check |
+| --- | --- | --- |
+| All source owners acquired, killed | no archive; source exact; every owner released | two controlled kills including ownership probe |
+| Archive file synced, killed | final archive absent; staging not adopted | process kill |
+| Archive renamed/parent synced/returned ACK, killed | exact complete archive and usable independent restore | three process kills |
+| Restore WAL/project/staging synced, killed | final registry absent; fresh restore still works | three process kills |
+| Restore renamed/parent synced/returned ACK, killed | complete scopes/epochs/IDs and later writes | three process kills |
+| Fourteen before/after sync failures | unchanged output or explicitly unknown complete publication | injected real-sync matrix |
+| Two synchronized process restorers | exactly one complete winner | subprocess race |
+| Generated cross-project changes/rotation/compaction/rollback/cache damage | repeated restored prefixes equal independent model | 24-case property |
+| Actual 128-project source | all keys restored; project 129 refuses | capacity integration |
+| Oversized aggregate sparse WALs | refusal before engine opens; no archive | aggregate-boundary case |
+| Real restored HTTP with a separate external master | scoped rows/rotation/writes; original exact; restored ACK survives kill | binary/TCP integration |
+| Actual release container serving the registry copy | retained credentials, isolated rows and independent writes | real Compose probe |
+
+These checks cover the current registry, including plaintext metadata/digests and
+mandatory histories. Unimplemented object/session services and unrelated standalone
+indexes are outside the archive; broad failing-media and production gates remain open.

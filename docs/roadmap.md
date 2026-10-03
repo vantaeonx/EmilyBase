@@ -159,6 +159,8 @@ Private no-clobber archive publication and whole-registry verified restore are
 implemented through the CLI. Basic corruption, identity, format/bounds, ownership,
 rejected-output preservation, properties and binary checks execute. This covers
 the current registry, not unimplemented object/session services or unrelated
-standalone indexes. Dedicated publication kills/injected faults and wider backup,
-power-loss, security/load and stable-release acceptance remain open.
+standalone indexes. Dedicated publication kills/injected sync failures, synchronized
+restorers, generated cross-project histories, real capacity and restored binary/
+container HTTP checks now execute. Wider failing-media/backup, power-loss,
+security/load and stable-release acceptance remain open.
 See [format](registry-backup-format.md) and [ADR 0018](adr/0018-offline-project-registry-backups.md).

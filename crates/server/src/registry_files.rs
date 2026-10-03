@@ -142,9 +142,15 @@ fn rename(source: &Path, target: &Path) -> Result<()> {
 fn sync(file: &File, _boundary: &str) -> std::io::Result<()> {
     #[cfg(test)]
     crate::durability::fail(_boundary)?;
-    file.sync_all()
+    file.sync_all()?;
+    #[cfg(test)]
+    crate::durability::fail(&format!("{_boundary}_after"))?;
+    Ok(())
 }
 fn checkpoint(_boundary: &str) {
     #[cfg(test)]
     crate::durability::checkpoint(_boundary);
 }
+
+#[cfg(test)]
+mod tests;

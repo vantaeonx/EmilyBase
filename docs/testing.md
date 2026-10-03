@@ -623,3 +623,36 @@ Python; combined 22815. Documents, configuration, locks, private fuzz corpora,
 dependencies and generated artifacts are excluded. The archive captures only the
 currently implemented registry; future objects/sessions and unrelated standalone
 indexes are outside its scope. No production readiness is claimed.
+
+## Registry backup publication and restored service: executed campaign
+
+On 2026-10-03, format, warning-denied workspace/fuzz Clippy, locked build and all
+324 main tests pass. Eleven ignored subprocess helpers are invoked by parents
+and excluded from that count. This block adds 909 physical Rust lines, removes
+two (net 907), and adds 59 Python lines; net source growth is 966. Totals: 21955
+Rust (20856 without blanks/comment-only lines), 1189 SDK, 637 Python; 23781 combined.
+
+Twelve real process kills cover acquisition of all source owners, archive file
+sync/rename/parent sync/returned ACK, and restore WAL/project/staging sync/rename/
+parent sync/returned ACK. Sources and archive bytes remain exact. Unpublished
+staging is never adopted; published registries reopen with scopes/epochs/IDs and
+accept subsequent commits. Fourteen before/after real sync failures distinguish
+unchanged output from a reported unknown complete publication. A paused capture
+excludes every direct database owner together; killing it releases all owners.
+Two synchronized subprocess restorers publish exactly one complete destination.
+
+A 24-case independent three-project model generates upserts, deletes, failed
+scripts, rollback, key rotation, WAL compaction and damaged optional caches.
+Repeated prefix backups/restores match model rows, transactions, WAL versions and
+epochs. Restored rotation/writes preserve the original registry. An actual
+128-project archive restores all scopes and refuses project 129; an aggregate
+sparse-file boundary refuses before opening oversized WALs.
+
+Real source/restored server binaries verify preserved/retired/cross-project keys,
+external master credentials, HTTP rows, independent rotation/writes, log redaction
+and acknowledged restored writes surviving SIGKILL. The rebuilt release Docker
+probe additionally serves the restored registry through its actual HTTP server
+with retained scoped credentials and independent writes; all existing SDK,
+container restart/crash/corruption checks pass. The parser is unchanged from its
+recorded 1111844-run ASan smoke. Broader failing media, physical power loss,
+encryption/streaming, stable upgrades, load/security and production gates stay open.
