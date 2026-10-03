@@ -25,7 +25,8 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
-4. Extend SQL semantic/crash/budget checks and execution fuzzing before the server.
+4. Add the isolated-project server with strict authorization, bounded worker calls
+   and synthetic-data-only deployment; continue wider recovery/query campaigns.
 
 ## SQL parser increment
 
@@ -35,6 +36,9 @@ literal/identifier/parameter and expression-depth bounds, without echoing input.
 Two 64-case properties and bounded ASan fuzzing execute. Schema-resolved plans,
 bounded scans/joins, null logic, atomic script execution and CLI now follow the
 parser. A separate 32-case CRUD/reopen model exercises committed SQL batches.
+Dedicated SQL writer kills, backup/restore for both WAL versions, actual row/memory
+bounds and execution ASan checks now run. Two 48-case read/join models verify
+projection, null ordering, filtering and limits against independent rows.
 Durable index integration and wider query gates remain open. See [SQL grammar](sql.md) and
 [ADR 0011](adr/0011-bounded-sql.md).
 

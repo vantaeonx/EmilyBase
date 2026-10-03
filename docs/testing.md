@@ -342,3 +342,44 @@ Parser code is unchanged from its recorded ASan smoke run. New executor modules
 compile under the fuzz manifest but do not yet have an execution fuzz campaign.
 Retained-output budget boundaries, dedicated SQL process-kill/backup tests and
 wider semantic/fault checks follow; durable index and production gates remain open.
+
+## SQL recovery, real budgets and read execution: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 234 main
+tests passed; eight subprocess helpers are invoked by their parents and excluded
+from that count. This increment adds 973 physical Rust lines and replaces/removes
+22, a net increase of 951. Total: 15100 physical Rust lines, or 14213 excluding
+blank/comment-only lines. Database/WAL/index codecs are unchanged.
+
+Fifteen new tests include six SQL writer kills at ACK thresholds 5/20/60, across
+both WAL versions. Each recovered script's insert and update remain atomic, all
+received ACKs survive, committed IDs form a complete prefix and new writes work.
+Complete commits with an unreceived response may also survive; this is not evidence
+of uncommitted data. A separate post-rollback kill preserves exact WAL bytes and
+the original rows. These subprocess tests do not simulate physical power loss.
+
+SQL-created Unicode text keys, booleans, floating point, bytes, NULLs and rollback
+state survive independently verified backups/restores from both WAL versions.
+Restored copies accept new SQL commits without changing the source. Actual 2800
+maximum-text rows exceed intermediate/shared-output byte budgets; prior staged
+writes roll back. A 101x101 join reaches the real intermediate-row cap. Boundary
+256-event scripts succeed, while an additional event discards the whole script.
+
+A regression first reproduced a work-limit failure for 64 key-targeted writes on
+a 6000-row table. UPDATE/DELETE now reuse primary-key equality lookup, preserving
+the complete predicate check without scanning unrelated rows. Predicate evaluation
+borrows validated values. Pure snapshot SELECT rejects writes/control/multiple
+statements and preserves detached pages after later committed writes.
+
+Two 48-case properties independently model generated filtering/projection/null
+sorting/limits and self-join pairs. Additional tests cover every catalog type,
+strict coercion refusal, parameter/row bounds, maximum 3072-byte text primary keys,
+nonfirst primary-key columns, named inserts and fresh table IDs after committed
+drop/recreate versus rolled-back/failed DDL.
+
+The new `sql_execution` AddressSanitizer smoke run completed 195618 executions in
+16 seconds (configured 15 seconds), without a crash. It evaluates raw seeded SQL
+on fixed validated synthetic snapshots and compares generated parameterized range
+queries with an independent numeric model. No filesystem writes occur in this
+target. Wider fault/crash/fuzz campaigns, durable index integration, server/project
+authorization and production gates remain open.

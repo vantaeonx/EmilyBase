@@ -148,7 +148,7 @@ impl Plan {
     }
 }
 
-fn primary_key(predicate: &Predicate, primary: usize) -> Option<Key> {
+pub(crate) fn primary_key(predicate: &Predicate, primary: usize) -> Option<Key> {
     match predicate {
         Predicate::Compare(BoundOperand::Column(i), Compare::Eq, BoundOperand::Value(v))
         | Predicate::Compare(BoundOperand::Value(v), Compare::Eq, BoundOperand::Column(i))

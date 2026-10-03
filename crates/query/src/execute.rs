@@ -1,5 +1,5 @@
 use crate::ast::*;
-use crate::plan::{Layout, Plan};
+use crate::plan::{Layout, Plan, primary_key};
 use crate::predicate::{Predicate, bind};
 use crate::{MAX_PARAMETERS, parse};
 use emilybase_catalog::{Column, Key, Row, Schema, Value};
@@ -34,7 +34,7 @@ pub enum ExecutionError {
     #[error("duplicate columns or unsupported primary-key assignment")]
     Assignment,
 }
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, PartialEq, serde::Serialize)]
 pub struct ResultSet {
     pub columns: Vec<String>,
     pub rows: Vec<Row>,
@@ -131,6 +131,26 @@ pub fn execute(database: &mut Database, sql: &str, parameters: &[Value]) -> RunR
     })
 }
 
+/// Evaluate exactly one SELECT on a validated snapshot, without locks, files or mutations.
+/// The caller determines whether the snapshot is committed or detached staged state.
+pub fn query(
+    snapshot: &emilybase_database::Snapshot,
+    sql: &str,
+    parameters: &[Value],
+) -> RunResult<ResultSet> {
+    validate_parameters(parameters)?;
+    let statements = parse(sql)?;
+    let [Statement::Select(select)] = statements.as_slice() else {
+        return Err(ExecutionError::Control);
+    };
+    let mut budget = Budget { work: 0, output: 0 };
+    crate::select::run(
+        snapshot,
+        Plan::compile(snapshot, select, parameters)?,
+        &mut budget,
+    )
+}
+
 fn indices(schema: &Schema, names: &[String]) -> RunResult<Vec<usize>> {
     let mut used = std::collections::BTreeSet::new();
     let mut positions = Vec::new();
@@ -176,15 +196,19 @@ fn matching(
         .map(|e| Predicate::compile(e, &layout, parameters))
         .transpose()?;
     let mut matching = Vec::new();
-    for row in snapshot.scan(table, MAX_ROWS)? {
+    let key = filter
+        .as_ref()
+        .and_then(|p| primary_key(p, usize::from(schema.primary_key)));
+    let source = match key {
+        Some(key) => snapshot.get(table, &key)?.cloned().into_iter().collect(),
+        None => snapshot.scan(table, MAX_ROWS)?,
+    };
+    for row in source {
         budget.step()?;
-        if filter
-            .as_ref()
-            .map(|p| p.evaluate(&row, budget))
-            .transpose()?
-            .flatten()
-            .unwrap_or(filter.is_none())
-        {
+        if match &filter {
+            None => true,
+            Some(p) => p.evaluate(&row, budget)? == Some(true),
+        } {
             matching.push((schema.key(&row)?, row));
         }
     }

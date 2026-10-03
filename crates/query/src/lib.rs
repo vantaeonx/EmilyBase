@@ -7,7 +7,7 @@ mod plan;
 mod predicate;
 mod select;
 pub use execute::{
-    ExecutionError, MAX_OUTPUT_BYTES, MAX_QUERY_WORK, Report, ResultSet, RunResult, execute,
+    ExecutionError, MAX_OUTPUT_BYTES, MAX_QUERY_WORK, Report, ResultSet, RunResult, execute, query,
 };
 pub use parser::parse;
 pub use plan::{PlanDescription, explain};

@@ -32,6 +32,13 @@ bounded nested loop for one inner join. Work, intermediate rows and retained out
 are capped. Sorting and three-valued null logic are explicit in the SQL document.
 No durable index pages or file-format changes accompany SQL execution.
 
+The same equality-conjunct key extraction serves filtered UPDATE/DELETE, preventing
+repeated point writes from spending work on unrelated rows. Predicates borrow
+validated values. A pure `query` entry point resolves/evaluates exactly one SELECT
+on a supplied validated snapshot; it has no ownership/file effects and cannot
+commit or write. Snapshot provenance belongs to the caller. This is separate
+from the managed script entry point and does not imply shared concurrent file owners.
+
 ## Validation
 
 Deterministic syntax/AST/boundary/secret-echo tests and two 64-case properties

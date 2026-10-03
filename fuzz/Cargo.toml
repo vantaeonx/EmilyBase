@@ -79,3 +79,10 @@ path = "fuzz_targets/sql_parser.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "sql_execution"
+path = "fuzz_targets/sql_execution.rs"
+test = false
+doc = false
+bench = false

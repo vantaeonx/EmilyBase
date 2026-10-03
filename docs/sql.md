@@ -77,10 +77,17 @@ only TRUE passes WHERE/ON, and IS [NOT] NULL is definite. Type errors and unknow
 ambiguous columns are checked even on empty input or LIMIT 0. An alias hides its
 original table qualifier; self joins require distinct aliases.
 
-The planner selects direct primary-key lookup for a usable equality conjunct;
+SELECT and filtered UPDATE/DELETE select direct primary-key lookup for a usable equality conjunct;
 otherwise it scans. Joins use a bounded nested loop. `explain` resolves one SELECT
 without reading rows. These access paths use current table maps; this does not
 enable durable B+ tree pages. Joins with large products can fail their work bound.
+
+The library's `query(snapshot, sql, parameters)` evaluates exactly one SELECT
+without file access or mutations, allowing reads of a detached validated snapshot.
+The caller determines its committed/staged provenance; it is not a commit ACK.
+Write/control/multiple-statement scripts are rejected by this read-only entry point.
+`execute` remains the managed transaction entry point. Predicate evaluation borrows
+validated row/literal values instead of copying their text/blob contents per node.
 
 ```sh
 cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT * FROM items WHERE id=$1' --parameters '[{"type":"integer","value":7}]'

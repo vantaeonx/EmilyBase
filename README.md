@@ -38,6 +38,9 @@ schema-resolved plans and execution through managed WAL transactions: table DDL,
 CRUD, predicates, ordering, limits, one inner join and whole-script transaction
 control. Separate numbered parameters are supported. CLI SQL errors discard the
 entire staged script; commit results follow WAL sync. See [SQL subset](docs/sql.md).
+Dedicated SQL process-kill, both-version backup/restore, actual work/output bounds
+and independent read/join models execute. The pure read API accepts one SELECT
+over a validated snapshot. Wider crash/fault campaigns and durable indexes remain open.
 
 ```sh
 cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT id,title FROM items WHERE id=$1 LIMIT 10' --parameters '[{"type":"integer","value":7}]'

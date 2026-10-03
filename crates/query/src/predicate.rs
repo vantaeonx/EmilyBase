@@ -82,25 +82,25 @@ impl Predicate {
     }
     pub(crate) fn evaluate(&self, row: &Row, budget: &mut Budget) -> RunResult<Option<bool>> {
         budget.step()?;
-        let value = |operand: &BoundOperand| -> RunResult<Value> {
+        fn value<'a>(operand: &'a BoundOperand, row: &'a Row) -> RunResult<&'a Value> {
             match operand {
-                BoundOperand::Value(v) => Ok(v.clone()),
-                BoundOperand::Column(i) => row.get(*i).cloned().ok_or(ExecutionError::Plan),
+                BoundOperand::Value(v) => Ok(v),
+                BoundOperand::Column(i) => row.get(*i).ok_or(ExecutionError::Plan),
             }
-        };
+        }
         Ok(match self {
-            Self::Truth(v) => match value(v)? {
+            Self::Truth(v) => match value(v, row)? {
                 Value::Null => None,
-                Value::Boolean(v) => Some(v),
+                Value::Boolean(v) => Some(*v),
                 _ => return Err(ExecutionError::Type),
             },
-            Self::IsNull(v, negated) => Some(matches!(value(v)?, Value::Null) != *negated),
+            Self::IsNull(v, negated) => Some(matches!(value(v, row)?, Value::Null) != *negated),
             Self::Compare(a, op, b) => {
-                let (a, b) = (value(a)?, value(b)?);
-                if a == Value::Null || b == Value::Null {
+                let (a, b) = (value(a, row)?, value(b, row)?);
+                if a == &Value::Null || b == &Value::Null {
                     None
                 } else {
-                    let order = value_order(&a, &b).ok_or(ExecutionError::Type)?;
+                    let order = value_order(a, b).ok_or(ExecutionError::Type)?;
                     Some(match op {
                         Compare::Eq => order.is_eq(),
                         Compare::Ne => !order.is_eq(),
