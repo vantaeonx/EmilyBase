@@ -38,6 +38,12 @@ pub struct AuthorizedProject {
     gate: Arc<Mutex<()>>,
     _owner: Arc<File>,
 }
+#[derive(serde::Serialize)]
+pub struct ProjectStatus {
+    pub transaction: u64,
+    pub tables: usize,
+    pub rows: usize,
+}
 
 impl ProjectStore {
     pub fn open(root: impl AsRef<Path>) -> Result<Self> {
@@ -205,6 +211,28 @@ impl AuthorizedProject {
         metadata::directory(&self.directory.join("data"))?;
         let mut database = Database::open(self.directory.join("data"))?;
         Ok(emilybase_query::execute(&mut database, sql, parameters)?)
+    }
+    pub fn explain(
+        self,
+        sql: &str,
+        parameters: &[Value],
+    ) -> Result<emilybase_query::PlanDescription> {
+        let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;
+        metadata::directory(&self.directory)?;
+        metadata::directory(&self.directory.join("data"))?;
+        let database = Database::open(self.directory.join("data"))?;
+        Ok(emilybase_query::explain(database.view()?, sql, parameters)?)
+    }
+    pub fn status(self) -> Result<ProjectStatus> {
+        let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;
+        metadata::directory(&self.directory)?;
+        metadata::directory(&self.directory.join("data"))?;
+        let database = Database::open(self.directory.join("data"))?;
+        Ok(ProjectStatus {
+            transaction: database.last_transaction(),
+            tables: database.view()?.schemas().len(),
+            rows: database.view()?.row_count(),
+        })
     }
 }
 fn info(metadata: &Metadata) -> ProjectInfo {

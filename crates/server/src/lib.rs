@@ -1,7 +1,10 @@
-//! Synchronous isolated-project/key registry. HTTP transport follows separately.
+//! Bounded HTTP transport over a synchronous isolated-project/key registry.
+mod http;
 mod metadata;
 mod projects;
-pub use projects::{AuthorizedProject, CreatedProject, ProjectInfo, ProjectStore};
+mod rate;
+pub use http::{router, serve};
+pub use projects::{AuthorizedProject, CreatedProject, ProjectInfo, ProjectStatus, ProjectStore};
 
 /// Pure, bounded inspection without credentials, filesystem operations or data access.
 pub fn inspect_project_metadata(id: &str, bytes: &[u8]) -> Result<ProjectInfo> {
@@ -43,4 +46,8 @@ pub enum Error {
     Query(#[from] emilybase_query::ExecutionError),
     #[error("project filesystem error")]
     Io(#[from] std::io::Error),
+    #[error("HTTP transport failed")]
+    Transport(#[source] std::io::Error),
+    #[error("invalid server configuration: {0}")]
+    Config(&'static str),
 }

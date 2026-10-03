@@ -10,7 +10,7 @@ flowchart TD
   CLI --> Database[Database: table coordination and event replay]
   Database --> Catalog[Catalog: schemas and typed records]
   Database --> Storage
-  HTTP[Future Axum server] --> Query[Bounded SQL parser / planner / executor]
+  HTTP[Axum server: bounded blocking workers] --> Query[Bounded SQL parser / planner / executor]
   CLI --> Query
   Query --> Transactions[Serialized transaction coordinator]
   Transactions --> WAL[Synced full-page WAL]
@@ -18,7 +18,7 @@ flowchart TD
   Query -.-> Index[B+ tree foundation: table integration pending]
   Index --> Storage
   WAL --> Storage
-  HTTP --> Auth[Future authentication and policies]
+  HTTP --> Auth[Scoped API keys: user policies pending]
   HTTP --> Realtime[Future committed-change subscriptions]
   HTTP --> Objects[Future private object storage]
   CLI --> Backup[Verified backup / restore]
@@ -29,7 +29,7 @@ Storage, catalog, database, WAL, transactions, backup, CLI, a separate index and
 the original SQL lexer/parser/planner/executor, isolated project registry and
 scoped API-key primitives are implemented. Add other crates when they contain
 working behavior, instead of declaring an implemented platform with empty modules.
-The future network layer will call the synchronous engine through bounded workers;
+The network layer calls the synchronous engine through bounded workers;
 blocking filesystem work must not run on Tokio reactor threads.
 
 ## Storage boundary
@@ -95,18 +95,20 @@ managed transactions and results follow commit; errors discard all staged work.
 Legacy raw files are not SQL write targets. See [SQL subset](sql.md) and
 [ADR 0011](adr/0011-bounded-sql.md).
 
-## Platform boundary (planned)
+## Platform boundary
 
 Each project receives a server-controlled directory and catalog. Public IDs must
 never be concatenated into filesystem paths. Authorization must bind every
 operation, subscription and object access to a project. The dashboard uses
 React/TypeScript/Vite; REST uses Axum, Serde and OpenAPI; realtime uses WebSocket.
-TypeScript and Kotlin SDKs will use the documented API. Docker and Compose follow
-once a runnable server exists. No external paid service is required.
+TypeScript and Kotlin SDKs will use the documented API. Docker and Compose are the next deployment increment. No external paid service is required.
 
 The synchronous registry portion now lives in `server`, with key primitives in
 `auth`. Server-issued IDs select private project directories; display names never
 form paths. Scoped one-shot capabilities retain ownership and a per-project gate
 while executing through the existing WAL engine. Project metadata has a separate
-bounded version/checksum contract. The HTTP/authentication/worker boundary remains
-the next increment. See [ADR 0012](adr/0012-isolated-projects.md).
+bounded version/checksum contract. The Axum transport reserves four owned worker permits, awaits the registry
+asynchronously, then executes all filesystem work in blocking tasks. Permits
+and ownership survive a client disconnect after a blocking commit starts.
+See [ADR 0012](adr/0012-isolated-projects.md),
+[ADR 0013](adr/0013-bounded-http-transport.md) and [HTTP limits](server.md).

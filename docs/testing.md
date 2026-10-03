@@ -411,3 +411,34 @@ This is a synchronous registry/key library. HTTP transport, administrative netwo
 authentication, network limits, registry publication kill/fault tests and complete
 platform backups are still pending. User/password/session/role and production gates
 remain open; the local private filesystem owner is trusted.
+
+## Bounded HTTP transport: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 259 main
+tests passed; eight subprocess helpers remain outside this count. This block
+adds 1081 physical Rust lines and removes/replaces two, net 1079; total 17076
+physical Rust lines, or 16146 excluding blanks/comment-only lines.
+
+Eleven new tests execute separate administrator/project scopes, create/list/key
+rotation, literal parameter binding, independent data and restart, exact script
+rollback, traversal IDs and strict generic input errors. Actual 65537-byte bodies
+fail; body completion times out after five seconds without writes. Four pending
+bodies exhaust worker permits; cancellation releases them. The exact 120-attempt
+IP boundary, forged forwarding headers, 4096-peer capacity and window reset run.
+
+A failing regression first reproduced registry waiting blocking the reactor;
+async mutex waiting fixes it. Real TCP requests commit data before graceful drain,
+release ownership and reopen the acknowledged transaction. Binary tests reject
+missing/invalid secrets before directory creation, stop cleanly on SIGTERM and
+prove logs omit tokens, project IDs, query strings and bodies. Initialization's
+transaction ID is 1; test assertions account for this existing behavior.
+
+A separate live JSON Schema check validated 11 actual responses across all seven
+OpenAPI route patterns, including create, SQL, explain, status, key rotation and
+400/401 responses. Local references resolve. Fuzz targets compile/lint with the
+updated locked transport dependencies; metadata/parser codecs are unchanged from
+recorded ASan runs. No new ASan campaign is claimed for HTTP.
+
+Four worker permits do not limit all accepted network connections. Concurrent
+commit-disconnect campaigns, publication crash/fault tests, full platform backups,
+security audit, broad load checks and production readiness remain open.

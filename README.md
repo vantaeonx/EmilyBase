@@ -17,8 +17,7 @@ strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
 process-kill, checkpoint-crash and competing-writer checks execute. The WAL is
 capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
-The full stage-2 acceptance gate remains open. Persistent table indexes, server, project
-isolation, authentication, dashboard and SDKs are future work.
+The full stage-2 acceptance gate remains open. Persistent table indexes, user authentication, dashboard and SDKs are future work.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks
@@ -45,9 +44,11 @@ over a validated snapshot. Wider crash/fault campaigns and durable indexes remai
 The synchronous project registry creates private isolated database directories,
 issues scoped high-entropy API keys and rotates them with atomic metadata publication.
 Only key digests are stored. Cross-project keys, traversal IDs and unsafe symlinks/
-permissions are rejected; requests for each project serialize. The HTTP transport
-and administrative authentication are the next increment. Accounts/roles are future
-work. See [project registry](docs/projects.md).
+permissions are rejected; requests for each project serialize. The Axum server
+adds separate administrator/project scopes, bounded blocking workers, strict JSON,
+peer attempt limits, structured logs and graceful shutdown. Actual TCP and binary
+checks execute. Accounts/roles remain future work. See [HTTP server](docs/server.md),
+[OpenAPI](docs/openapi.json) and [project registry](docs/projects.md).
 
 ```sh
 cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT id,title FROM items WHERE id=$1 LIMIT 10' --parameters '[{"type":"integer","value":7}]'
