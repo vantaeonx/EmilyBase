@@ -1,5 +1,6 @@
 //! Synchronous bounded redo log. Only synced commit records acknowledge a batch.
 mod codec;
+mod io;
 mod journal;
 mod recovery;
 

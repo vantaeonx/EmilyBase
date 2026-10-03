@@ -7,15 +7,24 @@ use emilybase_transactions::Database;
 use crate::{Error, MAX_BACKUP_BYTES, Report, Result, encode, inspect_bytes, publish};
 
 pub fn create(database: &mut Database, target: impl AsRef<Path>) -> Result<Report> {
+    create_with(database, target.as_ref(), || {}, || {})
+}
+
+pub(crate) fn create_with(
+    database: &mut Database,
+    target: &Path,
+    synced: impl FnOnce(),
+    published: impl FnOnce(),
+) -> Result<Report> {
     let bytes = encode(&database.committed_wal()?)?;
     let report = inspect_bytes(&bytes)?;
-    let target = target.as_ref();
     let pending = publish::stage(&bytes, publish::parent(target))?;
     let written = read(&pending.path)?;
     if written != bytes || inspect_bytes(&written)? != report {
         return Err(Error::Format("staged backup differs from its source"));
     }
-    publish::publish(pending, target)?;
+    synced();
+    publish::publish(pending, target, published)?;
     Ok(report)
 }
 

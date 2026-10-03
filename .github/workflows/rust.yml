@@ -24,3 +24,5 @@ jobs:
         run: cargo test --locked --workspace
       - name: Build
         run: cargo build --locked --workspace
+      - name: Lint and compile fuzz targets
+        run: cargo clippy --locked --manifest-path fuzz/Cargo.toml --bins -- -D warnings

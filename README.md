@@ -18,8 +18,10 @@ process-kill, checkpoint-crash and competing-writer checks execute. The full WAL
 is retained and capped at 64 MiB; checkpoint reuse and log rotation are pending.
 The full stage-2 acceptance gate remains open. SQL, B+ tree, server, project
 isolation, authentication, dashboard and SDKs are future work.
-The backup library now creates and verifies committed-WAL archives and restores
-them into a fully replayed new directory; its CLI and interruption tests follow.
+Verified backup/restore works through the library and CLI. Archives contain only
+the committed WAL; restore publishes a fully replayed new directory. Process-kill
+and competing-publication tests execute. Broader power-loss and upgrade checks
+remain open.
 
 ## Try typed tables
 
@@ -67,6 +69,24 @@ Recovery requires `redo.wal`. Missing/corrupt WAL fails closed even if an older
 checkpoint exists. Checkpointing does not reduce WAL size and is not a verified
 backup. Interrupted initialization is rejected; an existing path is preserved.
 
+## Verified backup and restore
+
+Create an archive, verify it independently and restore into a new directory:
+
+```sh
+cargo run -p emilybase-cli -- backup /tmp/emilybase-demo /tmp/emilybase-demo.backup
+cargo run -p emilybase-cli -- backup-verify /tmp/emilybase-demo.backup
+cargo run -p emilybase-cli -- restore /tmp/emilybase-demo.backup /tmp/emilybase-restored
+cargo run -p emilybase-cli -- row-scan /tmp/emilybase-restored items --limit 10
+```
+
+Existing files, directories and symlinks are preserved. Backup requires exclusive
+source ownership. Verification checks sizes, CRCs, SHA-256, identity, commit
+boundaries and relational history. It prints metadata without row contents.
+Restore preserves database identity and accepts new commits. Backups contain
+plaintext data and stay outside Git. Linux local filesystems are the current
+target; encryption, incremental copies and format upgrades remain future work.
+
 ## Legacy files and raw diagnostics
 
 `db-init PATH` without `--durable` creates the legacy table file. Existing files
@@ -95,6 +115,7 @@ cargo fmt --manifest-path fuzz/Cargo.toml -- --check
 cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo test --locked --workspace
 cargo build --locked --workspace
+cargo clippy --locked --manifest-path fuzz/Cargo.toml --bins -- -D warnings
 ```
 
 Open source covers the code license. Rows, journals and checkpoints stay local

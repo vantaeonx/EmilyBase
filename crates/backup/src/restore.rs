@@ -8,9 +8,17 @@ use crate::{Error, HEADER_SIZE, Report, Result, files, inspect_bytes, publish};
 
 /// Validate, replay and sync privately; publish a complete directory atomically.
 pub fn restore(backup: impl AsRef<Path>, target: impl AsRef<Path>) -> Result<Report> {
-    let bytes = files::read(backup.as_ref())?;
+    restore_with(backup.as_ref(), target.as_ref(), || {}, || {})
+}
+
+pub(crate) fn restore_with(
+    backup: &Path,
+    target: &Path,
+    synced: impl FnOnce(),
+    published: impl FnOnce(),
+) -> Result<Report> {
+    let bytes = files::read(backup)?;
     let report = inspect_bytes(&bytes)?;
-    let target = target.as_ref();
     let mut pending = PendingDirectory::new(publish::parent(target))?;
     let log = pending.path.join("redo.wal");
     let mut options = OpenOptions::new();
@@ -33,7 +41,8 @@ pub fn restore(backup: impl AsRef<Path>, target: impl AsRef<Path>) -> Result<Rep
     database.checkpoint()?;
     drop(database);
     File::open(&pending.path)?.sync_all()?;
-    pending.publish(target)?;
+    synced();
+    pending.publish(target, published)?;
     Ok(report)
 }
 
@@ -70,11 +79,12 @@ impl PendingDirectory {
         .into())
     }
 
-    fn publish(&mut self, target: &Path) -> Result<()> {
+    fn publish(&mut self, target: &Path, published: impl FnOnce()) -> Result<()> {
         rename_no_replace(&self.path, target)?;
         self.published = true;
-        File::open(publish::parent(target))?
-            .sync_all()
+        published();
+        File::open(publish::parent(target))
+            .and_then(|parent| parent.sync_all())
             .map_err(Error::PublicationUnknown)
     }
 }

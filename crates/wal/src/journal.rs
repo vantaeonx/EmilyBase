@@ -5,13 +5,14 @@ use std::path::Path;
 use emilybase_storage::{MAX_PAGES, Page};
 
 use crate::codec::{Frame, Payload};
+use crate::io::JournalIo;
 use crate::{
     DatabaseId, Error, FRAME_SIZE, HEADER_SIZE, MAX_TRANSACTION_PAGES, MAX_WAL_BYTES, Recovery,
     Result, encode_header, recover,
 };
 
 pub struct Wal {
-    file: File,
+    file: Box<dyn JournalIo>,
     id: DatabaseId,
     valid_bytes: u64,
     next_transaction: u64,
@@ -41,7 +42,7 @@ impl Wal {
             .unwrap_or_else(|| Path::new("."));
         File::open(parent)?.sync_all()?;
         Ok(Self {
-            file,
+            file: Box::new(file),
             id,
             valid_bytes: HEADER_SIZE as u64,
             next_transaction: 1,
@@ -66,7 +67,7 @@ impl Wal {
             .read_to_end(&mut bytes)?;
         let recovery = recover(&bytes, expected_id)?;
         let wal = Self {
-            file,
+            file: Box::new(file),
             id: recovery.database_id,
             valid_bytes: recovery.valid_bytes as u64,
             next_transaction: recovery.committed.len() as u64 + 1,
@@ -92,7 +93,7 @@ impl Wal {
     pub fn committed_bytes(&mut self) -> Result<Vec<u8>> {
         self.ready()?;
         let result = (|| {
-            if self.file.metadata()?.len() < self.valid_bytes {
+            if self.file.length()? < self.valid_bytes {
                 return Err(Error::Format("committed journal was externally truncated"));
             }
             self.file.seek(SeekFrom::Start(0))?;
@@ -180,9 +181,9 @@ impl Wal {
     }
 
     fn trim_tail(&mut self) -> Result<()> {
-        if self.file.metadata()?.len() != self.valid_bytes {
-            self.file.set_len(self.valid_bytes)?;
-            self.file.sync_all()?;
+        if self.file.length()? != self.valid_bytes {
+            self.file.truncate(self.valid_bytes)?;
+            self.file.sync()?;
         }
         Ok(())
     }
@@ -207,7 +208,7 @@ pub struct Pending<'a> {
 
 impl Pending<'_> {
     pub fn sync_uncommitted(&mut self) -> Result<()> {
-        let result = self.wal.file.sync_all().map_err(Error::Io);
+        let result = self.wal.file.sync().map_err(Error::Io);
         self.wal.finish_io(result)
     }
 
@@ -218,7 +219,7 @@ impl Pending<'_> {
             .wal
             .file
             .write_all(&self.commit)
-            .and_then(|()| self.wal.file.sync_all())
+            .and_then(|()| self.wal.file.sync())
         {
             self.wal.poisoned = true;
             return Err(Error::OutcomeUnknown {
@@ -248,6 +249,10 @@ fn lock(file: &File) -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "fault_tests.rs"]
+mod fault_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -259,7 +264,7 @@ mod tests {
         let mut page = Page::new(1).unwrap();
         page.insert(b"synthetic").unwrap();
         // Use a real OS write failure, without altering persisted test bytes.
-        wal.file = File::open(&path).unwrap();
+        wal.file = Box::new(File::open(&path).unwrap());
         assert!(matches!(wal.begin(&[page.clone()]), Err(Error::Io(_))));
         assert!(matches!(wal.begin(&[page]), Err(Error::Poisoned)));
         drop(wal);
@@ -275,7 +280,7 @@ mod tests {
         let mut page = Page::new(1).unwrap();
         page.insert(b"synthetic").unwrap();
         let pending = wal.begin(&[page.clone()]).unwrap();
-        pending.wal.file = File::open(&path).unwrap();
+        pending.wal.file = Box::new(File::open(&path).unwrap());
         assert!(matches!(
             pending.commit(),
             Err(Error::OutcomeUnknown { transaction: 1, .. })

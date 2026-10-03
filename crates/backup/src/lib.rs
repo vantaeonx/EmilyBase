@@ -2,6 +2,8 @@
 mod archive;
 mod files;
 mod header;
+#[cfg(test)]
+mod publication_tests;
 mod publish;
 mod restore;
 

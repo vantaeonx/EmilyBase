@@ -184,6 +184,7 @@ version = "0.1.0"
 dependencies = [
  "crc32fast",
  "emilybase-catalog",
+ "emilybase-database",
  "emilybase-storage",
  "emilybase-transactions",
  "emilybase-wal",
@@ -210,6 +211,7 @@ name = "emilybase-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "emilybase-backup",
  "emilybase-catalog",
  "emilybase-database",
  "emilybase-storage",

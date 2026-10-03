@@ -11,6 +11,8 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 crc32fast = "1.5"
+sha2 = "0.10"
+emilybase-backup = { path = "../crates/backup" }
 emilybase-storage = { path = "../crates/storage" }
 emilybase-catalog = { path = "../crates/catalog" }
 emilybase-database = { path = "../crates/database" }
@@ -44,6 +46,13 @@ bench = false
 [[bin]]
 name = "managed_recovery"
 path = "fuzz_targets/managed_recovery.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "backup_archive"
+path = "fuzz_targets/backup_archive.rs"
 test = false
 doc = false
 bench = false

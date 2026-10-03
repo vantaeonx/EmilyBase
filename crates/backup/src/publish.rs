@@ -65,8 +65,13 @@ pub(crate) fn stage(bytes: &[u8], parent: &Path) -> Result<PendingFile> {
     .into())
 }
 
-pub(crate) fn publish(mut pending: PendingFile, target: &Path) -> Result<()> {
+pub(crate) fn publish(
+    mut pending: PendingFile,
+    target: &Path,
+    published: impl FnOnce(),
+) -> Result<()> {
     fs::hard_link(&pending.path, target)?;
+    published();
     let result = (|| {
         fs::remove_file(&pending.path)?;
         pending.removed = true;

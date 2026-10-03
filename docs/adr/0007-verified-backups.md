@@ -1,6 +1,7 @@
 # ADR 0007: Committed-WAL backups and atomic verified restore
 
-Status: implemented in the backup library; CLI and interruption matrix follow.
+Status: implemented in the library and CLI; process-kill publication boundaries
+and competing-destination tests pass. Power loss and upgrades remain open.
 
 The retained WAL is authoritative, so back up its acknowledged prefix rather
 than a cache or an unlocked filesystem copy. Store a versioned 128-byte envelope

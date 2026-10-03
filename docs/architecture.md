@@ -20,10 +20,11 @@ flowchart TD
   HTTP --> Auth[Future authentication and policies]
   HTTP --> Realtime[Future committed-change subscriptions]
   HTTP --> Objects[Future private object storage]
-  Backup[Future backup service] --> Transactions
+  CLI --> Backup[Verified backup / restore]
+  Backup --> Transactions
 ```
 
-Storage, catalog, database, WAL, transactions and CLI crates are implemented. Add other crates when they contain
+Storage, catalog, database, WAL, transactions, backup and CLI crates are implemented. Add other crates when they contain
 working behavior, instead of declaring an implemented platform with empty modules.
 The future network layer will call the synchronous engine through bounded workers;
 blocking filesystem work must not run on Tokio reactor threads.
@@ -48,6 +49,15 @@ Recovery checks that redo never rewrites older history, then reconstructs tables
 A checkpoint atomically materializes the current page cache; the complete WAL
 remains authoritative and is never truncated. Recovery ignores this cache.
 See [ADR 0006](adr/0006-retained-journal.md). MVCC and journal rotation are pending.
+
+## Backup boundary
+
+The archive contains a bounded verified committed-WAL prefix, not filesystem
+paths or a page-cache copy. It binds format versions, database identity, transaction
+boundary, payload size, SHA-256 and header CRC. Verification performs strict table
+replay. Restore opens and checks a privately staged engine before atomic no-replace
+publication. Original identity is preserved; this does not create a separate
+project. See [ADR 0007](adr/0007-verified-backups.md).
 
 ## Platform boundary (planned)
 

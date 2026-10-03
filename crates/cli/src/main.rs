@@ -36,6 +36,12 @@ enum Command {
     },
     /// Materialize committed pages while retaining the full journal.
     Checkpoint { path: PathBuf },
+    /// Create and verify a no-clobber backup of a managed database.
+    Backup { path: PathBuf, target: PathBuf },
+    /// Validate archive checksums and replay its complete table history.
+    BackupVerify { path: PathBuf },
+    /// Verify and restore into a new directory without replacing existing paths.
+    Restore { backup: PathBuf, target: PathBuf },
     /// Create a table from an explicit JSON schema.
     TableCreate { path: PathBuf, schema: String },
     /// Print validated table schemas as JSON.
@@ -135,6 +141,14 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         Command::Checkpoint { path } => {
             emilybase_transactions::Database::open(path)?.checkpoint()?;
             println!("checkpoint synced; journal retained");
+        }
+        Command::Backup { path, target } => {
+            let mut database = emilybase_transactions::Database::open(path)?;
+            print_backup(emilybase_backup::create(&mut database, target)?);
+        }
+        Command::BackupVerify { path } => print_backup(emilybase_backup::inspect(path)?),
+        Command::Restore { backup, target } => {
+            print_backup(emilybase_backup::restore(backup, target)?)
         }
         Command::TableCreate { path, schema } => {
             let schema: Schema = parse_json(&schema)?;
@@ -242,6 +256,13 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     Ok(())
+}
+
+fn print_backup(report: emilybase_backup::Report) {
+    println!(
+        "verified tables={} rows={} transaction={} wal_bytes={}",
+        report.tables, report.rows, report.last_transaction, report.wal_bytes
+    );
 }
 
 fn parse_json<T: serde::de::DeserializeOwned>(text: &str) -> Result<T, Box<dyn std::error::Error>> {

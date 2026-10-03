@@ -10,7 +10,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | not started |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | not started |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | not started |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation implemented; other platform features not started |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | not started |
 
 ## Not supported
@@ -22,9 +22,9 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 ## Next increments
 
-1. Extend I/O fault injection to short writes, disk exhaustion and sync failures.
-2. Design checkpoint reuse / journal rotation with durable metadata and crash tests.
-3. Expose verified backup/restore through CLI, test interrupted publication and upgrades.
+1. Design checkpoint reuse / journal rotation with durable metadata and crash tests.
+2. Extend backup publication I/O failures, long random crash campaigns and upgrade tests.
+3. Build the original B+ tree and query layer after documenting their bounded behavior.
 
 ## Implemented first increment
 
@@ -49,14 +49,17 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 - Managed CLI mode, transaction batches and explicit legacy compatibility.
 - Process kills before/after commit, streaming writes and checkpoint rename.
 - Four competing processes, byte-cut matrix, OS write failures and recovery fuzzing.
+- Deterministic short-write, interrupted-write, disk-full, truncate/read and sync failures.
 
 Remaining gates are listed in the [recovery matrix](recovery-matrix.md).
 
-## Backup library increment
+## Verified backup increments
 
 Committed-WAL archives, bounded format validation, SHA-256 and strict relational
 replay are implemented. Restore stages and verifies a working database before
 atomic no-replace directory publication. Existing outputs are preserved. CLI,
-backup/restore process-kill tests and upgrades remain pending in this increment.
+backup/restore process-kill boundaries, competing destinations, generated CRUD
+restore models and archive fuzzing execute. Upgrades, physical power loss and
+broader publication I/O injection remain open.
 
 Only update a gate to complete when its full criteria have executed successfully.

@@ -2,7 +2,8 @@
 
 Run `cargo test --locked --workspace` for unit, file integration, subprocess CLI
 and property tests. Each property runs 256 generated cases by default. File tests
-use isolated temporary directories and synthetic payloads. They exercise reopen,
+use isolated temporary directories and synthetic payloads. Disk-backed properties
+override the default with 32 or 64 cases. They exercise reopen,
 no-clobber creation, concurrent creation, advisory locks, truncation, corruption
 and record mutation. They do not prove power-loss safety or transactional recovery.
 
@@ -18,6 +19,7 @@ cargo +nightly fuzz run file_format -- -max_total_time=30 -max_len=4096 -rss_lim
 cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
+cargo +nightly fuzz run backup_archive -- -max_total_time=30 -max_len=32768 -rss_limit_mb=512
 ```
 
 The target checks raw headers, pages and pages with a repaired checksum to reach
@@ -26,11 +28,15 @@ structural validation. Add valid synthetic header/page seeds to
 ignored. A bounded smoke run is not a complete fuzz campaign or a security audit.
 The catalog target checks schema, row and relational-event codecs and round trips
 accepted records. Synthetic `ESCH`, `EROW` and `ETBL` seeds improve its coverage.
+The backup target checks raw archives, repaired envelopes and repaired nested
+WAL/page checksums and commit digests. It reaches table-history checks using
+synthetic root/table archives. CI compiles and lints all targets on stable;
+coverage-guided execution remains an explicit nightly step.
 
 ## Pending acceptance tests
 
 Core process-kill, byte-cut, checkpoint and competing-writer checks now execute.
-Broader I/O fault injection, power-loss, backup/restore and cross-project
+Broader publication I/O fault injection, power-loss, backup upgrades and cross-project
 authorization remain open. See the [current matrix](recovery-matrix.md).
 
 ## First increment: executed checks
@@ -134,3 +140,31 @@ keys, nulls, binary values, schema identity history and new commits after reopen
 Source/backup bytes remain unchanged. External source corruption/truncation
 prevents export and poisons the live owner. Two properties run 32 cases each.
 Interrupted backup/restore publication, CLI and a backup fuzz target follow.
+
+## Backup CLI and fault-boundary increment: executed checks
+
+On 2026-10-03, workspace/fuzz formatting, both Clippy suites with warnings denied,
+workspace build and all 140 main tests passed. Five ignored subprocess helpers
+are invoked by their parent tests and are excluded from the main count. This block
+adds 1000 physical Rust lines; the total is 7945, or 7343 without blank/comment-only
+lines. CLI tests execute backup, verify, restore, new writes and Unicode paths.
+
+The publication matrix kills both backup and restore after staging sync and
+after publication before parent sync. Final outputs are absent or complete;
+source/archive bytes survive and retries use new destinations. Competing
+publishers produce exactly one verified winner. A regression reproduced before
+the fix verifies that failure to open the parent after restore rename reports
+unknown durability and preserves the already published database.
+
+Deterministic faults wrap the real locked WAL file: short and interrupted writes,
+zero writes, disk exhaustion inside page/commit frames, sync errors before/after
+underlying sync, failed uncommitted sync, rollback truncation, tail sync and
+export reads. Earlier ACKs survive; affected owners reject further writes until
+reopen. A failed commit sync can leave a complete committed transaction without
+an ACK, so outcome inspection remains necessary. These tests do not emulate
+power loss. The new 32-case restore property compares generated CRUD and rollback
+history against an independent map, including new writes after restore.
+
+The final backup-archive AddressSanitizer smoke run completed 392,375 executions
+in 16 seconds without a crash (configured budget: 15 seconds). This is a bounded
+smoke run, not a completed fuzz campaign or security audit.
