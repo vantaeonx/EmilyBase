@@ -8,14 +8,14 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 0 | design, threats, format, ADRs | documents reviewed against implementation | initial documents |
 | 1 | pages, tables, types, primary keys, CRUD, CLI | unit/integration tests and reopen round trips | implemented; normal reopen and validation tests pass |
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
-| 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | not started |
+| 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | B+ tree library foundation tested; table/WAL integration and SQL pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | not started |
 | 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation implemented; other platform features not started |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | not started |
 
 ## Not supported
 
-B+ tree, background journal rotation and history vacuuming,
+Durable table indexes and index deletion, background journal rotation and history vacuuming,
 SQL, joins, indexes, project isolation, server, authentication, row policies,
 file uploads, realtime, migrations, incremental/encrypted backups, SDKs, web dashboard and deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
@@ -24,7 +24,18 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
-3. Build the original B+ tree and query layer after documenting their bounded behavior.
+3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
+4. Implement index deletion/merges and the original query layer with documented limits.
+
+## Index foundation
+
+The original `index` crate has versioned 4096-byte leaf/internal images, checksums,
+numeric/UTF-8 keys, unique insertion, recursive splits, point lookup and linked-leaf
+range scans. Imports validate complete topology, exact separators, occupancy,
+balanced leaf depth, reachability and successor links. Errors preserve staged tree
+state. Boundary, capacity, independent-model property and parser fuzz checks execute.
+This library does not yet persist through the managed transaction engine. Existing
+table files and their primary-key maps are unchanged. See [ADR 0009](adr/0009-bounded-index-foundation.md).
 
 ## Implemented first increment
 

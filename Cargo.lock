@@ -233,6 +233,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "emilybase-index"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "emilybase-catalog",
+ "emilybase-storage",
+ "proptest",
+ "thiserror",
+]
+
+[[package]]
 name = "emilybase-storage"
 version = "0.1.0"
 dependencies = [

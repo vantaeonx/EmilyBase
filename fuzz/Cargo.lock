@@ -118,11 +118,22 @@ dependencies = [
  "emilybase-backup",
  "emilybase-catalog",
  "emilybase-database",
+ "emilybase-index",
  "emilybase-storage",
  "emilybase-transactions",
  "emilybase-wal",
  "libfuzzer-sys",
  "sha2",
+]
+
+[[package]]
+name = "emilybase-index"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "emilybase-catalog",
+ "emilybase-storage",
+ "thiserror",
 ]
 
 [[package]]

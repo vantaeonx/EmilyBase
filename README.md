@@ -17,12 +17,18 @@ strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
 process-kill, checkpoint-crash and competing-writer checks execute. The WAL is
 capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
-The full stage-2 acceptance gate remains open. SQL, B+ tree, server, project
+The full stage-2 acceptance gate remains open. SQL, persistent table indexes, server, project
 isolation, authentication, dashboard and SDKs are future work.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks
 remain open.
+
+The original B+ tree foundation supports unique insertion, leaf/internal splits,
+point lookup, ordered ranges and verified fixed-size page-image round trips.
+It is a separate bounded library; table primary-key maps still use the earlier
+in-memory representation. WAL integration, deletion and durable index files remain
+future work. See [index format and limits](docs/index-format.md).
 
 ## Try typed tables
 
@@ -144,6 +150,7 @@ contents. Never commit real data, passwords, tokens, signing keys or `.env` file
 See [architecture](docs/architecture.md), [page format](docs/file-format.md),
 [journal format](docs/wal-format.md), [threat model](docs/threat-model.md),
 [backup format](docs/backup-format.md),
+[index format](docs/index-format.md),
 [recovery matrix](docs/recovery-matrix.md), [testing](docs/testing.md),
 [roadmap](docs/roadmap.md), [size estimate](docs/size-estimate.md) and
 [contributing](CONTRIBUTING.md).

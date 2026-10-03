@@ -18,6 +18,7 @@ emilybase-catalog = { path = "../crates/catalog" }
 emilybase-database = { path = "../crates/database" }
 emilybase-wal = { path = "../crates/wal" }
 emilybase-transactions = { path = "../crates/transactions" }
+emilybase-index = { path = "../crates/index" }
 
 [[bin]]
 name = "file_format"
@@ -53,6 +54,13 @@ bench = false
 [[bin]]
 name = "backup_archive"
 path = "fuzz_targets/backup_archive.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "index_pages"
+path = "fuzz_targets/index_pages.rs"
 test = false
 doc = false
 bench = false

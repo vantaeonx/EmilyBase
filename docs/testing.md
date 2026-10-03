@@ -230,3 +230,32 @@ writes; failed identity/replay opens release ownership for explicit operator rep
 These checks do not simulate physical power loss or complete the stage-2/security
 gate. Wider filesystem failure injection, long campaigns, history vacuuming and
 stable upgrade policy remain open.
+
+
+## Original index foundation: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 189 main
+workspace tests passed; the six subprocess helpers remain outside the main count.
+This increment adds 1064 physical Rust lines, bringing the total to 10976, or
+10219 excluding blank/comment-only lines. Existing table/WAL codecs are unchanged.
+
+Ten new index tests cover recursive leaf/internal/root splits, all lookups and
+linked-leaf ranges over 1200 reverse-order keys, page-image reopen, signed-i64
+boundaries, mixed UTF-8 keys, maximum-size keys and an empty root. Actual arena
+capacity refusal preserves exact prior pages/root and imports successfully.
+Every byte cut/single-byte mutation of a synthetic leaf fails. Repaired CRCs do
+not hide malformed headers, pointers, key tags/lengths, UTF-8, duplicates or tails.
+Whole-tree imports reject bad roots, missing/orphan pages, underfull children,
+wrong separators, dense-ID violations and mismatched leaf chains.
+
+A 48-case property generates up to 399 insert/duplicate/lookup operations over
+integer and Unicode text keys, comparing counts, point queries and ranges against
+an independent sorted-map model. It validates topology after every operation and
+periodically exports/imports complete images.
+
+The new `index_pages` AddressSanitizer target exercised raw and checksum-repaired
+pages and complete bounded trees, seeded with three synthetic valid trees.
+It completed 328695 executions in 16 seconds with a configured 15-second budget
+and no crash. This is a smoke check, not a sustained fuzz campaign. Index mutation
+has no table/WAL publisher yet; existing crash tests do not establish durable
+index guarantees. SQL, deletion/merges and integration acceptance remain pending.

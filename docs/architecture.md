@@ -14,7 +14,7 @@ flowchart TD
   Query --> Transactions[Serialized transaction coordinator]
   Transactions --> WAL[Synced full-page WAL]
   Transactions --> Database
-  Catalog --> Index[Future B+ tree]
+  Query -.-> Index[B+ tree foundation: table integration pending]
   Index --> Storage
   WAL --> Storage
   HTTP --> Auth[Future authentication and policies]
@@ -24,7 +24,7 @@ flowchart TD
   Backup --> Transactions
 ```
 
-Storage, catalog, database, WAL, transactions, backup and CLI crates are implemented. Add other crates when they contain
+Storage, catalog, database, WAL, transactions, backup, CLI and a separate index foundation are implemented. Add other crates when they contain
 working behavior, instead of declaring an implemented platform with empty modules.
 The future network layer will call the synchronous engine through bounded workers;
 blocking filesystem work must not run on Tokio reactor threads.
@@ -52,6 +52,22 @@ repeated images with a complete baseline, preserving history and transaction IDs
 The database directory stays locked across journal inode replacement.
 See [ADR 0006](adr/0006-retained-journal.md) and [ADR 0008](adr/0008-self-contained-journal-compaction.md).
 MVCC, history vacuuming and background rotation are pending.
+
+## Index boundary
+
+The `index` crate implements original B+ tree routing, leaf/internal splits and
+linked-leaf scans over a bounded arena of page IDs. The standard map addresses
+pages by ID; it does not perform key lookup or replace the tree's routing logic.
+Mutations stage a tree copy so duplicate, invalid-key and capacity failures keep
+the exact previous images. This correctness-first foundation is not a throughput
+claim. Fixed-size images have an independent `EBIX` codec and whole-tree validation.
+
+The index currently has no file publisher, root catalog entry or WAL participation;
+the relational engine still uses its existing primary-key map. Its 256-byte text
+key bound is separate from the catalog's 3072-byte text limit. Future integration
+must explicitly reconcile those limits, page allocation, pointer lifetime and
+transactional split publication. No database-file format changes occur in this
+increment. See [ADR 0009](adr/0009-bounded-index-foundation.md).
 
 ## Backup boundary
 
