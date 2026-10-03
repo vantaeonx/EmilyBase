@@ -137,3 +137,10 @@ path = "fuzz_targets/snapshot_fingerprints.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "text_ranges"
+path = "fuzz_targets/text_ranges.rs"
+test = false
+doc = false
+bench = false

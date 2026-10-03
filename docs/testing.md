@@ -21,6 +21,7 @@ cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_li
 cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run row_locations -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run primary_lookup -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
+cargo +nightly fuzz run text_ranges -- -max_total_time=60 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run backup_archive -- -max_total_time=30 -max_len=32768 -rss_limit_mb=512
 ```
 
@@ -908,3 +909,18 @@ blank/comment-only lines), 1207 SDK and 718 Python: 31157 source lines including
 tests. SQL text ordering is UTF-8 byte order, without locale collation. Existing
 stored formats and API contracts remain unchanged; durable index WAL, secondary
 DDL, ordering pushdown and wider production acceptance remain open.
+
+The direct text_ranges ASan target independently generates short/long UTF-8 keys,
+NUL, exact 255/256/257/3072-byte bounds, unbounded/reversed intervals and row limits.
+It compares the snapshot API against an independent ordered set, validates rejected
+oversized/incorrect-type input, installs verified tree copies, reconstructs pages
+and preserves historical clones after deletion. The first 60-second campaign
+completes 52607 runs in 61 seconds with a 4096-byte input and 512-MiB RSS bound,
+without failure. Fuzz formatting and strict Clippy pass. Only test infrastructure
+changes after the 422-test/container-verified implementation; broader load,
+power-loss and security acceptance remain open.
+
+This separate test checkpoint adds 132 Rust lines. Source totals: 29364 Rust
+(28025 excluding blank/comment-only lines), 1207 SDK and 718 Python, or 31289
+physical source lines including tests. Runtime implementation and formats are
+unchanged.
