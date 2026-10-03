@@ -322,6 +322,7 @@ mod tests {
 
     #[tokio::test]
     async fn registry_wait_does_not_block_the_reactor() {
+        let _serial = crate::durability::PROCESS_TESTS.lock().await;
         let temp = tempfile::tempdir().unwrap();
         let master = "0".repeat(64);
         let mut store = ProjectStore::open(temp.path().join("projects")).unwrap();
@@ -359,5 +360,68 @@ mod tests {
             responsive,
             "waiting for registry ownership blocked the reactor"
         );
+    }
+
+    #[tokio::test]
+    async fn cancellation_cannot_release_a_started_commit_permit_or_its_root_owner() {
+        let _serial = crate::durability::PROCESS_TESTS.lock().await;
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("projects");
+        let mut store = ProjectStore::open(&root).unwrap();
+        let created = store.create("cancelled response").unwrap();
+        let project = store
+            .authorize(&created.project.id, &created.api_key)
+            .unwrap();
+        let workers = Arc::new(Semaphore::new(4));
+        let scope = Scope {
+            project: Arc::new(Mutex::new(None)),
+            _permit: Arc::new(workers.clone().try_acquire_owned().unwrap()),
+        };
+        let (started, begin) = tokio::sync::oneshot::channel();
+        let (release, wait) = std::sync::mpsc::channel();
+        let (finished, done) = tokio::sync::oneshot::channel();
+        let request = tokio::spawn(async move {
+            blocking(scope, move || {
+                started.send(()).unwrap();
+                wait.recv_timeout(Duration::from_secs(5)).unwrap();
+                let report = project.execute(
+                    "CREATE TABLE t(id INT PRIMARY KEY);INSERT INTO t VALUES (7)",
+                    &[],
+                )?;
+                finished.send(report.transaction).unwrap();
+                Ok(())
+            })
+            .await
+        });
+        begin.await.unwrap();
+        request.abort();
+        assert!(matches!(request.await, Err(error) if error.is_cancelled()));
+        drop(store);
+        assert_eq!(workers.available_permits(), 3);
+        assert!(matches!(ProjectStore::open(&root), Err(Error::Busy)));
+        release.send(()).unwrap();
+        assert_eq!(
+            tokio::time::timeout(Duration::from_secs(5), done)
+                .await
+                .unwrap()
+                .unwrap(),
+            2
+        );
+        // The finished signal precedes closure drop by a few instructions.
+        tokio::time::timeout(Duration::from_secs(5), async {
+            while workers.available_permits() != 4 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        let reopened = ProjectStore::open(root).unwrap();
+        let status = reopened
+            .authorize(&created.project.id, &created.api_key)
+            .unwrap()
+            .status()
+            .unwrap();
+        assert_eq!(status.transaction, 2);
+        assert_eq!(status.rows, 1);
     }
 }

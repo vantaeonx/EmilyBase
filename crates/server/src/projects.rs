@@ -130,9 +130,15 @@ impl ProjectStore {
         let data = pending.path().join("data");
         drop(Database::create(&data)?);
         std::fs::set_permissions(&data, std::fs::Permissions::from_mode(0o700))?;
-        File::open(&data)?.sync_all()?;
+        directory_sync(&File::open(&data)?, "create_data_sync")?;
+        #[cfg(test)]
+        crate::durability::checkpoint("create_data_synced");
         metadata::write_new(&pending.path().join("project.json"), &project)?;
-        File::open(pending.path())?.sync_all()?;
+        #[cfg(test)]
+        crate::durability::checkpoint("create_metadata_synced");
+        directory_sync(&File::open(pending.path())?, "create_stage_sync")?;
+        #[cfg(test)]
+        crate::durability::checkpoint("create_stage_synced");
         rustix::fs::renameat_with(
             rustix::fs::CWD,
             pending.path(),
@@ -142,10 +148,14 @@ impl ProjectStore {
         )
         .map_err(std::io::Error::from)?;
         let _old = pending.keep();
-        if let Err(error) = self.owner.sync_all() {
+        #[cfg(test)]
+        crate::durability::checkpoint("create_renamed");
+        if let Err(error) = directory_sync(&self.owner, "create_root_sync") {
             self.poisoned = true;
             return Err(Error::PublicationUnknown(error));
         }
+        #[cfg(test)]
+        crate::durability::checkpoint("create_root_synced");
         let response = CreatedProject {
             project: info(&project),
             api_key,
@@ -174,7 +184,7 @@ impl ProjectStore {
             _owner: Arc::clone(&self.owner),
         })
     }
-    /// Privileged operation; the future transport must require its administrative credential.
+    /// Privileged operation; HTTP transport requires its administrative credential.
     pub fn rotate(&mut self, id: &str) -> Result<CreatedProject> {
         self.ready()?;
         let project = self.projects.get(id).ok_or(Error::Denied)?;
@@ -187,15 +197,23 @@ impl ProjectStore {
         metadata::file(&path.join("project.json"))?;
         let mut pending = tempfile::NamedTempFile::new_in(&path)?;
         pending.write_all(&metadata::encoded(&changed)?)?;
-        pending.as_file().sync_all()?;
+        directory_sync(pending.as_file(), "rotate_file_sync")?;
+        #[cfg(test)]
+        crate::durability::checkpoint("rotate_file_synced");
         if let Err(error) = pending.persist(path.join("project.json")) {
             self.poisoned = true;
             return Err(Error::PublicationUnknown(error.error));
         }
-        if let Err(error) = File::open(&path).and_then(|directory| directory.sync_all()) {
+        #[cfg(test)]
+        crate::durability::checkpoint("rotate_renamed");
+        if let Err(error) = File::open(&path)
+            .and_then(|directory| directory_sync(&directory, "rotate_directory_sync"))
+        {
             self.poisoned = true;
             return Err(Error::PublicationUnknown(error));
         }
+        #[cfg(test)]
+        crate::durability::checkpoint("rotate_directory_synced");
         let response = CreatedProject {
             project: info(&changed),
             api_key,
@@ -203,6 +221,11 @@ impl ProjectStore {
         self.projects.get_mut(id).ok_or(Error::Denied)?.metadata = changed;
         Ok(response)
     }
+}
+fn directory_sync(file: &File, _boundary: &str) -> std::io::Result<()> {
+    #[cfg(test)]
+    crate::durability::fail(_boundary)?;
+    file.sync_all()
 }
 impl AuthorizedProject {
     pub fn execute(self, sql: &str, parameters: &[Value]) -> Result<Report> {

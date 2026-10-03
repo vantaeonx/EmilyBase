@@ -1,4 +1,6 @@
 //! Bounded HTTP transport over a synchronous isolated-project/key registry.
+#[cfg(test)]
+mod durability;
 mod http;
 mod metadata;
 mod projects;

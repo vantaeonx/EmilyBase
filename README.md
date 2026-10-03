@@ -47,7 +47,8 @@ Only key digests are stored. Cross-project keys, traversal IDs and unsafe symlin
 permissions are rejected; requests for each project serialize. The Axum server
 adds separate administrator/project scopes, bounded blocking workers, strict JSON,
 peer attempt limits, structured logs and graceful shutdown. Actual TCP and binary
-checks execute. Accounts/roles remain future work. See [HTTP server](docs/server.md),
+checks execute, including both-version writer kills, concurrent projects, accepted
+request drain and damaged-journal isolation. Accounts/roles remain future work. See [HTTP server](docs/server.md),
 [OpenAPI](docs/openapi.json) and [project registry](docs/projects.md).
 
 ```sh

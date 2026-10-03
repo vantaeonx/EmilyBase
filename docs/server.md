@@ -99,4 +99,9 @@ does not prove rollback. No request-id deduplication is implemented.
 
 TLS termination, CORS, user auth, row policies, database-wide export/import,
 realtime, objects, dashboard and SDKs are future increments. Full registry backups,
-publication crash/fault campaigns and production security/load gates remain open.
+broader publication crash/fault campaigns and production security/load gates remain open.
+
+Registry kill/sync-failure tests and actual network writer kills now execute.
+Received SQL responses survive both WAL versions; complete unobserved commits can
+also survive. Missing/corrupt WAL fails closed per project while healthy siblings
+remain available. Cache repair still requires an explicit checkpoint.

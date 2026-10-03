@@ -26,7 +26,7 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
 4. Add synthetic-data-only Docker deployment and client SDKs, then extend
-   HTTP disconnect/concurrency and registry publication crash/fault campaigns.
+   random network/media/publication campaigns and complete registry backup.
 
 ## Isolated registry and API keys
 
@@ -117,3 +117,8 @@ shutdown are implemented. Actual socket/binary/restart and worker/body/rate test
 execute. OpenAPI describes only existing routes. Wider connection/load/security,
 concurrent commit-disconnect and registry crash/backup gates remain open. See
 [HTTP contract](server.md) and [ADR 0013](adr/0013-bounded-http-transport.md).
+
+Registry publication kills/injected sync errors and actual HTTP writer kills,
+concurrency, cancellation/drain and journal-loss isolation now execute. These
+checks preserve ACKs but do not close physical-power-loss, full platform backup,
+load or security acceptance gates.

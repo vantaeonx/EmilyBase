@@ -442,3 +442,40 @@ recorded ASan runs. No new ASan campaign is claimed for HTTP.
 Four worker permits do not limit all accepted network connections. Concurrent
 commit-disconnect campaigns, publication crash/fault tests, full platform backups,
 security audit, broad load checks and production readiness remain open.
+
+## Registry publication and network recovery: executed checks
+
+On 2026-10-03, all 270 main tests, both format/Clippy suites and workspace build
+passed. Nine subprocess helpers remain outside the main count. This increment
+adds 976 physical Rust lines and removes/replaces six, net 970. Total 18046 physical
+Rust lines, or 17103 excluding blanks/comment-only lines. Storage codecs unchanged.
+
+Fourteen registry kills cover six creation boundaries and four rotation boundaries
+for both underlying WAL versions. Incomplete staging stays unadopted; published
+metadata is complete with exactly one epoch. Acknowledged keys authorize after
+restart. Existing project WAL bytes/rows remain unchanged. Five injected sync
+failures distinguish pre-publication refusal from post-rename uncertain outcomes;
+uncertain owners refuse later operations until reopen. Already accepted capabilities
+retain their documented right to finish. Lost returned keys can be replaced by an
+administrator without changing the database.
+
+Six actual binary/TCP writer kills at response thresholds 5/20/60 for WAL 1/2
+preserve every received complete response and a gapless prefix of whole SQL scripts.
+Anchor updates and inserts recover atomically; untouched siblings are byte-identical
+and new writes work. Separate rollback/rejected-script kills preserve exact WAL.
+Four TCP clients concurrently insert 32 rows across two projects, preserving each
+project's complete transaction sequence and rejecting staged duplicate scripts.
+
+SIGTERM drains an accepted partial body and its committed write before releasing
+root ownership. A controlled started blocking task survives request cancellation,
+keeps its permit/root owner and publishes durable rows without a response. Missing
+or corrupt WAL returns generic 503 while a healthy sibling remains available;
+checkpoint data cannot mask journal loss. HTTP ignores damaged optional cache;
+only an explicit later checkpoint replaces it. Actual private logs contain no
+project IDs, keys or SQL. These tests do not simulate physical power loss.
+
+Filesystem tests around subprocess launch are serialized: fork briefly inherits
+unrelated file descriptions until exec. Parallel harness failures first reproduced
+this ownership interference; strict engine locks remain unchanged. Production
+builds contain no kill/fault environment hooks. Wider random disconnect/load,
+publication I/O/media failures and complete platform backup gates remain open.

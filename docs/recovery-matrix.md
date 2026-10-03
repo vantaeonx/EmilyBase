@@ -61,6 +61,26 @@ retries need a future request/idempotency protocol.
 - Wider compaction filesystem faults, history vacuuming and retirement behavior.
 - Long random crash campaigns and failing-media recovery.
 - Backup upgrade compatibility and stable-format migration.
-- Security audit, server-level project isolation and authorization.
+- Security audit, user/row authorization and broader server/load isolation campaigns.
 
 Stage 2 remains **in progress**. These checks do not make the platform production-ready.
+
+
+## Server and project publication matrix
+
+| Fault/operation | Required observed result | Executed check |
+| --- | --- | --- |
+| Project staging/data/metadata sync, killed | incomplete project never listed; old data unchanged | six creation kill boundaries |
+| Project rename/root sync/returned key, killed | complete project opens; acknowledged key works | creation publication/ACK kills |
+| Rotation file sync/rename/dir sync/ACK, killed | one complete key epoch; old WAL unchanged | four boundaries on both WAL versions |
+| Creation/rotation directory sync failure | pre-publication refusal or poisoned uncertain owner; reopen required | five injected sync boundaries |
+| HTTP writer killed on response counts 5/20/60 | every complete response retained; atomic gapless prefix | six binary/TCP kills, WAL 1/2 |
+| Rolled-back/rejected SQL followed by kill | exact prior WAL, no staged rows | actual HTTP rollback kill |
+| Four TCP clients, two projects | 32 scoped rows and per-project IDs without lost writes | concurrent network test |
+| Client cancellation after blocking work starts | permit/root owner retained; commit finishes | controlled blocking-boundary test |
+| SIGTERM while accepted body incomplete | request drains, commit recovered, owner then released | actual binary/TCP drain |
+| Missing/corrupt project WAL with old cache | generic 503; no fallback/mutation; sibling works | actual HTTP corruption tests |
+| Damaged optional checkpoint | WAL-backed reads work; explicit checkpoint alone repairs cache | HTTP/cache test |
+
+Registry kill/fault callbacks compile only in unit-test builds. Private synthetic
+fixture keys stay in disposable 0600 files and are never printed or committed.
