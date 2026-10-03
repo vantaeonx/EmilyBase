@@ -84,3 +84,17 @@ Stage 2 remains **in progress**. These checks do not make the platform productio
 
 Registry kill/fault callbacks compile only in unit-test builds. Private synthetic
 fixture keys stay in disposable 0600 files and are never printed or committed.
+
+## Executed container checks
+
+| Operation | Observed result | Check |
+| --- | --- | --- |
+| Same-volume container recreation after WAL-2 compaction | keys, rows and last transaction preserved | real release image/Compose probe |
+| Offline backup, verify, restore and new restored write | exact synthetic rows/schema/ID; original preserved | image's compiled CLI |
+| SIGKILL during response-counted writes | every received ACK survives; complete gapless prefix; later writes work | real container writer |
+| Corrupt one project journal | that project fails closed; healthy sibling remains available | disposable container fault |
+| Rootless cgroup-v2 runtime limits | actual memory/CPU/process controller files match configuration | live container inspection |
+
+Same-revision recreation is not a future-format upgrade acceptance test. The probe
+deletes only its randomly named synthetic resources. Complete registry backup,
+physical power loss, security and wider load campaigns remain open.

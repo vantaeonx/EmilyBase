@@ -1,0 +1,22 @@
+services:
+  server:
+    build: .
+    image: emilybase:local
+    environment:
+      EMILYBASE_MASTER_KEY: "${EMILYBASE_MASTER_KEY:?supply a private 64-character lowercase hex master key}"
+    ports:
+      - "127.0.0.1:${EMILYBASE_PORT:-7000}:7000"
+    volumes:
+      - data:/var/lib/emilybase
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    mem_limit: 512m
+    cpus: 1.0
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    restart: "no"
+volumes:
+  data:

@@ -98,7 +98,9 @@ reopen using transaction state. Never automatically retry a write: absent respon
 does not prove rollback. No request-id deduplication is implemented.
 
 TLS termination, CORS, user auth, row policies, database-wide export/import,
-realtime, objects, dashboard and SDKs are future increments. Full registry backups,
+realtime, objects, dashboard and Kotlin SDK are future increments. The project
+TypeScript client is implemented; see its [usage and bounds](../sdks/typescript/README.md).
+The Rust server can also run through [Docker/Compose](deployment.md). Full registry backups,
 broader publication crash/fault campaigns and production security/load gates remain open.
 
 Registry kill/sync-failure tests and actual network writer kills now execute.

@@ -10,14 +10,14 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | bounded SQL subset/CLI and standalone B+ tree tested; durable index integration and wider query checks pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation implemented; other platform features not started |
-| 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | not started |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation and project TypeScript SDK implemented; other platform features pending |
+| 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
 
 Durable table indexes, background journal rotation and history vacuuming,
 Extended SQL, user/session authentication, row policies,
-file uploads, realtime, migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and deployment.
+file uploads, realtime, migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and production deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
 ## Next increments
@@ -25,7 +25,7 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
-4. Add synthetic-data-only Docker deployment and Kotlin client SDK, then extend
+4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and complete registry backup.
 
 ## Isolated registry and API keys
@@ -35,7 +35,7 @@ persists checked version-1 metadata and hashes for 256-bit random keys, and rota
 credentials atomically. Single-use request capabilities preserve root ownership
 and serialize same-project operations. Scope, traversal, symlink, permissions,
 real capacity, concurrent request and metadata bounds execute. Passwords/sessions,
-granular HTTP authorization and complete registry backups remain pending.
+granular row authorization and complete registry backups remain pending.
 See [project registry](projects.md) and [ADR 0012](adr/0012-isolated-projects.md).
 
 ## SQL parser increment
@@ -90,7 +90,7 @@ renumber index arena IDs; external row pointers remain unchanged. See
 - Compaction kill boundaries, unknown directory-sync outcomes and capacity recovery.
 - Four competing owners perform 80 updates with 16 compactions; all updates survive.
 - Frozen synthetic version-1 bytes and canonical/all-type compaction properties.
-- Atomic checkpoint cache; damaged caches are regenerated from WAL.
+- Atomic checkpoint cache; damaged caches are ignored and explicit checkpoint regenerates them from WAL.
 - Managed CLI mode, transaction batches and explicit legacy compatibility.
 - Process kills before/after commit, streaming writes and checkpoint rename.
 - Four competing processes, byte-cut matrix, OS write failures and recovery fuzzing.
@@ -129,3 +129,13 @@ A dependency-free project client performs SQL/explain/status with strict runtime
 validation, byte/shape bounds, exact safe integers and unknown-outcome errors.
 Eleven unit and seven live server/restart cases run. It neither persists credentials
 nor retries writes. npm publication, browser/CORS and Kotlin remain pending.
+
+## Container deployment increment
+
+The original compiled Rust server/CLI runs as a non-root process with a private
+volume, read-only image root, loopback host port and applied cgroup-v2 limits.
+Actual SQL/key isolation, offline verified backup/restore, WAL-2 compaction,
+same-volume recreation, SIGKILL ACK preservation and journal-damage isolation
+execute through the container. Full platform backups, arbitrary cross-version
+upgrade, remote TLS, load/security and physical-power-loss gates stay open.
+See [deployment](deployment.md) and [ADR 0015](adr/0015-experimental-containers.md).

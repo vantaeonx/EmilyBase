@@ -1,0 +1,15 @@
+**
+!Cargo.toml
+!Cargo.lock
+!crates/
+!crates/**
+!LICENSE
+**/.env
+**/.env.*
+**/*.key
+**/*.pem
+**/*.wal
+**/*.emily
+**/*.backup
+**/target/
+**/proptest-regressions/

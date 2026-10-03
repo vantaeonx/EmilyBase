@@ -1,0 +1,142 @@
+# Experimental local containers
+
+The image contains the compiled original Rust server and CLI. It requires no
+external database engine, paid service, JavaScript runtime or Python runtime.
+Node and Python are developer tools for optional client/integration checks.
+This deployment is for disposable synthetic data on Linux local filesystems.
+
+## Start
+
+Install Docker Engine with its Compose/build plugins using the
+[official instructions](https://docs.docker.com/engine/install/ubuntu/).
+Rootless Docker works with cgroup v2/systemd delegation; see
+[its resource-limit requirements](https://docs.docker.com/engine/security/rootless/tips/#limiting-resources).
+
+From this repository, supply a random secret privately and build:
+
+```sh
+export EMILYBASE_MASTER_KEY="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+docker compose build
+docker compose up --detach --wait
+curl --fail http://127.0.0.1:7000/health
+```
+
+The key is required, exactly 64 lowercase hexadecimal characters. Keep it in a
+private secret manager or private operator configuration outside the checkout;
+the example's generated value is not saved. Retain the same key before restarting.
+Compose currently passes it as environment configuration: the trusted Docker
+operator can inspect it. Secret-file loading and secret encryption are pending.
+Avoid publishing expanded Compose configuration or container inspection output.
+Never put the key in a URL, public frontend code, Git or logs.
+
+The host listens only on `127.0.0.1:7000`; `EMILYBASE_PORT` can change that port.
+The server binds all interfaces inside its own container. A named `data` volume
+stores `/var/lib/emilybase`; individual projects live under its private `projects`
+directory. Keep the Compose project name stable so the same volume is selected.
+No host checkout/data directory is bind-mounted into the container.
+
+The runtime process uses UID/GID 10001, a read-only image filesystem, all Linux
+capabilities dropped and `no-new-privileges`. The writable volume is private;
+`/tmp` is a bounded 16 MiB temporary filesystem. Compose configures 512 MiB memory,
+one CPU and 64 processes. Verify actual cgroup enforcement on the deployment host;
+rootless engines without delegated controllers may ignore those settings.
+
+Health is a public liveness response, not a database readiness check. A damaged
+project can return 503 while health and healthy projects remain available.
+There is no automatic restart loop: inspect failures before restarting.
+SIGTERM drains accepted work; Compose allows 30 seconds before forced termination.
+A commit can succeed without an observed response: inspect transaction state
+rather than retrying automatically. See the [HTTP contract](server.md).
+
+## Project backup and restore
+
+Stop the server before offline CLI maintenance. Obtain the server-issued project
+ID through the administrator API; never substitute a display name into a path.
+Use only this documented 32-character lowercase hexadecimal ID:
+
+```sh
+project_id='replace-with-server-issued-id'
+case "$project_id" in
+  *[!0-9a-f]*|'') exit 1 ;;
+esac
+[ "${#project_id}" -eq 32 ] || exit 1
+docker compose stop
+docker compose run --rm --no-deps --entrypoint emilybase server \
+  backup "/var/lib/emilybase/projects/$project_id/data" /var/lib/emilybase/project.backup
+docker compose run --rm --no-deps --entrypoint emilybase server \
+  backup-verify /var/lib/emilybase/project.backup
+docker compose run --rm --no-deps --entrypoint emilybase server \
+  restore /var/lib/emilybase/project.backup /var/lib/emilybase/restored-data
+docker compose run --rm --no-deps --entrypoint emilybase server \
+  sql /var/lib/emilybase/restored-data 'SELECT * FROM items LIMIT 10'
+docker compose up --detach --wait
+```
+
+Replace the example query with a known synthetic table. Existing archives and
+restore destinations are preserved; choose a new name for the next backup.
+The restored database is a separate offline managed directory. It is not
+automatically adopted as a project. Archives contain plaintext committed WAL,
+not project names/key metadata or an administrator secret. Full-platform
+backup/restore is still pending. An archive kept only in the source volume
+does not protect against loss of that volume: copy it to private independent
+storage and verify the copy using the CLI. No real data is authorized yet.
+
+Do not put backup archives or restored directories under the registry's `projects`
+root: unknown registry entries correctly prevent startup. Do not copy a live WAL
+as a backup. Do not replace existing project files with restored data manually.
+See [backup verification and limits](backup-format.md).
+
+## Image replacement and compatibility
+
+Current readers accept storage version 1 and WAL versions 1/2. Opening is never a
+format upgrade. Explicit offline `compact` writes a WAL-2 baseline; version-1-only
+older readers reject it. Check [format rules](file-format.md) and the relevant
+release notes before choosing a different revision. There is no stable production
+release or verified arbitrary cross-version downgrade procedure.
+
+For a candidate revision, use a separate disposable volume first. After a verified
+offline backup and independent restore check, preserve the current image/revision,
+stop the server, rebuild the new image, and recreate using the same Compose project
+and volume. Check administrator project listing, each project's transaction state
+and expected synthetic rows before accepting writes:
+
+```sh
+docker compose stop
+docker compose build
+docker compose up --detach --no-build --force-recreate --wait
+```
+
+The executed container probe verifies same-revision recreation with intact data,
+keys and IDs, including explicit WAL compaction. It does not prove compatibility
+with a future file-format change. Future migration acceptance must test old/new
+readers, restored backups and rollback before claiming a safe upgrade.
+
+`docker compose down` retains named volumes. `down --volumes` destroys their data;
+the test probe uses that flag only for its own randomly named synthetic project.
+Do not use it to maintain a deployment you intend to keep.
+
+## Executable container probe
+
+```sh
+python3 tests/containers.py
+```
+
+It builds the image, allocates a random Compose project and loopback port, and
+creates only synthetic data. It verifies non-root execution, applied cgroup-v2
+memory/CPU/process limits, read-only root, private directories, scoped keys,
+literal parameters, failed-script rollback and key rotation. Offline backup,
+independent replay/restore, no-clobber destinations, new restored writes, WAL-2
+compaction and same-volume container recreation run through the actual CLI.
+
+A real SIGKILL writer check restores every fully received SQL response and a
+gapless whole-script prefix. Complete commits whose responses were lost may also
+survive. Deliberate journal damage returns 503 for that project while its sibling
+continues to serve. Captured logs must exclude the probe's credentials, IDs and
+SQL. The probe finally removes only its own containers/volume, including on error.
+It respects `DOCKER_HOST`, `DOCKER_CONFIG` and optional `EMILYBASE_DOCKER`.
+
+For the already installed/compiled project SDK, add `--sdk`; `--no-build` reuses
+`emilybase:local`. The SDK's native-process restart case is skipped in external
+container mode; the Python probe owns and verifies container restart itself.
+No browser UI, TLS, load test, platform backup, physical power-loss experiment
+or full security audit is implied by these checks.

@@ -39,3 +39,24 @@ jobs:
         run: npm run test:integration --prefix sdks/typescript
       - name: Lint and compile fuzz targets
         run: cargo clippy --locked --manifest-path fuzz/Cargo.toml --bins -- -D warnings
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: sdks/typescript/package-lock.json
+      - name: Install SDK tooling
+        run: npm ci --ignore-scripts --prefix sdks/typescript
+      - name: Compile SDK
+        run: npm run build --prefix sdks/typescript
+      - name: Check container probe
+        run: |
+          python3 -m pip install ruff==0.16.10
+          ruff format --check tests/containers.py
+          ruff check tests/containers.py
+      - name: Original server container, restart, kill, corruption and restore
+        run: python3 tests/containers.py --sdk

@@ -58,6 +58,10 @@ cargo run -p emilybase-cli -- sql /tmp/emilybase-demo 'SELECT * FROM items WHERE
 
 ## Try typed tables
 
+For the compiled Rust server/CLI in Docker, see [local container deployment](docs/deployment.md).
+Compose uses a private named volume and loopback port. Actual recreation, SIGKILL,
+corruption isolation and offline backup/restore checks run; this remains experimental.
+
 Use a disposable managed directory and synthetic data:
 
 ```sh

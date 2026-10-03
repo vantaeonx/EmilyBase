@@ -14,5 +14,4 @@ dist/
 .emilybase-backup-*
 proptest-regressions/
 /emilybase-data/
-node_modules/
-dist/
+__pycache__/

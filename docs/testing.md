@@ -494,3 +494,29 @@ Rust remains 18046 physical lines; combined source is 19235. Manifests, lockfile
 docs, installed dependencies and generated dist are excluded. The prior 270 Rust
 main tests/nine helpers remain unchanged. SDK checks execute in GitHub Actions;
 no npm release, browser verification or production claim is made.
+
+## Experimental containers: executed checks
+
+On 2026-10-03, the locked original server/CLI built in the pinned multi-stage image.
+The real Docker 29.8.2 rootless daemon used cgroup v2/systemd delegation, Compose
+5.6.0 and buildx 0.37.2. The Python standard-library probe verifies actual UID
+10001, read-only root, private directory permissions, loopback binding and both
+configured and applied 512 MiB/one CPU/64-process limits. Ruff 0.16.10 formatting
+and lint checks pass. The probe adds 511 physical Python source lines; Rust stays
+18046 and SDK source 1189, total 19746 excluding docs/config/dependencies/output.
+
+Real scoped HTTP SQL, literal parameters, rollback/rejected scripts and key rotation
+pass. Offline CLI backup/verify/restore, refusal to clobber existing outputs,
+restored new writes, WAL-2 compaction and same-volume recreation preserve expected
+source/sibling rows, keys and transaction IDs. SIGKILL during a response-counted
+writer preserves every fully observed ACK and a gapless complete-row/transaction
+prefix; new commits work after reopen. Deliberate sibling journal corruption fails
+closed with 503 while the healthy project and liveness remain available. Private
+request content is absent from logs. Only the probe's own synthetic volume is removed.
+
+SDK integration also runs against the actual release container; its separate
+native-process restart subtest is skipped in external mode because the probe
+controls container restart. The prior native seven-case suite remains recorded
+above. All 270 Rust main tests/nine helpers are unchanged by this packaging step.
+CI now runs the real container probe. Arbitrary version upgrades, full platform
+backups, remote TLS, broad load, physical power loss and production audit stay open.

@@ -11,6 +11,7 @@ flowchart TD
   Database --> Catalog[Catalog: schemas and typed records]
   Database --> Storage
   HTTP[Axum server: bounded blocking workers] --> Query[Bounded SQL parser / planner / executor]
+  SDK[Optional project TypeScript SDK] --> HTTP
   CLI --> Query
   Query --> Transactions[Serialized transaction coordinator]
   Transactions --> WAL[Synced full-page WAL]
@@ -101,7 +102,9 @@ Each project receives a server-controlled directory and catalog. Public IDs must
 never be concatenated into filesystem paths. Authorization must bind every
 operation, subscription and object access to a project. The dashboard uses
 React/TypeScript/Vite; REST uses Axum, Serde and OpenAPI; realtime uses WebSocket.
-TypeScript and Kotlin SDKs will use the documented API. Docker and Compose are the next deployment increment. No external paid service is required.
+The TypeScript project SDK uses the documented API; Kotlin and the web dashboard
+remain future work. Docker/Compose packages the compiled Rust server and CLI,
+with no JavaScript/Python runtime dependency. No external paid service is required.
 
 The synchronous registry portion now lives in `server`, with key primitives in
 `auth`. Server-issued IDs select private project directories; display names never
