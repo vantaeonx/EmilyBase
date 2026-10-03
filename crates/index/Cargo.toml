@@ -11,6 +11,8 @@ emilybase-catalog = { path = "../catalog" }
 emilybase-storage = { path = "../storage" }
 crc32fast = "1.5"
 sha2 = "0.10"
+rustix = { version = "1", features = ["fs"] }
+tempfile = "3"
 thiserror = "2"
 
 [dev-dependencies]

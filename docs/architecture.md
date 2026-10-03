@@ -69,8 +69,9 @@ arena pages densely without changing opaque row pointers. This bounded foundatio
 is not a throughput claim or stable durable allocator. Fixed-size images have an
 independent `EBIX` codec and whole-tree validation.
 
-The index currently has no file publisher, root catalog entry or WAL participation;
-the relational engine still uses its existing primary-key map. Its 256-byte text
+The index has a standalone atomic snapshot publisher; table root catalog entry
+and WAL participation remain pending. The relational engine still uses its
+existing primary-key map. Its 256-byte text
 key bound is separate from the catalog's 3072-byte text limit. Future integration
 must explicitly reconcile those limits, page allocation, pointer lifetime and
 transactional split publication. No database-file format changes occur in this
@@ -80,7 +81,9 @@ increment. See [ADR 0009](adr/0009-bounded-index-foundation.md) and
 The opt-in stable arena now retains surviving IDs and reuses holes. Canonical
 EBIF snapshots bind root/revision/counts, while in-memory deltas bind their exact
 base and validate the whole resulting tree. Dense EBIX-1 remains compatible.
-Standalone file publication and managed table/WAL participation stay pending.
+Standalone file publication now owns a private directory across snapshot-file
+replacement, verifies its exact base and syncs before revision ACK. Managed
+table/WAL participation stays pending.
 See [ADR 0016](adr/0016-stable-index-snapshots.md).
 
 ## Backup boundary

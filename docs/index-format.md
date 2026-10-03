@@ -2,8 +2,8 @@
 
 This standalone codec is separate from the current database-file layout. Dense
 `page_images` exports pages ordered by ID; `from_pages` also requires a root ID.
-Opt-in stable arenas and a canonical EBIF snapshot envelope now exist. Filesystem
-publication, table root catalog and managed-WAL integration remain pending.
+Opt-in stable arenas, a canonical EBIF envelope and standalone atomic filesystem
+publication now exist. Table root catalog and managed-WAL integration remain pending.
 
 All integers use little-endian encoding. Every image is exactly 4096 bytes.
 
@@ -91,8 +91,8 @@ before allocating and verifies complete tree/count agreement.
 | 64 | 4032 | reserved zero |
 
 The revision is independent of table/WAL transaction IDs. The envelope does not
-include project/table identity or authenticate row targets. No automatic converter,
-file publisher or acknowledged snapshot durability is implemented yet.
+include project/table identity or authenticate row targets. No automatic converter
+or atomic table/index transaction is implemented yet.
 
 `SnapshotDelta` is a validated in-memory write set without a wire/WAL codec yet.
 It binds exact canonical base bytes using SHA-256 plus base/next revisions,
@@ -101,6 +101,37 @@ IDs. Application rejects stale/different bases, repeated/reordered/overlapping
 IDs, unchanged upserts, invalid topology/counts and revision overflow. It returns
 a new snapshot after full validation; an empty delta can increment revision.
 Retired handles need a future lifetime protocol. See [ADR 0016](adr/0016-stable-index-snapshots.md).
+
+## Standalone filesystem publisher
+
+`IndexStore` owns an exclusive directory lock and selects only `tree.ebif`.
+Creation stages a mode-0700 directory, writes/syncs/verifies the mode-0600 snapshot,
+syncs the stage, publishes with no-replace rename and syncs the parent before ACK.
+Replacement validates the full delta, checks the owned directory device/inode
+and exact persisted base, writes/syncs/verifies a temporary snapshot, replaces the
+active file and syncs the directory before ACK. The directory owner spans file
+replacement. Sync failure after publication has unknown outcome; reopen/inspect
+revision before retrying. Detected path/data replacement poisons the owner.
+
+Opening checks private paths, rejects symlinks/hard links, bounds file reads and
+validates the entire selected snapshot. Staging is never recovery fallback.
+Physical power loss and broader publication/media faults remain unverified.
+Whole-snapshot replacement is bounded but expensive. Table/WAL integration remains
+pending; local revisions and opaque targets are independent of table commits.
+
+Developer demonstration using only synthetic pointers:
+
+```sh
+cargo run -p emilybase-cli -- index-create /tmp/emilybase-index-demo
+cargo run -p emilybase-cli -- index-insert /tmp/emilybase-index-demo '{"type":"integer","value":7}' 10 3
+cargo run -p emilybase-cli -- index-get /tmp/emilybase-index-demo '{"type":"integer","value":7}'
+cargo run -p emilybase-cli -- index-delete /tmp/emilybase-index-demo '{"type":"integer","value":7}'
+cargo run -p emilybase-cli -- index-verify /tmp/emilybase-index-demo
+```
+
+`get` prints an opaque page/slot or null and does not open a table row. Errors
+preserve existing data; mutation success prints the published local revision.
+See [ADR 0017](adr/0017-atomic-index-publication.md).
 
 `from_sorted` accepts at most 10000 strictly ascending, unique, validated entries.
 It balances leaves and then child groups bottom-up; non-root occupancy remains

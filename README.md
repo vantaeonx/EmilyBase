@@ -33,7 +33,9 @@ external row pointers. See [index format and limits](docs/index-format.md) and
 [the integration boundary](docs/adr/0010-index-maintenance.md).
 An opt-in stable-ID arena preserves surviving page addresses and reuses holes.
 Canonical snapshots and exact-base-bound atomic write sets validate root/counts
-and complete topology. Their file publisher and table/WAL integration remain pending.
+and complete topology. A private standalone snapshot publisher and developer CLI
+now survive tested creation/replacement kills and competing writers. Atomic
+table/WAL integration remains pending.
 
 The original `query` crate implements a bounded SQL lexer, parser, typed AST,
 schema-resolved plans and execution through managed WAL transactions: table DDL,

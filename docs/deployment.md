@@ -127,6 +127,8 @@ memory/CPU/process limits, read-only root, private directories, scoped keys,
 literal parameters, failed-script rollback and key rotation. Offline backup,
 independent replay/restore, no-clobber destinations, new restored writes, WAL-2
 compaction and same-volume container recreation run through the actual CLI.
+The compiled standalone index CLI also creates, inserts, reads, deletes and verifies
+a separate synthetic index; table/WAL index integration remains pending.
 
 A real SIGKILL writer check restores every fully received SQL response and a
 gapless whole-script prefix. Complete commits whose responses were lost may also

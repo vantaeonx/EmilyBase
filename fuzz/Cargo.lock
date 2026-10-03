@@ -211,7 +211,9 @@ dependencies = [
  "crc32fast",
  "emilybase-catalog",
  "emilybase-storage",
+ "rustix",
  "sha2",
+ "tempfile",
  "thiserror",
 ]
 

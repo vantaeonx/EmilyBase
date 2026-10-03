@@ -548,3 +548,33 @@ reach empty, branch and sparse multilevel trees; the target repairs nested CRCs
 and checks whole snapshot/delta replay. This increment is a codec/arena API with
 in-memory atomic write sets. File publication, row ownership/key limits, managed
 WAL participation, power-loss and production gates remain pending.
+
+## Standalone index filesystem publication: executed checks
+
+On 2026-10-03, both format/Clippy suites, workspace build and all 302 main tests
+pass; ten subprocess helpers are outside that count. This block adds 1017 physical
+Rust lines and nine Python probe lines. Totals: Rust 20048 (19020 without blank/
+comment-only lines), SDK 1189, Python 520, combined 21757. Docs/config/lockfiles,
+dependencies and generated files are excluded.
+
+Thirteen unit cases cover private no-clobber publication, ownership across active
+inode replacement, path/hard-link/symlink/permission boundaries, staging refusal,
+truncation/corruption/oversized reads, stale bases and poisoned owners. Nine real
+creation/replacement process kills include returned ACKs; complete selected
+snapshots reopen and accept new revisions. Ten before/after injected sync errors
+distinguish unchanged selection from unknown post-rename outcomes. Two actual
+process writers preserve 20 increments and revision 21. A 32-case model reopens
+after each generated operation; a binary CLI case checks every new command and
+rejected-write preservation without reflecting input.
+
+A failing regression first reproduced writes following a replaced root path
+instead of the owned inode. Device/inode and private-path checks fixed it; moved
+and replacement directories remain unchanged on refusal. Release code contains
+no test pause/fault environment hooks. A full release-image rebuild and actual
+Docker/Compose probe, including new index CLI and SDK, pass. A local tmpfs quota
+initially stopped the image build; moving the isolated test engine cache to disk
+resolved it. No passing container run was claimed for the failed build.
+
+The existing snapshot codec is unchanged from its recorded ASan run. This is a
+standalone full-snapshot publisher; table/WAL root publication, longer table
+keys, row-pointer lifetime, media/power-loss and production gates remain open.

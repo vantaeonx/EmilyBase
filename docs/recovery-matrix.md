@@ -98,3 +98,19 @@ fixture keys stay in disposable 0600 files and are never printed or committed.
 Same-revision recreation is not a future-format upgrade acceptance test. The probe
 deletes only its randomly named synthetic resources. Complete registry backup,
 physical power loss, security and wider load campaigns remain open.
+
+## Standalone index snapshot publication
+
+| Boundary | Observed result | Check |
+| --- | --- | --- |
+| Creation file/stage synced, killed | final directory absent | two process kills |
+| Creation renamed/parent synced/ACK, killed | complete revision one, new writes work | three process kills |
+| Replacement file synced, killed | previous complete revision | process kill |
+| Replacement renamed/directory synced/ACK, killed | complete selected next revision | three process kills |
+| Ten before/after sync failures | old selection or reported unknown complete publication | injected sync matrix |
+| Two competing process owners | 20 increments, revision 21 and exact final pointer | real subprocess writers |
+| Owned root moved/replaced or permissions widened | refuse and poison; neither directory modified | reproduced path regression |
+| Generated operations with reopen after each | exact model rows, bytes and revisions | 32-case persistent property |
+
+The publisher is independent of table/WAL transactions. No integrated durable
+index, hardware power-loss or concurrent-reader acceptance gate closes.

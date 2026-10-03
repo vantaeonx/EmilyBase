@@ -331,6 +331,15 @@ class Probe:
             "restored database accepts new writes",
         )
         self.cli("compact", source)
+        index = "/var/lib/emilybase/standalone-index"
+        self.cli("index-create", index)
+        self.cli("index-insert", index, '{"type":"integer","value":7}', "10", "3")
+        pointer = json.loads(
+            self.cli("index-get", index, '{"type":"integer","value":7}').stdout
+        )
+        require(pointer == {"page": 10, "slot": 3}, "compiled standalone index CLI")
+        self.cli("index-delete", index, '{"type":"integer","value":7}')
+        self.cli("index-verify", index)
         self.up(recreate=True)
         require(
             self.status(first) == before,

@@ -20,6 +20,21 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Create a standalone stable B+ tree snapshot, separate from table/WAL storage.
+    IndexCreate { path: PathBuf },
+    /// Insert an opaque synthetic record pointer into a standalone index.
+    IndexInsert {
+        path: PathBuf,
+        key: String,
+        target_page: u64,
+        target_slot: u16,
+    },
+    /// Read a standalone index pointer; does not dereference a table row.
+    IndexGet { path: PathBuf, key: String },
+    /// Delete a standalone key and publish its next snapshot revision.
+    IndexDelete { path: PathBuf, key: String },
+    /// Validate the selected standalone snapshot and complete tree topology.
+    IndexVerify { path: PathBuf },
     /// Execute the documented SQL subset as one managed transaction.
     Sql {
         path: PathBuf,
@@ -135,6 +150,54 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::IndexCreate { path } => {
+            emilybase_index::IndexStore::create(path, &emilybase_index::BPlusTree::new_stable())?;
+            println!("created standalone experimental index; revision=1");
+        }
+        Command::IndexInsert {
+            path,
+            key,
+            target_page,
+            target_slot,
+        } => {
+            let key: Key = parse_json(&key)?;
+            let mut store = emilybase_index::IndexStore::open(path)?;
+            let mut tree = store.snapshot()?.tree.clone();
+            tree.insert(
+                key,
+                emilybase_index::RecordPointer {
+                    page_id: target_page,
+                    slot_id: target_slot,
+                },
+            )?;
+            println!("index revision={}", store.replace(&tree)?);
+        }
+        Command::IndexDelete { path, key } => {
+            let key: Key = parse_json(&key)?;
+            let mut store = emilybase_index::IndexStore::open(path)?;
+            let mut tree = store.snapshot()?.tree.clone();
+            tree.remove(&key)?;
+            println!("index revision={}", store.replace(&tree)?);
+        }
+        Command::IndexGet { path, key } => {
+            let key: Key = parse_json(&key)?;
+            let store = emilybase_index::IndexStore::open(path)?;
+            let result =
+                store.snapshot()?.tree.get(&key)?.map(
+                    |pointer| serde_json::json!({"page":pointer.page_id,"slot":pointer.slot_id}),
+                );
+            println!("{}", serde_json::to_string(&result)?);
+        }
+        Command::IndexVerify { path } => {
+            let store = emilybase_index::IndexStore::open(path)?;
+            let snapshot = store.snapshot()?;
+            println!(
+                "verified index revision={} pages={} entries={}",
+                snapshot.revision,
+                snapshot.tree.page_count(),
+                snapshot.tree.len()
+            );
+        }
         Command::Sql {
             path,
             sql,

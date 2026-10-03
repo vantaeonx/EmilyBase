@@ -1,6 +1,6 @@
 # ADR 0016: opt-in stable index IDs, canonical snapshots and bound write sets
 
-Status: implemented for the standalone index; file publication/table WAL pending.
+Status: codec/write sets implemented; publisher added in ADR 0017; table WAL pending.
 
 ## Context
 
@@ -49,3 +49,7 @@ does not authenticate attacker-controlled write sets. Table key limits, record
 ownership/lifetime, EBIX versus slotted EBPG images, transaction page caps and
 atomic table/index root publication remain unresolved. See [ADR 0010](0010-index-maintenance.md).
 No durable-index acceptance gate closes.
+
+Follow-up [ADR 0017](0017-atomic-index-publication.md) implements a standalone
+atomic filesystem publisher with ownership and process-kill checks. Integrated
+table/WAL publication remains pending.

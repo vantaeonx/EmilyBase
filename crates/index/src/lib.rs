@@ -4,6 +4,9 @@ mod delta;
 mod mutations;
 mod page;
 mod snapshot;
+mod store;
+#[cfg(test)]
+mod store_tests;
 mod tree;
 
 pub use delta::SnapshotDelta;
@@ -11,6 +14,7 @@ pub use emilybase_catalog::Key;
 pub use emilybase_storage::PAGE_SIZE;
 pub use page::{IndexPage, RecordPointer};
 pub use snapshot::{IndexSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_VERSION};
+pub use store::{IndexStore, StoreError};
 pub use tree::BPlusTree;
 
 pub const INDEX_VERSION: u16 = 1;

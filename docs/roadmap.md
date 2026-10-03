@@ -69,7 +69,8 @@ renumber index arena IDs; external row pointers remain unchanged. See
 An explicit stable arena now retains survivor IDs, reuses holes and exports
 canonical root/revision/count snapshots. Bound atomic in-memory deltas validate
 full resulting topology. Both modes pass exact compatibility, capacity and model
-checks. Standalone file publication and table/WAL participation remain pending.
+checks. Standalone private snapshot publication/CLI now passes sync, process-kill,
+ownership and competing-writer checks. Table/WAL participation remains pending.
 
 ## Implemented first increment
 
