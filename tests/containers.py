@@ -329,6 +329,33 @@ class Probe:
         require(self.status(first) == before, "key rotation preserves data")
         return first, second
 
+    def text_ranges(self):
+        phase("Check UTF-8 primary ranges through the actual container HTTP server")
+        project = self.create("synthetic-text-ranges")
+        self.sql(project, "CREATE TABLE t(id TEXT PRIMARY KEY,n INT)")
+        long_key = "a" + "x" * 3071
+        self.private.append(long_key)
+        self.sql(
+            project,
+            "INSERT INTO t VALUES ('a',1); INSERT INTO t VALUES ($1,7); INSERT INTO t VALUES ('b',2)",
+            [{"type": "text", "value": long_key}],
+        )
+        source = "SELECT n FROM t WHERE id >= 'a' AND id < 'b' ORDER BY id"
+        plan = self.request(
+            f"/v1/projects/{project[0]}/explain", project[1], {"sql": source}
+        )
+        require(plan["access"] == "primary_range", "text inequality index plan")
+        result = self.sql(project, source)["results"][0]["rows"]
+        require(
+            result
+            == [[{"type": "integer", "value": 1}], [{"type": "integer", "value": 7}]],
+            "text ranges include the maximum-length excluded key",
+        )
+        report = self.sql(project, "UPDATE t SET n=8 WHERE id > 'a' AND id < 'b'")
+        require(report["results"][0]["affected"] == 1, "text ranged mutation")
+        result = self.sql(project, source)["results"][0]["rows"]
+        require(result[1][0]["value"] == 8, "text ranged mutation is readable")
+
     def sdk(self, enabled):
         if not enabled:
             return
@@ -660,6 +687,7 @@ def main():
         probe.setup(not args.no_build)
         probe.configuration()
         first, second = probe.data_and_credentials()
+        probe.text_ranges()
         probe.sdk(args.sdk)
         probe.backup_recreate(first, second)
         probe.killed_writer(first, second)

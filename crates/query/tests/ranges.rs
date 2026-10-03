@@ -169,7 +169,7 @@ fn range_extraction_preserves_or_not_null_and_schema_validation_semantics() {
         )
         .unwrap()
         .access,
-        "scan"
+        "primary_range"
     );
     assert_eq!(
         explain(

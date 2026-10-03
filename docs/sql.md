@@ -78,7 +78,7 @@ ambiguous columns are checked even on empty input or LIMIT 0. An alias hides its
 original table qualifier; self joins require distinct aliases.
 
 SELECT and filtered UPDATE/DELETE select direct primary-key lookup for a usable equality conjunct;
-otherwise it scans. Joins use a bounded nested loop. `explain` resolves one SELECT
+otherwise it selects a usable primary range or scans. Joins use a bounded nested loop. `explain` resolves one SELECT
 without reading rows. Eligible point lookups route through the original derived
 B+ tree, then validate their live page/slot/image. Text keys over 256 bytes retain
 the map path, through the existing 3072-byte limit. Scans/joins keep current row
@@ -90,10 +90,30 @@ claim is made. See [ADR 0021](adr/0021-derived-primary-key-trees.md).
 For integer primary keys, necessary AND inequalities (`<`, `<=`, `>`, `>=`)
 select a `primary_range` plan for SELECT and filtered UPDATE/DELETE. Reversed
 operands and multiple intersecting bounds are supported without i64 overflow.
-The complete filter still executes. OR/NOT, joins, column comparisons and text
-ranges retain their earlier paths; equality takes priority. Empty/contradictory
+The complete filter still executes. OR/NOT, joins and column comparisons
+retain their earlier paths; equality takes priority. Empty/contradictory
 intervals still validate every field/type/parameter before returning rows.
 See [ADR 0022](adr/0022-integer-primary-range-plans.md).
+
+Text primary keys support the same necessary AND inequalities in UTF-8 byte
+order, without locale or case folding. Inclusive lower/exclusive upper bounds
+can use at most 256 bytes. Strict lower/inclusive upper normalization appends a
+NUL scalar: `s + '\0'` is the smallest valid string greater than `s`, including
+empty strings and strings already containing NUL. This is usable only when the
+normalized bound fits 256 bytes. Longer or unrepresentable literals remain
+filters/scans; another usable necessary conjunct can still supply the range.
+Every predicate is fully bound before plan extraction, even with LIMIT 0.
+
+The snapshot API validates the short-key tree interval and its live pointers,
+then resolves ordered live keys including long keys through the 3072-byte table
+limit. LIMIT follows this merge, so a long key preceding a short tree entry
+cannot disappear or change ordering. Direct snapshot ranges accept long bounds
+through 3072 bytes using the ordered live map. The integrity comparisons and
+derived-tree build remain bounded by table capacity, outside the row-execution
+work counter. SELECT still applies its complete filter and explicit ORDER BY;
+UPDATE/DELETE use the same range on their staged snapshot. Durable index WAL,
+secondary DDL and ordering pushdown remain pending. See
+[ADR 0026](adr/0026-utf8-primary-range-plans.md).
 
 The library's `query(snapshot, sql, parameters)` evaluates exactly one SELECT
 without file access or mutations, allowing reads of a detached validated snapshot.

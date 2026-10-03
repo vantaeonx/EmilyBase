@@ -21,11 +21,9 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
             .cloned()
             .into_iter()
             .collect(),
-        None => match plan.range {
-            Some(range) if range.empty => Vec::new(),
-            Some(range) => {
-                snapshot.scan_integer_range(&plan.table, range.lower, range.upper, MAX_ROWS)?
-            }
+        None => match &plan.range {
+            Some(range) if range.empty() => Vec::new(),
+            Some(range) => range.scan(snapshot, &plan.table, MAX_ROWS)?,
             None => snapshot.scan(&plan.table, MAX_ROWS)?,
         },
     };

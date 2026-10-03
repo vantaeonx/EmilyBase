@@ -7,6 +7,7 @@ mod projection;
 mod range;
 mod snapshot;
 mod state;
+mod text_range;
 
 pub use engine::Database;
 pub use event::{DATABASE_MARKER, Event, EventKind};
@@ -22,6 +23,8 @@ pub const MAX_EVENTS: usize = 100000;
 pub enum Error {
     #[error("integer primary-key range requires an integer primary key")]
     IntegerRangeType,
+    #[error("text range requires a text primary key")]
+    TextRangeType,
     #[error("invalid derived primary index: {0}")]
     PrimaryIndex(&'static str),
     #[error(transparent)]

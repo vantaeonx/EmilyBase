@@ -52,7 +52,7 @@ pub(crate) struct SortKey {
 pub(crate) struct Plan {
     pub table: String,
     pub key: Option<Key>,
-    pub range: Option<crate::range::IntegerRange>,
+    pub range: Option<crate::range::PrimaryRange>,
     pub join: Option<(String, Predicate)>,
     pub filter: Option<Predicate>,
     pub columns: Vec<(usize, String)>,
@@ -138,10 +138,7 @@ impl Plan {
             None
         };
         let schema = snapshot.schema(&select.from.name)?;
-        let range = if key.is_none()
-            && select.join.is_none()
-            && schema.columns[usize::from(schema.primary_key)].data_type == DataType::Integer
-        {
+        let range = if key.is_none() && select.join.is_none() {
             filter.as_ref().and_then(|predicate| {
                 crate::range::primary_range(predicate, usize::from(schema.primary_key))
             })

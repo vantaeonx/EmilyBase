@@ -876,3 +876,35 @@ Totals: 28270 Rust (26960 excluding blank/comment-only lines), 1207 SDK and 690
 Python; 30167 source lines including tests. Existing formats and HTTP contracts
 are unchanged. Automatic refresh/housekeeping, independently durable index WAL,
 wider failing-media/load/security and production acceptance remain open.
+
+## UTF-8 primary ranges
+
+The final locked workspace run passes 422 main Rust tests; 12 ignored process
+entry helpers are invoked by their parent crash tests. Workspace/fuzz formatting,
+both strict Clippy checks and the locked workspace build pass. Python lint and
+format checks pass. The rebuilt release container campaign, including SDK,
+crash/restore/isolation/redaction checks and new real HTTP text-range reads and
+updates, passes.
+
+New tests cover all comparison directions and reversed operands, empty strings,
+embedded NUL, emoji, 255/256/257/3072-byte bounds, NULL filters, aliases, joins,
+LIMIT 0 validation and contradictions. Independent generated models include
+48 snapshot interval cases, 48 nullable SQL comparison cases and 32 mutation/
+rollback/reopen cases. A real 10000-key mixed short/long table preserves ordering
+and limits; 64 narrow writes among 6000 rows remain within the execution work
+bound. Forged missing/extra/wrong short-tree projections fail even if a long key
+would fill LIMIT. Both WAL versions and verified restores retain the rows.
+An actual compiled CLI test covers explain, reads, long-key update and rollback.
+
+The SQL execution ASan target now independently checks generated text intervals
+alongside raw SQL and integer cases. It completes 130452 executions in 16 seconds
+under a 15-second, 16384-byte, 512-MiB budget without failure. This is a short
+fuzz smoke campaign, not an exhaustive audit.
+
+The initial new text-plan regression failed against the previous scan planner,
+then passed after implementation. Net source growth is 962 Rust lines (+994/-32)
+and 28 Python lines, or 990 total. Current totals are 29232 Rust (27897 excluding
+blank/comment-only lines), 1207 SDK and 718 Python: 31157 source lines including
+tests. SQL text ordering is UTF-8 byte order, without locale collation. Existing
+stored formats and API contracts remain unchanged; durable index WAL, secondary
+DDL, ordering pushdown and wider production acceptance remain open.

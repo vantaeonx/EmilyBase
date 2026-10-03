@@ -90,9 +90,16 @@ index roots/pages/WAL and secondary indexes remain pending. See
 Integer primary range plans now route necessary AND inequalities through linked
 leaves for SELECT/UPDATE/DELETE. Endpoint/overflow, nullable/filter/alias, generated
 read/write/reopen models and 6000-row narrow-work checks execute. Explain/client
-contracts include primary_range. Text ranges, ordering pushdown, secondary DDL
+contracts include primary_range. Ordering pushdown, secondary DDL
 and independently durable index pages remain open. See
 [ADR 0022](adr/0022-integer-primary-range-plans.md).
+
+Text primary ranges now support necessary AND inequalities, UTF-8 byte ordering
+and exact representable successor bounds. Long keys merge before LIMIT; longer
+SQL bounds retain scans. Independent generated read/write models, 10000-key
+capacity, nullable/reversed/NUL/Unicode edges, 6000-row narrow writes, both-WAL
+restore and real CLI/container HTTP cases execute. No durable format or wider
+production gate is closed. See [ADR 0026](adr/0026-utf8-primary-range-plans.md).
 
 Explicit EBTI primary-tree images bind persistent database/table identity,
 acknowledged transaction and exact relational history. Full live-key/pointer

@@ -46,8 +46,14 @@ It does not create an index file. See [ADR 0021](docs/adr/0021-derived-primary-k
 
 Integer primary-key inequalities in necessary AND conjuncts now use linked-leaf
 range lookup for SELECT/UPDATE/DELETE, with checked i64 boundaries and unchanged
-null/rollback semantics. Explain reports `primary_range`. Text ranges, joins and
-other predicates retain their existing paths. See [ADR 0022](docs/adr/0022-integer-primary-range-plans.md).
+null/rollback semantics. Explain reports `primary_range`. See
+[ADR 0022](docs/adr/0022-integer-primary-range-plans.md).
+
+Text primary ranges also support necessary AND inequalities in UTF-8 byte order.
+Short bounds validate linked-leaf entries; live ordered keys include excluded long
+keys before LIMIT. SQL uses this path for representable bounds through 256 bytes;
+longer bounds retain bounded scans. No locale collation or ordering pushdown is
+claimed. See [ADR 0026](docs/adr/0026-utf8-primary-range-plans.md).
 
 Explicit bound primary-tree images now validate persistent database/table identity,
 acknowledged transaction, exact relational history and every eligible live pointer

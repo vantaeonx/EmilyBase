@@ -59,6 +59,40 @@ fn snapshot() -> &'static Snapshot {
             }
         }
         snapshot
+            .apply(Event {
+                table_id: 3,
+                kind: EventKind::Create(Schema {
+                    name: "words".into(),
+                    columns: vec![Column {
+                        name: "id".into(),
+                        data_type: DataType::Text,
+                        nullable: false,
+                    }],
+                    primary_key: 0,
+                }),
+            })
+            .unwrap();
+        for key in [
+            String::new(),
+            "\0".into(),
+            "a".into(),
+            "a\0".into(),
+            "b".into(),
+            "界".into(),
+            "😀".into(),
+            "z".repeat(255),
+            "z".repeat(256),
+            "z".repeat(257),
+            format!("a{}", "z".repeat(3071)),
+        ] {
+            snapshot
+                .apply(Event {
+                    table_id: 3,
+                    kind: EventKind::Insert(vec![Value::Text(key)]),
+                })
+                .unwrap();
+        }
+        snapshot
     })
 }
 
@@ -102,6 +136,28 @@ fuzz_target!(|bytes: &[u8]| {
             .filter(|i| *i >= lower && *i < upper)
             .take(limit as usize)
             .map(|i| vec![Value::Integer(i)])
+            .collect::<Vec<_>>();
+        assert_eq!(result.rows, expected);
+        let length = bytes.len().min(64);
+        let lower = String::from_utf8_lossy(&bytes[..length]).into_owned();
+        let upper = String::from_utf8_lossy(&bytes[bytes.len() - length..]).into_owned();
+        let result = query(
+            snapshot,
+            "SELECT id FROM words WHERE id > $1 AND id <= $2 ORDER BY id DESC LIMIT $3",
+            &[
+                Value::Text(lower.clone()),
+                Value::Text(upper.clone()),
+                Value::Integer(limit),
+            ],
+        )
+        .unwrap();
+        let expected = snapshot
+            .scan("words", 100)
+            .unwrap()
+            .into_iter()
+            .rev()
+            .filter(|row| matches!(&row[0],Value::Text(key) if *key>lower && *key<=upper))
+            .take(limit as usize)
             .collect::<Vec<_>>();
         assert_eq!(result.rows, expected);
     }

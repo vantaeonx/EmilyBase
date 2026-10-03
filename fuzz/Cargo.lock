@@ -226,6 +226,7 @@ version = "0.1.0"
 dependencies = [
  "emilybase-catalog",
  "emilybase-database",
+ "emilybase-index",
  "emilybase-transactions",
  "serde",
  "thiserror",

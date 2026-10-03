@@ -16,7 +16,7 @@ flowchart TD
   Query --> Transactions[Serialized transaction coordinator]
   Transactions --> WAL[Synced full-page WAL]
   Transactions --> Database
-  Database --> Index[B+ tree: derived primary lookup and integer ranges]
+  Database --> Index[B+ tree: primary lookup and integer/text ranges]
   CLI --> Index
   Index --> Storage
   WAL --> Storage
@@ -91,8 +91,12 @@ rows. No independently durable index bytes are added. See
 Integer primary inequalities in necessary AND conjuncts select linked-leaf
 interval lookup after complete binding. Checked normalization preserves i64
 boundaries; full predicates still evaluate nullable values. SELECT and staged
-UPDATE/DELETE share the interval API. Durable format/secondary index and text
-range planning remain separate work. See [ADR 0022](adr/0022-integer-primary-range-plans.md).
+UPDATE/DELETE share the interval API. Text bounds use UTF-8 byte order, exact NUL
+successors and short-tree verification merged with all ordered live keys. Long
+keys remain visible before LIMIT; SQL falls back when bounds cannot fit the tree.
+Durable index WAL, secondary DDL and ordering pushdown remain separate work. See
+[ADR 0022](adr/0022-integer-primary-range-plans.md) and
+[ADR 0026](adr/0026-utf8-primary-range-plans.md).
 
 The opt-in stable arena now retains surviving IDs and reuses holes. Canonical
 EBIF snapshots bind root/revision/counts, while in-memory deltas bind their exact

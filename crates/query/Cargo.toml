@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }
+emilybase-index = { path = "../index" }
 emilybase-transactions = { path = "../transactions" }
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
