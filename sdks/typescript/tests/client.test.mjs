@@ -244,6 +244,11 @@ test("status and explain decode their actual wire shapes without write endpoints
     plan,
   );
   assert.equal(calls[1].method, "POST");
+  const rangePlan = { ...plan, access: "primary_range" };
+  assert.deepEqual(
+    await client(rangePlan).explain("SELECT * FROM t WHERE id>=1 AND id<3"),
+    rangePlan,
+  );
   await rejects(
     client({ ...status, rows: 10001 }).status(),
     "protocol_error",

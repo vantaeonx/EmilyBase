@@ -1015,6 +1015,7 @@
             "type": "string",
             "enum": [
               "primary_key",
+              "primary_range",
               "scan",
               "bounded_nested_loop"
             ]

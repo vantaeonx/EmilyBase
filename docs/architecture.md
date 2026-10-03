@@ -16,7 +16,8 @@ flowchart TD
   Query --> Transactions[Serialized transaction coordinator]
   Transactions --> WAL[Synced full-page WAL]
   Transactions --> Database
-  Query -.-> Index[B+ tree foundation: table integration pending]
+  Database --> Index[B+ tree: derived primary lookup and integer ranges]
+  CLI --> Index
   Index --> Storage
   WAL --> Storage
   HTTP --> Auth[Scoped API keys: user policies pending]
@@ -86,6 +87,12 @@ exhaustion discards a derived cache for dense rebuilding without rejecting table
 rows. No independently durable index bytes are added. See
 [ADR 0020](adr/0020-validated-live-row-locations.md) and
 [ADR 0021](adr/0021-derived-primary-key-trees.md).
+
+Integer primary inequalities in necessary AND conjuncts select linked-leaf
+interval lookup after complete binding. Checked normalization preserves i64
+boundaries; full predicates still evaluate nullable values. SELECT and staged
+UPDATE/DELETE share the interval API. Durable format/secondary index and text
+range planning remain separate work. See [ADR 0022](adr/0022-integer-primary-range-plans.md).
 
 The opt-in stable arena now retains surviving IDs and reuses holes. Canonical
 EBIF snapshots bind root/revision/counts, while in-memory deltas bind their exact

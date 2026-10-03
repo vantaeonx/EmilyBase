@@ -5,6 +5,7 @@ mod lexer;
 mod parser;
 mod plan;
 mod predicate;
+mod range;
 mod select;
 pub use execute::{
     ExecutionError, MAX_OUTPUT_BYTES, MAX_QUERY_WORK, Report, ResultSet, RunResult, execute, query,

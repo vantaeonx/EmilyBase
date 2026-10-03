@@ -741,3 +741,35 @@ comment-only lines), 1189 SDK, 664 Python; 26219 combined. Existing format bytes
 legacy behavior remain compatible. Derived routing and maintenance are in memory;
 independent durable table-index pages, secondary DDL, broader load/security and
 physical power-loss acceptance remain open.
+
+## Integer primary ranges: executed increment
+
+On 2026-10-03, format and warning-denied workspace/fuzz Clippy pass. Locked
+workspace build and all 368 then-existing main tests pass; the subsequently added
+nullable-range property passes with all six range tests and nine parser tests,
+bringing executed main coverage to 369. Eleven subprocess helpers remain excluded.
+
+The original B+ tree interval path verifies actual linked-leaf results, bounded
+ordered keys and live physical images. Tests cover all endpoint/limit/reversed
+interval cases, MIN/MAX successors, nested/reversed comparisons, aliases and
+nonleading primary columns, OR/NOT/null/type/parameter rules, empty LIMIT 0,
+rollback/failed scripts, reopen, both WAL versions and verified restore. A real
+6000-row/64-statement narrow ranged-write script stays within its work bound.
+Independent generated models run 64 interval, 48 comparison, 48 nullable predicate
+and 32 ranged update/delete/error/rollback cases. CLI and current strict SDK verify
+the actual primary_range explain/HTTP contract; 11 unit and seven native client
+integration/restart checks pass. The rebuilt release container campaign passes.
+
+A failing legal x-alias execution reproduced predicate parsing ambiguity with
+hex byte literals. Correct lookahead and a dedicated parser regression preserve
+X/x columns/qualifiers and valid/malformed bytes. After the repair, ASan parser
+fuzz completes 924494 and SQL execution fuzz 282978 runs, each in 16 seconds with
+15-second/512-MiB budgets. The updated primary lookup/range target completed
+222550 runs with bounded raw/repaired WALs before this parser-only repair.
+These are smoke checks, not full audit campaigns.
+
+Totals: 25278 Rust (24062 without blank/comment-only lines), 1207 SDK, 664 Python;
+27149 physical source lines including tests. The increment grows Rust by 912 and
+the client contract/tests by 18 (combined net 930), near the requested logical
+1000-line checkpoint. File formats are unchanged. Durable secondary/index WAL,
+broader fault/load/security and production gates remain open.

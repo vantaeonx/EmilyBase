@@ -3,6 +3,7 @@ mod engine;
 mod event;
 mod location;
 mod primary;
+mod range;
 mod snapshot;
 mod state;
 
@@ -18,6 +19,8 @@ pub const MAX_EVENTS: usize = 100000;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("integer primary-key range requires an integer primary key")]
+    IntegerRangeType,
     #[error("invalid derived primary index: {0}")]
     PrimaryIndex(&'static str),
     #[error(transparent)]

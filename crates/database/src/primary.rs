@@ -365,6 +365,10 @@ mod tests {
                 Err(Error::PrimaryIndex(_))
             ));
             assert!(matches!(
+                snapshot.scan_integer_range("a", None, None, 32),
+                Err(Error::PrimaryIndex(_))
+            ));
+            assert!(matches!(
                 snapshot.apply(Event {
                     table_id: 1,
                     kind: EventKind::Replace(vec![Value::Integer(1)])

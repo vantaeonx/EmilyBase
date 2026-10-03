@@ -154,6 +154,18 @@ test(
           ).access,
           "primary_key",
         );
+        assert.equal(
+          (await client.explain("SELECT * FROM t WHERE id>=1 AND id<3")).access,
+          "primary_range",
+        );
+        assert.deepEqual(
+          (
+            await client.sql(
+              "SELECT id FROM t WHERE id>=1 AND id<3 ORDER BY id",
+            )
+          ).results[0].rows,
+          [[{ type: "integer", value: 1 }], [{ type: "integer", value: 2 }]],
+        );
       },
     );
     await t.test(

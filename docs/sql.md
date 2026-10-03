@@ -87,6 +87,14 @@ products can fail their work bound. Initial derived-cache construction is bounde
 by table capacity and is outside the row-execution work counter; no throughput
 claim is made. See [ADR 0021](adr/0021-derived-primary-key-trees.md).
 
+For integer primary keys, necessary AND inequalities (`<`, `<=`, `>`, `>=`)
+select a `primary_range` plan for SELECT and filtered UPDATE/DELETE. Reversed
+operands and multiple intersecting bounds are supported without i64 overflow.
+The complete filter still executes. OR/NOT, joins, column comparisons and text
+ranges retain their earlier paths; equality takes priority. Empty/contradictory
+intervals still validate every field/type/parameter before returning rows.
+See [ADR 0022](adr/0022-integer-primary-range-plans.md).
+
 The library's `query(snapshot, sql, parameters)` evaluates exactly one SELECT
 without file access or mutations, allowing reads of a detached validated snapshot.
 The caller determines its committed/staged provenance; it is not a commit ACK.
@@ -124,6 +132,6 @@ sorting, selection stops at LIMIT. Writes share the existing 256-event/256-page
 normal transaction limit; overflow rolls back the entire script.
 
 Arithmetic, functions, aggregates, DISTINCT, GROUP BY, subqueries, RETURNING,
-OFFSET, UNION, outer/cross joins, indexes, ALTER, implicit casts and PostgreSQL
+OFFSET, UNION, outer/cross joins, secondary-index DDL, ALTER, implicit casts and PostgreSQL
 protocols are unsupported. Persistent indexes and stable schema migrations need
 separate format/transaction decisions. Syntax/AST APIs are experimental.

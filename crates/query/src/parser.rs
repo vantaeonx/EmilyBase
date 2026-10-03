@@ -504,7 +504,13 @@ impl Parser {
         Ok(Expr::Compare(left, comparison, self.operand()?))
     }
     fn operand(&mut self) -> Result<Operand> {
-        if matches!(self.peek(),Kind::Word(s) if !["NULL","TRUE","FALSE","X"].iter().any(|w|s.eq_ignore_ascii_case(w)))
+        let hex_literal = matches!(self.peek(),Kind::Word(s) if s.eq_ignore_ascii_case("X"))
+            && self
+                .tokens
+                .get(self.position + 1)
+                .is_some_and(|token| matches!(token.kind, Kind::String(_)));
+        if (matches!(self.peek(),Kind::Word(s) if !["NULL","TRUE","FALSE"].iter().any(|w|s.eq_ignore_ascii_case(w)))
+            && !hex_literal)
             || matches!(self.peek(), Kind::Identifier(_))
         {
             Ok(Operand::Column(self.column()?))

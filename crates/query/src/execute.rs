@@ -201,7 +201,24 @@ fn matching(
         .and_then(|p| primary_key(p, usize::from(schema.primary_key)));
     let source = match key {
         Some(key) => snapshot.get(table, &key)?.cloned().into_iter().collect(),
-        None => snapshot.scan(table, MAX_ROWS)?,
+        None => {
+            let range = if schema.columns[usize::from(schema.primary_key)].data_type
+                == emilybase_catalog::DataType::Integer
+            {
+                filter.as_ref().and_then(|predicate| {
+                    crate::range::primary_range(predicate, usize::from(schema.primary_key))
+                })
+            } else {
+                None
+            };
+            match range {
+                Some(range) if range.empty => Vec::new(),
+                Some(range) => {
+                    snapshot.scan_integer_range(table, range.lower, range.upper, MAX_ROWS)?
+                }
+                None => snapshot.scan(table, MAX_ROWS)?,
+            }
+        }
     };
     for row in source {
         budget.step()?;

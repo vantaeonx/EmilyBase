@@ -13,9 +13,9 @@ use crate::{EventKind, PrimaryIndexInfo, RowLocation};
 /// Mutating a snapshot alone provides no persistence or commit acknowledgment.
 #[derive(Clone)]
 pub struct Snapshot {
-    state: State,
+    pub(crate) state: State,
     pages: Vec<Arc<Page>>,
-    locations: Locations,
+    pub(crate) locations: Locations,
     pub(crate) primary_indexes: PrimaryIndexes,
 }
 

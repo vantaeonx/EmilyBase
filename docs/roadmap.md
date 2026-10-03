@@ -87,6 +87,13 @@ and SQL/restore behavior execute. Dense rebuilds preserve table admission. Persi
 index roots/pages/WAL and secondary indexes remain pending. See
 [ADR 0021](adr/0021-derived-primary-key-trees.md).
 
+Integer primary range plans now route necessary AND inequalities through linked
+leaves for SELECT/UPDATE/DELETE. Endpoint/overflow, nullable/filter/alias, generated
+read/write/reopen models and 6000-row narrow-work checks execute. Explain/client
+contracts include primary_range. Text ranges, ordering pushdown, secondary DDL
+and independently durable index pages remain open. See
+[ADR 0022](adr/0022-integer-primary-range-plans.md).
+
 ## Implemented first increment
 
 - Original versioned header and 4096-byte slotted pages with CRC32.

@@ -3,6 +3,33 @@ use emilybase_query::{ast::*, *};
 use proptest::prelude::*;
 
 #[test]
+fn x_columns_and_qualifiers_are_distinguished_from_hex_literal_prefixes() {
+    for name in ["x", "X", "xray"] {
+        let sql = format!("SELECT {name}.id FROM t AS {name} WHERE {name}.id>=1");
+        assert!(parse(&sql).is_ok());
+        let sql = format!("SELECT {name} FROM t WHERE {name}=1");
+        let parsed = parse(&sql).unwrap();
+        let Statement::Select(select) = &parsed[0] else {
+            panic!("expected SELECT")
+        };
+        assert!(matches!(
+            select.filter,
+            Some(Expr::Compare(Operand::Column(_), Compare::Eq, _))
+        ));
+    }
+    let parsed = parse("SELECT payload FROM t WHERE payload=X'00ff'").unwrap();
+    let Statement::Select(select) = &parsed[0] else {
+        panic!("expected SELECT")
+    };
+    assert!(
+        matches!(&select.filter,Some(Expr::Compare(_,Compare::Eq,Operand::Scalar(Scalar::Literal(Value::Bytes(bytes))))) if bytes==&[0,255])
+    );
+    for hex in ["X'0'", "X'gg'", "X'00", "X'"] {
+        assert!(parse(&format!("SELECT payload FROM t WHERE payload={hex}")).is_err());
+    }
+}
+
+#[test]
 fn complete_synthetic_script_has_typed_statements_and_bound_parameters() {
     let script = "BEGIN TRANSACTION; CREATE TABLE items (id BIGINT PRIMARY KEY, title TEXT, active BOOL NOT NULL, price DOUBLE, payload BYTES); INSERT INTO items (id,title) VALUES (1,'été'),($1,$2); SELECT title AS label FROM items WHERE active = TRUE ORDER BY id DESC NULLS FIRST LIMIT $3; UPDATE items SET title='new',price=1.5 WHERE id=1; DELETE FROM items WHERE title IS NULL; DROP TABLE items; COMMIT;";
     let statements = parse(script).unwrap();

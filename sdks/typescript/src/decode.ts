@@ -110,6 +110,7 @@ export function plan(input: unknown): Plan {
   const access = object.access;
   if (
     access !== "primary_key" &&
+    access !== "primary_range" &&
     access !== "scan" &&
     access !== "bounded_nested_loop"
   )

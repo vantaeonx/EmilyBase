@@ -44,6 +44,11 @@ trees stage insert/delete/pointer maintenance alongside their relational snapsho
 `primary-index-info PATH TABLE` reports the derived tree and excluded long keys.
 It does not create an index file. See [ADR 0021](docs/adr/0021-derived-primary-key-trees.md).
 
+Integer primary-key inequalities in necessary AND conjuncts now use linked-leaf
+range lookup for SELECT/UPDATE/DELETE, with checked i64 boundaries and unchanged
+null/rollback semantics. Explain reports `primary_range`. Text ranges, joins and
+other predicates retain their existing paths. See [ADR 0022](docs/adr/0022-integer-primary-range-plans.md).
+
 Validated live row-image locations now bind table/key to an actual slotted-page
 position and event fingerprint. Managed locations also bind the persistent
 database identity. Updates/deletes retire previous images; discarded staged
