@@ -1,11 +1,12 @@
 use emilybase_storage::FORMAT_VERSION;
-use emilybase_wal::{DatabaseId, MAX_WAL_BYTES, WAL_VERSION};
+use emilybase_wal::{DatabaseId, MAX_WAL_BYTES, SNAPSHOT_WAL_VERSION, WAL_VERSION};
 
 use crate::{BACKUP_VERSION, Error, HEADER_SIZE, Report, Result};
 
 pub(crate) struct Metadata {
     pub id: DatabaseId,
     pub transaction: u64,
+    pub wal_version: u16,
     pub wal_bytes: usize,
     pub digest: [u8; 32],
 }
@@ -15,7 +16,7 @@ pub(crate) fn encode(report: &Report, digest: [u8; 32]) -> [u8; HEADER_SIZE] {
     bytes[..8].copy_from_slice(b"EMILYBAK");
     bytes[8..10].copy_from_slice(&BACKUP_VERSION.to_le_bytes());
     bytes[10..12].copy_from_slice(&(HEADER_SIZE as u16).to_le_bytes());
-    bytes[12..14].copy_from_slice(&WAL_VERSION.to_le_bytes());
+    bytes[12..14].copy_from_slice(&report.wal_version.to_le_bytes());
     bytes[14..16].copy_from_slice(&FORMAT_VERSION.to_le_bytes());
     bytes[16..32].copy_from_slice(&report.database_id);
     bytes[32..40].copy_from_slice(&report.last_transaction.to_le_bytes());
@@ -35,7 +36,7 @@ pub(crate) fn decode(bytes: &[u8]) -> Result<Metadata> {
         return Err(Error::Version(version));
     }
     if u16_at(bytes, 10) as usize != HEADER_SIZE
-        || u16_at(bytes, 12) != WAL_VERSION
+        || !matches!(u16_at(bytes, 12), WAL_VERSION | SNAPSHOT_WAL_VERSION)
         || u16_at(bytes, 14) != FORMAT_VERSION
     {
         return Err(Error::Format("header sizes or dependency versions"));
@@ -63,6 +64,7 @@ pub(crate) fn decode(bytes: &[u8]) -> Result<Metadata> {
     Ok(Metadata {
         id,
         transaction,
+        wal_version: u16_at(bytes, 12),
         wal_bytes,
         digest,
     })

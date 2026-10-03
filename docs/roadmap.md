@@ -15,14 +15,14 @@ open; a table engine is not a completed transaction engine or backend platform.
 
 ## Not supported
 
-B+ tree, journal rotation,
+B+ tree, background journal rotation and history vacuuming,
 SQL, joins, indexes, project isolation, server, authentication, row policies,
 file uploads, realtime, migrations, incremental/encrypted backups, SDKs, web dashboard and deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
 ## Next increments
 
-1. Design checkpoint reuse / journal rotation with durable metadata and crash tests.
+1. Execute the publication crash/fault matrix for self-contained WAL compaction.
 2. Extend backup publication I/O failures, long random crash campaigns and upgrade tests.
 3. Build the original B+ tree and query layer after documenting their bounded behavior.
 
@@ -44,7 +44,9 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 - Bounded full-page WAL with transaction/sequence IDs, commit digest and sync ordering.
 - Staged table transactions, commit/rollback and abort-on-write-error.
-- Mandatory retained WAL with strict append-only relational recovery.
+- Mandatory self-contained WAL with strict append-only relational recovery.
+- Explicit version-2 baseline compaction, stable directory ownership and transaction ID preservation.
+- Complete baseline cuts/corruption fail closed; version-1 files/backups remain readable.
 - Atomic checkpoint cache; damaged caches are regenerated from WAL.
 - Managed CLI mode, transaction batches and explicit legacy compatibility.
 - Process kills before/after commit, streaming writes and checkpoint rename.

@@ -46,9 +46,12 @@ transaction stages a bounded state copy and shared immutable pages. Commit write
 changed full pages and a commit marker, syncs WAL, then publishes committed state.
 Rollback/drop discard staged memory; a failed write aborts the transaction.
 Recovery checks that redo never rewrites older history, then reconstructs tables.
-A checkpoint atomically materializes the current page cache; the complete WAL
-remains authoritative and is never truncated. Recovery ignores this cache.
-See [ADR 0006](adr/0006-retained-journal.md). MVCC and journal rotation are pending.
+A checkpoint atomically materializes the current page cache. Recovery ignores
+this cache and requires the self-contained WAL. Explicit compaction replaces
+repeated images with a complete baseline, preserving history and transaction IDs.
+The database directory stays locked across journal inode replacement.
+See [ADR 0006](adr/0006-retained-journal.md) and [ADR 0008](adr/0008-self-contained-journal-compaction.md).
+MVCC, history vacuuming and background rotation are pending.
 
 ## Backup boundary
 

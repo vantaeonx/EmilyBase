@@ -12,7 +12,7 @@ All integers are little-endian. The 128-byte header has:
 | 0..8 | `EMILYBAK` magic |
 | 8..10 | archive version u16, currently 1 |
 | 10..12 | header size u16, currently 128 |
-| 12..14 | WAL version u16, currently 1 |
+| 12..14 | embedded WAL version u16, 1 or 2 |
 | 14..16 | page-file version u16, currently 1 |
 | 16..32 | nonzero original database identity |
 | 32..40 | last committed transaction ID u64 |
@@ -46,6 +46,10 @@ durability; verify the destination before retrying.
 Restores preserve database identity and transaction IDs: they are historical
 clones, not newly isolated projects. New commits remain possible after restore.
 Legacy direct-write page files cannot be backed up by this managed-WAL API.
+Both retained version-1 and compacted version-2 WALs are supported. The envelope
+must match the actual payload version. An incomplete baseline is rejected even
+if archive length and SHA-256 were recomputed. Existing version-1 archives remain
+readable; old readers reject archives binding the new WAL version.
 
 SHA-256 detects corruption; it is not authentication or encryption. Backups
 contain plaintext data and require private storage. Source/target paths are

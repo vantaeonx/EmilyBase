@@ -36,6 +36,8 @@ enum Command {
     },
     /// Materialize committed pages while retaining the full journal.
     Checkpoint { path: PathBuf },
+    /// Explicitly compact repeated WAL images into a self-contained version-2 baseline.
+    Compact { path: PathBuf },
     /// Create and verify a no-clobber backup of a managed database.
     Backup { path: PathBuf, target: PathBuf },
     /// Validate archive checksums and replay its complete table history.
@@ -141,6 +143,16 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         Command::Checkpoint { path } => {
             emilybase_transactions::Database::open(path)?.checkpoint()?;
             println!("checkpoint synced; journal retained");
+        }
+        Command::Compact { path } => {
+            let report = emilybase_transactions::Database::open(path)?.compact()?;
+            println!(
+                "compacted pages={} transaction={} wal_bytes={}->{}",
+                report.pages,
+                report.transaction,
+                report.previous_wal_bytes,
+                report.compacted_wal_bytes
+            );
         }
         Command::Backup { path, target } => {
             let mut database = emilybase_transactions::Database::open(path)?;

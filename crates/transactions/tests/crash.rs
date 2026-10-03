@@ -8,6 +8,10 @@ use emilybase_database::{Event, EventKind};
 use emilybase_transactions::Database;
 use emilybase_wal::Wal;
 
+// Serialize parent tests: fork briefly inherits another parent's locked handles
+// before exec closes them, which otherwise makes immediate reopen flaky.
+static PROCESS_TESTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 fn schema() -> Schema {
     Schema {
         name: "items".into(),
@@ -88,6 +92,7 @@ impl Drop for Worker {
 
 #[test]
 fn killed_table_writer_preserves_complete_batches_and_discards_pending_work() {
+    let _guard = PROCESS_TESTS.lock().unwrap();
     for phase in ["staged", "wal_pages", "committed"] {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("db");
@@ -156,6 +161,7 @@ fn killed_table_writer_preserves_complete_batches_and_discards_pending_work() {
 
 #[test]
 fn killing_a_continuously_writing_process_preserves_every_observed_acknowledgment() {
+    let _guard = PROCESS_TESTS.lock().unwrap();
     for kill_after in [1, 5, 20, 50] {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("db");

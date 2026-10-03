@@ -3,15 +3,18 @@ mod codec;
 mod io;
 mod journal;
 mod recovery;
+mod snapshot;
 
 pub use codec::{FRAME_SIZE, HEADER_SIZE, encode_header};
 pub use journal::{Pending, Wal};
 pub use recovery::{Committed, Recovery, recover};
+pub use snapshot::encode_snapshot;
 
 pub type DatabaseId = [u8; 16];
 pub const MAX_TRANSACTION_PAGES: usize = 256;
 pub const MAX_WAL_BYTES: usize = 64 * 1024 * 1024;
 pub const WAL_VERSION: u16 = 1;
+pub const SNAPSHOT_WAL_VERSION: u16 = 2;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

@@ -168,3 +168,29 @@ history against an independent map, including new writes after restore.
 The final backup-archive AddressSanitizer smoke run completed 392,375 executions
 in 16 seconds without a crash (configured budget: 15 seconds). This is a bounded
 smoke run, not a completed fuzz campaign or security audit.
+
+## Self-contained compaction increment: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, build and all 161 main tests passed;
+five subprocess helpers remain excluded from that count. This block adds 1002
+physical Rust lines, bringing the total to 8947. WAL version 2 stores a complete
+baseline and preserves the original transaction anchor. Every byte cut/mutation
+inside a two-page baseline fails closed; every cut in a later transaction keeps
+the complete baseline and excludes the uncommitted batch.
+
+Tests cover mismatched header/frame versions, baseline ordering/count/digest,
+bounded inputs, more than 256 baseline pages, original table IDs/history, later
+commits, stale/damaged/missing checkpoints and independent backup restore of both
+WAL versions. A 64-case baseline property and the 32-case committed-map model
+exercise generated anchors/pages and intermittent compaction respectively.
+The actual CLI compact/backup/verify/restore sequence executed with synthetic data.
+
+A regression reproduced the ownership gap after replacing the WAL inode and
+passed after stable directory locking. A repeated full run also reproduced a
+crash-harness race from brief fork inheritance of another parent test's handles;
+those two parent tests now serialize process launches within their executable.
+Compaction publication kill/fault tests are the next increment, not yet accepted.
+
+AddressSanitizer smoke runs with synthetic version-2 seeds completed 1,275,837
+WAL, 398,744 managed-recovery and 208,375 backup executions, each in 16 seconds
+with a configured 15-second budget and no crash. These are bounded smoke checks.

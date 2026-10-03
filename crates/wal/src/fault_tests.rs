@@ -351,3 +351,41 @@ fn failed_committed_export_poisons_owner_without_modifying_old_bytes() {
     assert_eq!(std::fs::read(&path).unwrap(), before);
     check_reopen(&path, 1);
 }
+
+#[test]
+fn ambiguous_sync_after_baseline_preserves_anchor_and_requires_outcome_inspection() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("redo.wal");
+    let original = page(b"baseline acknowledgment");
+    let mut wal =
+        Wal::create_snapshot(&path, [7; 16], 42, std::slice::from_ref(&original)).unwrap();
+    install(
+        &mut wal,
+        &path,
+        Schedule {
+            fail_sync: Some(1),
+            sync_before_error: true,
+            ..Schedule::default()
+        },
+    );
+    assert!(matches!(
+        wal.append(&[page(b"ambiguous next")]),
+        Err(Error::OutcomeUnknown {
+            transaction: 43,
+            ..
+        })
+    ));
+    assert_eq!(wal.last_transaction(), 42);
+    assert!(matches!(
+        wal.append(&[page(b"retry")]),
+        Err(Error::Poisoned)
+    ));
+    drop(wal);
+    let (mut wal, recovered) = Wal::open(path, Some([7; 16])).unwrap();
+    assert_eq!(recovered.last_transaction(), 43);
+    let base = recovered.baseline.unwrap();
+    assert_eq!(base.transaction, 42);
+    assert_eq!(base.pages, vec![original]);
+    assert_eq!(recovered.committed[0].pages, vec![page(b"ambiguous next")]);
+    assert_eq!(wal.append(&[page(b"after inspection")]).unwrap(), 44);
+}

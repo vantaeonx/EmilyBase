@@ -14,6 +14,7 @@ use crate::{
 pub struct Wal {
     file: Box<dyn JournalIo>,
     id: DatabaseId,
+    version: u16,
     valid_bytes: u64,
     next_transaction: u64,
     next_sequence: u64,
@@ -24,29 +25,35 @@ impl Wal {
     /// Exclusive no-clobber creation. The enclosing database publishes this log.
     pub fn create(path: impl AsRef<Path>, id: DatabaseId) -> Result<Self> {
         let header = encode_header(id)?;
-        let path = path.as_ref();
-        let mut options = OpenOptions::new();
-        options.read(true).write(true).create_new(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            options.mode(0o600);
-        }
-        let mut file = options.open(path)?;
-        lock(&file)?;
-        file.write_all(&header)?;
-        file.sync_all()?;
-        let parent = path
-            .parent()
-            .filter(|p| !p.as_os_str().is_empty())
-            .unwrap_or_else(|| Path::new("."));
-        File::open(parent)?.sync_all()?;
+        let file = create_file(path.as_ref(), &header)?;
         Ok(Self {
             file: Box::new(file),
             id,
+            version: crate::WAL_VERSION,
             valid_bytes: HEADER_SIZE as u64,
             next_transaction: 1,
             next_sequence: 1,
+            poisoned: false,
+        })
+    }
+
+    /// A synced, self-contained version-2 baseline. The caller publishes it only
+    /// after relational validation; the existing destination is never replaced.
+    pub fn create_snapshot(
+        path: impl AsRef<Path>,
+        id: DatabaseId,
+        transaction: u64,
+        pages: &[Page],
+    ) -> Result<Self> {
+        let bytes = crate::encode_snapshot(id, transaction, pages)?;
+        let file = create_file(path.as_ref(), &bytes)?;
+        Ok(Self {
+            file: Box::new(file),
+            id,
+            version: crate::SNAPSHOT_WAL_VERSION,
+            valid_bytes: bytes.len() as u64,
+            next_transaction: transaction + 1,
+            next_sequence: pages.len() as u64 + 2,
             poisoned: false,
         })
     }
@@ -69,8 +76,9 @@ impl Wal {
         let wal = Self {
             file: Box::new(file),
             id: recovery.database_id,
+            version: recovery.format_version,
             valid_bytes: recovery.valid_bytes as u64,
-            next_transaction: recovery.committed.len() as u64 + 1,
+            next_transaction: recovery.last_transaction() + 1,
             next_sequence: recovery.next_sequence,
             poisoned: false,
         };
@@ -79,6 +87,10 @@ impl Wal {
 
     pub fn database_id(&self) -> DatabaseId {
         self.id
+    }
+
+    pub fn format_version(&self) -> u16 {
+        self.version
     }
 
     pub fn last_transaction(&self) -> u64 {
@@ -101,7 +113,8 @@ impl Wal {
             self.file.read_exact(&mut bytes)?;
             let recovered = recover(&bytes, Some(self.id))?;
             if recovered.discarded_bytes != 0
-                || recovered.committed.len() as u64 != self.last_transaction()
+                || recovered.last_transaction() != self.last_transaction()
+                || recovered.format_version != self.version
                 || recovered.next_sequence != self.next_sequence
             {
                 return Err(Error::Format("committed journal metadata changed"));
@@ -141,7 +154,7 @@ impl Wal {
                 sequence: self.next_sequence + index as u64,
                 payload: Payload::Page(page.clone()),
             };
-            bytes.extend_from_slice(&frame.encode()?);
+            bytes.extend_from_slice(&frame.encode_version(self.version)?);
         }
         let commit = Frame {
             transaction: self.next_transaction,
@@ -151,7 +164,7 @@ impl Wal {
                 digest: crc32fast::hash(&bytes),
             },
         }
-        .encode()?;
+        .encode_version(self.version)?;
         let result = (|| {
             self.trim_tail()?;
             self.file.seek(SeekFrom::Start(self.valid_bytes))?;
@@ -194,6 +207,26 @@ impl Wal {
         }
         result
     }
+}
+
+fn create_file(path: &Path, bytes: &[u8]) -> Result<File> {
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    lock(&file)?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    let parent = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    File::open(parent)?.sync_all()?;
+    Ok(file)
 }
 
 /// Dropping a pending batch leaves a recoverable, uncommitted tail.

@@ -1,8 +1,11 @@
 //! Serialized table transactions backed by the mandatory authoritative redo log.
+mod compaction;
 mod database;
+mod ownership;
 mod replay;
 mod transaction;
 
+pub use compaction::Compaction;
 pub use database::Database;
 pub use transaction::Transaction;
 pub const MAX_TRANSACTION_EVENTS: usize = 256;
@@ -19,6 +22,7 @@ pub struct RecoveredImage {
     pub snapshot: emilybase_database::Snapshot,
     pub database_id: emilybase_wal::DatabaseId,
     pub last_transaction: u64,
+    pub wal_version: u16,
     pub committed_bytes: usize,
     pub discarded_bytes: usize,
 }
@@ -30,13 +34,15 @@ pub fn recover_image(
 ) -> Result<RecoveredImage> {
     let recovery = emilybase_wal::recover(bytes, expected_id)?;
     let database_id = recovery.database_id;
-    let last_transaction = recovery.committed.len() as u64;
+    let last_transaction = recovery.last_transaction();
+    let wal_version = recovery.format_version;
     let committed_bytes = recovery.valid_bytes;
     let discarded_bytes = recovery.discarded_bytes;
     Ok(RecoveredImage {
         snapshot: replay::replay(recovery)?,
         database_id,
         last_transaction,
+        wal_version,
         committed_bytes,
         discarded_bytes,
     })
@@ -64,6 +70,8 @@ pub enum Error {
     Poisoned,
     #[error("operating-system randomness is unavailable")]
     Randomness,
+    #[error("journal replacement was published but durability is uncertain; reopen before writing")]
+    MaintenanceUnknown(#[source] std::io::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

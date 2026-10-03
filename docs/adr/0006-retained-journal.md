@@ -1,6 +1,7 @@
 # ADR 0006: Retained authoritative journal for the first transaction engine
 
-Status: implemented; wider recovery and backup acceptance remains open.
+Status: implemented as the version-1 baseline. Explicit compaction extends it
+in [ADR 0008](0008-self-contained-journal-compaction.md); wider reliability remains open.
 
 Use a new managed directory with a mandatory `redo.wal` and an optional
 `checkpoint.emily` page snapshot. Its first committed transaction contains the

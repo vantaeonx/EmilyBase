@@ -16,6 +16,11 @@ Linux, local temporary files, synthetic data, Rust stable 1.99.0, 2026-10-03.
 | Damaged/partial checkpoint | state restored from WAL, cache regenerated | transaction file tests |
 | Four competing owners, 20 updates each | all 80 increments restored | process concurrency test |
 | OS rejects page/commit write | writer poisoned; ambiguous commit reports transaction ID | read-only-handle failure tests |
+| Every baseline byte cut or mutation | error; no incomplete baseline recovery | version-2 WAL tests |
+| Compacted histories with later writes | rows/history/IDs preserved; next transaction continues | compaction file/model tests |
+| More than 256 baseline pages | all 300 rows restored; normal transaction limit unchanged | baseline/integrated tests |
+| WAL inode replaced while owner exists | another database owner remains excluded | directory ownership regression |
+| Version-1 and version-2 backup payloads | independent verified restore and new writes | backup compatibility tests |
 | Short writes or interrupted syscall | complete acknowledged batch restored | deterministic WAL I/O tests |
 | Disk full in page/commit frame, zero write | prior ACKs survive; partial tail ignored; owner poisoned | deterministic WAL I/O tests |
 | Sync failure before/after underlying sync | no ACK; complete commit may exist; inspect after reopen | deterministic WAL I/O tests |
@@ -44,7 +49,7 @@ retries need a future request/idempotency protocol.
 
 - Actual power interruption and hardware/filesystem behavior beyond sync calls.
 - Wider backup-publication I/O fault injection and failing-media behavior.
-- Journal rotation, checkpoint reuse and retirement ordering.
+- Compaction publication kill/fault boundaries and wider retirement behavior.
 - Long random crash campaigns and failing-media recovery.
 - Backup upgrade compatibility and stable-format migration.
 - Security audit, server-level project isolation and authorization.

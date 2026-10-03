@@ -11,6 +11,7 @@ proptest! {
     fn generated_transaction_batches_match_an_independent_committed_model(
         batches in prop::collection::vec((
             any::<bool>(),
+            any::<bool>(),
             prop::collection::vec((0u8..3, 0i64..12, "[a-z]{0,20}"), 0..8)
         ), 0..12)
     ) {
@@ -28,7 +29,7 @@ proptest! {
         }).unwrap();
         tx.commit().unwrap();
         let mut model = BTreeMap::new();
-        for (commit, operations) in batches {
+        for (commit, compact, operations) in batches {
             let before = std::fs::read(path.join("redo.wal")).unwrap();
             let mut staged = model.clone();
             let mut tx = db.begin().unwrap();
@@ -65,6 +66,11 @@ proptest! {
             }
             if failed || !commit {
                 prop_assert_eq!(std::fs::read(path.join("redo.wal")).unwrap(), before);
+            }
+            if compact {
+                let transaction=db.last_transaction();
+                db.compact().unwrap();
+                prop_assert_eq!(db.last_transaction(),transaction);
             }
             db.checkpoint().unwrap();
             drop(db);

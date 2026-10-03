@@ -29,8 +29,14 @@ fuzz_target!(|bytes: &[u8]| {
             .iter()
             .filter(|frame| frame[6] == 2)
             .count() as u64;
+        let mut baseline = [0; 8];
+        baseline.copy_from_slice(&wal[32..40]);
+        let Some(transactions) = transactions.checked_add(u64::from_le_bytes(baseline)) else {
+            return;
+        };
         let mut envelope = vec![0; HEADER_SIZE];
         envelope[..16].copy_from_slice(b"EMILYBAK\x01\0\x80\0\x01\0\x01\0");
+        envelope[12..14].copy_from_slice(&wal[8..10]);
         envelope[16..32].copy_from_slice(&[7; 16]);
         envelope[32..40].copy_from_slice(&transactions.to_le_bytes());
         envelope[40..48].copy_from_slice(&(wal.len() as u64).to_le_bytes());

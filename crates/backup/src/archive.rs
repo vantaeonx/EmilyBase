@@ -31,7 +31,10 @@ pub fn inspect_bytes(bytes: &[u8]) -> Result<Report> {
         return Err(Error::Checksum);
     }
     let report = report(recover_image(wal, Some(metadata.id))?)?;
-    if report.last_transaction != metadata.transaction || report.wal_bytes != metadata.wal_bytes {
+    if report.last_transaction != metadata.transaction
+        || report.wal_bytes != metadata.wal_bytes
+        || report.wal_version != metadata.wal_version
+    {
         return Err(Error::Format(
             "header does not match recovered commit boundary",
         ));
@@ -46,6 +49,7 @@ fn report(recovered: RecoveredImage) -> Result<Report> {
     Ok(Report {
         database_id: recovered.database_id,
         last_transaction: recovered.last_transaction,
+        wal_version: recovered.wal_version,
         wal_bytes: recovered.committed_bytes,
         tables: recovered.snapshot.schemas().len(),
         rows: recovered.snapshot.row_count(),

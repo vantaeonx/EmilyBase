@@ -11,7 +11,8 @@ pub struct Database {
     pub(crate) wal: Wal,
     pub(crate) snapshot: Snapshot,
     pub(crate) poisoned: bool,
-    path: PathBuf,
+    pub(crate) path: PathBuf,
+    pub(crate) ownership: File,
 }
 
 impl Database {
@@ -27,6 +28,7 @@ impl Database {
             builder.mode(0o700);
         }
         builder.create(path)?;
+        let ownership = crate::ownership::lock_directory(path)?;
         let mut wal = Wal::create(path.join("redo.wal"), id)?;
         let snapshot = Snapshot::empty()?;
         let pages = snapshot.pages().cloned().collect::<Vec<_>>();
@@ -41,6 +43,7 @@ impl Database {
             snapshot,
             poisoned: false,
             path: path.to_path_buf(),
+            ownership,
         })
     }
 
@@ -51,6 +54,7 @@ impl Database {
 
     pub fn open_bound(path: impl AsRef<Path>, expected_id: Option<DatabaseId>) -> Result<Self> {
         let path = path.as_ref();
+        let ownership = crate::ownership::lock_directory(path)?;
         let (wal, recovery) = Wal::open(path.join("redo.wal"), expected_id)?;
         let snapshot = replay(recovery)?;
         Ok(Self {
@@ -58,6 +62,7 @@ impl Database {
             snapshot,
             poisoned: false,
             path: path.to_path_buf(),
+            ownership,
         })
     }
 

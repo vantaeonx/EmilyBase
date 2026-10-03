@@ -19,6 +19,7 @@ pub const MAX_BACKUP_BYTES: usize = HEADER_SIZE + emilybase_wal::MAX_WAL_BYTES;
 pub struct Report {
     pub database_id: emilybase_wal::DatabaseId,
     pub last_transaction: u64,
+    pub wal_version: u16,
     pub wal_bytes: usize,
     pub tables: usize,
     pub rows: usize,

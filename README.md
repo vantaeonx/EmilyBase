@@ -14,8 +14,9 @@ full-page WAL commit, then publish committed memory state.
 
 Working features include multi-operation commit/rollback, abort-on-write-error,
 strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
-process-kill, checkpoint-crash and competing-writer checks execute. The full WAL
-is retained and capped at 64 MiB; checkpoint reuse and log rotation are pending.
+process-kill, checkpoint-crash and competing-writer checks execute. The WAL is
+capped at 64 MiB. Explicit compaction removes repeated page images into a
+self-contained version-2 baseline; checkpoint remains a disposable cache.
 The full stage-2 acceptance gate remains open. SQL, B+ tree, server, project
 isolation, authentication, dashboard and SDKs are future work.
 Verified backup/restore works through the library and CLI. Archives contain only
@@ -68,6 +69,21 @@ transaction ID before retrying; absence of a response does not prove rollback.
 Recovery requires `redo.wal`. Missing/corrupt WAL fails closed even if an older
 checkpoint exists. Checkpointing does not reduce WAL size and is not a verified
 backup. Interrupted initialization is rejected; an existing path is preserved.
+
+## Explicit journal compaction
+
+```sh
+cargo run -p emilybase-cli -- compact /tmp/emilybase-demo
+```
+
+This retains all relational events, schemas, rows, table IDs and transaction
+numbers while removing redundant page images. New transactions continue at the
+previous ID plus one. The replacement is synced, recovered and compared before
+atomic rename and directory sync. Directory ownership spans WAL inode replacement.
+Opening never changes format; only this explicit operation writes WAL version 2.
+Old version-1 readers reject it. Backups support both versions. History and the
+64 MiB limit remain bounded; compaction cannot reclaim obsolete table events.
+Publication kill/fault checks for this new operation are the next acceptance step.
 
 ## Verified backup and restore
 

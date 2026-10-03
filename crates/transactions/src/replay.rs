@@ -5,7 +5,7 @@ use emilybase_wal::Recovery;
 use crate::{Error, Result};
 
 pub(crate) fn replay(recovery: Recovery) -> Result<Snapshot> {
-    let mut pages: Vec<Page> = Vec::new();
+    let mut pages: Vec<Page> = recovery.baseline.map_or_else(Vec::new, |batch| batch.pages);
     for batch in recovery.committed {
         if pages.is_empty() {
             if batch.transaction != 1 || batch.pages.len() != 1 {
