@@ -189,8 +189,44 @@ A regression reproduced the ownership gap after replacing the WAL inode and
 passed after stable directory locking. A repeated full run also reproduced a
 crash-harness race from brief fork inheritance of another parent test's handles;
 those two parent tests now serialize process launches within their executable.
-Compaction publication kill/fault tests are the next increment, not yet accepted.
+Compaction publication kill/fault tests follow in the next recorded increment.
 
 AddressSanitizer smoke runs with synthetic version-2 seeds completed 1,275,837
 WAL, 398,744 managed-recovery and 208,375 backup executions, each in 16 seconds
 with a configured 15-second budget and no crash. These are bounded smoke checks.
+
+
+## Compaction crash, capacity and compatibility increment: executed checks
+
+On 2026-10-03, both formatting/Clippy suites, workspace build and all 179 main
+tests passed. Six subprocess helpers are excluded from the main count. This block
+adds 965 physical Rust lines; total source size is 9912, or 9199 excluding blank
+and comment-only lines. Parser code is unchanged from the preceding fuzz runs.
+
+Eight subprocess cases kill compaction at staged, renamed, directory-synced and
+returned boundaries, from both source versions. Exact pages, rows, identity and
+transaction IDs recover; new commits and retry compaction work. Four parent-sync
+fault cases report unknown maintenance durability and forbid further owner work
+until reopen. Ownership remains exclusive before and after rename.
+
+The actual 64 MiB bound is reached for each WAL version. The refused write changes
+no bytes/state; compaction reduces repeated images and new acknowledged writes
+survive reopen. Four competing processes preserve all 80 updates while performing
+16 compactions. Existing staged/page/commit/streaming crash tests and all 12480
+integrated cut positions now run against both WAL versions. Backup/restore kills
+also cover both payload versions. Actual CLI cases cover compaction, Unicode
+paths, unchanged boundaries, both archive versions, later writes and safe errors.
+
+Baseline tests reject catalog/key/type/history violations despite valid CRCs and
+commit digests. Invalid selected logs cannot adopt a valid staging file or cache.
+An ignored version-2 tail disappears without entering state. An externally changed
+valid snapshot is rejected by a live owner; this is a consistency check, not file
+authentication. A 32-case property verifies canonical repeated baselines, all
+supported types, Unicode text keys, rollback and new commits. Frozen hashes from
+pre-version-2 synthetic root/table archives verify byte-compatible version-1 output
+with only random database identity normalized. Staging symlinks cannot redirect
+writes; failed identity/replay opens release ownership for explicit operator repair.
+
+These checks do not simulate physical power loss or complete the stage-2/security
+gate. Wider filesystem failure injection, long campaigns, history vacuuming and
+stable upgrade policy remain open.

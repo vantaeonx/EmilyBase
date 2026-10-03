@@ -20,7 +20,7 @@ fn counter_worker() {
             Err(error) => panic!("worker failed: {error}"),
         }
     };
-    for _ in 0..20 {
+    for index in 0..20 {
         let mut tx = db.begin().unwrap();
         let stored = tx
             .view()
@@ -38,6 +38,9 @@ fn counter_worker() {
         )
         .unwrap();
         tx.commit().unwrap();
+        if index % 5 == 4 {
+            db.compact().unwrap();
+        }
     }
 }
 

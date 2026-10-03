@@ -16,6 +16,15 @@ Linux, local temporary files, synthetic data, Rust stable 1.99.0, 2026-10-03.
 | Damaged/partial checkpoint | state restored from WAL, cache regenerated | transaction file tests |
 | Four competing owners, 20 updates each | all 80 increments restored | process concurrency test |
 | OS rejects page/commit write | writer poisoned; ambiguous commit reports transaction ID | read-only-handle failure tests |
+| Compaction staged, renamed, directory-synced or returned, process killed | exact acknowledged state restored for both source versions | 8-boundary subprocess matrix |
+| Compaction parent sync fails before/after underlying sync | complete selected baseline; owner poisoned; reopen required | 4-case fault matrix |
+| WAL reaches actual 64 MiB cap, versions 1/2 | failed write changes no bytes; compaction and subsequent commits work | capacity integration test |
+| Compacted commit/tail or streaming writer killed | all observed ACKs retained; uncommitted frames absent | version-1/2 table crash matrix |
+| Four competing owners with 16 compactions | all 80 increments and transaction IDs preserved | process concurrency test |
+| Missing/damaged baseline with valid staging/cache | error; no fallback or input mutation | baseline selection tests |
+| Valid CRC/digest with invalid baseline/append history | error; constraints and old records protected | baseline relational tests |
+| Existing live snapshot differs from valid persisted bytes | export/compaction refuses; owner poisoned | live consistency regression |
+| Frozen version-1 root/table bytes | identical normalized SHA-256 after new code and reopen | compatibility fixture test |
 | Every baseline byte cut or mutation | error; no incomplete baseline recovery | version-2 WAL tests |
 | Compacted histories with later writes | rows/history/IDs preserved; next transaction continues | compaction file/model tests |
 | More than 256 baseline pages | all 300 rows restored; normal transaction limit unchanged | baseline/integrated tests |
@@ -49,7 +58,7 @@ retries need a future request/idempotency protocol.
 
 - Actual power interruption and hardware/filesystem behavior beyond sync calls.
 - Wider backup-publication I/O fault injection and failing-media behavior.
-- Compaction publication kill/fault boundaries and wider retirement behavior.
+- Wider compaction filesystem faults, history vacuuming and retirement behavior.
 - Long random crash campaigns and failing-media recovery.
 - Backup upgrade compatibility and stable-format migration.
 - Security audit, server-level project isolation and authorization.

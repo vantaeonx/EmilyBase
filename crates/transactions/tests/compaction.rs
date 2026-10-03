@@ -186,3 +186,76 @@ fn prepublication_path_errors_preserve_source_and_allow_later_commits() {
     drop(db);
     assert_eq!(Database::open(path).unwrap().view().unwrap().row_count(), 2);
 }
+
+#[cfg(unix)]
+#[test]
+fn staging_symlink_cannot_redirect_compaction_into_an_unrelated_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("db");
+    let unrelated = dir.path().join("keep.txt");
+    fs::write(&unrelated, b"preserve this unrelated synthetic file").unwrap();
+    let mut db = initialized(&path);
+    let transaction = db.last_transaction();
+    std::os::unix::fs::symlink(&unrelated, path.join("redo-next.wal")).unwrap();
+    db.compact().unwrap();
+    assert!(!path.join("redo-next.wal").exists());
+    assert_eq!(
+        fs::read(unrelated).unwrap(),
+        b"preserve this unrelated synthetic file"
+    );
+    assert_eq!(db.last_transaction(), transaction);
+    assert_eq!(db.view().unwrap().row_count(), 1);
+}
+
+#[test]
+fn successful_repeated_compaction_and_noop_commit_keep_the_same_canonical_log() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("db");
+    let mut db = initialized(&path);
+    db.compact().unwrap();
+    let original = db.committed_wal().unwrap();
+    let transaction = db.last_transaction();
+    assert_eq!(db.begin().unwrap().commit().unwrap(), transaction);
+    assert_eq!(db.committed_wal().unwrap(), original);
+    let report = db.compact().unwrap();
+    assert_eq!(report.previous_wal_bytes, report.compacted_wal_bytes);
+    assert_eq!(db.committed_wal().unwrap(), original);
+    // Checkpoint cache corruption does not require rewriting the selected log.
+    fs::write(path.join("checkpoint.emily"), b"corrupt disposable cache").unwrap();
+    db.checkpoint().unwrap();
+    assert_eq!(db.committed_wal().unwrap(), original);
+}
+
+#[test]
+fn valid_checksums_cannot_hide_external_changes_to_the_live_committed_snapshot() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("db");
+    let mut db = initialized(&path);
+    db.compact().unwrap();
+    let mut changed = db.view().unwrap().clone();
+    changed
+        .apply(emilybase_database::Event {
+            table_id: 1,
+            kind: emilybase_database::EventKind::Replace(row(7, "external synthetic mutation")),
+        })
+        .unwrap();
+    let bytes = emilybase_wal::encode_snapshot(
+        db.database_id(),
+        db.last_transaction(),
+        &changed.pages().cloned().collect::<Vec<_>>(),
+    )
+    .unwrap();
+    assert_eq!(
+        bytes.len() as u64,
+        fs::metadata(path.join("redo.wal")).unwrap().len()
+    );
+    assert!(recover_image(&bytes, Some(db.database_id())).is_ok());
+    fs::write(path.join("redo.wal"), &bytes).unwrap();
+    assert!(matches!(
+        db.compact(),
+        Err(Error::History("committed snapshot changed externally"))
+    ));
+    assert!(matches!(db.view(), Err(Error::Poisoned)));
+    assert_eq!(fs::read(path.join("redo.wal")).unwrap(), bytes);
+    assert!(!path.join("redo-next.wal").exists());
+}

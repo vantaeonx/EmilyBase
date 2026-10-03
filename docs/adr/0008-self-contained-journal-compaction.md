@@ -1,7 +1,8 @@
 # ADR 0008: Self-contained journal compaction
 
-Status: API/CLI, format, recovery, ownership and backup compatibility implemented
-and tested. Publication crash/fault acceptance is the next increment.
+Status: implemented and tested through API/CLI, format, recovery, ownership,
+backup compatibility, publication process kills, directory sync faults and actual
+WAL capacity. Broader fault campaigns and physical power-loss acceptance remain open.
 
 The retained version-1 WAL repeats full page images on each transaction and
 eventually reaches its 64 MiB limit. Compact explicitly into a version-2 WAL

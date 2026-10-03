@@ -181,6 +181,7 @@ mod tests {
 
     #[test]
     fn checkpoint_process_kill_before_and_after_rename_preserves_commits() {
+        let _guard = crate::PROCESS_TESTS.lock().unwrap();
         for phase in ["synced", "renamed"] {
             let dir = tempfile::tempdir().unwrap();
             let path = dir.path().join("db");

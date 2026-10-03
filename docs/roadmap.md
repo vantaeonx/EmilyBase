@@ -22,8 +22,8 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 ## Next increments
 
-1. Execute the publication crash/fault matrix for self-contained WAL compaction.
-2. Extend backup publication I/O failures, long random crash campaigns and upgrade tests.
+1. Extend random crash/fault campaigns and backup publication I/O failures.
+2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Build the original B+ tree and query layer after documenting their bounded behavior.
 
 ## Implemented first increment
@@ -47,6 +47,9 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 - Mandatory self-contained WAL with strict append-only relational recovery.
 - Explicit version-2 baseline compaction, stable directory ownership and transaction ID preservation.
 - Complete baseline cuts/corruption fail closed; version-1 files/backups remain readable.
+- Compaction kill boundaries, unknown directory-sync outcomes and capacity recovery.
+- Four competing owners perform 80 updates with 16 compactions; all updates survive.
+- Frozen synthetic version-1 bytes and canonical/all-type compaction properties.
 - Atomic checkpoint cache; damaged caches are regenerated from WAL.
 - Managed CLI mode, transaction batches and explicit legacy compatibility.
 - Process kills before/after commit, streaming writes and checkpoint rename.

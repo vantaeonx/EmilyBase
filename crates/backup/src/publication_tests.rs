@@ -9,6 +9,8 @@ use emilybase_transactions::Database;
 
 use crate::{create, files, inspect, restore};
 
+static PROCESS_TESTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 fn barrier() {
     println!("READY");
     std::io::stdout().flush().unwrap();
@@ -50,6 +52,7 @@ impl Drop for Worker {
 
 #[test]
 fn failure_opening_parent_after_restore_publication_reports_unknown_durability() {
+    let _guard = PROCESS_TESTS.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
     let source = dir.path().join("source");
     let archive = dir.path().join("snapshot.backup");
@@ -74,7 +77,11 @@ fn failure_opening_parent_after_restore_publication_reports_unknown_durability()
 
 #[test]
 fn forced_termination_never_publishes_a_partial_backup_or_restore() {
-    for kind in ["backup", "restore"] {
+    let _guard = PROCESS_TESTS.lock().unwrap();
+    for (kind, compacted) in ["backup", "restore"]
+        .into_iter()
+        .flat_map(|kind| [false, true].map(|compacted| (kind, compacted)))
+    {
         for phase in ["synced", "published"] {
             let dir = tempfile::tempdir().unwrap();
             let source = dir.path().join("source");
@@ -96,6 +103,9 @@ fn forced_termination_never_publishes_a_partial_backup_or_restore() {
                 tx.insert("items", vec![Value::Integer(id)]).unwrap();
             }
             tx.commit().unwrap();
+            if compacted {
+                db.compact().unwrap();
+            }
             let expected = create(&mut db, &archive).unwrap();
             let source_before = std::fs::read(source.join("redo.wal")).unwrap();
             let archive_before = std::fs::read(&archive).unwrap();

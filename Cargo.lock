@@ -252,6 +252,7 @@ dependencies = [
  "emilybase-wal",
  "getrandom 0.3.4",
  "proptest",
+ "sha2",
  "tempfile",
  "thiserror",
 ]

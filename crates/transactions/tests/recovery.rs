@@ -27,38 +27,43 @@ fn table() -> Schema {
 
 #[test]
 fn every_byte_cut_before_integrated_commit_preserves_previous_tables() {
-    let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("db");
-    let mut db = Database::create(&path).unwrap();
-    let mut tx = db.begin().unwrap();
-    tx.create_table(table()).unwrap();
-    tx.insert(
-        "items",
-        vec![Value::Integer(0), Value::Text("baseline".into())],
-    )
-    .unwrap();
-    tx.commit().unwrap();
-    let boundary = fs::metadata(path.join("redo.wal")).unwrap().len() as usize;
-    let mut tx = db.begin().unwrap();
-    for id in [1, 2] {
+    for compacted in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("db");
+        let mut db = Database::create(&path).unwrap();
+        let mut tx = db.begin().unwrap();
+        tx.create_table(table()).unwrap();
         tx.insert(
             "items",
-            vec![Value::Integer(id), Value::Text("x".repeat(3000))],
+            vec![Value::Integer(0), Value::Text("baseline".into())],
         )
         .unwrap();
+        tx.commit().unwrap();
+        if compacted {
+            db.compact().unwrap();
+        }
+        let boundary = fs::metadata(path.join("redo.wal")).unwrap().len() as usize;
+        let mut tx = db.begin().unwrap();
+        for id in [1, 2] {
+            tx.insert(
+                "items",
+                vec![Value::Integer(id), Value::Text("x".repeat(3000))],
+            )
+            .unwrap();
+        }
+        tx.commit().unwrap();
+        drop(db);
+        let bytes = fs::read(path.join("redo.wal")).unwrap();
+        assert_eq!(bytes.len() - boundary, 3 * FRAME_SIZE);
+        for cut in boundary..bytes.len() {
+            let snapshot = recover_snapshot(&bytes[..cut], None).unwrap();
+            assert_eq!(snapshot.row_count(), 1, "cut {cut}");
+            assert!(snapshot.get("items", &Key::Integer(0)).unwrap().is_some());
+            assert!(snapshot.get("items", &Key::Integer(1)).unwrap().is_none());
+            assert!(snapshot.get("items", &Key::Integer(2)).unwrap().is_none());
+        }
+        assert_eq!(recover_snapshot(&bytes, None).unwrap().row_count(), 3);
     }
-    tx.commit().unwrap();
-    drop(db);
-    let bytes = fs::read(path.join("redo.wal")).unwrap();
-    assert_eq!(bytes.len() - boundary, 3 * FRAME_SIZE);
-    for cut in boundary..bytes.len() {
-        let snapshot = recover_snapshot(&bytes[..cut], None).unwrap();
-        assert_eq!(snapshot.row_count(), 1, "cut {cut}");
-        assert!(snapshot.get("items", &Key::Integer(0)).unwrap().is_some());
-        assert!(snapshot.get("items", &Key::Integer(1)).unwrap().is_none());
-        assert!(snapshot.get("items", &Key::Integer(2)).unwrap().is_none());
-    }
-    assert_eq!(recover_snapshot(&bytes, None).unwrap().row_count(), 3);
 }
 
 #[test]

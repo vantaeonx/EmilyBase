@@ -93,7 +93,10 @@ impl Drop for Worker {
 #[test]
 fn killed_table_writer_preserves_complete_batches_and_discards_pending_work() {
     let _guard = PROCESS_TESTS.lock().unwrap();
-    for phase in ["staged", "wal_pages", "committed"] {
+    for (phase, compacted) in ["staged", "wal_pages", "committed"]
+        .into_iter()
+        .flat_map(|phase| [false, true].map(|compacted| (phase, compacted)))
+    {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("db");
         let mut db = Database::create(&path).unwrap();
@@ -101,6 +104,9 @@ fn killed_table_writer_preserves_complete_batches_and_discards_pending_work() {
         tx.create_table(schema()).unwrap();
         tx.insert("items", vec![Value::Integer(0)]).unwrap();
         tx.commit().unwrap();
+        if compacted {
+            db.compact().unwrap();
+        }
         db.checkpoint().unwrap();
         drop(db);
         let mut worker = Worker(
@@ -162,7 +168,10 @@ fn killed_table_writer_preserves_complete_batches_and_discards_pending_work() {
 #[test]
 fn killing_a_continuously_writing_process_preserves_every_observed_acknowledgment() {
     let _guard = PROCESS_TESTS.lock().unwrap();
-    for kill_after in [1, 5, 20, 50] {
+    for (kill_after, compacted) in [1, 5, 20, 50]
+        .into_iter()
+        .flat_map(|threshold| [false, true].map(|compacted| (threshold, compacted)))
+    {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("db");
         let mut db = Database::create(&path).unwrap();
@@ -170,6 +179,9 @@ fn killing_a_continuously_writing_process_preserves_every_observed_acknowledgmen
         tx.create_table(schema()).unwrap();
         tx.insert("items", vec![Value::Integer(0)]).unwrap();
         tx.commit().unwrap();
+        if compacted {
+            db.compact().unwrap();
+        }
         drop(db);
         let mut worker = Worker(
             Command::new(std::env::current_exe().unwrap())

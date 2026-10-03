@@ -1,4 +1,4 @@
-use std::fs;
+use std::fs::{self, File};
 use std::path::PathBuf;
 
 use emilybase_wal::Wal;
@@ -17,13 +17,14 @@ impl Database {
     /// Explicitly replace repeated images with a self-contained version-2
     /// baseline. This retains all relational events and the transaction boundary.
     pub fn compact(&mut self) -> Result<Compaction> {
-        self.compact_with(|| {}, || {})
+        self.compact_with(|| {}, || {}, File::sync_all)
     }
 
     pub(crate) fn compact_with(
         &mut self,
         synced: impl FnOnce(),
         published: impl FnOnce(),
+        sync_directory: impl FnOnce(&File) -> std::io::Result<()>,
     ) -> Result<Compaction> {
         self.committed_wal()?;
         let report = Compaction {
@@ -54,7 +55,7 @@ impl Database {
         synced();
         fs::rename(&pending.0, self.path.join("redo.wal"))?;
         published();
-        if let Err(error) = self.ownership.sync_all() {
+        if let Err(error) = sync_directory(&self.ownership) {
             self.poisoned = true;
             return Err(Error::MaintenanceUnknown(error));
         }
@@ -66,6 +67,10 @@ impl Database {
         Ok(report)
     }
 }
+
+#[cfg(test)]
+#[path = "compaction_tests.rs"]
+mod tests;
 
 struct PendingPath(PathBuf);
 impl Drop for PendingPath {

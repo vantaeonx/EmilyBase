@@ -83,7 +83,10 @@ atomic rename and directory sync. Directory ownership spans WAL inode replacemen
 Opening never changes format; only this explicit operation writes WAL version 2.
 Old version-1 readers reject it. Backups support both versions. History and the
 64 MiB limit remain bounded; compaction cannot reclaim obsolete table events.
-Publication kill/fault checks for this new operation are the next acceptance step.
+Process-kill tests cover staging, rename, directory sync and returned success for
+both source versions. Sync failures poison the owner until reopen. Actual 64 MiB
+capacity tests verify refusal without mutation, compaction and new durable writes.
+Physical power loss, broader filesystem failures and history vacuuming remain open.
 
 ## Verified backup and restore
 
