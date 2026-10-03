@@ -20,6 +20,8 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Inspect the derived managed primary-key B+ tree without persisting index pages.
+    PrimaryIndexInfo { path: PathBuf, table: String },
     /// Inspect an experimental row-image location bound to a managed database identity.
     RowLocation {
         path: PathBuf,
@@ -169,6 +171,13 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::PrimaryIndexInfo { path, table } => {
+            let database = emilybase_transactions::Database::open(path)?;
+            println!(
+                "{}",
+                serde_json::to_string(&database.view()?.primary_index_info(&table)?)?
+            );
+        }
         Command::RowLocation { path, table, key } => {
             let key: Key = parse_json(&key)?;
             let database = emilybase_transactions::Database::open(path)?;

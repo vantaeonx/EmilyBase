@@ -2,12 +2,14 @@
 mod engine;
 mod event;
 mod location;
+mod primary;
 mod snapshot;
 mod state;
 
 pub use engine::Database;
 pub use event::{DATABASE_MARKER, Event, EventKind};
 pub use location::RowLocation;
+pub use primary::PrimaryIndexInfo;
 pub use snapshot::Snapshot;
 
 pub const MAX_TABLES: usize = 128;
@@ -16,6 +18,8 @@ pub const MAX_EVENTS: usize = 100000;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("invalid derived primary index: {0}")]
+    PrimaryIndex(&'static str),
     #[error(transparent)]
     Storage(#[from] emilybase_storage::Error),
     #[error(transparent)]

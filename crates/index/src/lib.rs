@@ -1,4 +1,5 @@
-//! Original bounded B+ tree, with versioned page images. Not yet a table/WAL index.
+//! Original bounded B+ tree and standalone storage. Managed snapshots derive point caches;
+//! independently durable table-index pages do not yet participate in WAL.
 mod bulk;
 mod delta;
 mod mutations;

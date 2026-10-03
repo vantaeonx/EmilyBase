@@ -306,6 +306,7 @@ name = "emilybase-database"
 version = "0.1.0"
 dependencies = [
  "emilybase-catalog",
+ "emilybase-index",
  "emilybase-storage",
  "proptest",
  "serde",

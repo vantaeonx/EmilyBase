@@ -20,6 +20,7 @@ cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss
 cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run row_locations -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
+cargo +nightly fuzz run primary_lookup -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run backup_archive -- -max_total_time=30 -max_len=32768 -rss_limit_mb=512
 ```
 
@@ -707,3 +708,36 @@ This increment adds 1147 physical Rust lines and removes five (net 1142), plus
 without blank/comment-only lines), 1189 SDK and 658 Python; 25235 combined.
 No stored formats change. Table primary-key maps still use BTreeMap; durable
 table/index WAL integration, wider fuzz/security/load and production gates stay open.
+
+## Derived primary-key B+ routing: executed increment
+
+On 2026-10-03, workspace/fuzz formatting, warning-denied Clippy, locked build and
+all 355 main tests pass; eleven child-process helpers are excluded. Thirteen new
+tests exercise lazy immutable caches, historical uninitialized branches, staged
+pointer/insert/delete maintenance, wrong/missing pointer denial before reads or
+writes, and eight simultaneous pure snapshot readers. A failing regression first
+demonstrated needless full-table rebuilding on initialized point UPDATE; staged
+pointer maintenance fixes it. The existing 6000-row/64-statement work test passes.
+
+Both 10000-integer-key and 10000-exact-256-byte-text-key tables build 768-page
+trees and resolve every row without changing physical table bytes. A separate
+actual incremental arena-exhaustion test admits all 10000 table rows across two
+tables, rebuilds the derived cache at the real page limit and preserves lookup/
+replay. Mixed 256/257/3072-byte UTF-8 keys, absent/wrong-type keys, update/delete,
+drop/recreated tables, independent 48-case mutation/replay models and SQL null/
+parameter/rollback/both-version backup/restore checks execute. CLI inspection
+creates no index sidecar and preserves WAL and directory entries.
+
+The new primary_lookup ASan smoke completes 434609 executions in 16 seconds
+(15-second budget, 20000-byte inputs, 512 MiB RSS limit), seeded by ignored integer
+and boundary/maximum UTF-8 WALs. It verifies eligible counts, reconstructed trees,
+point results and unchanged physical pages after raw/repaired recovery. Rebuilt
+release container/SDK/restart/crash/corruption/restore checks pass and inspect the
+actual restored primary tree; seven native SDK integration/restart checks pass.
+
+This increment adds 981 physical Rust lines and removes three (net 978), plus six
+Python lines; net source growth is 984. Totals: 24366 Rust (23176 excluding blank/
+comment-only lines), 1189 SDK, 664 Python; 26219 combined. Existing format bytes and
+legacy behavior remain compatible. Derived routing and maintenance are in memory;
+independent durable table-index pages, secondary DDL, broader load/security and
+physical power-loss acceptance remain open.

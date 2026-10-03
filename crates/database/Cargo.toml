@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 emilybase-storage = { path = "../storage" }
 emilybase-catalog = { path = "../catalog" }
+emilybase-index = { path = "../index" }
 thiserror = "2"
 sha2 = "0.10"
 serde = { version = "1", features = ["derive"] }

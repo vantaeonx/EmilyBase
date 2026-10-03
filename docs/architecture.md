@@ -70,13 +70,22 @@ is not a throughput claim or stable durable allocator. Fixed-size images have an
 independent `EBIX` codec and whole-tree validation.
 
 The index has a standalone atomic snapshot publisher; table root catalog entry
-and WAL participation remain pending. The relational engine still uses its
-existing primary-key map. Its 256-byte text
-key bound is separate from the catalog's 3072-byte text limit. Future integration
+and WAL participation remain pending. Managed snapshots now use original B+
+routing for eligible primary-key point lookups, built from current validated
+row locations. Existing row maps still supply scans and longer text keys. The
+256-byte index bound remains separate from the catalog's 3072-byte text limit. Future durable integration
 must explicitly reconcile those limits, page allocation, pointer lifetime and
 transactional split publication. No database-file format changes occur in this
 increment. See [ADR 0009](adr/0009-bounded-index-foundation.md) and
 [ADR 0010](adr/0010-index-maintenance.md).
+
+Per-table immutable derived caches share initialized trees and stage maintenance
+before successful snapshot publication. Failed/rolled-back writes preserve the
+committed view. Uninitialized branch cells are replaced before mutation; arena
+exhaustion discards a derived cache for dense rebuilding without rejecting table
+rows. No independently durable index bytes are added. See
+[ADR 0020](adr/0020-validated-live-row-locations.md) and
+[ADR 0021](adr/0021-derived-primary-key-trees.md).
 
 The opt-in stable arena now retains surviving IDs and reuses holes. Canonical
 EBIF snapshots bind root/revision/counts, while in-memory deltas bind their exact

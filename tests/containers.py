@@ -377,6 +377,12 @@ class Probe:
             self.cli("sql", restored, "SELECT * FROM t ORDER BY id").stdout
         )
         require(result["results"][0] == expected, "restored rows and schema")
+        index_info = json.loads(self.cli("primary-index-info", restored, "t").stdout)
+        require(
+            index_info["entries"] == before["rows"]
+            and index_info["excluded_long_keys"] == 0,
+            "restored primary tree covers every integer key",
+        )
         require(
             result["transaction"] == before["transaction"],
             "restored transaction number",

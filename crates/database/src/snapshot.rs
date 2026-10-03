@@ -4,9 +4,10 @@ use emilybase_catalog::{Key, Row, Schema};
 use emilybase_storage::{Error as StorageError, MAX_PAGES, Page};
 
 use crate::location::{Change, Locations};
+use crate::primary::{PrimaryIndexes, eligible};
 use crate::state::State;
 use crate::{DATABASE_MARKER, Error, Event, MAX_ROWS, Result};
-use crate::{EventKind, RowLocation};
+use crate::{EventKind, PrimaryIndexInfo, RowLocation};
 
 /// Validated in-memory relational history. Clones share immutable page images.
 /// Mutating a snapshot alone provides no persistence or commit acknowledgment.
@@ -15,6 +16,7 @@ pub struct Snapshot {
     state: State,
     pages: Vec<Arc<Page>>,
     locations: Locations,
+    pub(crate) primary_indexes: PrimaryIndexes,
 }
 
 impl Snapshot {
@@ -25,6 +27,7 @@ impl Snapshot {
             state: State::new(),
             pages: vec![Arc::new(root)],
             locations: Locations::default(),
+            primary_indexes: PrimaryIndexes::default(),
         })
     }
 
@@ -57,10 +60,12 @@ impl Snapshot {
                 }
             }
         }
+        let primary_indexes = PrimaryIndexes::from_tables(state.tables.keys().copied());
         Ok(Self {
             state,
             pages: pages.into_iter().map(Arc::new).collect(),
             locations,
+            primary_indexes,
         })
     }
 
@@ -83,6 +88,9 @@ impl Snapshot {
         };
         let location = RowLocation::from_record(&event, page.id(), slot, &bytes);
         let change = Change::prepare(&self.state, &event, location)?;
+        let index_change = self
+            .primary_indexes
+            .prepare(&event, &change, &self.locations)?;
         self.state.apply(event)?;
         if append {
             self.pages.push(Arc::new(page));
@@ -91,6 +99,7 @@ impl Snapshot {
             *last = Arc::new(page);
         }
         self.locations.apply(change);
+        self.primary_indexes.apply(index_change);
         Ok(())
     }
 
@@ -117,7 +126,37 @@ impl Snapshot {
     pub fn get(&self, name: &str, key: &Key) -> Result<Option<&Row>> {
         let table = self.state.table(name)?;
         table.schema.validate_key(key)?;
-        Ok(table.rows.get(key))
+        if !eligible(key) {
+            return Ok(table.rows.get(key));
+        }
+        let table_id = self.table_id(name)?;
+        let tree = self
+            .primary_indexes
+            .tree(table_id, &table.rows, &self.locations)?;
+        let Some(pointer) = tree
+            .get(key)
+            .map_err(|_| Error::PrimaryIndex("point lookup failed"))?
+        else {
+            if table.rows.contains_key(key) {
+                return Err(Error::PrimaryIndex("missing live key"));
+            }
+            return Ok(None);
+        };
+        let location = self
+            .locations
+            .get(table_id, key)
+            .ok_or(Error::PrimaryIndex("unknown indexed key"))?;
+        if pointer.page_id != location.page_id || pointer.slot_id != location.slot_id {
+            return Err(Error::PrimaryIndex("obsolete row pointer"));
+        }
+        Ok(Some(self.resolve_row_location(name, key, location)?))
+    }
+
+    /// Build/read the bounded derived point-lookup index without writing files.
+    pub fn primary_index_info(&self, name: &str) -> Result<PrimaryIndexInfo> {
+        let table = self.state.table(name)?;
+        self.primary_indexes
+            .info(self.table_id(name)?, &table.rows, &self.locations)
     }
 
     /// Return the last live insert/replace image, never an obsolete historical row.

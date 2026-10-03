@@ -26,9 +26,10 @@ remain open.
 The original B+ tree supports unique insertion, leaf/internal splits, pointer
 replacement, deletion with sibling rotations/merges and root collapse, sorted
 bulk loading, point lookup and ordered ranges. Fixed-size page-image round trips
-validate the complete topology. It is a separate bounded library; table primary-key
-maps still use the earlier in-memory representation. WAL integration and durable
-index files remain future work. Deletion may renumber index page IDs while preserving
+validate the complete topology. Managed snapshots now derive point-lookup trees
+from live row locations; SQL primary-key equalities use this original routing.
+Long text keys retain the existing map path. Durable table/index WAL participation
+remains future work. Deletion may renumber index page IDs while preserving
 external row pointers. See [index format and limits](docs/index-format.md) and
 [the integration boundary](docs/adr/0010-index-maintenance.md).
 An opt-in stable-ID arena preserves surviving page addresses and reuses holes.
@@ -36,6 +37,12 @@ Canonical snapshots and exact-base-bound atomic write sets validate root/counts
 and complete topology. A private standalone snapshot publisher and developer CLI
 now survive tested creation/replacement kills and competing writers. Atomic
 table/WAL integration remains pending.
+
+Derived trees preserve all 10000 admitted rows: a full dense build uses 768 pages,
+and fragmented incremental arena exhaustion triggers a rebuild. Initialized
+trees stage insert/delete/pointer maintenance alongside their relational snapshot.
+`primary-index-info PATH TABLE` reports the derived tree and excluded long keys.
+It does not create an index file. See [ADR 0021](docs/adr/0021-derived-primary-key-trees.md).
 
 Validated live row-image locations now bind table/key to an actual slotted-page
 position and event fingerprint. Managed locations also bind the persistent

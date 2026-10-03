@@ -79,8 +79,13 @@ original table qualifier; self joins require distinct aliases.
 
 SELECT and filtered UPDATE/DELETE select direct primary-key lookup for a usable equality conjunct;
 otherwise it scans. Joins use a bounded nested loop. `explain` resolves one SELECT
-without reading rows. These access paths use current table maps; this does not
-enable durable B+ tree pages. Joins with large products can fail their work bound.
+without reading rows. Eligible point lookups route through the original derived
+B+ tree, then validate their live page/slot/image. Text keys over 256 bytes retain
+the map path, through the existing 3072-byte limit. Scans/joins keep current row
+maps. No durable index pages or secondary-index DDL are enabled. Joins with large
+products can fail their work bound. Initial derived-cache construction is bounded
+by table capacity and is outside the row-execution work counter; no throughput
+claim is made. See [ADR 0021](adr/0021-derived-primary-key-trees.md).
 
 The library's `query(snapshot, sql, parameters)` evaluates exactly one SELECT
 without file access or mutations, allowing reads of a detached validated snapshot.

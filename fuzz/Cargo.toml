@@ -116,3 +116,10 @@ path = "fuzz_targets/row_locations.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "primary_lookup"
+path = "fuzz_targets/primary_lookup.rs"
+test = false
+doc = false
+bench = false

@@ -8,7 +8,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 0 | design, threats, format, ADRs | documents reviewed against implementation | initial documents |
 | 1 | pages, tables, types, primary keys, CRUD, CLI | unit/integration tests and reopen round trips | implemented; normal reopen and validation tests pass |
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
-| 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | bounded SQL subset/CLI and standalone B+ tree tested; durable index integration and wider query checks pending |
+| 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
 | 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation and project TypeScript SDK implemented; other platform features pending |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
@@ -76,9 +76,16 @@ ownership and competing-writer checks. Table/WAL participation remains pending.
 Current live row-image locations now validate actual page/slot, event fingerprint,
 table/key and persistent managed database identity. Old images retire on mutation;
 rollback, reopen, both WAL versions and verified restore are covered. Existing
-formats and 3072-byte table text keys are preserved. The B+ tree adapter and
-atomic table/index WAL participation remain pending. See
+formats and 3072-byte table text keys are preserved. Atomic table/index WAL
+participation remains pending; the following increment adds derived point routing. See
 [ADR 0020](adr/0020-validated-live-row-locations.md).
+
+Managed point lookup now derives and maintains the original B+ tree for integer
+and short text keys; long text keys retain their existing path. Immutable caches,
+failure/rollback preservation, 10000-row capacity, real incremental arena exhaustion
+and SQL/restore behavior execute. Dense rebuilds preserve table admission. Persistent
+index roots/pages/WAL and secondary indexes remain pending. See
+[ADR 0021](adr/0021-derived-primary-key-trees.md).
 
 ## Implemented first increment
 
