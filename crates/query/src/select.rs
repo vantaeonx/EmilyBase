@@ -15,6 +15,9 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
             affected: 0,
         });
     }
+    if plan.join.is_none() && (plan.order.is_empty() || plan.primary_order.is_some()) {
+        return crate::stream::run(snapshot, &plan, budget);
+    }
     let source = match &plan.key {
         Some(key) => snapshot
             .get(&plan.table, key)?

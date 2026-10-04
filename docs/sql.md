@@ -78,7 +78,8 @@ ambiguous columns are checked even on empty input or LIMIT 0. An alias hides its
 original table qualifier; self joins require distinct aliases.
 
 SELECT and filtered UPDATE/DELETE select direct primary-key lookup for a usable equality conjunct;
-otherwise it selects a usable primary range or scans. Joins use a bounded nested loop. `explain` resolves one SELECT
+otherwise it selects a usable primary range or scans. Primary-ordered SELECT also
+uses `primary_range` for a full interval. Joins use a bounded nested loop. `explain` resolves one SELECT
 without reading rows. Eligible point lookups route through the original derived
 B+ tree, then validate their live page/slot/image. Text keys over 256 bytes retain
 the map path, through the existing 3072-byte limit. Scans/joins keep current row
@@ -112,7 +113,7 @@ through 3072 bytes using the ordered live map. The integrity comparisons and
 derived-tree build remain bounded by table capacity, outside the row-execution
 work counter. SELECT still applies its complete filter and explicit ORDER BY;
 UPDATE/DELETE use the same range on their staged snapshot. Durable index WAL,
-secondary DDL and ordering pushdown remain pending. See
+secondary DDL remain pending. See
 [ADR 0026](adr/0026-utf8-primary-range-plans.md).
 
 The library's `query(snapshot, sql, parameters)` evaluates exactly one SELECT
@@ -143,13 +144,19 @@ schema validation impose additional catalog limits. SQL errors report an offset
 and generic expected category, without SQL, literals or parameter contents.
 
 Execution: 100000 combined scan/join-candidate and predicate-node visits per script;
-10000 intermediate rows per SELECT. Estimated retained intermediate row bytes are
-capped at 8 MiB per SELECT; returned rows across the script share another 8 MiB cap.
-This is a row-memory estimate, not a JSON/wire-byte limit. Full input scans still
-use bounded existing table snapshots. Sorting is separately bounded by row/column
-limits. ORDER BY can hit intermediate limits despite a small final LIMIT; without
-sorting, selection stops at LIMIT. Writes share the existing 256-event/256-page
-normal transaction limit; overflow rolls back the entire script.
+10000 result/intermediate rows per SELECT. Estimated retained intermediate row
+bytes for joins/non-primary ordering are capped at 8 MiB per SELECT; returned
+projected rows across the script share another 8 MiB cap. This is a row-memory
+estimate, not a JSON/wire-byte limit. Single-table reads with no order or a primary
+column first in ORDER BY borrow checked rows, retain projected fields only and
+stop after LIMIT TRUE matches. All predicates and later sort terms are fully
+bound, including LIMIT zero. Every consumed row/predicate node counts as work;
+LIMIT does not bypass an expensive unsuccessful filter. Other orderings/joins
+still materialize/sort and can hit intermediate limits despite a small LIMIT.
+Source snapshots and lazy derived-tree construction remain bounded by table
+capacity, outside this output/work estimate. See [ADR 0029](adr/0029-streamed-primary-sql-order.md).
+Writes share the existing 256-event/256-page normal transaction limit; overflow
+rolls back the entire script.
 
 Arithmetic, functions, aggregates, DISTINCT, GROUP BY, subqueries, RETURNING,
 OFFSET, UNION, outer/cross joins, secondary-index DDL, ALTER, implicit casts and PostgreSQL

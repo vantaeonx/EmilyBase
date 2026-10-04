@@ -41,15 +41,22 @@ table/WAL integration remains pending.
 Borrowed double-ended B+ cursors now read intervals in either direction without
 copying a whole result vector. Reverse traversal uses bounded ancestor paths,
 so existing EBIX-1 bytes are unchanged. `index-range PATH --descending --limit N`
-inspects an ordered standalone key/pointer interval. SQL ordering pushdown remains
-the next integration step. See [ADR 0027](docs/adr/0027-double-ended-index-cursors.md).
+inspects an ordered standalone key/pointer interval. See
+[ADR 0027](docs/adr/0027-double-ended-index-cursors.md).
 
 `Snapshot::primary_rows` now borrows live rows in either direction, validating
 consumed short-tree entries and every selected physical image. Long keys merge
 before the caller's limit; long bounds use checked point lookups. Full imported
 tree verification also streams keys instead of allocating a complete key vector.
-SQL still uses its prior materialized path until the next integration increment.
 See [ADR 0028](docs/adr/0028-borrowed-live-primary-rows.md).
+
+Single-table SELECT now uses borrowed rows when no order is requested or the first
+ORDER BY field is the unique primary column. It reads in that direction, evaluates
+the full filter and stops after LIMIT matches, retaining projected fields only.
+Joins and other orderings keep bounded materialized sorting. Explain uses the
+existing `primary_range`; `sorted` indicates requested ordering. Wide limited reads,
+script budgets, both-WAL restore and real CLI/HTTP kill replay are tested. See
+[ADR 0029](docs/adr/0029-streamed-primary-sql-order.md).
 
 Derived trees preserve all 10000 admitted rows: a full dense build uses 768 pages,
 and fragmented incremental arena exhaustion triggers a rebuild. Initialized
@@ -65,7 +72,7 @@ null/rollback semantics. Explain reports `primary_range`. See
 Text primary ranges also support necessary AND inequalities in UTF-8 byte order.
 Short bounds validate linked-leaf entries; live ordered keys include excluded long
 keys before LIMIT. SQL uses this path for representable bounds through 256 bytes;
-longer bounds retain bounded scans. No locale collation or ordering pushdown is
+longer SQL bounds retain full intervals with filtering. No locale collation is
 claimed. See [ADR 0026](docs/adr/0026-utf8-primary-range-plans.md).
 
 Explicit bound primary-tree images now validate persistent database/table identity,

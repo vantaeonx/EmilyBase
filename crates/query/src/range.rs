@@ -12,6 +12,21 @@ pub(crate) struct TextRange {
     empty: bool,
 }
 impl PrimaryRange {
+    pub fn bounds(
+        &self,
+    ) -> (
+        Option<emilybase_catalog::Key>,
+        Option<emilybase_catalog::Key>,
+    ) {
+        use emilybase_catalog::Key;
+        match self {
+            Self::Integer(range) => (range.lower.map(Key::Integer), range.upper.map(Key::Integer)),
+            Self::Text(range) => (
+                range.lower.clone().map(Key::Text),
+                range.upper.clone().map(Key::Text),
+            ),
+        }
+    }
     pub fn empty(&self) -> bool {
         match self {
             Self::Integer(range) => range.empty,

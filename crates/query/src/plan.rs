@@ -57,6 +57,7 @@ pub(crate) struct Plan {
     pub filter: Option<Predicate>,
     pub columns: Vec<(usize, String)>,
     pub order: Vec<SortKey>,
+    pub primary_order: Option<bool>,
     pub limit: usize,
 }
 
@@ -97,7 +98,7 @@ impl Plan {
                 })
                 .collect(),
         };
-        let order = select
+        let order: Vec<SortKey> = select
             .order
             .iter()
             .map(|o| {
@@ -138,6 +139,14 @@ impl Plan {
             None
         };
         let schema = snapshot.schema(&select.from.name)?;
+        let primary_order = if select.join.is_none() {
+            order
+                .first()
+                .filter(|key| key.index == usize::from(schema.primary_key))
+                .map(|key| key.descending)
+        } else {
+            None
+        };
         let range = if key.is_none() && select.join.is_none() {
             filter.as_ref().and_then(|predicate| {
                 crate::range::primary_range(predicate, usize::from(schema.primary_key))
@@ -153,6 +162,7 @@ impl Plan {
             filter,
             columns,
             order,
+            primary_order,
             limit,
         })
     }
@@ -193,7 +203,7 @@ pub fn explain(snapshot: &Snapshot, sql: &str, parameters: &[Value]) -> RunResul
             "bounded_nested_loop"
         } else if plan.key.is_some() {
             "primary_key"
-        } else if plan.range.is_some() {
+        } else if plan.range.is_some() || plan.primary_order.is_some() {
             "primary_range"
         } else {
             "scan"

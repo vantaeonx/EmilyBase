@@ -992,3 +992,33 @@ excluding blank/comment-only lines), 1207 SDK and 718 Python, or 33298 source
 lines including tests. Runtime formats and HTTP contracts are unchanged. SQL
 adoption, independently durable table index WAL, wider power-loss/load/security
 and real-data acceptance remain pending.
+
+## Streamed primary SQL order
+
+On 2026-10-04 the locked workspace run passes 458 main Rust tests, with 13
+ignored process-entry helpers called by parents. Workspace/fuzz formatting,
+strict Clippy and the locked workspace build pass. An earlier failing regression
+reproduces the 6000-wide-row ORDER BY id LIMIT 2 intermediate-byte rejection.
+The repaired executor borrows primary rows, applies the full filter, retains only
+projected fields and stops after enough TRUE matches. Two independent 48-case
+integer/text models exercise order, ranges, OR/NOT, NULL, aliases, long/NUL/Unicode
+keys and limits; typed projections preserve all catalog types and negative zero.
+Unknown fields/bindings/types still fail on empty/contradictory/zero-limit reads.
+
+Real script work and shared output budgets still reject expensive unsuccessful
+filters or oversized retained results; prior writes are rolled back. Sixty-four
+limited ordered reads of 6000 rows fit the work budget. Both WAL versions cover
+staged reads, rollback/abort, independent old snapshots, cache/reopen and verified
+backup/restore. Actual compiled CLI and TCP server cases exercise wide limited
+reads, unchanged read-only WAL, scoped denial/redaction and ACK replay after kill.
+Joins and non-primary ordering retain their materialized intermediate limits.
+
+The extended sql_execution ASan target completes 34332 runs in 16 seconds, with
+a 15-second, 16384-byte and 512-MiB budget. Independent nullable projections and
+long-key models cover the new path. This is bounded smoke verification.
+
+Net growth is 994 Rust lines. Totals: 32367 Rust (30925 without blank/comment-only
+lines), 1207 SDK and 718 Python, or 34292 source lines including tests. No format
+version or HTTP/SDK shape changed; primary_range also describes unbounded primary
+ordering and sorted indicates requested ORDER BY. Durable table-index WAL, wider
+recovery/load/security and production gates remain open.

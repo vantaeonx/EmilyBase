@@ -32,7 +32,7 @@ Borrowed double-ended B+ intervals are now implemented, with bounded ancestor
 paths, fused errors, unchanged EBIX-1 bytes and actual standalone range CLI.
 Capacity, mixed keys, separator/leaf edges, alternating consumption, stable holes,
 root collapse/reuse, generated mutation/import models and ASan checks execute.
-Borrowed table-row integration and SQL primary ordering pushdown remain next work;
+Borrowed table-row integration and primary ordering are implemented below;
 independently durable index-WAL participation remains a separate acceptance gate.
 See [ADR 0027](adr/0027-double-ended-index-cursors.md).
 
@@ -40,9 +40,16 @@ Borrowed live primary rows now merge long keys, validate consumed tree keys and
 physical images, and support arbitrary mixed end consumption. Long bounds retain
 checked eligible point lookups. Historical clones, cold shared readers, 10000
 wide rows, rollback/abort/reopen, both WAL versions and verified restore execute.
-Imported projection verification streams the complete key set. SQL ordering and
-early filtered LIMIT integration follows separately. See
+Imported projection verification streams the complete key set. See
 [ADR 0028](adr/0028-borrowed-live-primary-rows.md).
+
+SQL single-table primary ordering now consumes those borrowed rows in the requested
+direction, applies the complete filter and stops after LIMIT matches. No-order
+reads use the same projected-row path; joins/other orderings remain materialized.
+Wide-table regression, independent integer/text models, actual script work/output
+bounds, both-WAL restore, compiled CLI and real HTTP isolation/kill replay execute.
+Explain keeps its existing primary_range/sorted contract. Wider query/load gates
+and durable table-index WAL remain open. See [ADR 0029](adr/0029-streamed-primary-sql-order.md).
 
 ## Isolated registry and API keys
 
@@ -106,7 +113,7 @@ index roots/pages/WAL and secondary indexes remain pending. See
 Integer primary range plans now route necessary AND inequalities through linked
 leaves for SELECT/UPDATE/DELETE. Endpoint/overflow, nullable/filter/alias, generated
 read/write/reopen models and 6000-row narrow-work checks execute. Explain/client
-contracts include primary_range. Ordering pushdown, secondary DDL
+contracts include primary_range. Secondary DDL
 and independently durable index pages remain open. See
 [ADR 0022](adr/0022-integer-primary-range-plans.md).
 

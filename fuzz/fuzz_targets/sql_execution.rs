@@ -138,6 +138,51 @@ fuzz_target!(|bytes: &[u8]| {
             .map(|i| vec![Value::Integer(i)])
             .collect::<Vec<_>>();
         assert_eq!(result.rows, expected);
+        let descending = a & 1 != 0;
+        let condition = if b & 1 == 0 {
+            "id >= $1 AND id < $2 AND (active OR active IS NULL)"
+        } else {
+            "NOT (id < $1 OR id >= $2) AND NOT active"
+        };
+        let sql = format!(
+            "SELECT title AS name,id,id FROM items WHERE {condition} ORDER BY id {} NULLS FIRST,title DESC LIMIT $3",
+            if descending { "DESC" } else { "ASC" }
+        );
+        let mut expected = (0..24)
+            .filter(|i| {
+                *i >= lower && *i < upper && if b & 1 == 0 { i % 3 != 1 } else { i % 3 == 1 }
+            })
+            .collect::<Vec<_>>();
+        if descending {
+            expected.reverse();
+        }
+        let expected = expected
+            .into_iter()
+            .take(limit as usize)
+            .map(|i| {
+                vec![
+                    if i % 3 == 0 {
+                        Value::Null
+                    } else {
+                        Value::Text(format!("clé-{i}"))
+                    },
+                    Value::Integer(i),
+                    Value::Integer(i),
+                ]
+            })
+            .collect::<Vec<_>>();
+        let parameters = [
+            Value::Integer(lower),
+            Value::Integer(upper),
+            Value::Integer(limit),
+        ];
+        let result = query(snapshot, &sql, &parameters).unwrap();
+        assert_eq!(result.columns, ["name", "id", "id"]);
+        assert_eq!(result.rows, expected);
+        assert_eq!(
+            explain(snapshot, &sql, &parameters).unwrap().access,
+            "primary_range"
+        );
         let length = bytes.len().min(64);
         let lower = String::from_utf8_lossy(&bytes[..length]).into_owned();
         let upper = String::from_utf8_lossy(&bytes[bytes.len() - length..]).into_owned();
@@ -159,6 +204,46 @@ fuzz_target!(|bytes: &[u8]| {
             .filter(|row| matches!(&row[0],Value::Text(key) if *key>lower && *key<=upper))
             .take(limit as usize)
             .collect::<Vec<_>>();
+        assert_eq!(result.rows, expected);
+        // Long live keys and bounds are admissible even when excluded from EBIX.
+        // Build the expected key set independently from the storage scan.
+        let mut keys = vec![
+            String::new(),
+            "\0".into(),
+            "a".into(),
+            "a\0".into(),
+            "b".into(),
+            "界".into(),
+            "😀".into(),
+            "z".repeat(255),
+            "z".repeat(256),
+            "z".repeat(257),
+            format!("a{}", "z".repeat(3071)),
+        ];
+        keys.sort();
+        let lower = keys[usize::from(*c) % keys.len()].clone();
+        let upper = keys[usize::from(*d) % keys.len()].clone();
+        let equal = keys[usize::from(*a) % keys.len()].clone();
+        let sql = format!(
+            "SELECT id FROM words WHERE (id>$1 AND id<=$2) OR id=$3 ORDER BY id {} LIMIT $4",
+            if descending { "DESC" } else { "ASC" }
+        );
+        let parameters = [
+            Value::Text(lower.clone()),
+            Value::Text(upper.clone()),
+            Value::Text(equal.clone()),
+            Value::Integer(limit),
+        ];
+        if descending {
+            keys.reverse();
+        }
+        let expected = keys
+            .into_iter()
+            .filter(|key| (*key > lower && *key <= upper) || *key == equal)
+            .take(limit as usize)
+            .map(|key| vec![Value::Text(key)])
+            .collect::<Vec<_>>();
+        let result = query(snapshot, &sql, &parameters).unwrap();
         assert_eq!(result.rows, expected);
     }
 });

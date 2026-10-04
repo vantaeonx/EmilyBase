@@ -13,6 +13,125 @@ use std::time::Duration;
 static PROCESS_TESTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[test]
+fn actual_http_streams_wide_primary_order_limits_with_isolation_and_kill_replay() {
+    let _serial = PROCESS_TESTS.lock().unwrap();
+    for version in [1, 2] {
+        let temporary = tempfile::tempdir().unwrap();
+        let root = temporary.path().join("projects");
+        let mut store = ProjectStore::open(&root).unwrap();
+        let first = store.create("ordered-wide").unwrap();
+        let sibling = store.create("ordered-sibling").unwrap();
+        let data = root.join(&first.project.id).join("data");
+        if version == 2 {
+            Database::open(&data).unwrap().compact().unwrap();
+        }
+        store
+            .authorize(&first.project.id, &first.api_key)
+            .unwrap()
+            .execute("CREATE TABLE t(n INT,id INT PRIMARY KEY,payload TEXT)", &[])
+            .unwrap();
+        let payload = Value::Text("synthetic-private-ordered-payload-".repeat(90));
+        for start in (0..6000).step_by(200) {
+            let values = (start..start + 200)
+                .map(|id| format!("({},{id},$1)", id % 5))
+                .collect::<Vec<_>>()
+                .join(",");
+            store
+                .authorize(&first.project.id, &first.api_key)
+                .unwrap()
+                .execute(
+                    &format!("INSERT INTO t VALUES {values}"),
+                    std::slice::from_ref(&payload),
+                )
+                .unwrap();
+        }
+        store.authorize(&sibling.project.id,&sibling.api_key).unwrap().execute("CREATE TABLE t(n INT,id INT PRIMARY KEY,payload TEXT); INSERT INTO t VALUES (88,5999,'sibling')",&[]).unwrap();
+        let mut database = Database::open(&data).unwrap();
+        database.save_primary_index_cache("t").unwrap();
+        let before = database.committed_wal().unwrap();
+        let transaction = database.last_transaction();
+        drop(database);
+        drop(store);
+        let master = issue_key().unwrap();
+        let server = support::Server::start(&root, &master);
+        let route = format!("/v1/projects/{}/sql", first.project.id);
+        let sql =
+            "SELECT x.id AS key,x.n FROM t AS x WHERE x.n>=$1 ORDER BY x.id DESC,x.n LIMIT $2";
+        let source = json!({"sql":sql,"parameters":[{"type":"integer","value":4},{"type":"integer","value":2}]});
+        for key in [&master, &sibling.api_key] {
+            let (status, _) = support::call(server.address, "POST", &route, key, &source).unwrap();
+            assert_eq!(status, 401);
+        }
+        let (status, report) =
+            support::call(server.address, "POST", &route, &first.api_key, &source).unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["transaction"], transaction);
+        assert_eq!(report["results"][0]["columns"], json!(["key", "n"]));
+        assert_eq!(
+            report["results"][0]["rows"],
+            json!([
+                [{"type":"integer","value":5999},{"type":"integer","value":4}],
+                [{"type":"integer","value":5994},{"type":"integer","value":4}]
+            ])
+        );
+        let explain = format!("/v1/projects/{}/explain", first.project.id);
+        let (status, plan) =
+            support::call(server.address, "POST", &explain, &first.api_key, &source).unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(plan["access"], "primary_range");
+        assert_eq!(plan["sorted"], true);
+        assert_eq!(std::fs::read(data.join("redo.wal")).unwrap(), before);
+        let rolled = json!({"sql":"BEGIN; UPDATE t SET n=9 WHERE id=5999; SELECT n FROM t ORDER BY id DESC LIMIT 1; ROLLBACK"});
+        let (status, report) =
+            support::call(server.address, "POST", &route, &first.api_key, &rolled).unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["committed"], false);
+        assert_eq!(report["results"][1]["rows"][0][0]["value"], 9);
+        assert_eq!(std::fs::read(data.join("redo.wal")).unwrap(), before);
+        let written = json!({"sql":"UPDATE t SET n=9 WHERE id=5999; SELECT n FROM t ORDER BY id DESC LIMIT 1"});
+        let (status, report) =
+            support::call(server.address, "POST", &route, &first.api_key, &written).unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["transaction"], transaction + 1);
+        assert_eq!(report["results"][1]["rows"][0][0]["value"], 9);
+        let log = server.kill();
+        let server = support::Server::start(&root, &master);
+        let selected = json!({"sql":"SELECT n FROM t ORDER BY id DESC LIMIT 1"});
+        for (project, expected) in [(&first, 9), (&sibling, 88)] {
+            let path = format!("/v1/projects/{}/sql", project.project.id);
+            let (status, report) =
+                support::call(server.address, "POST", &path, &project.api_key, &selected).unwrap();
+            assert_eq!(status, 200);
+            assert_eq!(report["results"][0]["rows"][0][0]["value"], expected);
+        }
+        let log = log + &server.stop();
+        for private in [
+            master.as_str(),
+            first.api_key.as_str(),
+            sibling.api_key.as_str(),
+            first.project.id.as_str(),
+            sibling.project.id.as_str(),
+            sql,
+            "synthetic-private-ordered-payload",
+        ] {
+            assert!(!log.contains(private));
+        }
+        let database = Database::open(&data).unwrap();
+        assert_eq!(database.last_transaction(), transaction + 1);
+        assert_eq!(database.primary_cache_startup().unwrap().rejected, 1);
+        assert_eq!(
+            database
+                .view()
+                .unwrap()
+                .get("t", &Key::Integer(5999))
+                .unwrap()
+                .unwrap()[0],
+            Value::Integer(9)
+        );
+    }
+}
+
+#[test]
 fn actual_http_reads_reject_foreign_or_damaged_caches_without_cross_project_leaks() {
     let _serial = PROCESS_TESTS.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
