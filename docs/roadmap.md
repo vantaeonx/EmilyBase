@@ -31,6 +31,10 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
    substitutions, native process changes, before/after fsync failures and generated
    verified restore execute. Wider failing-media campaigns remain open. See
    [ADR 0032](adr/0032-owned-backup-publication.md).
+   The independent registry publisher is also bound to original handles, with
+   reproduced substitutions, native pre/post-rename checks, descriptor-release
+   cycles and an independent scope/epoch model. See
+   [ADR 0033](adr/0033-owned-registry-backup-publication.md).
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
    [ADR 0031](adr/0031-atomic-index-wal-proposal.md) proposes the commit/domain

@@ -64,12 +64,19 @@ physical WAL lengths, so abandoned tails can also cause size-limit refusal.
 
 Archives must be private, regular, single-link files; symlinks, hard-link aliases,
 broad permissions and oversized reads fail. Publication uses a private synced
-temporary file, exact readback/replay, Linux no-replace rename and parent sync.
+temporary file, exact descriptor readback/replay, descriptor-relative Linux
+no-replace rename and owned-parent sync. Device/inode checks bind the parent,
+staging and selected entry. Final parent symlinks are refused.
 Restore first validates the entire input, writes private project/data directories,
 syncs journals, replays databases, regenerates checkpoints and compares a fresh
 whole-registry image before publication. Existing files, directories and symlinks
 remain untouched. Selected output is complete; leftover staging is not adopted.
-After publication uncertainty, inspect the destination before retrying.
+After publication uncertainty, inspect the destination before retrying. Cleanup
+uses the pinned parent only when staging still names the owned inode; detached
+originals and foreign replacements are preserved. Restore writes through the
+owned directory's `/proc/self/fd` path, so mounted `/proc` is required.
+Operator-selected ancestors remain trusted; this is not a sandbox against a
+malicious local administrator. See [ADR 0033](adr/0033-owned-registry-backup-publication.md).
 
 This backs up the currently implemented project registry. Unrelated standalone
 indexes and future objects/user-session components require separate formats.

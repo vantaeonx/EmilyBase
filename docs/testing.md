@@ -1103,8 +1103,8 @@ has successful stable, Rust 1.89 and real-container GitHub jobs.
 
 On 2026-10-04 both locked workspace runs, stable 1.99.0 and minimum 1.89.0,
 pass all 479 main Rust tests with 14 ignored child entry helpers. Workspace/fuzz
-format, strict Clippy and locked build pass. Two parent-substitution regressions
-SDK format, eleven unit checks and seven checks against the real server also pass.
+format, strict Clippy and locked build pass. SDK format, eleven unit checks and
+seven checks against the real server also pass. Two parent-substitution regressions
 first fail against the old publisher, then pass with descriptor-relative owned
 publication and conservative identity-bound cleanup.
 
@@ -1135,3 +1135,28 @@ Rust (32744 excluding blank/comment-only lines), 1207 SDK and 718 Python, or 361
 combined source lines. Archive/WAL versions and HTTP/SDK shapes are unchanged.
 See [ADR 0032](adr/0032-owned-backup-publication.md); wider recovery, security,
 registry publication and production gates remain open.
+
+## Owned offline registry publication
+
+On 2026-10-04 all 490 main Rust tests pass on stable 1.99.0 and Rust 1.89.0,
+with 14 ignored child entry helpers. Workspace/fuzz format, strict Clippy and
+locked build pass. Seven SDK checks against the current real server also pass.
+The previous single-database checkpoint bf79267 has all four GitHub jobs green:
+stable/SDK, minimum Rust, advisories and the real release container.
+
+Two registry parent regressions first fail against the old publisher. The new
+guard binds parent/staging/selection identities, writes restored projects through
+the original directory handle and preserves foreign/detached objects. Eight
+native pre/post-rename substitutions, ancestor replacement during WAL restore,
+64 isolated descriptor-release cycles and a 32-case independent scope/epoch/row
+model execute. Existing registry kills, fourteen sync failures, competing restorers
+and restored actual HTTP cases remain green. New real CLI cases cover empty and
+mixed-WAL registries with relative Unicode paths and parent-alias refusal.
+
+Net growth is 980 Rust lines (+1017/-37). Totals: 35237 Rust (33700 without
+blank/comment-only lines), 1207 SDK and 718 Python, or 37162 combined source lines.
+EMILYREG/EMILYBAK/WAL bytes and public report shapes are unchanged. Source/archived
+project values, key epochs and scopes remain exact; copy writes/rotation are
+independent. These are bounded namespace/cleanup checks, not hostile-admin,
+whole-process load, hardware power-loss or completed production/security proof.
+See [ADR 0033](adr/0033-owned-registry-backup-publication.md).

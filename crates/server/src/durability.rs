@@ -2,7 +2,7 @@
 use crate::{Error, ProjectStore};
 use std::cell::RefCell;
 use std::fs;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -14,6 +14,25 @@ pub(crate) static PROCESS_TESTS: tokio::sync::Mutex<()> = tokio::sync::Mutex::co
 
 thread_local! {
     static FAULT: RefCell<Option<&'static str>> = const { RefCell::new(None) };
+    static CALLBACK: RefCell<Option<PublicationCallback>> = const { RefCell::new(None) };
+}
+type PublicationCallback = (&'static str, Box<dyn FnOnce()>);
+
+pub(crate) struct CallbackGuard;
+impl Drop for CallbackGuard {
+    fn drop(&mut self) {
+        CALLBACK.with_borrow_mut(|value| *value = None);
+    }
+}
+pub(crate) fn on_boundary(
+    boundary: &'static str,
+    callback: impl FnOnce() + 'static,
+) -> CallbackGuard {
+    CALLBACK.with_borrow_mut(|value| {
+        assert!(value.is_none());
+        *value = Some((boundary, Box::new(callback)));
+    });
+    CallbackGuard
 }
 pub(crate) fn fail(boundary: &str) -> std::io::Result<()> {
     FAULT.with_borrow_mut(|selected| {
@@ -26,9 +45,26 @@ pub(crate) fn fail(boundary: &str) -> std::io::Result<()> {
     })
 }
 pub(crate) fn checkpoint(boundary: &str) {
+    let callback = CALLBACK.with_borrow_mut(|value| {
+        if value
+            .as_ref()
+            .is_some_and(|(selected, _)| *selected == boundary)
+        {
+            value.take().map(|(_, callback)| callback)
+        } else {
+            None
+        }
+    });
+    if let Some(callback) = callback {
+        callback();
+    }
     if std::env::var("EMILYBASE_REGISTRY_KILL_POINT").as_deref() == Ok(boundary) {
         println!("REGISTRY_BOUNDARY {boundary}");
         std::io::stdout().flush().unwrap();
+        if std::env::var("EMILYBASE_REGISTRY_RESUME_POINT").as_deref() == Ok(boundary) {
+            std::io::stdin().read_exact(&mut [0; 1]).unwrap();
+            return;
+        }
         loop {
             std::thread::park();
         }

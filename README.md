@@ -36,6 +36,13 @@ symlinks and nonregular files. Native subprocess, sync-fault, generated model an
 relative-path CLI checks execute. Linux `/proc` is required; operator-selected
 ancestors remain trusted. See [ADR 0032](docs/adr/0032-owned-backup-publication.md).
 
+The independent offline registry publisher now applies the same destination and
+staged-inode binding, including restore writes through the original directory
+handle. Substitution failures preserve foreign entries and complete ambiguous
+selections. Generated scope/epoch models, native mutations, descriptor-release
+cycles and real relative CLI cases execute; registry/nested archive bytes are
+unchanged. See [ADR 0033](docs/adr/0033-owned-registry-backup-publication.md).
+
 The original B+ tree supports unique insertion, leaf/internal splits, pointer
 replacement, deletion with sibling rotations/merges and root collapse, sorted
 bulk loading, point lookup and ordered ranges. Fixed-size page-image round trips

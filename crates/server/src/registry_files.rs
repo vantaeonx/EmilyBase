@@ -2,9 +2,11 @@
 use crate::registry_archive::{self, MAX_REGISTRY_BACKUP_BYTES};
 use crate::{Error, ProjectStore, RegistryBackupReport, Result, metadata};
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsExt};
 use std::path::Path;
+
+mod pending;
 
 pub fn inspect_registry_backup(path: impl AsRef<Path>) -> Result<RegistryBackupReport> {
     crate::inspect_registry_backup_bytes(&read(path.as_ref())?)
@@ -20,7 +22,11 @@ pub(crate) fn read(path: &Path) -> Result<Vec<u8>> {
         rustix::fs::Mode::empty(),
     )
     .map_err(std::io::Error::from)?;
-    let file: File = fd.into();
+    let mut file: File = fd.into();
+    read_file(&mut file)
+}
+
+fn read_file(file: &mut File) -> Result<Vec<u8>> {
     let metadata = file.metadata()?;
     if !metadata.is_file() || metadata.nlink() != 1 || metadata.permissions().mode() & 0o077 != 0 {
         return Err(Error::Path);
@@ -29,6 +35,7 @@ pub(crate) fn read(path: &Path) -> Result<Vec<u8>> {
         return Err(Error::Limit);
     }
     let mut bytes = Vec::new();
+    file.seek(SeekFrom::Start(0))?;
     file.take(MAX_REGISTRY_BACKUP_BYTES as u64 + 1)
         .read_to_end(&mut bytes)?;
     if bytes.len() > MAX_REGISTRY_BACKUP_BYTES {
@@ -39,23 +46,17 @@ pub(crate) fn read(path: &Path) -> Result<Vec<u8>> {
 
 pub(crate) fn publish(bytes: &[u8], target: &Path) -> Result<RegistryBackupReport> {
     let report = crate::inspect_registry_backup_bytes(bytes)?;
-    let mut pending = tempfile::Builder::new()
-        .prefix(".emilybase-registry-backup-")
-        .tempfile_in(parent(target))?;
-    pending.write_all(bytes)?;
-    sync(pending.as_file(), "registry_backup_file_sync")?;
+    let mut pending = pending::Pending::file(target)?;
+    pending.owner.write_all(bytes)?;
+    sync(&pending.owner, "registry_backup_file_sync")?;
     checkpoint("registry_backup_file_synced");
-    let written = read(pending.path())?;
+    let written = read_file(&mut pending.owner)?;
     if written != bytes || crate::inspect_registry_backup_bytes(&written)? != report {
         return Err(Error::RegistryFormat("staged archive differs from source"));
     }
-    rename(pending.path(), target)?;
+    pending.publish()?;
     checkpoint("registry_backup_renamed");
-    // The temporary pathname is gone. Its drop cannot unlink the selected target.
-    drop(pending);
-    File::open(parent(target))
-        .and_then(|file| sync(&file, "registry_backup_parent_sync"))
-        .map_err(Error::PublicationUnknown)?;
+    pending.finish("registry_backup_parent_sync")?;
     checkpoint("registry_backup_parent_synced");
     Ok(report)
 }
@@ -72,10 +73,7 @@ pub fn restore_registry_backup(
 
 fn restore_bytes(bytes: &[u8], target: &Path) -> Result<RegistryBackupReport> {
     let archive = registry_archive::decode(bytes)?;
-    let pending = tempfile::Builder::new()
-        .prefix(".emilybase-registry-restore-")
-        .tempdir_in(parent(target))?;
-    std::fs::set_permissions(pending.path(), std::fs::Permissions::from_mode(0o700))?;
+    let mut pending = pending::Pending::directory(target)?;
     for (entry, report) in archive.entries.iter().zip(&archive.report.projects) {
         let project = pending.path().join(&entry.metadata.id);
         std::fs::DirBuilder::new().mode(0o700).create(&project)?;
@@ -110,15 +108,11 @@ fn restore_bytes(bytes: &[u8], target: &Path) -> Result<RegistryBackupReport> {
             ));
         }
     }
-    sync(&File::open(pending.path())?, "registry_restore_stage_sync")?;
+    sync(&pending.owner, "registry_restore_stage_sync")?;
     checkpoint("registry_restore_stage_synced");
-    rename(pending.path(), target)?;
+    pending.publish()?;
     checkpoint("registry_restore_renamed");
-    // A renamed private staging directory must never be deleted on uncertainty.
-    let _old = pending.keep();
-    File::open(parent(target))
-        .and_then(|file| sync(&file, "registry_restore_parent_sync"))
-        .map_err(Error::PublicationUnknown)?;
+    pending.finish("registry_restore_parent_sync")?;
     checkpoint("registry_restore_parent_synced");
     Ok(archive.report)
 }
@@ -127,17 +121,6 @@ pub(crate) fn parent(path: &Path) -> &Path {
     path.parent()
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."))
-}
-fn rename(source: &Path, target: &Path) -> Result<()> {
-    rustix::fs::renameat_with(
-        rustix::fs::CWD,
-        source,
-        rustix::fs::CWD,
-        target,
-        rustix::fs::RenameFlags::NOREPLACE,
-    )
-    .map_err(std::io::Error::from)?;
-    Ok(())
 }
 fn sync(file: &File, _boundary: &str) -> std::io::Result<()> {
     #[cfg(test)]

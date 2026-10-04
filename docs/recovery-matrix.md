@@ -74,6 +74,10 @@ Stage 2 remains **in progress**. These checks do not make the platform productio
 
 | Fault/operation | Required observed result | Executed check |
 | --- | --- | --- |
+| Registry backup/restore parent or staging replaced before rename | refusal; foreign entries and exact source preserved | two reproduced regressions, identity/alias and native cases |
+| Ancestor replaced between restore WAL sync and later project writes | original private staging used; replacement subtree untouched | pinned-directory restore regression |
+| Registry parent/selection replaced after rename | complete original retained; unknown publication outcome | native and unit pre/post-rename cases |
+| Repeated registry refusal/uncertainty | no leaked owned descriptors after each cycle | 64 isolated native cycles |
 | Project staging/data/metadata sync, killed | incomplete project never listed; old data unchanged | six creation kill boundaries |
 | Project rename/root sync/returned key, killed | complete project opens; acknowledged key works | creation publication/ACK kills |
 | Rotation file sync/rename/dir sync/ACK, killed | one complete key epoch; old WAL unchanged | four boundaries on both WAL versions |

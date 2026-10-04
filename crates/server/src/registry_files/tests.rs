@@ -8,6 +8,8 @@ use std::sync::mpsc::{Receiver, channel};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+mod ownership;
+
 fn seed(source: &Path) -> Vec<(String, String)> {
     let mut store = ProjectStore::open(source).unwrap();
     let mut credentials = Vec::new();
@@ -91,6 +93,14 @@ impl Worker {
             .env("EMILYBASE_ARCHIVE_TEST_TARGET", target)
             .env("EMILYBASE_ARCHIVE_TEST_ACTION", action)
             .env("EMILYBASE_REGISTRY_KILL_POINT", point)
+            .env(
+                "EMILYBASE_REGISTRY_RESUME_POINT",
+                if action.starts_with("owned-") {
+                    point
+                } else {
+                    ""
+                },
+            )
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -196,6 +206,25 @@ fn publication_worker() {
                 Err(_) => panic!("unexpected restore race failure"),
             }
         }
+        action @ ("owned-backup" | "owned-restore") => {
+            let result = if action == "owned-backup" {
+                ProjectStore::open_existing(source)
+                    .unwrap()
+                    .backup(&archive)
+            } else {
+                restore_registry_backup(archive, target)
+            };
+            let selected = std::env::var("EMILYBASE_REGISTRY_KILL_POINT")
+                .unwrap()
+                .ends_with("renamed");
+            if selected {
+                assert!(matches!(result, Err(Error::PublicationUnknown(_))));
+            } else {
+                assert!(matches!(result, Err(Error::Path)));
+            }
+            println!("REGISTRY_REFUSED");
+        }
+        "descriptor-cycles" => ownership::verify_descriptor_cycles(&source, &archive, &target),
         _ => panic!("invalid archive worker action"),
     }
 }
