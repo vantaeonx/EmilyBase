@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{DataType, Error, Key, Result, Value};
+use crate::{DataType, Error, Key, MAX_VALUE_BYTES, Result, Value};
 
 pub const MAX_NAME_BYTES: usize = 63;
 pub const MAX_COLUMNS: usize = 64;
@@ -70,9 +70,17 @@ impl Schema {
 
     pub fn validate_key(&self, key: &Key) -> Result<()> {
         self.validate()?;
-        let value = key.to_value();
-        value.validate()?;
-        if value.data_type() != Some(self.columns[usize::from(self.primary_key)].data_type) {
+        // Reject oversized borrowed keys before creating an owned value or buffer.
+        let data_type = match key {
+            Key::Integer(_) => DataType::Integer,
+            Key::Text(text) => {
+                if text.len() > MAX_VALUE_BYTES {
+                    return Err(Error::ValueSize);
+                }
+                DataType::Text
+            }
+        };
+        if data_type != self.columns[usize::from(self.primary_key)].data_type {
             return Err(Error::PrimaryKey);
         }
         Ok(())

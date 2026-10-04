@@ -44,6 +44,13 @@ so existing EBIX-1 bytes are unchanged. `index-range PATH --descending --limit N
 inspects an ordered standalone key/pointer interval. SQL ordering pushdown remains
 the next integration step. See [ADR 0027](docs/adr/0027-double-ended-index-cursors.md).
 
+`Snapshot::primary_rows` now borrows live rows in either direction, validating
+consumed short-tree entries and every selected physical image. Long keys merge
+before the caller's limit; long bounds use checked point lookups. Full imported
+tree verification also streams keys instead of allocating a complete key vector.
+SQL still uses its prior materialized path until the next integration increment.
+See [ADR 0028](docs/adr/0028-borrowed-live-primary-rows.md).
+
 Derived trees preserve all 10000 admitted rows: a full dense build uses 768 pages,
 and fragmented incremental arena exhaustion triggers a rebuild. Initialized
 trees stage insert/delete/pointer maintenance alongside their relational snapshot.

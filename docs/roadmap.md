@@ -36,6 +36,14 @@ Borrowed table-row integration and SQL primary ordering pushdown remain next wor
 independently durable index-WAL participation remains a separate acceptance gate.
 See [ADR 0027](adr/0027-double-ended-index-cursors.md).
 
+Borrowed live primary rows now merge long keys, validate consumed tree keys and
+physical images, and support arbitrary mixed end consumption. Long bounds retain
+checked eligible point lookups. Historical clones, cold shared readers, 10000
+wide rows, rollback/abort/reopen, both WAL versions and verified restore execute.
+Imported projection verification streams the complete key set. SQL ordering and
+early filtered LIMIT integration follows separately. See
+[ADR 0028](adr/0028-borrowed-live-primary-rows.md).
+
 ## Isolated registry and API keys
 
 The synchronous server library publishes independent managed project directories,

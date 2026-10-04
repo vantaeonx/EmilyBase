@@ -151,3 +151,10 @@ path = "fuzz_targets/index_cursors.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "primary_rows"
+path = "fuzz_targets/primary_rows.rs"
+test = false
+doc = false
+bench = false

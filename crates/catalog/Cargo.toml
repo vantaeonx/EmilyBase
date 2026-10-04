@@ -11,6 +11,7 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 
 [dev-dependencies]
+rustix = { version = "1", features = ["process"] }
 proptest = "1"
 serde_json = "1"
 

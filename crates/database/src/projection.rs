@@ -1,5 +1,5 @@
 use crate::primary::eligible;
-use crate::{Error, MAX_ROWS, PrimaryIndexInfo, Result, Snapshot};
+use crate::{Error, PrimaryIndexInfo, Result, Snapshot};
 use emilybase_index::BPlusTree;
 use sha2::{Digest, Sha256};
 
@@ -40,17 +40,15 @@ impl Snapshot {
         {
             return Err(Error::PrimaryIndex("import entry count"));
         }
+        let mut expected = table.rows.keys().filter(|key| eligible(key));
         let entries = tree
-            .range(None, None, MAX_ROWS)
+            .cursor(None, None)
             .map_err(|_| Error::PrimaryIndex("import range"))?;
-        if !entries
-            .iter()
-            .map(|(key, _)| key)
-            .eq(table.rows.keys().filter(|key| eligible(key)))
-        {
-            return Err(Error::PrimaryIndex("import live key mismatch"));
-        }
-        for (key, pointer) in &entries {
+        for entry in entries {
+            let (key, pointer) = entry.map_err(|_| Error::PrimaryIndex("import cursor"))?;
+            if expected.next() != Some(key) {
+                return Err(Error::PrimaryIndex("import live key mismatch"));
+            }
             let location = self
                 .locations
                 .get(table_id, key)
@@ -59,6 +57,9 @@ impl Snapshot {
                 return Err(Error::PrimaryIndex("import obsolete pointer"));
             }
             self.resolve_row_location(name, key, location)?;
+        }
+        if expected.next().is_some() {
+            return Err(Error::PrimaryIndex("import missing live keys"));
         }
         let info = PrimaryIndexInfo {
             entries: tree.len(),

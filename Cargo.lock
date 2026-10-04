@@ -278,6 +278,7 @@ name = "emilybase-catalog"
 version = "0.1.0"
 dependencies = [
  "proptest",
+ "rustix",
  "serde",
  "serde_json",
  "thiserror",

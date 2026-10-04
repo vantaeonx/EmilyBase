@@ -954,3 +954,41 @@ Rust source grows by 985 lines (+1015/-30). Current totals: 30349 Rust (28973
 excluding blank/comment-only lines), 1207 SDK and 718 Python, or 32274 source
 lines including tests. No persisted bytes or format versions change. Borrowed
 live-row/SQL ordering integration and durable index WAL remain pending.
+
+## Borrowed validated primary rows
+
+On 2026-10-04, the final locked workspace run passes 447 main Rust tests; 13
+ignored child entry helpers are invoked by parents. Workspace/fuzz format and
+strict Clippy checks and the locked workspace build pass. Borrowed row identity,
+mixed end consumption, integer/Text/NUL/Unicode/3072-byte bounds, nullable and
+non-leading primary columns, temporary name/bound lifetimes, historical forks
+and fused corruption errors execute. A 48-case independent text mutation model
+checks ordered rows and replay. A real 10000-row table with 3072-byte payloads
+and eight concurrent cold snapshot readers returns checked borrowed rows.
+
+Actual transactions check staged reads, rollback, write-error abort, preserved
+WAL bytes, checkpoint/cache adoption, reopen and verified restore for WAL 1/2.
+Restored compaction and independent writes preserve the original view. Complete
+projection verification now streams keys while retaining full topology/liveness
+validation; existing allocating range contracts remain unchanged.
+
+An oversized-key memory defect was reproduced before repair: the original
+validator cloned a synthetic 128-MiB key before checking its length and aborted
+under a child process address/data limit. Borrowed validation now rejects it with
+ValueSize while allowing valid maximum Unicode keys and rejecting wrong types.
+The isolated child allows eight MiB of growth, disables core dumps and changes no
+parent limits. Its rustix process support is dev-only. Initial 32-MiB fixtures
+could reuse reserved allocator space, so the reproducer uses 128 MiB; no failed
+reproduction was presented as proof.
+
+The primary_rows ASan target uses raw/repaired synthetic integer/text WAL-1/2
+seeds to compare generated intervals, mixed ends, partial reverse reads,
+projection verification and reconstructed snapshots. The initial campaign
+completes 374937 executions; the final repaired build completes 370711, each in
+16 seconds with a 15-second/20000-byte/512-MiB budget. These are smoke checks.
+
+Net source growth is 1024 Rust lines (+1038/-14). Totals: 31373 Rust (29965
+excluding blank/comment-only lines), 1207 SDK and 718 Python, or 33298 source
+lines including tests. Runtime formats and HTTP contracts are unchanged. SQL
+adoption, independently durable table index WAL, wider power-loss/load/security
+and real-data acceptance remain pending.

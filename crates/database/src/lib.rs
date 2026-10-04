@@ -3,6 +3,9 @@ mod engine;
 mod event;
 mod location;
 mod primary;
+mod primary_rows;
+#[cfg(test)]
+mod primary_rows_tests;
 mod projection;
 mod range;
 mod snapshot;
@@ -13,6 +16,7 @@ pub use engine::Database;
 pub use event::{DATABASE_MARKER, Event, EventKind};
 pub use location::RowLocation;
 pub use primary::PrimaryIndexInfo;
+pub use primary_rows::PrimaryRows;
 pub use snapshot::Snapshot;
 
 pub const MAX_TABLES: usize = 128;
