@@ -144,3 +144,10 @@ path = "fuzz_targets/text_ranges.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "index_cursors"
+path = "fuzz_targets/index_cursors.rs"
+test = false
+doc = false
+bench = false

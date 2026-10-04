@@ -1,6 +1,9 @@
 //! Original bounded B+ tree and standalone storage. Managed snapshots derive point caches;
 //! independently durable table-index pages do not yet participate in WAL.
 mod bulk;
+mod cursor;
+#[cfg(test)]
+mod cursor_tests;
 mod delta;
 mod mutations;
 mod page;
@@ -10,6 +13,7 @@ mod store;
 mod store_tests;
 mod tree;
 
+pub use cursor::RangeCursor;
 pub use delta::SnapshotDelta;
 pub use emilybase_catalog::Key;
 pub use emilybase_storage::PAGE_SIZE;

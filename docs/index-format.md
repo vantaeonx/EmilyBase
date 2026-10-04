@@ -125,6 +125,7 @@ Developer demonstration using only synthetic pointers:
 cargo run -p emilybase-cli -- index-create /tmp/emilybase-index-demo
 cargo run -p emilybase-cli -- index-insert /tmp/emilybase-index-demo '{"type":"integer","value":7}' 10 3
 cargo run -p emilybase-cli -- index-get /tmp/emilybase-index-demo '{"type":"integer","value":7}'
+cargo run -p emilybase-cli -- index-range /tmp/emilybase-index-demo --lower '{"type":"integer","value":0}' --upper '{"type":"integer","value":20}' --descending --limit 10
 cargo run -p emilybase-cli -- index-delete /tmp/emilybase-index-demo '{"type":"integer","value":7}'
 cargo run -p emilybase-cli -- index-verify /tmp/emilybase-index-demo
 ```
@@ -144,3 +145,32 @@ Version changes fail closed; there is no automatic converter. CRC detects
 accidental damage and does not authenticate an index. Record targets, schema key
 types, project ownership and pointer lifetime require future table-layer checks.
 See [ADR 0010](adr/0010-index-maintenance.md) for costs and integration requirements.
+
+## Borrowed interval cursors
+
+`BPlusTree::cursor(lower, upper)` owns validated small bounds and borrows the tree.
+It yields `Result<(&Key, RecordPointer)>`, inclusive lower/exclusive upper, through
+Iterator and DoubleEndedIterator. Arbitrary interleaving visits each matching key
+once. Exhaustion or an error fuses both ends; a typed error is emitted only once.
+Cursor lifetime prevents mutation of its owning tree. A separately cloned tree
+can mutate without changing the borrowed original.
+
+Each end retains an ancestor path bounded by the existing eight-level limit.
+Forward/reverse leaf transitions follow those paths and compare the existing
+successor link. No backward pointer, page renumbering or format upgrade is added.
+Visited page layouts, key monotonicity and emitted-entry capacity are checked;
+leaf-transition counters bound progress even for an internally malformed DAG.
+Public imports continue to validate full topology before constructing a tree;
+a cursor does not replace that complete import validation.
+
+The existing allocating `range` API now collects this cursor up to its limit.
+Standalone `index-range` prints only the requested keys and opaque page/slot
+pointers, not resolved table rows; bounds use tagged JSON, default limit is 100,
+maximum 10000, and `--descending` reverses the interval. No snapshot revision or
+file image changes. Cursor memory excludes the already owned tree, bounds and
+two short paths; result allocation is controlled by the caller.
+
+SELECT currently retains its existing execution path. A later borrowed-row and
+ordering integration will use this foundation; no query throughput claim or
+durable table/index-WAL milestone is made here. See
+[ADR 0027](adr/0027-double-ended-index-cursors.md).

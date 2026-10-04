@@ -924,3 +924,33 @@ This separate test checkpoint adds 132 Rust lines. Source totals: 29364 Rust
 (28025 excluding blank/comment-only lines), 1207 SDK and 718 Python, or 31289
 physical source lines including tests. Runtime implementation and formats are
 unchanged.
+
+## Double-ended original B+ cursors
+
+On 2026-10-04, the final locked workspace run passes 435 main tests, with 12
+ignored process helpers called by parents. Workspace/fuzz format checks, strict
+Clippy and the locked workspace build pass. Thirteen new tests cover exact
+separator/leaf endpoints, arbitrary mixed end consumption, full 10000-key dense
+and stable trees, mixed numeric/text keys, NUL/Unicode/maximum text, actual
+borrowed key addresses, malformed visited pages/counts/links/roots/height and
+fused error/exhaustion behavior. Independent models run 64 interval cases and
+48 mutation/reimport cases. Stable holes, root collapse/reuse and active cursors
+over immutable originals survive independent cloned mutations.
+
+Actual compiled index-range CLI cases verify lower/upper/direction/default/limit
+semantics, unchanged snapshot revision/images, private-path rejection, invalid
+JSON/oversized bounds, no partial output and error redaction. Existing frozen
+version-one images, recovery, backup, table/SQL/server tests still pass. SQL has
+not yet adopted the new cursor; no HTTP contract changed.
+
+The index_cursors ASan target independently compares generated mixed trees and
+post-delete/reimport views to an ordered map, including alternating ends. Its
+initial 30-second smoke completes 6134 runs in 31 seconds. A further seeded run
+with four ignored synthetic 64/250/1024/2048-byte inputs completes 3654 runs in
+16 seconds under a 15-second, 2048-byte-input and 512-MiB RSS bound. Both pass;
+these are bounded checks, not sustained fuzz/security acceptance.
+
+Rust source grows by 985 lines (+1015/-30). Current totals: 30349 Rust (28973
+excluding blank/comment-only lines), 1207 SDK and 718 Python, or 32274 source
+lines including tests. No persisted bytes or format versions change. Borrowed
+live-row/SQL ordering integration and durable index WAL remain pending.

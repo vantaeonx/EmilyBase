@@ -205,36 +205,10 @@ impl BPlusTree {
         if limit == 0 || matches!((start, end), (Some(a), Some(b)) if a >= b) {
             return Ok(Vec::new());
         }
-        let mut result = Vec::new();
-        let mut next = Some(self.find_leaf(start)?);
-        let mut visited = BTreeSet::new();
-        while let Some(id) = next {
-            if !visited.insert(id) {
-                return Err(Error::Layout("leaf cycle"));
-            }
-            let page = self.page(id)?;
-            let Body::Leaf {
-                values,
-                next: successor,
-            } = &page.body
-            else {
-                return Err(Error::Layout("leaf link to branch"));
-            };
-            for (key, value) in page.keys.iter().zip(values) {
-                if start.is_some_and(|bound| key < bound) {
-                    continue;
-                }
-                if end.is_some_and(|bound| key >= bound) {
-                    return Ok(result);
-                }
-                result.push((key.clone(), *value));
-                if result.len() == limit {
-                    return Ok(result);
-                }
-            }
-            next = *successor;
-        }
-        Ok(result)
+        self.cursor(start, end)?
+            .take(limit)
+            .map(|entry| entry.map(|(key, pointer)| (key.clone(), pointer)))
+            .collect()
     }
     pub fn page_images(&self) -> Result<Vec<[u8; PAGE_SIZE]>> {
         self.pages.values().map(IndexPage::encode).collect()

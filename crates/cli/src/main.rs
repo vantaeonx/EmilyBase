@@ -58,6 +58,20 @@ enum Command {
     },
     /// Read a standalone index pointer; does not dereference a table row.
     IndexGet { path: PathBuf, key: String },
+    /// Read an ordered standalone key/pointer interval without resolving table rows.
+    IndexRange {
+        path: PathBuf,
+        /// Inclusive tagged JSON key; absent means unbounded.
+        #[arg(long)]
+        lower: Option<String>,
+        /// Exclusive tagged JSON key; absent means unbounded.
+        #[arg(long)]
+        upper: Option<String>,
+        #[arg(long, default_value_t = 100)]
+        limit: usize,
+        #[arg(long)]
+        descending: bool,
+    },
     /// Delete a standalone key and publish its next snapshot revision.
     IndexDelete { path: PathBuf, key: String },
     /// Validate the selected standalone snapshot and complete tree topology.
@@ -276,6 +290,40 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
                     |pointer| serde_json::json!({"page":pointer.page_id,"slot":pointer.slot_id}),
                 );
             println!("{}", serde_json::to_string(&result)?);
+        }
+        Command::IndexRange {
+            path,
+            lower,
+            upper,
+            limit,
+            descending,
+        } => {
+            if limit > emilybase_index::MAX_INDEX_ENTRIES {
+                return Err(emilybase_index::Error::Limit.into());
+            }
+            let lower: Option<Key> = lower.as_deref().map(parse_json).transpose()?;
+            let upper: Option<Key> = upper.as_deref().map(parse_json).transpose()?;
+            let store = emilybase_index::IndexStore::open(path)?;
+            let cursor = store
+                .snapshot()?
+                .tree
+                .cursor(lower.as_ref(), upper.as_ref())?;
+            let json = |entry: emilybase_index::Result<(&Key, emilybase_index::RecordPointer)>| {
+                entry.map(|(key, pointer)| serde_json::json!({"key":key,"page":pointer.page_id,"slot":pointer.slot_id}))
+            };
+            let rows = if descending {
+                cursor
+                    .rev()
+                    .take(limit)
+                    .map(json)
+                    .collect::<emilybase_index::Result<Vec<_>>>()?
+            } else {
+                cursor
+                    .take(limit)
+                    .map(json)
+                    .collect::<emilybase_index::Result<Vec<_>>>()?
+            };
+            println!("{}", serde_json::to_string(&rows)?);
         }
         Command::IndexVerify { path } => {
             let store = emilybase_index::IndexStore::open(path)?;

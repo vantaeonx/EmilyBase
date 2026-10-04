@@ -28,6 +28,14 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 
+Borrowed double-ended B+ intervals are now implemented, with bounded ancestor
+paths, fused errors, unchanged EBIX-1 bytes and actual standalone range CLI.
+Capacity, mixed keys, separator/leaf edges, alternating consumption, stable holes,
+root collapse/reuse, generated mutation/import models and ASan checks execute.
+Borrowed table-row integration and SQL primary ordering pushdown remain next work;
+independently durable index-WAL participation remains a separate acceptance gate.
+See [ADR 0027](adr/0027-double-ended-index-cursors.md).
+
 ## Isolated registry and API keys
 
 The synchronous server library publishes independent managed project directories,

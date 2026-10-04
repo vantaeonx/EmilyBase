@@ -38,6 +38,12 @@ and complete topology. A private standalone snapshot publisher and developer CLI
 now survive tested creation/replacement kills and competing writers. Atomic
 table/WAL integration remains pending.
 
+Borrowed double-ended B+ cursors now read intervals in either direction without
+copying a whole result vector. Reverse traversal uses bounded ancestor paths,
+so existing EBIX-1 bytes are unchanged. `index-range PATH --descending --limit N`
+inspects an ordered standalone key/pointer interval. SQL ordering pushdown remains
+the next integration step. See [ADR 0027](docs/adr/0027-double-ended-index-cursors.md).
+
 Derived trees preserve all 10000 admitted rows: a full dense build uses 768 pages,
 and fragmented incremental arena exhaustion triggers a rebuild. Initialized
 trees stage insert/delete/pointer maintenance alongside their relational snapshot.
