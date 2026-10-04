@@ -91,12 +91,24 @@ rows. No independently durable index bytes are added. See
 Integer primary inequalities in necessary AND conjuncts select linked-leaf
 interval lookup after complete binding. Checked normalization preserves i64
 boundaries; full predicates still evaluate nullable values. SELECT and staged
-UPDATE/DELETE share the interval API. Text bounds use UTF-8 byte order, exact NUL
+UPDATE/DELETE share the bound extraction. Text bounds use UTF-8 byte order, exact NUL
 successors and short-tree verification merged with all ordered live keys. Long
 keys remain visible before LIMIT; SQL falls back when bounds cannot fit the tree.
-Durable index WAL, secondary DDL and ordering pushdown remain separate work. See
+Durable index WAL and secondary DDL remain separate work. See
 [ADR 0022](adr/0022-integer-primary-range-plans.md) and
 [ADR 0026](adr/0026-utf8-primary-range-plans.md).
+
+Borrowed double-ended primary rows merge short-tree and long live keys, validating
+each consumed physical image. Single-table no-order or primary-first ORDER BY
+reads retain projected fields only and stop after LIMIT TRUE matches; joins and
+other orderings retain materialized sorting. Mutation selection accumulates only
+the transaction's remaining normal events: selected rows for UPDATE, keys for
+DELETE. Every statement shares one atomic script; overflow discards prior staged
+work. Cold tree construction and snapshot staging keep their documented bounded
+costs, outside the row-work/output estimate. See
+[ADR 0028](adr/0028-borrowed-live-primary-rows.md),
+[ADR 0029](adr/0029-streamed-primary-sql-order.md) and
+[ADR 0030](adr/0030-bounded-mutation-selection.md).
 
 The opt-in stable arena now retains surviving IDs and reuses holes. Canonical
 EBIF snapshots bind root/revision/counts, while in-memory deltas bind their exact

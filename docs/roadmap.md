@@ -22,6 +22,10 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 ## Next increments
 
+The declared Linux Rust floor is now verified on 1.89.0 with all 467 main tests;
+CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
+checks. This is build/test compatibility, not a stable file-format upgrade gate.
+
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.

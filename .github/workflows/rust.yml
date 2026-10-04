@@ -39,6 +39,20 @@ jobs:
         run: npm run test:integration --prefix sdks/typescript
       - name: Lint and compile fuzz targets
         run: cargo clippy --locked --manifest-path fuzz/Cargo.toml --bins -- -D warnings
+  msrv:
+    name: Minimum Rust 1.89
+    runs-on: ubuntu-latest
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_TEST_DEBUG: '0'
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install minimum toolchain
+        run: rustup toolchain install 1.89.0 --profile minimal
+      - name: Test workspace on minimum Rust
+        run: cargo +1.89.0 test --locked --workspace
   container:
     runs-on: ubuntu-latest
     steps:

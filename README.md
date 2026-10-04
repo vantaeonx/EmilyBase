@@ -6,6 +6,11 @@ as internal storage or as a required runtime dependency.
 
 **Early development. Not production-ready. Use synthetic data only.**
 
+Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is
+tested on Rust 1.89.0 and current stable; CI checks both. Nightly is needed only
+for optional sanitizer fuzzing. Docker uses pinned Rust 1.99.0 to build the
+original server/CLI. Other operating systems remain unverified.
+
 The synchronous engine supports named tables, validated schemas, primary-key
 uniqueness and typed CRUD. Values are booleans, signed i64, finite f64, UTF-8
 text, bytes and nullable columns. The original file format uses 4096-byte slotted

@@ -1059,3 +1059,25 @@ Net growth: 1033 Rust lines. Totals: 33400 Rust (31931 without blank/comment-onl
 lines), 1207 SDK and 718 Python, or 35325 source lines including tests. Persisted
 formats and HTTP/SDK shapes are unchanged. Snapshot staging, wider fault/media/
 load/security checks and durable table-index WAL remain separate work.
+
+## Minimum Rust compatibility checkpoint
+
+On 2026-10-04, Rust 1.89.0 executes the complete locked Linux workspace: all
+467 main tests pass, with 14 subprocess entry helpers called by parents. CI adds
+a separate minimum-version test job; stable format/Clippy/fuzz/SDK and actual
+container jobs remain. Workflow YAML structure and quoted environment values
+are validated locally. Other operating systems and older toolchains are unverified.
+
+The first separate debug build in /tmp fails during linking because that tmpfs
+runs out of space. Only the new owned build directory is cleaned. Retrying on
+the main filesystem, with incremental/debug symbols disabled and two build jobs,
+completes the full test suite. No source/compiler incompatibility was inferred
+from the temporary-filesystem failure. Those resource settings apply to the MSRV
+job, not persisted formats or the normal development profile.
+
+A longer sql_mutations ASan check also completes 2336 runs in 61 seconds under
+a 60-second, 4096-byte and 512-MiB bound with its generated corpus; no failure.
+This remains bounded fuzz verification, not a completed security/power-loss audit.
+The previously published code checkpoint 4f052d4 has successful GitHub stable
+and container jobs. Source counts remain 33400 Rust/35325 combined; this
+compatibility/documentation checkpoint adds no source lines.
