@@ -13,6 +13,13 @@ recovery, backup and security acceptance gates.
   dependency names. This name inspection is not a dependency vulnerability audit.
 - [x] Workspace source forbids unsafe code. Fuzz targets do likewise. This does
   not forbid unsafe implementation inside ordinary third-party dependencies.
+- [x] Both locked dependency graphs checked with cargo-audit 0.22.2 on
+  2026-10-04, without ignored advisories/target filters and with warnings denied.
+  RustSec database revision ef6173cbc5c50ec8166f9a5b28f07834144373ee contains
+  1290 advisories, updated 2026-10-03. The workspace and fuzz graphs report zero
+  known vulnerabilities and no warnings. CI repeats these checks on changes.
+  This checks known entries in the [RustSec database](https://rustsec.org/), not
+  the original engine, binary contents or unknown supply-chain vulnerabilities.
 - [x] Bounded checksummed page/WAL/index decoders, explicit format versions and
   typed rejection. Raw and checksum-repaired ASan targets have executed; short
   runs do not establish exhaustive coverage.
@@ -44,7 +51,8 @@ recovery, backup and security acceptance gates.
 
 - [ ] Independent review of authentication, project boundaries, logs, parsers
   and publication protocols, with documented findings and repaired regressions.
-- [ ] Current dependency advisory and complete transitive-license review.
+- [ ] Complete transitive-license/source review and independent supply-chain
+  audit; ongoing known-advisory checks do not establish these controls.
 - [ ] Sustained fuzz campaigns, seed/coverage review and minimized regression
   tests for every finding, beyond the current bounded smoke runs.
 - [ ] Wider failing-media and actual power-loss matrix; corruption across every

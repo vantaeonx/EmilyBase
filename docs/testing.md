@@ -1081,3 +1081,20 @@ This remains bounded fuzz verification, not a completed security/power-loss audi
 The previously published code checkpoint 4f052d4 has successful GitHub stable
 and container jobs. Source counts remain 33400 Rust/35325 combined; this
 compatibility/documentation checkpoint adds no source lines.
+
+## Known dependency advisory checkpoint
+
+On 2026-10-04 cargo-audit 0.22.2 checks both lockfiles with warnings denied:
+133 workspace and 105 fuzz dependency entries. Both report zero known
+vulnerabilities and no warnings, with no ignored advisories or target filters.
+The fetched RustSec database has 1290 advisories at revision
+ef6173cbc5c50ec8166f9a5b28f07834144373ee, updated 2026-10-03. The second graph
+uses that same database without another fetch. CI now adds a pinned-auditor job
+for both graphs alongside stable, minimum-Rust and container jobs. Its YAML
+structure and command behavior are checked locally.
+
+This is a dated known-advisory scan, not an independent review of original code,
+all transitive licenses, native/system libraries, binary contents or unknown
+supply-chain issues. Those security/real-data acceptance gates remain open.
+Source counts are unchanged. The previous compatibility checkpoint 247f288
+has successful stable, Rust 1.89 and real-container GitHub jobs.

@@ -53,6 +53,19 @@ jobs:
         run: rustup toolchain install 1.89.0 --profile minimal
       - name: Test workspace on minimum Rust
         run: cargo +1.89.0 test --locked --workspace
+  advisories:
+    name: Known dependency advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install audit toolchain
+        run: rustup toolchain install stable --profile minimal
+      - name: Install pinned auditor
+        run: cargo +stable install cargo-audit --version 0.22.2 --locked
+      - name: Check workspace lockfile
+        run: cargo +stable audit --deny warnings
+      - name: Check fuzz lockfile against the same database
+        run: cargo +stable audit --no-fetch --file fuzz/Cargo.lock --deny warnings
   container:
     runs-on: ubuntu-latest
     steps:
