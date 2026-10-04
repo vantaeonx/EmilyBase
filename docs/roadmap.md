@@ -29,6 +29,8 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
 1. Extend random crash/fault campaigns and backup publication I/O failures.
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
+   [ADR 0031](adr/0031-atomic-index-wal-proposal.md) proposes the commit/domain
+   boundary and required evidence; no new format or migration is enabled.
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 
