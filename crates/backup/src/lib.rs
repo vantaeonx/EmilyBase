@@ -1,7 +1,10 @@
 //! Immutable bounded backups of validated, committed original-engine history.
 mod archive;
+mod directory;
 mod files;
 mod header;
+#[cfg(all(test, target_os = "linux"))]
+mod ownership_tests;
 #[cfg(test)]
 mod publication_tests;
 mod publish;
@@ -46,6 +49,10 @@ pub enum Error {
         "backup was published but durability is uncertain; verify its destination before retrying"
     )]
     PublicationUnknown(#[source] std::io::Error),
+    #[error("backup path must be a regular file or a real destination directory")]
+    Path,
+    #[error("backup destination or staged entry changed during publication")]
+    PathChanged,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

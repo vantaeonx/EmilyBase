@@ -9,7 +9,9 @@ use emilybase_transactions::Database;
 
 use crate::{create, files, inspect, restore};
 
-static PROCESS_TESTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+// Fork briefly inherits unrelated ownership handles until exec. Keep filesystem
+// unit cases outside subprocess launch windows without weakening engine locks.
+pub(super) static PROCESS_TESTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 fn barrier() {
     println!("READY");
@@ -36,9 +38,19 @@ fn publication_worker() {
     };
     if kind == "backup" {
         let mut db = Database::open(input).unwrap();
-        files::create_with(&mut db, &target, synced, published).unwrap();
+        let result = files::create_with(&mut db, &target, synced, published);
+        check_worker_result(result);
     } else {
-        restore::restore_with(&input, &target, synced, published).unwrap();
+        let result = restore::restore_with(&input, &target, synced, published);
+        check_worker_result(result);
+    }
+}
+
+fn check_worker_result(result: crate::Result<crate::Report>) {
+    if std::env::var_os("EMILYBASE_PUBLICATION_CHANGED").is_some() {
+        assert!(matches!(result, Err(crate::Error::PathChanged)));
+    } else {
+        result.unwrap();
     }
 }
 

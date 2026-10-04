@@ -1,6 +1,6 @@
 # Executed recovery checks and open gates
 
-Linux, local temporary files, synthetic data, Rust stable 1.99.0, 2026-10-03.
+Linux, local temporary files, synthetic data, Rust stable 1.99.0, updated 2026-10-04.
 
 | Boundary or failure | Observed result | Check |
 | --- | --- | --- |
@@ -30,6 +30,10 @@ Linux, local temporary files, synthetic data, Rust stable 1.99.0, 2026-10-03.
 | More than 256 baseline pages | all 300 rows restored; normal transaction limit unchanged | baseline/integrated tests |
 | WAL inode replaced while owner exists | another database owner remains excluded | directory ownership regression |
 | Version-1 and version-2 backup payloads | independent verified restore and new writes | backup compatibility tests |
+| Backup/restore parent or staged entry substituted before rename | refusal; foreign entries untouched; source bytes unchanged | reproduced regressions and eight external subprocess changes |
+| Backup/restore file/WAL/staging sync fails before/after real fsync | no selected target; owned staging cleaned | twenty-case combined publication sync matrix |
+| Backup/restore parent sync or identity fails after rename | complete selection preserved; unknown publication outcome | sync and post-publication identity cases |
+| Final archive symlink, FIFO, device or directory input | refusal without blocking/read | no-follow/nonblocking regular-input tests |
 | Short writes or interrupted syscall | complete acknowledged batch restored | deterministic WAL I/O tests |
 | Disk full in page/commit frame, zero write | prior ACKs survive; partial tail ignored; owner poisoned | deterministic WAL I/O tests |
 | Sync failure before/after underlying sync | no ACK; complete commit may exist; inspect after reopen | deterministic WAL I/O tests |

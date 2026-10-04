@@ -27,6 +27,10 @@ CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.
 
 1. Extend random crash/fault campaigns and backup publication I/O failures.
+   Single-database publication now pins destination/staging identities; reproduced
+   substitutions, native process changes, before/after fsync failures and generated
+   verified restore execute. Wider failing-media campaigns remain open. See
+   [ADR 0032](adr/0032-owned-backup-publication.md).
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
    [ADR 0031](adr/0031-atomic-index-wal-proposal.md) proposes the commit/domain

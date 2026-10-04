@@ -1,61 +1,73 @@
-use std::fs::{self, File, OpenOptions};
+use std::ffi::OsString;
+use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
+use rustix::fs::{AtFlags, Mode, OFlags};
+
+use crate::directory::{Destination, sync};
 use crate::{Error, Result};
 
-pub(crate) fn parent(path: &Path) -> &Path {
-    path.parent()
-        .filter(|p| !p.as_os_str().is_empty())
-        .unwrap_or(Path::new("."))
-}
-
-pub(crate) fn temporary_name(parent: &Path) -> Result<PathBuf> {
+pub(crate) fn temporary_name() -> Result<OsString> {
     let mut nonce = [0; 16];
     getrandom::fill(&mut nonce).map_err(|_| Error::Randomness)?;
     let hex = nonce
         .iter()
         .map(|byte| format!("{byte:02x}"))
         .collect::<String>();
-    Ok(parent.join(format!(".emilybase-backup-{hex}")))
+    Ok(format!(".emilybase-backup-{hex}").into())
 }
 
 pub(crate) struct PendingFile {
-    pub path: PathBuf,
-    removed: bool,
+    pub file: File,
+    destination: Destination,
+    name: OsString,
+    published: bool,
+}
+
+impl PendingFile {
+    pub fn check(&self) -> Result<()> {
+        self.destination.check()?;
+        if !self.destination.owns(&self.name, &self.file) {
+            return Err(Error::PathChanged);
+        }
+        Ok(())
+    }
 }
 
 impl Drop for PendingFile {
     fn drop(&mut self) {
-        if !self.removed {
-            let _ = fs::remove_file(&self.path);
+        // Cleanup follows the owned parent, and never removes a substituted entry.
+        if !self.published && self.destination.owns(&self.name, &self.file) {
+            let _ = rustix::fs::unlinkat(&self.destination.parent, &self.name, AtFlags::empty());
         }
     }
 }
 
-/// Write and sync privately; publication is a separate no-clobber operation.
-pub(crate) fn stage(bytes: &[u8], parent: &Path) -> Result<PendingFile> {
+/// Write and sync privately; publication is a separate descriptor-relative operation.
+pub(crate) fn stage(bytes: &[u8], target: &Path) -> Result<PendingFile> {
+    let destination = Destination::open(target)?;
     for _ in 0..32 {
-        let path = temporary_name(parent)?;
-        let mut options = OpenOptions::new();
-        options.write(true).read(true).create_new(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            options.mode(0o600);
-        }
-        match options.open(&path) {
-            Ok(mut file) => {
-                let pending = PendingFile {
-                    path,
-                    removed: false,
+        let name = temporary_name()?;
+        match rustix::fs::openat(
+            &destination.parent,
+            &name,
+            OFlags::RDWR | OFlags::CREATE | OFlags::EXCL | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+            Mode::RUSR | Mode::WUSR,
+        ) {
+            Ok(fd) => {
+                let mut pending = PendingFile {
+                    file: fd.into(),
+                    destination,
+                    name,
+                    published: false,
                 };
-                file.write_all(bytes)?;
-                file.sync_all()?;
+                pending.file.write_all(bytes)?;
+                sync(&pending.file, "backup_file_sync")?;
                 return Ok(pending);
             }
-            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => (),
-            Err(error) => return Err(error.into()),
+            Err(rustix::io::Errno::EXIST) => (),
+            Err(error) => return Err(std::io::Error::from(error).into()),
         }
     }
     Err(std::io::Error::new(
@@ -65,17 +77,13 @@ pub(crate) fn stage(bytes: &[u8], parent: &Path) -> Result<PendingFile> {
     .into())
 }
 
-pub(crate) fn publish(
-    mut pending: PendingFile,
-    target: &Path,
-    published: impl FnOnce(),
-) -> Result<()> {
-    fs::hard_link(&pending.path, target)?;
+pub(crate) fn publish(mut pending: PendingFile, published: impl FnOnce()) -> Result<()> {
+    pending.check()?;
+    pending.destination.publish(&pending.name)?;
+    pending.published = true;
     published();
-    let result = (|| {
-        fs::remove_file(&pending.path)?;
-        pending.removed = true;
-        File::open(parent(target))?.sync_all()
-    })();
-    result.map_err(Error::PublicationUnknown)
+    pending
+        .destination
+        .finish(&pending.file)
+        .map_err(Error::PublicationUnknown)
 }

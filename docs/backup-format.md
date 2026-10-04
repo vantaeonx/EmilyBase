@@ -29,8 +29,10 @@ the same recovery and schema validation as a managed database open.
 
 Creation owns the source journal exclusively. It compares recovered exported
 pages with the current committed snapshot, writes an owner-only temporary file,
-syncs it, rereads and verifies its exact contents, then publishes by an atomic
-no-clobber hard link and syncs the parent directory. Source bytes do not change.
+syncs it, rereads and verifies its exact contents through the owned file handle,
+then publishes by descriptor-relative Linux no-clobber rename and syncs the
+owned parent directory. Device/inode checks bind the visible destination and
+staged entry to their handles. Source bytes do not change.
 Interrupted temporary files are private and excluded from Git.
 
 Restore verifies the complete archive before creating a staging directory.
@@ -38,10 +40,13 @@ Inside that owner-only directory it writes/syncs the original WAL, opens it with
 the expected identity, compares the restored WAL byte-for-byte with the archive,
 and materializes a checkpoint. Linux `renameat2` with `RENAME_NOREPLACE` publishes
 the complete directory without replacing even an existing empty directory.
-Syncing its parent precedes success. No partly initialized final directory is
-published. Errors before publication clean up owned staging paths; process kills
+Restore operations use the staged directory handle through `/proc/self/fd`.
+Syncing its owned parent and checking the selected entry precede success.
+No partly initialized final directory is published. Errors before publication
+clean up only staging entries still bound to owned handles; process kills
 may leave private staging artifacts. An error after publication reports uncertain
-durability; verify the destination before retrying.
+durability or changed destination identity; verify the destination before retrying.
+Substituted entries and detached original staging objects are preserved.
 
 Restores preserve database identity and transaction IDs: they are historical
 clones, not newly isolated projects. New commits remain possible after restore.
@@ -53,6 +58,10 @@ readable; old readers reject archives binding the new WAL version.
 
 SHA-256 detects corruption; it is not authentication or encryption. Backups
 contain plaintext data and require private storage. Source/target paths are
-trusted local operator inputs; server-controlled project path resolution is future
-work. The format is experimental, with no silent version conversion. Streaming,
+trusted local operator inputs. Final archive/parent symlinks and nonregular
+archive inputs are refused without following or blocking on them. Ancestors
+remain operator-trusted; this API is not a sandbox against malicious local
+administrators. Linux and mounted `/proc` are required for publication/restore.
+See [ADR 0032](adr/0032-owned-backup-publication.md). The format is experimental,
+with no silent version conversion. Streaming,
 encryption, incremental backup, remote storage and migration are not implemented.

@@ -28,6 +28,14 @@ the committed WAL; restore publishes a fully replayed new directory. Process-kil
 and competing-publication tests execute. Broader power-loss and upgrade checks
 remain open.
 
+Single-database backup/restore now pins destination directory and staged-entry
+identities, publishes without replacement through those handles and checks the
+selection before success. Parent/staging substitutions are refused; post-rename
+errors preserve the selection and report uncertainty. Archive input refuses
+symlinks and nonregular files. Native subprocess, sync-fault, generated model and
+relative-path CLI checks execute. Linux `/proc` is required; operator-selected
+ancestors remain trusted. See [ADR 0032](docs/adr/0032-owned-backup-publication.md).
+
 The original B+ tree supports unique insertion, leaf/internal splits, pointer
 replacement, deletion with sibling rotations/merges and root collapse, sorted
 bulk loading, point lookup and ordered ranges. Fixed-size page-image round trips

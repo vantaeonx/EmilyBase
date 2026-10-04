@@ -1098,3 +1098,40 @@ all transitive licenses, native/system libraries, binary contents or unknown
 supply-chain issues. Those security/real-data acceptance gates remain open.
 Source counts are unchanged. The previous compatibility checkpoint 247f288
 has successful stable, Rust 1.89 and real-container GitHub jobs.
+
+## Owned single-database backup publication
+
+On 2026-10-04 both locked workspace runs, stable 1.99.0 and minimum 1.89.0,
+pass all 479 main Rust tests with 14 ignored child entry helpers. Workspace/fuzz
+format, strict Clippy and locked build pass. Two parent-substitution regressions
+SDK format, eleven unit checks and seven checks against the real server also pass.
+first fail against the old publisher, then pass with descriptor-relative owned
+publication and conservative identity-bound cleanup.
+
+The new cases execute twenty sync failures before/after real fsync, eight native
+external parent/staging changes, a 32-case independent row/restore model, FIFO/
+device/symlink refusal, exact old archive bytes/private modes and real relative
+Unicode-path CLI checks. Existing eight publication kills and competing publishers
+still pass. Uncertain publication retains the complete destination; retry cannot
+replace it. Source WAL/archive bytes are unchanged. This covers the single-database
+publisher, not the separate registry publisher or actual hardware power loss.
+
+The expanded sql_mutations corpus initially exceeds the 512-MiB ASan RSS limit
+(517 MiB), with about 25 MiB live heap and 222 MiB freed-block quarantine reported.
+That run fails and is not counted as passing. The saved input passes twenty fixed
+replays. A separate ASan-enabled campaign with 32-MiB quarantine completes 1434
+runs in 46 seconds at 160-MiB final RSS, retaining the 4096-byte input and 512-MiB
+RSS bounds. Reduced quarantine narrows the freed-block detection window; these
+bounded observations are not a whole-process memory or completed security proof.
+
+```sh
+ASAN_OPTIONS=quarantine_size_mb=32:thread_local_quarantine_size_kb=256 \
+  cargo +nightly fuzz run sql_mutations -- \
+  -max_total_time=45 -max_len=4096 -rss_limit_mb=512
+```
+
+Net source growth is 857 Rust lines (+961/-104), including tests. Totals: 34257
+Rust (32744 excluding blank/comment-only lines), 1207 SDK and 718 Python, or 36182
+combined source lines. Archive/WAL versions and HTTP/SDK shapes are unchanged.
+See [ADR 0032](adr/0032-owned-backup-publication.md); wider recovery, security,
+registry publication and production gates remain open.
