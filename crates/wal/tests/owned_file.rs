@@ -127,3 +127,122 @@ fn competing_empty_file_owner_is_refused_without_initializing_bytes() {
     drop(Wal::create_snapshot_from_file(separate, [7; 16], 1, &pages()).unwrap());
     assert_eq!(Wal::open(path, None).unwrap().1.last_transaction(), 1);
 }
+
+#[test]
+fn version_one_owned_creation_and_both_version_recovery_start_at_offset_zero() {
+    for baseline in [false, true] {
+        let temporary = tempfile::tempdir().unwrap();
+        let path = temporary.path().join("wal");
+        let mut file = empty(&path);
+        file.seek(SeekFrom::Start(1234)).unwrap();
+        let mut owner = if baseline {
+            Wal::create_snapshot_from_file(file, [7; 16], 31, &pages()).unwrap()
+        } else {
+            Wal::create_from_file(file, [7; 16]).unwrap()
+        };
+        if !baseline {
+            assert_eq!(
+                fs::read(&path).unwrap(),
+                emilybase_wal::encode_header([7; 16]).unwrap()
+            );
+            assert_eq!(owner.last_transaction(), 0);
+            assert_eq!(owner.append(&pages()).unwrap(), 1);
+        }
+        let expected = owner.committed_bytes().unwrap();
+        let transaction = owner.last_transaction();
+        drop(owner);
+        let mut offered = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&path)
+            .unwrap();
+        offered
+            .seek(SeekFrom::Start(expected.len() as u64))
+            .unwrap();
+        let (mut reopened, recovery) = Wal::open_from_file(offered, Some([7; 16])).unwrap();
+        assert_eq!(recovery.last_transaction(), transaction);
+        assert_eq!(reopened.committed_bytes().unwrap(), expected);
+        assert_eq!(reopened.append(&pages()).unwrap(), transaction + 1);
+    }
+}
+
+#[test]
+fn raw_journal_open_refuses_final_aliases_before_reading_or_mutating_the_source() {
+    let temporary = tempfile::tempdir().unwrap();
+    let path = temporary.path().join("wal");
+    let mut owner = Wal::create(&path, [7; 16]).unwrap();
+    owner.append(&pages()).unwrap();
+    drop(owner);
+    let before = fs::read(&path).unwrap();
+    let alias = temporary.path().join("alias");
+    std::os::unix::fs::symlink(&path, &alias).unwrap();
+    assert!(Wal::open(&alias, None).is_err());
+    fs::remove_file(&alias).unwrap();
+    fs::hard_link(&path, &alias).unwrap();
+    assert!(matches!(Wal::open(&alias, None), Err(Error::Path)));
+    assert!(matches!(Wal::open(&path, None), Err(Error::Path)));
+    assert_eq!(fs::read(&path).unwrap(), before);
+    assert_eq!(fs::read(&alias).unwrap(), before);
+    fs::remove_file(alias).unwrap();
+    assert_eq!(Wal::open(&path, None).unwrap().1.last_transaction(), 1);
+}
+
+#[test]
+fn journal_type_size_identity_and_new_file_admission_fail_without_source_mutation() {
+    let temporary = tempfile::tempdir().unwrap();
+    let path = temporary.path().join("wal");
+    let mut owner = Wal::create(&path, [7; 16]).unwrap();
+    owner.append(&pages()).unwrap();
+    drop(owner);
+    let before = fs::read(&path).unwrap();
+    let offered = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(&path)
+        .unwrap();
+    assert!(matches!(
+        Wal::open_from_file(offered, Some([9; 16])),
+        Err(Error::Identity)
+    ));
+    let offered = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(&path)
+        .unwrap();
+    assert!(Wal::create_from_file(offered, [7; 16]).is_err());
+    assert_eq!(fs::read(&path).unwrap(), before);
+    assert!(matches!(
+        Wal::open_from_file(File::open(temporary.path()).unwrap(), None),
+        Err(Error::Path)
+    ));
+    assert!(matches!(
+        Wal::open_from_file(File::open("/dev/null").unwrap(), None),
+        Err(Error::Path)
+    ));
+    let fifo = temporary.path().join("fifo");
+    rustix::fs::mknodat(
+        rustix::fs::CWD,
+        &fifo,
+        rustix::fs::FileType::Fifo,
+        rustix::fs::Mode::RWXU,
+        0,
+    )
+    .unwrap();
+    assert!(matches!(Wal::open(fifo, None), Err(Error::Path)));
+    let oversized = temporary.path().join("oversized");
+    let offered = empty(&oversized);
+    offered
+        .set_len(emilybase_wal::MAX_WAL_BYTES as u64 + 1)
+        .unwrap();
+    assert!(matches!(
+        Wal::open_from_file(offered, None),
+        Err(Error::Limit(_))
+    ));
+    assert_eq!(
+        fs::metadata(oversized).unwrap().len(),
+        emilybase_wal::MAX_WAL_BYTES as u64 + 1
+    );
+    let invalid = temporary.path().join("invalid-id");
+    assert!(Wal::create_from_file(empty(&invalid), [0; 16]).is_err());
+    assert_eq!(fs::metadata(invalid).unwrap().len(), 0);
+}

@@ -43,7 +43,10 @@ part of commit acknowledgment. Restored databases work without sidecars. An
 explicitly copied matching image can load into a verified restore clone until
 its history diverges. Retired table IDs and orphan staging are never adopted.
 
-Raw database paths remain trusted as before. An unsafe cache directory makes
+Operator-selected ancestors remain trusted. Later
+[ADR 0036](0036-owned-database-initialization.md) deliberately refuses final managed
+directory aliases; its no-follow admission precedes optional warmup. An unsafe
+regular cache directory makes
 caches rejected, while raw WAL-only behavior is retained. Project directory
 authorization/ownership checks still happen before scoped execution; warming does
 not grant scope. Private host-owner/privileged attackers, physical power loss,

@@ -164,3 +164,81 @@ fn raw_cli_refuses_link_aliases_without_touching_source_or_disclosing_data() {
         );
     }
 }
+
+#[test]
+fn managed_cli_relative_unicode_creation_reopens_and_preserves_current_directory_data() {
+    use std::os::unix::fs::MetadataExt;
+    let _serial = CASES.lock().unwrap();
+    let temporary = tempfile::tempdir().unwrap();
+    let parent = temporary.path().join("каталог базы 界 с пробелами");
+    std::fs::create_dir(&parent).unwrap();
+    let run = |action: &str, args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_emilybase"))
+            .current_dir(&parent)
+            .arg(action)
+            .arg("./данные")
+            .args(args)
+            .output()
+            .unwrap()
+    };
+    assert!(run("db-init", &["--durable"]).status.success());
+    let path = parent.join("данные");
+    assert_eq!(std::fs::metadata(&path).unwrap().mode() & 0o777, 0o700);
+    assert_eq!(
+        std::fs::metadata(path.join("redo.wal")).unwrap().mode() & 0o777,
+        0o600
+    );
+    let sql = "CREATE TABLE items(id INT PRIMARY KEY,n INT);INSERT INTO items VALUES(7,222)";
+    assert!(run("sql", &[sql]).status.success());
+    assert!(run("checkpoint", &[]).status.success());
+    assert!(run("compact", &[]).status.success());
+    let result = run("sql", &["SELECT n FROM items WHERE id=7"]);
+    assert!(result.status.success());
+    assert!(String::from_utf8_lossy(&result.stdout).contains("222"));
+    let original = std::fs::read(path.join("redo.wal")).unwrap();
+    assert!(!run("db-init", &["--durable"]).status.success());
+    assert_eq!(std::fs::read(path.join("redo.wal")).unwrap(), original);
+}
+
+#[test]
+fn managed_cli_refuses_directory_and_journal_aliases_without_path_or_row_disclosure() {
+    let _serial = CASES.lock().unwrap();
+    let temporary = tempfile::tempdir().unwrap();
+    let source = temporary.path().join("private-managed-source");
+    assert!(invoke("db-init", &source, &["--durable"]).status.success());
+    assert!(invoke("sql",&source,&["CREATE TABLE items(id INT PRIMARY KEY,v TEXT);INSERT INTO items VALUES(1,'synthetic private row')"]).status.success());
+    let before = std::fs::read(source.join("redo.wal")).unwrap();
+    let alias = temporary.path().join("private-directory-alias");
+    std::os::unix::fs::symlink(&source, &alias).unwrap();
+    let denied = invoke("sql", &alias, &["SELECT * FROM items"]);
+    assert!(!denied.status.success());
+    assert!(denied.stdout.is_empty());
+    let detached = temporary.path().join("private-detached-wal");
+    std::fs::rename(source.join("redo.wal"), &detached).unwrap();
+    for symbolic in [false, true] {
+        if symbolic {
+            std::os::unix::fs::symlink(&detached, source.join("redo.wal")).unwrap();
+        } else {
+            std::fs::hard_link(&detached, source.join("redo.wal")).unwrap();
+        }
+        let denied = invoke("sql", &source, &["SELECT * FROM items"]);
+        assert!(!denied.status.success());
+        assert!(denied.stdout.is_empty());
+        for private in [
+            "synthetic private row",
+            "private-managed-source",
+            "private-detached-wal",
+        ] {
+            assert!(!String::from_utf8_lossy(&denied.stderr).contains(private));
+        }
+        assert_eq!(std::fs::read(&detached).unwrap(), before);
+        std::fs::remove_file(source.join("redo.wal")).unwrap();
+    }
+    std::fs::rename(detached, source.join("redo.wal")).unwrap();
+    assert!(
+        invoke("sql", &source, &["SELECT * FROM items"])
+            .status
+            .success()
+    );
+    assert_eq!(std::fs::read(source.join("redo.wal")).unwrap(), before);
+}

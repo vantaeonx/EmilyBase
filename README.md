@@ -59,6 +59,15 @@ redirect compaction. Before/after-rename substitutions, native mutations and an
 independent relocation model exercise this path. See
 [ADR 0035](docs/adr/0035-owned-journal-replacement.md).
 
+Managed create/open now anchor relative paths and create/open the mandatory WAL
+inside the locked directory through its descriptor. Named directory and selected
+WAL identities are checked before return. Raw WAL input rejects final aliases,
+multiple links and nonregular objects. A partial managed directory remains
+detectable; complete initialization followed by sync/identity failure reports
+uncertainty and requires inspection. Creation kills, namespace/sync faults,
+independent row models and relative CLI checks exercise this boundary. See
+[ADR 0036](docs/adr/0036-owned-database-initialization.md).
+
 The original B+ tree supports unique insertion, leaf/internal splits, pointer
 replacement, deletion with sibling rotations/merges and root collapse, sorted
 bulk loading, point lookup and ordered ranges. Fixed-size page-image round trips

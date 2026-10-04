@@ -22,7 +22,7 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 ## Next increments
 
-The declared Linux Rust floor is now verified on 1.89.0 with all 514 main tests;
+The declared Linux Rust floor is now verified on 1.89.0 with all 530 main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.
 
@@ -43,6 +43,11 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
    selection, staging and post-rename exact bytes; uncertain selection poisons the
    owner. Native substitutions and an independent relocation model exercise it.
    See [ADR 0035](adr/0035-owned-journal-replacement.md).
+   Managed creation/opening now bind the directory and mandatory WAL together,
+   with named identity checks, private creation and no-follow leaf admission.
+   Detectable partial initialization, native kills/substitutions, sync failures
+   and independent row models remain separate from hardware power-loss acceptance.
+   See [ADR 0036](adr/0036-owned-database-initialization.md).
 2. Design history vacuuming/retirement and extend format upgrade compatibility.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
    [ADR 0031](adr/0031-atomic-index-wal-proposal.md) proposes the commit/domain

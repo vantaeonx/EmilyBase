@@ -298,7 +298,7 @@ fn private_path_failures_are_optional_but_damaged_or_missing_wal_is_fatal() {
 }
 
 #[test]
-fn a_trusted_raw_database_path_with_an_unsafe_cache_root_retains_wal_only_behavior() {
+fn public_root_keeps_wal_behavior_and_final_aliases_cannot_bypass_directory_admission() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("db");
     let mut database = initialized(&path, 2);
@@ -325,12 +325,12 @@ fn a_trusted_raw_database_path_with_an_unsafe_cache_root_retains_wal_only_behavi
     fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
     let alias = dir.path().join("alias");
     symlink(&path, &alias).unwrap();
-    let database = Database::open(alias).unwrap();
-    let report = database.primary_cache_startup().unwrap();
-    assert_eq!(
-        (report.loaded, report.rejected, report.bytes_budgeted),
-        (0, 2, 0)
-    );
+    let cache = fs::read(active(&path, 1)).unwrap();
+    assert!(Database::open(alias).is_err());
+    assert_eq!(fs::read(path.join("redo.wal")).unwrap(), wal);
+    assert_eq!(fs::read(active(&path, 1)).unwrap(), cache);
+    let database = Database::open(&path).unwrap();
+    assert_eq!(database.primary_cache_startup().unwrap().loaded, 1);
     assert_eq!(database.view().unwrap().row_count(), 1);
     assert_eq!(fs::read(path.join("redo.wal")).unwrap(), wal);
 }

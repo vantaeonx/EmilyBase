@@ -18,6 +18,8 @@ pub const SNAPSHOT_WAL_VERSION: u16 = 2;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("journal input must be a regular single-link file")]
+    Path,
     #[error("journal filesystem error: {0}")]
     Io(#[from] std::io::Error),
     #[error(transparent)]

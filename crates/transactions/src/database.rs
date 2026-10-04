@@ -1,6 +1,6 @@
 #[cfg(test)]
 use std::fs;
-use std::fs::{DirBuilder, File};
+use std::fs::File;
 use std::path::{Path, PathBuf};
 
 use emilybase_database::Snapshot;
@@ -19,28 +19,32 @@ pub struct Database {
 }
 
 impl Database {
-    /// A interrupted initialization remains detectable, never silently retried.
+    /// An interrupted initialization remains detectable, never silently retried.
     pub fn create(path: impl AsRef<Path>) -> Result<Self> {
-        let path = path.as_ref();
+        Self::create_with(path.as_ref(), || {}, || {})
+    }
+
+    pub(crate) fn create_with(
+        path: &Path,
+        owned: impl FnOnce(),
+        initialized: impl FnOnce(),
+    ) -> Result<Self> {
+        let path = crate::ownership::absolute(path)?;
+        let path = path.as_path();
         let mut id = [0; 16];
         getrandom::fill(&mut id).map_err(|_| Error::Randomness)?;
-        let mut builder = DirBuilder::new();
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::DirBuilderExt;
-            builder.mode(0o700);
-        }
-        builder.create(path)?;
-        let ownership = crate::ownership::lock_directory(path)?;
-        let mut wal = Wal::create(path.join("redo.wal"), id)?;
+        let created = crate::ownership::Created::new(path)?;
+        owned();
+        created.verify()?;
+        let file = crate::ownership::wal_file(&created.owner, true)?;
+        let probe = file.try_clone()?;
+        let mut wal = Wal::create_from_file(file, id)?;
         let snapshot = Snapshot::empty()?;
         let pages = snapshot.pages().cloned().collect::<Vec<_>>();
         wal.append(&pages)?;
-        let parent = path
-            .parent()
-            .filter(|p| !p.as_os_str().is_empty())
-            .unwrap_or(Path::new("."));
-        File::open(parent)?.sync_all()?;
+        initialized();
+        created.finish(&wal, &probe)?;
+        let ownership = created.owner;
         Ok(Self {
             wal,
             snapshot,
@@ -57,10 +61,26 @@ impl Database {
     }
 
     pub fn open_bound(path: impl AsRef<Path>, expected_id: Option<DatabaseId>) -> Result<Self> {
-        let path = path.as_ref();
+        Self::open_with(path.as_ref(), expected_id, || {}, || {})
+    }
+
+    pub(crate) fn open_with(
+        path: &Path,
+        expected_id: Option<DatabaseId>,
+        owned: impl FnOnce(),
+        recovered: impl FnOnce(),
+    ) -> Result<Self> {
+        let path = crate::ownership::absolute(path)?;
+        let path = path.as_path();
         let ownership = crate::ownership::lock_directory(path)?;
-        let (wal, recovery) = Wal::open(path.join("redo.wal"), expected_id)?;
+        owned();
+        crate::ownership::verify_path(path, &ownership)?;
+        let (wal, recovery) =
+            Wal::open_from_file(crate::ownership::wal_file(&ownership, false)?, expected_id)?;
         let snapshot = replay(recovery)?;
+        recovered();
+        crate::ownership::verify_path(path, &ownership)?;
+        crate::journal_replacement::source_selected(&ownership, &wal)?;
         let mut database = Self {
             wal,
             snapshot,
@@ -153,6 +173,10 @@ impl Database {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "initialization_tests.rs"]
+pub(crate) mod initialization_tests;
 
 #[cfg(test)]
 mod tests {

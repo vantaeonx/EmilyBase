@@ -411,6 +411,7 @@ dependencies = [
  "crc32fast",
  "emilybase-storage",
  "proptest",
+ "rustix",
  "tempfile",
  "thiserror",
 ]

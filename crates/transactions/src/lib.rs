@@ -65,6 +65,10 @@ pub fn recover_image(
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("managed database directory identity changed; inspect the selected directory")]
+    DirectoryChanged,
+    #[error("database initialized but directory durability or selection requires inspection")]
+    InitializationUnknown(#[source] std::io::Error),
     #[error(
         "managed journal or replacement staging identity changed; inspect the selected journal"
     )]

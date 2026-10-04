@@ -1227,3 +1227,40 @@ blank/comment-only lines), 1207 SDK and 718 Python, or 39101 combined source lin
 including tests. WAL/page/table/backup bytes, transaction IDs and report fields
 are unchanged. Broader hardware power-loss, failing-media, upgrade and security/
 production gates remain open. See [ADR 0035](adr/0035-owned-journal-replacement.md).
+
+## Owned managed database initialization and admission
+
+On 2026-10-04 all 530 main Rust tests pass on stable 1.99.0 and Rust 1.89.0;
+17 ignored child entry helpers are invoked by their parent cases. Workspace/fuzz
+format, strict Clippy, locked build and seven native SDK checks pass. Both
+lockfiles pass the cached known-advisory check without warnings (133/105 packages,
+1290 advisories). Only WAL's existing rustix dependency edge changes; package
+versions are unchanged. The previous c67efbf has all four GitHub jobs successful,
+run 37203670641, including the actual release container. This new block's container
+CI remains unconfirmed until its own run completes.
+
+Three namespace regressions fail independently against the old constructors;
+another reproduces raw WAL opening through a final symlink before no-follow
+admission. Eleven initialization tests cover four failures before/after directory
+and parent fsync, three native kills and eight native external directory/alias
+changes. An independent 32-case row model exercises both WAL versions, exact
+foreign/original histories, failed open, repair, checkpoint and later commits.
+Leaf substitution, parent moves, private modes, links and descriptor release are
+also checked. Six owned-WAL tests cover offset-zero reading/initialization, types,
+links, IDs, oversize/nonempty admission and unchanged refused bytes. Eight real CLI
+tests include relative Unicode paths and alias refusal without data/path output.
+
+The first full run exposed an existing cache test expecting admission through a
+final database-directory symlink. That expectation was updated for the documented
+no-follow policy; unchanged journal/cache bytes and reopening the ordinary
+directory are checked. Ordinary existing directory/file modes remain compatible.
+The focused rerun and both complete toolchain runs subsequently passed.
+
+This logical block adds 991 Rust lines and removes/replaces 56, net 935. Totals:
+38111 Rust (36454 excluding blank/comment-only lines), 1207 SDK and 718 Python,
+or 40036 combined source lines including tests. Initial managed directories may
+remain detectably incomplete; they are never silently recreated. Post-root-commit
+sync/selection uncertainty retains the journal for inspection. WAL/page/table/
+backup bytes and API report shapes are unchanged. Ancestors remain operator
+trusted, and broader power-loss, failing-media, upgrade and security/production
+gates stay open. See [ADR 0036](adr/0036-owned-database-initialization.md).

@@ -27,7 +27,19 @@ impl Wal {
     pub fn create(path: impl AsRef<Path>, id: DatabaseId) -> Result<Self> {
         let header = encode_header(id)?;
         let file = create_file(path.as_ref(), &header)?;
-        Ok(Self {
+        Ok(Self::initial_owner(file, id))
+    }
+
+    /// Initialize an owned empty private file with the original version-1 header.
+    /// The enclosing database owns namespace selection and directory sync.
+    pub fn create_from_file(mut file: File, id: DatabaseId) -> Result<Self> {
+        let header = encode_header(id)?;
+        initialize_owned(&mut file, &header)?;
+        Ok(Self::initial_owner(file, id))
+    }
+
+    fn initial_owner(file: File, id: DatabaseId) -> Self {
+        Self {
             file: Box::new(file),
             id,
             version: crate::WAL_VERSION,
@@ -35,7 +47,7 @@ impl Wal {
             next_transaction: 1,
             next_sequence: 1,
             poisoned: false,
-        })
+        }
     }
 
     /// A synced, self-contained version-2 baseline. The caller publishes it only
@@ -67,20 +79,7 @@ impl Wal {
         pages: &[Page],
     ) -> Result<Self> {
         let bytes = crate::encode_snapshot(id, transaction, pages)?;
-        let metadata = file.metadata()?;
-        if !metadata.is_file()
-            || metadata.len() != 0
-            || metadata.nlink() != 1
-            || metadata.mode() & 0o777 != 0o600
-        {
-            return Err(Error::Format(
-                "baseline destination must be an empty private single-link file",
-            ));
-        }
-        lock(&file)?;
-        file.seek(SeekFrom::Start(0))?;
-        file.write_all(&bytes)?;
-        file.sync_all()?;
+        initialize_owned(&mut file, &bytes)?;
         Ok(Self::snapshot_owner(
             file,
             id,
@@ -124,11 +123,33 @@ impl Wal {
         path: impl AsRef<Path>,
         expected_id: Option<DatabaseId>,
     ) -> Result<(Self, Recovery)> {
-        let mut file = OpenOptions::new().read(true).write(true).open(path)?;
-        lock(&file)?;
-        if file.metadata()?.len() > MAX_WAL_BYTES as u64 {
+        let fd = rustix::fs::open(
+            path.as_ref(),
+            rustix::fs::OFlags::RDWR
+                | rustix::fs::OFlags::NOFOLLOW
+                | rustix::fs::OFlags::NONBLOCK
+                | rustix::fs::OFlags::CLOEXEC,
+            rustix::fs::Mode::empty(),
+        )
+        .map_err(std::io::Error::from)?;
+        Self::open_from_file(fd.into(), expected_id)
+    }
+
+    /// Recover an exact owned regular single-link file; never resolve another path.
+    /// Existing file modes remain compatible. Validation does not trim abandoned tails.
+    pub fn open_from_file(
+        mut file: File,
+        expected_id: Option<DatabaseId>,
+    ) -> Result<(Self, Recovery)> {
+        let metadata = file.metadata()?;
+        if !metadata.is_file() || metadata.nlink() != 1 {
+            return Err(Error::Path);
+        }
+        if metadata.len() > MAX_WAL_BYTES as u64 {
             return Err(Error::Limit("journal bytes"));
         }
+        lock(&file)?;
+        file.seek(SeekFrom::Start(0))?;
         let mut bytes = Vec::new();
         (&mut file)
             .take(MAX_WAL_BYTES as u64 + 1)
@@ -279,15 +300,31 @@ fn create_file(path: &Path, bytes: &[u8]) -> Result<File> {
         options.mode(0o600);
     }
     let mut file = options.open(path)?;
-    lock(&file)?;
-    file.write_all(bytes)?;
-    file.sync_all()?;
+    initialize_owned(&mut file, bytes)?;
     let parent = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
     File::open(parent)?.sync_all()?;
     Ok(file)
+}
+
+fn initialize_owned(file: &mut File, bytes: &[u8]) -> Result<()> {
+    let metadata = file.metadata()?;
+    if !metadata.is_file()
+        || metadata.len() != 0
+        || metadata.nlink() != 1
+        || metadata.mode() & 0o777 != 0o600
+    {
+        return Err(Error::Format(
+            "journal destination must be an empty private single-link file",
+        ));
+    }
+    lock(file)?;
+    file.seek(SeekFrom::Start(0))?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    Ok(())
 }
 
 /// Dropping a pending batch leaves a recoverable, uncommitted tail.

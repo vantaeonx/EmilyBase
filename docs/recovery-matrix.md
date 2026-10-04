@@ -4,6 +4,11 @@ Linux, local temporary files, synthetic data, Rust stable 1.99.0, updated 2026-1
 
 | Boundary or failure | Observed result | Check |
 | --- | --- | --- |
+| Managed creation killed after directory ownership, initial commit or returned handle | partial root refused or complete initial root inspectable; no automatic reinitialization | three native creation kill boundaries |
+| Managed parent/root replaced during creation or recovery | named ownership refused; foreign files and original histories preserved | old regressions and eight native directory changes |
+| Initial directory/parent sync fails before/after real fsync | complete internal initialization preserved; explicit unknown outcome | four initialization sync cases |
+| Selected WAL replaced after initial commit/recovery | constructor refuses; both original/foreign inodes preserved and locks released | initialization/recovery leaf-selection cases |
+| Raw/managed WAL symlink, hard-link alias, FIFO, device, directory or oversized file | refusal before bounded recovery; source unchanged | owned-file admission and actual CLI cases |
 | Raw page creation killed while staged, renamed or returned | no target or exact complete header/pages; selected file opens and accepts later writes | three native creation kill boundaries |
 | Raw parent/staging substituted before publication | refusal; foreign/detached entries preserved | reproduced parent and ownership regressions |
 | Raw staging/selected links or permissions changed | admission refusal or preserved uncertain selection | four pre/post-rename admission cases |
