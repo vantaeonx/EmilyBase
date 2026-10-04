@@ -18,6 +18,7 @@ cargo install cargo-fuzz --locked
 cargo +nightly fuzz run file_format -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
+cargo +nightly fuzz run owned_journal -- -max_total_time=45 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run row_locations -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run primary_lookup -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
@@ -1264,3 +1265,33 @@ sync/selection uncertainty retains the journal for inspection. WAL/page/table/
 backup bytes and API report shapes are unchanged. Ancestors remain operator
 trusted, and broader power-loss, failing-media, upgrade and security/production
 gates stay open. See [ADR 0036](adr/0036-owned-database-initialization.md).
+
+## Owned journal differential filesystem fuzz checkpoint
+
+On 2026-10-04 the new `owned_journal` target passes stable warning-denied Clippy,
+fuzz formatting and locked compilation of all fuzz binaries on Rust 1.89.0.
+All six focused owned-WAL tests pass. The unchanged runtime workspace has 530
+passing main tests on both toolchains from 60faebc; that commit's four GitHub jobs
+are now confirmed successful, run 37207354811, including the real container.
+
+Two AddressSanitizer campaigns finish without failure: 163953 executions in
+46 seconds from bounded generated inputs, then 235964 executions in 46 seconds
+after adding actual synthetic CLI-created WAL 1/2 root images. Default ASan
+quarantine is retained. Input admission is capped at 20000 bytes and RSS at
+512 MiB; final RSS is 285/299 MiB. The second evolving corpus reaches 8388-byte
+valid seeds, complete frames, raw/repaired headers, wrong identities and byte cuts.
+These are bounded smoke campaigns, not exhaustive filesystem or security proof.
+
+The target compares all accepted recovery metadata, baseline/committed pages and
+valid/discarded byte boundaries against the direct bounded decoder. It checks
+nonzero descriptor offsets, ordinary mode compatibility, hard/symbolic aliases,
+moved owned files and competing locks. Opening/refusal preserves exact bytes;
+failed recovery releases locks. Accepted histories retain their exact committed
+prefix, append another confirmed transaction, reopen and compare every page.
+Only private temporary synthetic directories are used. Seeds/artifacts remain
+ignored. No runtime code, dependency versions, formats or API shape change.
+
+This separate test checkpoint adds 173 Rust lines: totals are 38284 Rust
+(36616 without blank/comment-only lines), 1207 SDK and 718 Python, or 40209
+combined source lines including tests. Wider recovery/power-loss/security gates
+remain open; source line counts are measurements, not development targets.

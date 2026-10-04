@@ -166,3 +166,10 @@ path = "fuzz_targets/sql_mutations.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "owned_journal"
+path = "fuzz_targets/owned_journal.rs"
+test = false
+doc = false
+bench = false
