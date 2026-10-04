@@ -13,6 +13,111 @@ use std::time::Duration;
 static PROCESS_TESTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[test]
+fn actual_http_mutations_share_capacity_fail_atomically_and_recover_after_ack_kill() {
+    let _serial = PROCESS_TESTS.lock().unwrap();
+    for version in [1, 2] {
+        let temporary = tempfile::tempdir().unwrap();
+        let root = temporary.path().join("projects");
+        let mut store = ProjectStore::open(&root).unwrap();
+        let project = store.create("mutation-capacity").unwrap();
+        let sibling = store.create("mutation-isolation").unwrap();
+        let data = root.join(&project.project.id).join("data");
+        if version == 2 {
+            Database::open(&data).unwrap().compact().unwrap();
+        }
+        store
+            .authorize(&project.project.id, &project.api_key)
+            .unwrap()
+            .execute("CREATE TABLE t(id INT PRIMARY KEY,n INT)", &[])
+            .unwrap();
+        for start in [0, 150] {
+            let tuples = (start..start + 150)
+                .map(|id| format!("({id},0)"))
+                .collect::<Vec<_>>()
+                .join(",");
+            store
+                .authorize(&project.project.id, &project.api_key)
+                .unwrap()
+                .execute(&format!("INSERT INTO t VALUES {tuples}"), &[])
+                .unwrap();
+        }
+        let mut database = Database::open(&data).unwrap();
+        let before = database.committed_wal().unwrap();
+        let transaction = database.last_transaction();
+        drop(database);
+        drop(store);
+        let master = issue_key().unwrap();
+        let server = support::Server::start(&root, &master);
+        let route = format!("/v1/projects/{}/sql", project.project.id);
+        let failed = json!({"sql":"UPDATE t SET n=9 WHERE id=299; UPDATE t SET n=8 WHERE id<256"});
+        for key in [&master, &sibling.api_key] {
+            assert_eq!(
+                support::call(server.address, "POST", &route, key, &failed)
+                    .unwrap()
+                    .0,
+                401
+            );
+        }
+        let (status, error) =
+            support::call(server.address, "POST", &route, &project.api_key, &failed).unwrap();
+        assert_eq!(status, 400);
+        assert_eq!(error, json!({"code":"query_rejected"}));
+        assert_eq!(std::fs::read(data.join("redo.wal")).unwrap(), before);
+        let selected = json!({"sql":"SELECT n FROM t WHERE id=299"});
+        let (status, report) =
+            support::call(server.address, "POST", &route, &project.api_key, &selected).unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["transaction"], transaction);
+        assert_eq!(report["results"][0]["rows"][0][0]["value"], 0);
+        let accepted = json!({"sql":"UPDATE t SET n=9 WHERE id=299; DELETE FROM t WHERE id<255; SELECT n FROM t ORDER BY id DESC LIMIT 1"});
+        let (status, report) =
+            support::call(server.address, "POST", &route, &project.api_key, &accepted).unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["transaction"], transaction + 1);
+        assert_eq!(report["results"][0]["affected"], 1);
+        assert_eq!(report["results"][1]["affected"], 255);
+        assert_eq!(report["results"][2]["rows"][0][0]["value"], 9);
+        let log = server.kill();
+        let server = support::Server::start(&root, &master);
+        let (status, report) =
+            support::call(server.address, "POST", &route, &project.api_key, &selected).unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["transaction"], transaction + 1);
+        assert_eq!(report["results"][0]["rows"][0][0]["value"], 9);
+        let rollback = json!({"sql":"BEGIN; DELETE FROM t WHERE id=299; SELECT id FROM t ORDER BY id DESC LIMIT 1; ROLLBACK"});
+        let (status, report) =
+            support::call(server.address, "POST", &route, &project.api_key, &rollback).unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["committed"], false);
+        assert_eq!(report["results"][1]["rows"][0][0]["value"], 298);
+        let log = log + &server.stop();
+        for private in [
+            master.as_str(),
+            project.api_key.as_str(),
+            sibling.api_key.as_str(),
+            project.project.id.as_str(),
+            sibling.project.id.as_str(),
+            "UPDATE t SET",
+            "DELETE FROM t",
+        ] {
+            assert!(!log.contains(private));
+        }
+        let database = Database::open(&data).unwrap();
+        assert_eq!(database.last_transaction(), transaction + 1);
+        assert_eq!(database.view().unwrap().row_count(), 45);
+        assert_eq!(
+            database
+                .view()
+                .unwrap()
+                .get("t", &Key::Integer(299))
+                .unwrap()
+                .unwrap()[1],
+            Value::Integer(9)
+        );
+    }
+}
+
+#[test]
 fn actual_http_streams_wide_primary_order_limits_with_isolation_and_kill_replay() {
     let _serial = PROCESS_TESTS.lock().unwrap();
     for version in [1, 2] {

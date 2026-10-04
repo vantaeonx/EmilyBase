@@ -22,6 +22,7 @@ cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -r
 cargo +nightly fuzz run row_locations -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run primary_lookup -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run text_ranges -- -max_total_time=60 -max_len=4096 -rss_limit_mb=512
+cargo +nightly fuzz run sql_mutations -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run backup_archive -- -max_total_time=30 -max_len=32768 -rss_limit_mb=512
 ```
 
@@ -1022,3 +1023,39 @@ lines), 1207 SDK and 718 Python, or 34292 source lines including tests. No forma
 version or HTTP/SDK shape changed; primary_range also describes unbounded primary
 ordering and sorted indicates requested ORDER BY. Durable table-index WAL, wider
 recovery/load/security and production gates remain open.
+
+## Bounded mutation selection
+
+On 2026-10-04, the locked workspace run passes 466 main Rust tests with 14
+ignored child entry helpers. One subsequently added compatibility test passes
+in a focused locked run: 467 distinct main tests verified. Final workspace/fuzz
+format, strict Clippy and locked build pass; the seven native SDK checks pass.
+
+Before repair, an isolated Linux child selecting 6000 wide synthetic rows exits
+with SIGABRT on a 3072-byte allocation under eight MiB of additional address/data
+headroom. After repair it returns the existing transaction Limit after 257
+candidate visits, verifies key-only deletion and a narrow range, then rolls back.
+Staging and initial derived-cache construction precede the child memory cap;
+this does not claim an eight-MiB SQL/process memory bound. Core dumps are disabled
+and no parent resource limit is changed.
+
+Public transaction checks count every staged event, preserve zero-capacity reads
+and reject aborted views. Exact SQL 256/257, DDL/prior-statement accounting,
+zero-match behavior and full binding preserve failed WAL/transaction numbers.
+A 32-case independent mutation model covers integer/text/long/NUL/Unicode keys,
+nullable AND/OR/NOT filters, rollback/errors, cache/reopen and WAL-1/2 verified
+restore. Actual CLI and HTTP verify long points, generic overflow errors, scopes,
+log redaction and ACK kill replay. Compatibility compares SQL and direct-library
+mutations on copies with the same identity: resulting WAL/page bytes match
+exactly for both key types and both WAL versions.
+
+The new filesystem-backed sql_mutations ASan target executes 800 cases in
+16 seconds under a 15-second/4096-byte/512-MiB budget. Each case constructs
+258..305 synthetic rows, compares bounded scripts with an independent state,
+checks arbitrary SQL error atomicity, and reopens the committed journal. Eight
+synthetic seeds cover integer/text and both WAL versions. This is smoke fuzzing.
+
+Net growth: 1033 Rust lines. Totals: 33400 Rust (31931 without blank/comment-only
+lines), 1207 SDK and 718 Python, or 35325 source lines including tests. Persisted
+formats and HTTP/SDK shapes are unchanged. Snapshot staging, wider fault/media/
+load/security checks and durable table-index WAL remain separate work.

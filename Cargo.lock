@@ -341,6 +341,7 @@ dependencies = [
  "emilybase-index",
  "emilybase-transactions",
  "proptest",
+ "rustix",
  "serde",
  "tempfile",
  "thiserror",

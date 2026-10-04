@@ -2,9 +2,12 @@ use crate::ast::*;
 use crate::plan::{Layout, Plan, primary_key};
 use crate::predicate::{Predicate, bind};
 use crate::{MAX_PARAMETERS, parse};
-use emilybase_catalog::{Column, Key, Row, Schema, Value};
-use emilybase_database::MAX_ROWS;
+use emilybase_catalog::{Column, Row, Schema, Value};
 use emilybase_transactions::{Database, Transaction};
+
+#[cfg(all(test, target_os = "linux"))]
+#[path = "matching_memory.rs"]
+mod matching_memory;
 
 pub const MAX_OUTPUT_BYTES: usize = 8 * 1024 * 1024;
 pub const MAX_QUERY_WORK: usize = 100_000;
@@ -177,13 +180,14 @@ fn typed(value: &Value, column: &Column) -> RunResult<()> {
     }
     Ok(())
 }
-fn matching(
+fn matching<T>(
     tx: &Transaction<'_>,
     table: &str,
     filter: &Option<Expr>,
     parameters: &[Value],
     budget: &mut Budget,
-) -> RunResult<Vec<(Key, Row)>> {
+    materialize: impl Fn(&Schema, &Row) -> RunResult<T>,
+) -> RunResult<Vec<T>> {
     let snapshot = tx.view()?;
     let schema = snapshot.schema(table)?;
     let table_ref = TableRef {
@@ -196,29 +200,36 @@ fn matching(
         .map(|e| Predicate::compile(e, &layout, parameters))
         .transpose()?;
     let mut matching = Vec::new();
+    let remaining = tx.remaining_events()?;
     let key = filter
         .as_ref()
         .and_then(|p| primary_key(p, usize::from(schema.primary_key)));
-    let source = match key {
-        Some(key) => snapshot.get(table, &key)?.cloned().into_iter().collect(),
-        None => {
-            let range = filter.as_ref().and_then(|predicate| {
-                crate::range::primary_range(predicate, usize::from(schema.primary_key))
-            });
-            match range {
-                Some(range) if range.empty() => Vec::new(),
-                Some(range) => range.scan(snapshot, table, MAX_ROWS)?,
-                None => snapshot.scan(table, MAX_ROWS)?,
-            }
-        }
-    };
-    for row in source {
+    let mut retain = |row: &Row| -> RunResult<()> {
         budget.step()?;
         if match &filter {
             None => true,
-            Some(p) => p.evaluate(&row, budget)? == Some(true),
+            Some(p) => p.evaluate(row, budget)? == Some(true),
         } {
-            matching.push((schema.key(&row)?, row));
+            if matching.len() >= remaining {
+                return Err(emilybase_transactions::Error::Limit.into());
+            }
+            matching.push(materialize(schema, row)?);
+        }
+        Ok(())
+    };
+    if let Some(key) = key {
+        if let Some(row) = crate::stream::point(snapshot, table, &key)? {
+            retain(row)?;
+        }
+    } else {
+        let range = filter.as_ref().and_then(|predicate| {
+            crate::range::primary_range(predicate, usize::from(schema.primary_key))
+        });
+        if !range.as_ref().is_some_and(|range| range.empty()) {
+            let (lower, upper) = range.as_ref().map_or((None, None), |range| range.bounds());
+            for row in snapshot.primary_rows(table, lower.as_ref(), upper.as_ref())? {
+                retain(row?)?;
+            }
         }
     }
     Ok(matching)
@@ -286,7 +297,11 @@ fn run(
                 typed(&value, &schema.columns[position])?;
                 updates.push((position, value));
             }
-            for (key, mut row) in matching(tx, &table, &filter, parameters, budget)? {
+            for (key, mut row) in
+                matching(tx, &table, &filter, parameters, budget, |schema, row| {
+                    Ok((schema.key(row)?, row.clone()))
+                })?
+            {
                 for (i, value) in &updates {
                     row[*i] = value.clone();
                 }
@@ -295,7 +310,9 @@ fn run(
             }
         }
         Statement::Delete { table, filter } => {
-            for (key, _) in matching(tx, &table, &filter, parameters, budget)? {
+            for key in matching(tx, &table, &filter, parameters, budget, |schema, row| {
+                Ok(schema.key(row)?)
+            })? {
                 tx.delete(&table, &key)?;
                 affected += 1;
             }

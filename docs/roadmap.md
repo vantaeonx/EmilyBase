@@ -51,6 +51,14 @@ bounds, both-WAL restore, compiled CLI and real HTTP isolation/kill replay execu
 Explain keeps its existing primary_range/sorted contract. Wider query/load gates
 and durable table-index WAL remain open. See [ADR 0029](adr/0029-streamed-primary-sql-order.md).
 
+UPDATE/DELETE now borrow candidates and collect only the remaining transaction
+event capacity. Early overflow preserves whole-script rollback; zero matches
+still succeed at capacity. Key-only deletes, memory-capped reproduction/repair,
+exact event boundaries, independent mutation/reopen/restore models and actual
+CLI/HTTP kill replay execute. Snapshot staging remains bounded by its prior copy;
+no durable format or production gate is closed. See
+[ADR 0030](adr/0030-bounded-mutation-selection.md).
+
 ## Isolated registry and API keys
 
 The synchronous server library publishes independent managed project directories,

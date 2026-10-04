@@ -72,6 +72,15 @@ impl Transaction<'_> {
         Ok(&self.staged)
     }
 
+    /// Remaining normal event capacity of this staged transaction, not a reservation.
+    /// Page and WAL byte limits still apply when the actual writes are committed.
+    pub fn remaining_events(&self) -> Result<usize> {
+        self.ready()?;
+        MAX_TRANSACTION_EVENTS
+            .checked_sub(self.events)
+            .ok_or(Error::History("invalid staged event count"))
+    }
+
     pub fn commit(self) -> Result<u64> {
         self.ready()?;
         if self.events == 0 {

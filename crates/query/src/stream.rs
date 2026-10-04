@@ -25,14 +25,7 @@ fn retain(plan: &Plan, row: &Row, budget: &mut Budget, rows: &mut Vec<Row>) -> R
 pub(crate) fn run(snapshot: &Snapshot, plan: &Plan, budget: &mut Budget) -> RunResult<ResultSet> {
     let mut rows = Vec::new();
     if let Some(key) = &plan.key {
-        if let Some(mut row) = snapshot.get(&plan.table, key)? {
-            // Long keys use the retained map in get; check the physical image here too.
-            if matches!(key,Key::Text(text) if text.len()>emilybase_index::MAX_KEY_BYTES) {
-                let location = snapshot
-                    .row_location(&plan.table, key)?
-                    .ok_or(emilybase_database::Error::StaleLocation)?;
-                row = snapshot.resolve_row_location(&plan.table, key, location)?;
-            }
+        if let Some(row) = point(snapshot, &plan.table, key)? {
             retain(plan, row, budget, &mut rows)?;
         }
     } else if !plan.range.as_ref().is_some_and(|range| range.empty()) {
@@ -58,4 +51,22 @@ pub(crate) fn run(snapshot: &Snapshot, plan: &Plan, budget: &mut Budget) -> RunR
         rows,
         affected: 0,
     })
+}
+
+pub(crate) fn point<'a>(
+    snapshot: &'a Snapshot,
+    table: &str,
+    key: &Key,
+) -> RunResult<Option<&'a Row>> {
+    let Some(mut row) = snapshot.get(table, key)? else {
+        return Ok(None);
+    };
+    // Long keys use the retained map in get; check the physical image here too.
+    if matches!(key, Key::Text(text) if text.len() > emilybase_index::MAX_KEY_BYTES) {
+        let location = snapshot
+            .row_location(table, key)?
+            .ok_or(emilybase_database::Error::StaleLocation)?;
+        row = snapshot.resolve_row_location(table, key, location)?;
+    }
+    Ok(Some(row))
 }

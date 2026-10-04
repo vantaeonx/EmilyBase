@@ -158,6 +158,16 @@ capacity, outside this output/work estimate. See [ADR 0029](adr/0029-streamed-pr
 Writes share the existing 256-event/256-page normal transaction limit; overflow
 rolls back the entire script.
 
+UPDATE/DELETE select checked borrowed rows in primary order, retaining at most
+the remaining event capacity after earlier statements. UPDATE copies selected
+keys/rows; DELETE stores keys only. Selection rejects the first additional TRUE
+match before copying it. Full schema/assignment/predicate binding still precedes
+selection. Zero matches consume no events, even at capacity; expensive unsuccessful
+filters still spend work. Applying the collected selection remains part of the
+one atomic script, with no implicit batching or intermediate commit. Snapshot
+staging still uses its original bounded copy, so the reduced selection estimate
+is not a limit on the whole process. See [ADR 0030](adr/0030-bounded-mutation-selection.md).
+
 Arithmetic, functions, aggregates, DISTINCT, GROUP BY, subqueries, RETURNING,
 OFFSET, UNION, outer/cross joins, secondary-index DDL, ALTER, implicit casts and PostgreSQL
 protocols are unsupported. Persistent indexes and stable schema migrations need

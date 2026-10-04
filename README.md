@@ -58,6 +58,14 @@ existing `primary_range`; `sorted` indicates requested ordering. Wide limited re
 script budgets, both-WAL restore and real CLI/HTTP kill replay are tested. See
 [ADR 0029](docs/adr/0029-streamed-primary-sql-order.md).
 
+UPDATE/DELETE now select checked borrowed candidates within the transaction's
+remaining event capacity. UPDATE copies selected rows only; DELETE retains keys
+only. Prior statements share the 256-event bound, and overflow rolls back the
+whole script. Zero matches consume no events. A reproduced memory-capped selection
+abort, generated models, CLI/HTTP and both-WAL recovery checks cover the change.
+Snapshot staging itself retains its normal copy. See
+[ADR 0030](docs/adr/0030-bounded-mutation-selection.md).
+
 Derived trees preserve all 10000 admitted rows: a full dense build uses 768 pages,
 and fragmented incremental arena exhaustion triggers a rebuild. Initialized
 trees stage insert/delete/pointer maintenance alongside their relational snapshot.
