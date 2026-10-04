@@ -2,6 +2,10 @@
 
 Status: proposed. No new runtime format, migration or durable index is implemented.
 
+The [prototype implementation order](../durable-index-prototype-plan.md) separates
+namespace codecs, independent transaction models, capacity admission, WAL enablement
+and verified migration. This plan does not accept the proposal or close its gates.
+
 ## Context
 
 Current table data is authoritative in WAL 1/2. B+ primary trees are derived from
