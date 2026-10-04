@@ -56,6 +56,9 @@ impl Write for FaultIo {
 }
 
 impl JournalIo for FaultIo {
+    fn metadata(&self) -> io::Result<std::fs::Metadata> {
+        self.inner.metadata()
+    }
     fn length(&self) -> io::Result<u64> {
         self.inner.length()
     }

@@ -5,6 +5,7 @@ mod index_cache;
 #[cfg(test)]
 mod index_cache_tests;
 mod index_image;
+mod journal_replacement;
 mod location;
 mod ownership;
 mod replay;
@@ -64,6 +65,10 @@ pub fn recover_image(
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(
+        "managed journal or replacement staging identity changed; inspect the selected journal"
+    )]
+    JournalOwnership,
     #[error("optional cache warmup input budget exhausted")]
     CacheWarmupBudget,
     #[error("invalid primary index cache: {0}")]
@@ -96,7 +101,9 @@ pub enum Error {
     Poisoned,
     #[error("operating-system randomness is unavailable")]
     Randomness,
-    #[error("journal replacement was published but durability is uncertain; reopen before writing")]
+    #[error(
+        "journal replacement was published but durability or selection is uncertain; reopen before writing"
+    )]
     MaintenanceUnknown(#[source] std::io::Error),
 }
 

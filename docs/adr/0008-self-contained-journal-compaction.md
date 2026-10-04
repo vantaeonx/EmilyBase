@@ -29,6 +29,12 @@ WAL inode alone cannot serialize owners across rename. Keep that directory handl
 locked until all WAL handles are released. This targets cooperating owners on a
 Linux local filesystem; hostile local path replacement is outside the trust model.
 
+The later [ADR 0035](0035-owned-journal-replacement.md) pins all replacement
+operations to this owned directory, checks old/new selected inodes and exact
+post-rename bytes, and poisons an owner whose authoritative selection changes.
+Observed namespace mutations are now covered; this does not add a hostile local
+administrator sandbox or complete failing-media acceptance.
+
 New databases still use WAL version 1. Opening never silently upgrades them.
 An explicit compaction writes version 2; old readers must reject it. Backup
 envelopes bind the actual embedded WAL version and verify either supported version.

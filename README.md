@@ -51,6 +51,14 @@ owned database directory even if it moves. Native creation kills, sync failures,
 generated page models and both-WAL checkpoint regressions execute without changing
 file bytes. See [ADR 0034](docs/adr/0034-owned-page-file-publication.md).
 
+Explicit journal compaction now uses the owned database directory throughout
+replacement. It checks the selected old WAL inode and the staged/selected new
+inode and bytes; source selection changes or uncertain post-rename outcomes
+prevent further writes until inspection/reopen. Moving the directory does not
+redirect compaction. Before/after-rename substitutions, native mutations and an
+independent relocation model exercise this path. See
+[ADR 0035](docs/adr/0035-owned-journal-replacement.md).
+
 The original B+ tree supports unique insertion, leaf/internal splits, pointer
 replacement, deletion with sibling rotations/merges and root collapse, sorted
 bulk loading, point lookup and ordered ranges. Fixed-size page-image round trips

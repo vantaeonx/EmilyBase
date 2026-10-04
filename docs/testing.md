@@ -1193,3 +1193,37 @@ or 38095 combined source lines including tests. EMILYDB/EBPG/WAL/backup bytes ar
 unchanged. Raw in-place writes remain nontransactional. These bounded checks do
 not close hardware power-loss, failing-media, upgrade or production/security gates.
 See [ADR 0034](adr/0034-owned-page-file-publication.md).
+
+## Owned authoritative journal replacement
+
+On 2026-10-04 all 514 main Rust tests pass on stable 1.99.0 and Rust 1.89.0,
+with 16 ignored child entry helpers invoked by parent cases. Workspace/fuzz
+format and strict Clippy, locked build and all seven native SDK checks pass.
+The previous 5c46052 has all four GitHub jobs successful, run 37201879044:
+stable/SDK, minimum Rust, known advisories and the actual release container.
+Dependency packages/versions and lockfiles are unchanged in this source block.
+
+Three independently executed old regressions first fail for directory redirection,
+substituted staging and detached selected-baseline acceptance. A fourth fails
+before same-inode readback checks. Before/after rename, truncation, CRC damage and
+valid foreign history cannot return false success. The original authoritative WAL
+is checked before starting and publishing: substitution poisons the old owner and
+preserves the detached/foreign histories. Mode/link changes are refused or reported
+uncertain; post-rename uncertain selection preserves the output and blocks writes.
+
+Twelve native external parent/regular/symlink substitutions cover both WAL versions
+and pre/post-rename boundaries. A 32-case independent live-row model repeatedly
+moves directories during compaction, preserves foreign old-path files, checks
+exact committed pages/rows, checkpoints, reopens and accepts independent later
+writes. Owned-file WAL tests verify initialization at offset zero, exact descriptor
+identity, original-path preservation, nonempty/private/link/type/input admission,
+competing locks and lifetime until the final descriptor clone closes. Existing
+eight compaction kills, four sync failures, capacity, compatibility, backup, actual
+CLI/HTTP and container probes remain included in the local workspace/SDK or prior
+published CI checks; the new commit's container CI is not yet confirmed.
+
+Source growth is +1030/-24 Rust, net 1006. Totals: 37176 Rust (35560 excluding
+blank/comment-only lines), 1207 SDK and 718 Python, or 39101 combined source lines
+including tests. WAL/page/table/backup bytes, transaction IDs and report fields
+are unchanged. Broader hardware power-loss, failing-media, upgrade and security/
+production gates remain open. See [ADR 0035](adr/0035-owned-journal-replacement.md).

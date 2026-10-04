@@ -1,5 +1,6 @@
 use std::fs::{File, OpenOptions, TryLockError};
 use std::io::{Read, Seek, SeekFrom, Write};
+use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
 use emilybase_storage::{MAX_PAGES, Page};
@@ -47,15 +48,75 @@ impl Wal {
     ) -> Result<Self> {
         let bytes = crate::encode_snapshot(id, transaction, pages)?;
         let file = create_file(path.as_ref(), &bytes)?;
-        Ok(Self {
+        Ok(Self::snapshot_owner(
+            file,
+            id,
+            transaction,
+            pages.len(),
+            bytes.len(),
+        ))
+    }
+
+    /// Initialize an exclusively owned empty private regular file as a synced baseline.
+    /// The caller retains responsibility for namespace publication and directory sync.
+    /// Invalid arguments/admission never truncate or replace existing file bytes.
+    pub fn create_snapshot_from_file(
+        mut file: File,
+        id: DatabaseId,
+        transaction: u64,
+        pages: &[Page],
+    ) -> Result<Self> {
+        let bytes = crate::encode_snapshot(id, transaction, pages)?;
+        let metadata = file.metadata()?;
+        if !metadata.is_file()
+            || metadata.len() != 0
+            || metadata.nlink() != 1
+            || metadata.mode() & 0o777 != 0o600
+        {
+            return Err(Error::Format(
+                "baseline destination must be an empty private single-link file",
+            ));
+        }
+        lock(&file)?;
+        file.seek(SeekFrom::Start(0))?;
+        file.write_all(&bytes)?;
+        file.sync_all()?;
+        Ok(Self::snapshot_owner(
+            file,
+            id,
+            transaction,
+            pages.len(),
+            bytes.len(),
+        ))
+    }
+
+    fn snapshot_owner(
+        file: File,
+        id: DatabaseId,
+        transaction: u64,
+        pages: usize,
+        bytes: usize,
+    ) -> Self {
+        Self {
             file: Box::new(file),
             id,
             version: crate::SNAPSHOT_WAL_VERSION,
-            valid_bytes: bytes.len() as u64,
+            valid_bytes: bytes as u64,
             next_transaction: transaction + 1,
-            next_sequence: pages.len() as u64 + 2,
+            next_sequence: pages as u64 + 2,
             poisoned: false,
-        })
+        }
+    }
+
+    /// Compare inode ownership without opening a pathname, changing position or locking anew.
+    /// Identity alone does not verify file contents or publication durability.
+    pub fn owns_file(&self, file: &File) -> Result<bool> {
+        self.ready()?;
+        let owned = self.file.metadata()?;
+        let selected = file.metadata()?;
+        Ok(owned.is_file()
+            && selected.is_file()
+            && (owned.dev(), owned.ino()) == (selected.dev(), selected.ino()))
     }
 
     /// Validation is read-only. Tail removal happens only before another write.

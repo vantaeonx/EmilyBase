@@ -34,6 +34,10 @@ Linux, local temporary files, synthetic data, Rust stable 1.99.0, updated 2026-1
 | Compacted histories with later writes | rows/history/IDs preserved; next transaction continues | compaction file/model tests |
 | More than 256 baseline pages | all 300 rows restored; normal transaction limit unchanged | baseline/integrated tests |
 | WAL inode replaced while owner exists | another database owner remains excluded | directory ownership regression |
+| Directory moved during compaction with substituted old pathname | original directory compacted; foreign journal/staging untouched | old failing regression, native changes and generated relocation model |
+| Compaction staging/selection detached or substituted | pre-rename refusal or preserved uncertain result; foreign/detached entries untouched | native and unit replacement cases |
+| Selected authoritative WAL substituted before compaction publication | old owner poisoned; both histories preserved; no later ACK accepted | before-start/staged source selection regression |
+| Same-inode baseline truncation, CRC damage or valid foreign history | pre-rename refusal or post-rename uncertainty/poisoning | six exact-content boundary cases |
 | Version-1 and version-2 backup payloads | independent verified restore and new writes | backup compatibility tests |
 | Backup/restore parent or staged entry substituted before rename | refusal; foreign entries untouched; source bytes unchanged | reproduced regressions and eight external subprocess changes |
 | Backup/restore file/WAL/staging sync fails before/after real fsync | no selected target; owned staging cleaned | twenty-case combined publication sync matrix |

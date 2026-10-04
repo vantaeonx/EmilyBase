@@ -1,5 +1,4 @@
-use std::fs::{self, File};
-use std::path::PathBuf;
+use std::fs::File;
 
 use emilybase_wal::Wal;
 
@@ -27,22 +26,24 @@ impl Database {
         sync_directory: impl FnOnce(&File) -> std::io::Result<()>,
     ) -> Result<Compaction> {
         self.committed_wal()?;
+        self.check_selected_journal()?;
         let report = Compaction {
             previous_wal_bytes: self.wal.valid_bytes(),
             compacted_wal_bytes: 0,
             transaction: self.last_transaction(),
             pages: self.snapshot.page_count(),
         };
-        let temporary = self.path.join("redo-next.wal");
-        match fs::remove_file(&temporary) {
-            Ok(()) => (),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
-            Err(error) => return Err(error.into()),
-        }
-        let pending = PendingPath(temporary);
+        let mut pending = crate::journal_replacement::Pending::new(&self.ownership)?;
         let pages = self.snapshot.pages().cloned().collect::<Vec<_>>();
-        let mut replacement =
-            Wal::create_snapshot(&pending.0, self.database_id(), report.transaction, &pages)?;
+        let mut replacement = Wal::create_snapshot_from_file(
+            pending.file.try_clone()?,
+            self.database_id(),
+            report.transaction,
+            &pages,
+        )?;
+        synced();
+        pending.check()?;
+        self.check_selected_journal()?;
         let bytes = replacement.committed_bytes()?;
         let recovered = recover_image(&bytes, Some(self.database_id()))?;
         if recovered.last_transaction != report.transaction
@@ -52,12 +53,22 @@ impl Database {
                 "replacement baseline differs from committed state",
             ));
         }
-        synced();
-        fs::rename(&pending.0, self.path.join("redo.wal"))?;
+        pending.publish()?;
         published();
         if let Err(error) = sync_directory(&self.ownership) {
             self.poisoned = true;
             return Err(Error::MaintenanceUnknown(error));
+        }
+        let selection = pending.selected_image(&bytes);
+        if !matches!(selection, Ok(true)) {
+            self.poisoned = true;
+            return Err(Error::MaintenanceUnknown(selection.err().unwrap_or_else(
+                || {
+                    std::io::Error::other(
+                        "selected replacement journal identity or contents changed",
+                    )
+                },
+            )));
         }
         let report = Compaction {
             compacted_wal_bytes: replacement.valid_bytes(),
@@ -66,15 +77,20 @@ impl Database {
         self.wal = replacement;
         Ok(report)
     }
+
+    fn check_selected_journal(&mut self) -> Result<()> {
+        let result = crate::journal_replacement::source_selected(&self.ownership, &self.wal);
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
+    }
 }
 
 #[cfg(test)]
 #[path = "compaction_tests.rs"]
 mod tests;
 
-struct PendingPath(PathBuf);
-impl Drop for PendingPath {
-    fn drop(&mut self) {
-        let _ = fs::remove_file(&self.0);
-    }
-}
+#[cfg(test)]
+#[path = "compaction_ownership_tests.rs"]
+mod ownership_tests;
