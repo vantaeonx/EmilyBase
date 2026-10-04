@@ -1,4 +1,6 @@
-use std::fs::{self, DirBuilder, File};
+#[cfg(test)]
+use std::fs;
+use std::fs::{DirBuilder, File};
 use std::path::{Path, PathBuf};
 
 use emilybase_database::Snapshot;
@@ -121,18 +123,24 @@ impl Database {
 
     fn checkpoint_with(&mut self, synced: impl FnOnce(), published: impl FnOnce()) -> Result<()> {
         self.ready()?;
-        let temporary = self.path.join("checkpoint-next.emily");
-        match fs::remove_file(&temporary) {
+        let temporary = "checkpoint-next.emily";
+        match rustix::fs::unlinkat(&self.ownership, temporary, rustix::fs::AtFlags::empty()) {
             Ok(()) => (),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
-            Err(error) => return Err(error.into()),
+            Err(rustix::io::Errno::NOENT) => (),
+            Err(error) => return Err(std::io::Error::from(error).into()),
         }
         let pages = self.snapshot.pages().cloned().collect::<Vec<_>>();
-        let pager = Pager::create_with_pages(&temporary, &pages)?;
+        let pager = Pager::create_with_pages_at(&self.ownership, temporary, &pages)?;
         synced();
-        fs::rename(&temporary, self.path.join("checkpoint.emily"))?;
+        rustix::fs::renameat(
+            &self.ownership,
+            temporary,
+            &self.ownership,
+            "checkpoint.emily",
+        )
+        .map_err(std::io::Error::from)?;
         published();
-        File::open(&self.path)?.sync_all()?;
+        self.ownership.sync_all()?;
         drop(pager);
         Ok(())
     }

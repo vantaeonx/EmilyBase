@@ -64,3 +64,88 @@ fn failed_relational_replay_releases_ownership_for_operator_repair() {
     let mut db = Database::open_bound(path, Some(id)).unwrap();
     assert_eq!(db.committed_wal().unwrap(), before);
 }
+
+#[test]
+fn checkpoint_cannot_remove_or_replace_files_in_a_substituted_database_directory() {
+    use emilybase_catalog::{Column, DataType, Schema, Value};
+    use std::fs;
+
+    for compact in [false, true] {
+        for replacement in [true, false] {
+            let temporary = tempfile::tempdir().unwrap();
+            let path = temporary.path().join("database");
+            let moved = temporary.path().join("owned-database");
+            let mut database = Database::create(&path).unwrap();
+            let mut transaction = database.begin().unwrap();
+            transaction
+                .create_table(Schema {
+                    name: "items".into(),
+                    columns: vec![Column {
+                        name: "id".into(),
+                        data_type: DataType::Integer,
+                        nullable: false,
+                    }],
+                    primary_key: 0,
+                })
+                .unwrap();
+            transaction
+                .insert("items", vec![Value::Integer(7)])
+                .unwrap();
+            transaction.commit().unwrap();
+            if compact {
+                database.compact().unwrap();
+            }
+            let id = database.database_id();
+            let before = database.committed_wal().unwrap();
+            let selected_pages = database
+                .view()
+                .unwrap()
+                .pages()
+                .cloned()
+                .collect::<Vec<_>>();
+            fs::rename(&path, &moved).unwrap();
+            if replacement {
+                fs::create_dir(&path).unwrap();
+                fs::write(path.join("checkpoint-next.emily"), b"foreign pending file").unwrap();
+                fs::write(path.join("checkpoint.emily"), b"foreign selected file").unwrap();
+                fs::write(path.join("redo.wal"), b"foreign WAL").unwrap();
+            }
+            database.checkpoint().unwrap();
+            assert_eq!(database.committed_wal().unwrap(), before);
+            assert_eq!(fs::read(moved.join("redo.wal")).unwrap(), before);
+            assert!(!moved.join("checkpoint-next.emily").exists());
+            let mut cache = emilybase_storage::Pager::open(moved.join("checkpoint.emily")).unwrap();
+            assert_eq!(cache.page_count(), selected_pages.len() as u64);
+            for page in &selected_pages {
+                assert_eq!(cache.read_page(page.id()).unwrap(), *page);
+            }
+            if replacement {
+                assert_eq!(
+                    fs::read(path.join("checkpoint-next.emily")).unwrap(),
+                    b"foreign pending file"
+                );
+                assert_eq!(
+                    fs::read(path.join("checkpoint.emily")).unwrap(),
+                    b"foreign selected file"
+                );
+                assert_eq!(fs::read(path.join("redo.wal")).unwrap(), b"foreign WAL");
+                assert_eq!(fs::read_dir(&path).unwrap().count(), 3);
+            } else {
+                assert!(!path.exists());
+            }
+            drop(cache);
+            drop(database);
+            let reopened = Database::open_bound(&moved, Some(id)).unwrap();
+            assert_eq!(
+                reopened
+                    .view()
+                    .unwrap()
+                    .pages()
+                    .cloned()
+                    .collect::<Vec<_>>(),
+                selected_pages
+            );
+            assert_eq!(reopened.last_transaction(), 2);
+        }
+    }
+}

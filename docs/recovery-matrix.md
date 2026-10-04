@@ -4,6 +4,11 @@ Linux, local temporary files, synthetic data, Rust stable 1.99.0, updated 2026-1
 
 | Boundary or failure | Observed result | Check |
 | --- | --- | --- |
+| Raw page creation killed while staged, renamed or returned | no target or exact complete header/pages; selected file opens and accepts later writes | three native creation kill boundaries |
+| Raw parent/staging substituted before publication | refusal; foreign/detached entries preserved | reproduced parent and ownership regressions |
+| Raw staging/selected links or permissions changed | admission refusal or preserved uncertain selection | four pre/post-rename admission cases |
+| Raw file/parent sync fails before/after underlying fsync | no target before rename; complete selection and uncertainty after rename | eight pathname/descriptor sync cases |
+| Managed directory moved with absent/substituted old path | checkpoint stays in owned directory; foreign files and exact WAL unchanged | both-WAL checkpoint ownership regression |
 | Staged table changes, no WAL write, process killed | previous state only | integrated crash tests |
 | Synced page frames without commit, process killed | previous state only; next commit removes tail | WAL and integrated crash tests |
 | Synced table commit acknowledged, process killed | complete batch restored | integrated crash tests |

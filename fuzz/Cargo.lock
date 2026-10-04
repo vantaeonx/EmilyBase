@@ -261,6 +261,8 @@ name = "emilybase-storage"
 version = "0.1.0"
 dependencies = [
  "crc32fast",
+ "getrandom 0.3.4",
+ "rustix",
  "thiserror",
 ]
 

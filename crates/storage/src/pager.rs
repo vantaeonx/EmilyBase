@@ -1,12 +1,11 @@
-use std::fs::{self, File, OpenOptions, TryLockError};
+use std::fs::{File, TryLockError};
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::os::unix::fs::MetadataExt;
+use std::path::Path;
 
 use crate::{Error, PAGE_SIZE, Page, Result, header};
 
 pub const MAX_PAGES: u64 = 65536;
-static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 /// Exclusive synchronous access to a page file. Not a transaction manager.
 pub struct Pager {
@@ -17,37 +16,57 @@ pub struct Pager {
 
 impl Pager {
     /// Publish a fully initialized header without replacing an existing path.
-    /// Requires local hard-link and directory-sync support.
+    /// Requires local Linux no-replace rename and directory-sync support.
     pub fn create(path: impl AsRef<Path>) -> Result<Self> {
         Self::create_with_pages(path, &[])
     }
 
     /// Initialize all supplied pages before atomic no-clobber publication.
     pub fn create_with_pages(path: impl AsRef<Path>, pages: &[Page]) -> Result<Self> {
-        if pages.len() as u64 > MAX_PAGES {
-            return Err(Error::PageLimit);
-        }
-        for (index, page) in pages.iter().enumerate() {
-            if page.id() != index as u64 + 1 {
-                return Err(Error::PageId(page.id()));
-            }
-        }
-        let path = path.as_ref();
-        let parent = path
-            .parent()
-            .filter(|p| !p.as_os_str().is_empty())
-            .unwrap_or_else(|| Path::new("."));
-        let (mut file, mut pending) = temporary_file(parent)?;
-        lock(&file)?;
-        file.write_all(&header::encode())?;
+        Self::create_with(path.as_ref(), pages, || {}, || {})
+    }
+
+    /// Publish a single-component name in the exact directory supplied by its owner.
+    /// Namespace renames do not redirect this explicit descriptor-based operation.
+    pub fn create_with_pages_at(
+        directory: &File,
+        name: impl AsRef<std::ffi::OsStr>,
+        pages: &[Page],
+    ) -> Result<Self> {
+        validate_initial(pages)?;
+        let pending = crate::creation::Pending::at(directory, name.as_ref())?;
+        Self::initialize(pending, pages, || {}, || {})
+    }
+
+    pub(crate) fn create_with(
+        path: &Path,
+        pages: &[Page],
+        synced: impl FnOnce(),
+        published: impl FnOnce(),
+    ) -> Result<Self> {
+        validate_initial(pages)?;
+        let pending = crate::creation::Pending::new(path)?;
+        Self::initialize(pending, pages, synced, published)
+    }
+
+    fn initialize(
+        mut pending: crate::creation::Pending,
+        pages: &[Page],
+        synced: impl FnOnce(),
+        published: impl FnOnce(),
+    ) -> Result<Self> {
+        lock(&pending.file)?;
+        pending.file.write_all(&header::encode())?;
         for page in pages {
-            file.write_all(&page.encode())?;
+            pending.file.write_all(&page.encode())?;
         }
-        file.sync_all()?;
-        fs::hard_link(&pending.path, path)?;
-        fs::remove_file(&pending.path)?;
-        pending.removed = true;
-        File::open(parent)?.sync_all()?;
+        crate::creation::sync(&pending.file, "file_sync")?;
+        synced();
+        pending.check()?;
+        verify_initial(&mut pending.file, pages)?;
+        // Any descriptor-duplication failure occurs before the irreversible rename.
+        let file = pending.file.try_clone()?;
+        pending.publish(published)?;
         Ok(Self {
             file,
             pages: pages.len() as u64,
@@ -56,7 +75,20 @@ impl Pager {
     }
 
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
-        let mut file = OpenOptions::new().read(true).write(true).open(path)?;
+        let fd = rustix::fs::open(
+            path.as_ref(),
+            rustix::fs::OFlags::RDWR
+                | rustix::fs::OFlags::NOFOLLOW
+                | rustix::fs::OFlags::NONBLOCK
+                | rustix::fs::OFlags::CLOEXEC,
+            rustix::fs::Mode::empty(),
+        )
+        .map_err(std::io::Error::from)?;
+        let mut file: File = fd.into();
+        let metadata = file.metadata()?;
+        if !metadata.is_file() || metadata.nlink() != 1 {
+            return Err(Error::Path);
+        }
         lock(&file)?;
         let length = file.metadata()?.len();
         if length < PAGE_SIZE as u64
@@ -147,51 +179,36 @@ fn lock(file: &File) -> Result<()> {
     }
 }
 
-struct Pending {
-    path: PathBuf,
-    removed: bool,
-}
-
-impl Drop for Pending {
-    fn drop(&mut self) {
-        // Best effort on an error path; the destination is never removed.
-        if !self.removed {
-            let _ = fs::remove_file(&self.path);
+fn validate_initial(pages: &[Page]) -> Result<()> {
+    if pages.len() as u64 > MAX_PAGES {
+        return Err(Error::PageLimit);
+    }
+    for (index, page) in pages.iter().enumerate() {
+        if page.id() != index as u64 + 1 {
+            return Err(Error::PageId(page.id()));
         }
     }
+    Ok(())
 }
 
-fn temporary_file(parent: &Path) -> Result<(File, Pending)> {
-    for _ in 0..32 {
-        let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
-        let path = parent.join(format!(
-            ".emilybase-create-{}-{sequence}",
-            std::process::id()
-        ));
-        let mut options = OpenOptions::new();
-        options.read(true).write(true).create_new(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            options.mode(0o600);
-        }
-        match options.open(&path) {
-            Ok(file) => {
-                return Ok((
-                    file,
-                    Pending {
-                        path,
-                        removed: false,
-                    },
-                ));
-            }
-            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
-            Err(error) => return Err(error.into()),
+fn verify_initial(file: &mut File, pages: &[Page]) -> Result<()> {
+    let expected_length = (pages.len() as u64 + 1) * PAGE_SIZE as u64;
+    let length = file.metadata()?.len();
+    if length != expected_length {
+        return Err(Error::FileLength(length));
+    }
+    file.seek(SeekFrom::Start(0))?;
+    let mut bytes = [0; PAGE_SIZE];
+    file.read_exact(&mut bytes)?;
+    header::decode(&bytes)?;
+    if bytes != header::encode() {
+        return Err(Error::Layout("staged header differs from source"));
+    }
+    for page in pages {
+        file.read_exact(&mut bytes)?;
+        if bytes != page.encode() {
+            return Err(Error::Layout("staged page differs from source"));
         }
     }
-    Err(std::io::Error::new(
-        std::io::ErrorKind::AlreadyExists,
-        "temporary path collision limit",
-    )
-    .into())
+    Ok(())
 }

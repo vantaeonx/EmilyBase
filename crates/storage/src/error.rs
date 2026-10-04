@@ -30,6 +30,14 @@ pub enum Error {
     PageLimit,
     #[error("pager has encountered an I/O failure; close and inspect the file")]
     Poisoned,
+    #[error("page-file path must be regular, single-link and not a symlink")]
+    Path,
+    #[error("page-file destination or staging identity changed")]
+    PathChanged,
+    #[error("operating-system randomness is unavailable")]
+    Randomness,
+    #[error("page file was published but its durability or destination requires inspection")]
+    PublicationUnknown(#[source] io::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -43,6 +43,14 @@ selections. Generated scope/epoch models, native mutations, descriptor-release
 cycles and real relative CLI cases execute; registry/nested archive bytes are
 unchanged. See [ADR 0033](docs/adr/0033-owned-registry-backup-publication.md).
 
+Raw page-file creation now pins its directory and staged inode, rereads exact
+synced header/page bytes and publishes through a no-replace rename. Errors after
+rename preserve the selected file and report uncertainty. Open refuses link
+aliases and nonregular objects. Managed checkpoint operations use the already
+owned database directory even if it moves. Native creation kills, sync failures,
+generated page models and both-WAL checkpoint regressions execute without changing
+file bytes. See [ADR 0034](docs/adr/0034-owned-page-file-publication.md).
+
 The original B+ tree supports unique insertion, leaf/internal splits, pointer
 replacement, deletion with sibling rotations/merges and root collapse, sorted
 bulk loading, point lookup and ordered ranges. Fixed-size page-image round trips

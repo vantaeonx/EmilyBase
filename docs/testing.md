@@ -1160,3 +1160,36 @@ project values, key epochs and scopes remain exact; copy writes/rotation are
 independent. These are bounded namespace/cleanup checks, not hostile-admin,
 whole-process load, hardware power-loss or completed production/security proof.
 See [ADR 0033](adr/0033-owned-registry-backup-publication.md).
+
+## Owned raw page creation and managed checkpoints
+
+On 2026-10-04 all 503 main Rust tests pass on stable 1.99.0 and Rust 1.89.0;
+15 ignored child entry helpers are invoked by their parent cases. Workspace/fuzz
+format, strict Clippy, locked build and seven native SDK checks pass. Both
+lockfiles pass the local known-advisory check without warnings (133/105 packages,
+1290 cached advisories); only storage dependency edges changed, not versions.
+The previous 9fb20a2 has successful GitHub stable/SDK, minimum Rust, advisory and
+real release-container jobs, run 37199464107.
+
+Three regressions fail before their fixes: raw creation parent substitution,
+checkpoint redirection after moving its owned directory and changed staging
+permissions/links. Initial header/page readback now rejects truncation, corrupted
+bytes and a valid foreign page. Cases check detached/substituted staging, final
+aliases/nonregular files, explicit directory-handle filenames and eight sync
+failures before/after underlying fsync. Post-rename uncertainty retains a complete
+selection and its lock is released for inspection. A 32-case independent page
+model checks exact file bytes, failed sync, retry, reopen and independent appends.
+
+Three native process kills at synced staging, rename and returned pager retain
+no target or the exact complete initialized image. An orphan stage is never
+adopted. Selected images reopen and accept another page. Managed checkpoints stay
+in their held directory after its name moves or is replaced, for WAL 1/2; exact
+WAL and foreign old-path files remain unchanged. Actual CLI cases cover relative
+Unicode paths, 0600 creation, no clobber and link refusal without printing records.
+
+This logical block adds 1011 Rust lines and removes/replaces 78, net 933. Totals:
+36170 Rust (34594 excluding blank/comment-only lines), 1207 SDK and 718 Python,
+or 38095 combined source lines including tests. EMILYDB/EBPG/WAL/backup bytes are
+unchanged. Raw in-place writes remain nontransactional. These bounded checks do
+not close hardware power-loss, failing-media, upgrade or production/security gates.
+See [ADR 0034](adr/0034-owned-page-file-publication.md).

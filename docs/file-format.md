@@ -49,13 +49,23 @@ Golden fixtures are synthetic and represented as source bytes, not user files.
 
 ## Durability boundary
 
-Creation uses an exclusively created temporary file in the destination directory,
-syncs it, publishes it with an atomic no-clobber hard link, removes the temporary
-name and syncs the directory. Filesystems must support hard links and directory
-sync. If sync reports an error, creation may already be visible; success is
-never returned before the durability steps complete.
+Creation pins the destination directory and exclusively creates a random 0600
+temporary file through that handle. It syncs the complete initial image, rereads
+exact header/page bytes, validates identities and single-link admission, then
+publishes with Linux no-replace rename and syncs the owned directory. A returned
+pager retains the same inode and exclusive lock. Final parent symlinks are refused;
+operator-selected ancestors remain trusted. The explicit directory-handle API
+accepts one filename and addresses the owned directory even if its name moves.
+
+Before publication, cleanup removes only the unchanged owned staging entry.
+After rename, sync or identity/admission failure preserves the selection and
+reports `PublicationUnknown`; reopening/inspection is required before retry.
+Raw open refuses final symlinks, multiple hard links and nonregular files. These
+are filesystem admission rules; header and page bytes remain version 1.
+See [ADR 0034](adr/0034-owned-page-file-publication.md).
 
 In-place page writes are synced but are **not transaction-safe**. A crash can
 tear a page or leave an incomplete append. The initial pager detects corruption;
-it cannot repair it. WAL, rollback and power-loss recovery are not implemented.
+it cannot repair it. The separate managed transaction layer uses its mandatory
+WAL for recovery and rollback; this raw pager does not implement those guarantees.
 Do not equate an individual page-write result with a durable transaction commit.

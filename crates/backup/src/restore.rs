@@ -35,7 +35,7 @@ pub(crate) fn restore_with(
     sync(&file, "restore_wal_sync")?;
     drop(file);
     // The legacy path-based engine is anchored through our live directory handle.
-    let path = descriptor_path(&pending.owner);
+    let path = descriptor_path(&pending.owner).join(".");
     let mut database = Database::open_bound(&path, Some(report.database_id))?;
     if database.committed_wal()? != bytes[HEADER_SIZE..] {
         return Err(Error::Format(
