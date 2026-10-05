@@ -3,6 +3,7 @@ use crate::{Error, Event, EventKind, Result};
 use emilybase_catalog::Key;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 /// Identifies a current row image within the caller's already validated snapshot.
 /// This is not a globally unique database identity or transaction/version token.
@@ -40,7 +41,7 @@ impl RowLocation {
 }
 
 #[derive(Clone, Default)]
-pub(crate) struct Locations(BTreeMap<u64, BTreeMap<Key, RowLocation>>);
+pub(crate) struct Locations(BTreeMap<u64, Arc<BTreeMap<Key, RowLocation>>>);
 pub(crate) enum Change {
     Put(u64, Key, RowLocation),
     Delete(u64, Key),
@@ -69,11 +70,11 @@ impl Locations {
     pub(crate) fn apply(&mut self, change: Change) {
         match change {
             Change::Put(table_id, key, location) => {
-                self.0.entry(table_id).or_default().insert(key, location);
+                Arc::make_mut(self.0.entry(table_id).or_default()).insert(key, location);
             }
             Change::Delete(table_id, key) => {
                 if let Some(rows) = self.0.get_mut(&table_id) {
-                    rows.remove(&key);
+                    Arc::make_mut(rows).remove(&key);
                     if rows.is_empty() {
                         self.0.remove(&table_id);
                     }
@@ -83,6 +84,62 @@ impl Locations {
                 self.0.remove(&table_id);
             }
             Change::None => (),
+        }
+    }
+}
+
+#[cfg(test)]
+mod sharing_tests {
+    use super::*;
+
+    fn location(table: u64, page: u64) -> RowLocation {
+        RowLocation {
+            table_id: table,
+            page_id: page,
+            slot_id: 0,
+            fingerprint: [page as u8; 32],
+        }
+    }
+
+    fn maps() -> Locations {
+        let mut value = Locations::default();
+        value.apply(Change::Put(1, Key::Text("я".repeat(1536)), location(1, 1)));
+        value.apply(Change::Put(2, Key::Integer(1), location(2, 1)));
+        value
+    }
+
+    #[test]
+    fn clone_and_put_detach_only_affected_location_map() {
+        let original = maps();
+        let mut branch = original.clone();
+        assert!(Arc::ptr_eq(&original.0[&1], &branch.0[&1]));
+        assert!(Arc::ptr_eq(&original.0[&2], &branch.0[&2]));
+        let key = Key::Text("я".repeat(1536));
+        branch.apply(Change::Put(1, key.clone(), location(1, 2)));
+        assert!(!Arc::ptr_eq(&original.0[&1], &branch.0[&1]));
+        assert!(Arc::ptr_eq(&original.0[&2], &branch.0[&2]));
+        assert_eq!(original.get(1, &key), Some(location(1, 1)));
+        assert_eq!(branch.get(1, &key), Some(location(1, 2)));
+    }
+
+    #[test]
+    fn delete_last_drop_and_reinsert_preserve_historical_location_maps() {
+        let original = maps();
+        for drop in [false, true] {
+            let mut branch = original.clone();
+            let key = Key::Text("я".repeat(1536));
+            branch.apply(if drop {
+                Change::Drop(1)
+            } else {
+                Change::Delete(1, key.clone())
+            });
+            assert!(!branch.0.contains_key(&1));
+            assert_eq!(original.get(1, &key), Some(location(1, 1)));
+            assert!(Arc::ptr_eq(&original.0[&2], &branch.0[&2]));
+            branch.apply(Change::Put(1, key.clone(), location(1, 3)));
+            assert_eq!(branch.get(1, &key), Some(location(1, 3)));
+            assert!(!Arc::ptr_eq(&original.0[&1], &branch.0[&1]));
+            assert_eq!(original.get(1, &key), Some(location(1, 1)));
         }
     }
 }

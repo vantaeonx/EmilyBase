@@ -94,7 +94,7 @@ impl Report {
             return Err(Error::Report("version or project count"));
         }
         let expected: &[PhaseKind] = match self.config.mode {
-            Mode::State => &[
+            Mode::State | Mode::IndexOnly => &[
                 PhaseKind::Built,
                 PhaseKind::Staged,
                 PhaseKind::IndexesStaged,
@@ -152,7 +152,7 @@ impl Report {
                 return Err(Error::Report("index component"));
             }
             let total = match self.config.mode {
-                Mode::State => {
+                Mode::State | Mode::IndexOnly => {
                     if !(1..=65536).contains(&value.history_pages) || value.root_bytes != 192 {
                         return Err(Error::Report("state component"));
                     }
@@ -170,7 +170,7 @@ impl Report {
             }
         }
         match (self.config.mode, self.comparison) {
-            (Mode::State, None) => {}
+            (Mode::State | Mode::IndexOnly, None) => {}
             (Mode::Fingerprint, Some(comparison)) => {
                 let actual = Comparison::from_samples(
                     self.phases[0].heap,

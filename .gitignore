@@ -17,5 +17,6 @@ dist/
 .emilybase-registry-backup-*
 .emilybase-registry-restore-*
 proptest-regressions/
+*.proptest-regressions
 /emilybase-data/
 __pycache__/

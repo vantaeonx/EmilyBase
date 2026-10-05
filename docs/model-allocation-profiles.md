@@ -16,6 +16,7 @@ target/release/emilybase-model-profile --case short-text --rows 10000 --value-by
 target/release/emilybase-model-profile --case long-text --rows 10000 --value-bytes 768 --retain-old
 target/release/emilybase-model-profile --case long-text --rows 10000 --value-bytes 768 --projects 4 --retain-old
 cargo test --release --locked -p emilybase-model-profile --features heap-profile
+target/release/emilybase-model-profile --mode index-only --case long-text --rows 10000 --value-bytes 768 --projects 4 --retain-old
 ```
 
 The binary emits one version-1 JSON report to stdout. Shell redirection can retain
@@ -104,3 +105,38 @@ test a real rejection/release mechanism independently of these measurements.
 Encoded-image admission, the four HTTP worker permits and diagnostic row bounds
 do not enforce a common heap quota. Shared durable WAL records/replay and broader
 power-loss, security, backup/upgrade and load acceptance remain open.
+
+## Shared-table follow-up
+
+[ADR 0041](adr/0041-shared-relational-snapshot-tables.md) changes the runtime
+Snapshot's private table/location-map ownership to per-table copy-on-write.
+Previous report modes/shapes remain accepted; `index-only` is an additional
+mode with the same state phase order/components and no row replacement. It
+publishes a new complete index/root memory selection while verifying unchanged
+rows and physical history. It does not make an independently durable index.
+
+Two later local release runs use the same Linux/Rust/dhat settings, four held
+models, 10000 long keys and 768-byte values each:
+
+| Sample | Earlier eager begin, row-write mode | Shared-table row-write mode | Shared-table index-only mode |
+| --- | ---: | ---: | ---: |
+| Built requested bytes | 572915440 | 572912112 | 572912112 |
+| At begin, requested bytes | 984941760 | 573235312 | 573235312 |
+| Indexes staged, requested bytes | 985292312 | 985285656 | 573249168 |
+| Published retaining old view, bytes | 985283384 | 985276728 | 573240656 |
+| After old-view release, bytes | 572932520 | 572929192 | 572593136 |
+| Global requested-byte peak | 985295630 | 985288974 | 675834188 |
+| Instrumented maximum process RSS, KiB | 1008592 | 1008768 | 688696 |
+| Instrumented elapsed | 9.79 s | 9.31 s | 9.42 s |
+
+Begin avoids the former whole-state row copy: its current-byte sample is lower
+by 411706448 bytes in this shape. Index-only staging then keeps shared relational
+objects; its old-view release drops just 647520 bytes of metadata/handles/old
+index selections. Its cumulative peak still includes construction, not just
+index-only publication. Actual row-write mode still detaches each large table
+and per-table location map; its approximately 940-MiB peak remains. Neither the
+timing difference nor RSS establishes throughput or a server reservation.
+
+Actual later reports: [shared row writes](measurements/2026-10-05-shared-tables/state-long-four.json)
+and [shared index-only stages](measurements/2026-10-05-shared-tables/index-only-four.json).
+The preserved earlier reports remain historical observations and are not replaced.

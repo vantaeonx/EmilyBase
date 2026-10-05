@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "kebab-case")]
 pub enum Mode {
     State,
+    IndexOnly,
     Fingerprint,
 }
 

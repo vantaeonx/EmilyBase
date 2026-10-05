@@ -108,7 +108,7 @@ remaining event capacity. UPDATE copies selected rows only; DELETE retains keys
 only. Prior statements share the 256-event bound, and overflow rolls back the
 whole script. Zero matches consume no events. A reproduced memory-capped selection
 abort, generated models, CLI/HTTP and both-WAL recovery checks cover the change.
-Snapshot staging itself retains its normal copy. See
+Snapshot staging now shares unchanged tables and copies a changed table on first write. See
 [ADR 0030](docs/adr/0030-bounded-mutation-selection.md).
 
 Derived trees preserve all 10000 admitted rows: a full dense build uses 768 pages,
@@ -192,6 +192,13 @@ server/CLI runtime dependencies. See [reproduction and actual reports](docs/mode
 and [ADR 0040](docs/adr/0040-opt-in-model-allocation-diagnostics.md).
 The model has no file/WAL writes or durable acknowledgments; combined budgets and a shared
 durable writer remain pending. See [ADR 0038](docs/adr/0038-staged-table-index-model.md).
+
+Relational snapshot clones now share immutable tables and per-table physical
+location maps. First mutation detaches only the affected table; unrelated rows
+and historical views keep their objects. No-op/read-only/index-only stages avoid
+eagerly copying all rows. A write still copies the affected shared table, so
+heap/lifetime admission remains open. Existing durable formats/ACKs are unchanged.
+See [ADR 0041](docs/adr/0041-shared-relational-snapshot-tables.md).
 
 The synchronous project registry creates private isolated database directories,
 issues scoped high-entropy API keys and rotates them with atomic metadata publication.

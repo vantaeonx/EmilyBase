@@ -71,6 +71,10 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
    measure concurrent worker transients. Heap/lifetime admission remains open.
    See [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md) and
    [profiles](model-allocation-profiles.md).
+   Relational snapshot clones now share tables/location maps and detach the
+   affected table on first write. Read-only/index-only stages avoid eager row
+   copies, while writes to a large table still copy that table. Lifetime/worker
+   reservation remains open. See [ADR 0041](adr/0041-shared-relational-snapshot-tables.md).
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 

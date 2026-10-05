@@ -6,7 +6,7 @@ use proptest::prelude::*;
 
 fn fixture(mode: Mode, kind: Kind, rows: u16, projects: u8) -> Report {
     let names: &[PhaseKind] = match mode {
-        Mode::State => &[
+        Mode::State | Mode::IndexOnly => &[
             PhaseKind::Built,
             PhaseKind::Staged,
             PhaseKind::IndexesStaged,
@@ -44,11 +44,11 @@ fn fixture(mode: Mode, kind: Kind, rows: u16, projects: u8) -> Report {
     };
     let index_bytes = (index_pages + 1) * 4096;
     let component = Components {
-        history_pages: u64::from(mode == Mode::State),
-        root_bytes: if mode == Mode::State { 192 } else { 0 },
+        history_pages: u64::from(mode != Mode::Fingerprint),
+        root_bytes: if mode != Mode::Fingerprint { 192 } else { 0 },
         index_pages,
         index_bytes,
-        total_bytes: index_bytes + if mode == Mode::State { 4288 } else { 0 },
+        total_bytes: index_bytes + if mode != Mode::Fingerprint { 4288 } else { 0 },
     };
     let comparison = if mode == Mode::Fingerprint {
         Some(Comparison::from_samples(phases[0].heap, phases[1].heap, phases[2].heap).unwrap())
@@ -195,6 +195,10 @@ fn preserved_synthetic_release_reports_pass_bounded_admission() {
             .as_slice(),
         include_bytes!("../../../docs/measurements/2026-10-05-model-profile/state-long-four.json")
             .as_slice(),
+        include_bytes!("../../../docs/measurements/2026-10-05-shared-tables/index-only-four.json")
+            .as_slice(),
+        include_bytes!("../../../docs/measurements/2026-10-05-shared-tables/state-long-four.json")
+            .as_slice(),
     ] {
         let report = decode_report(bytes).unwrap();
         assert_eq!(report.config.rows, 10000);
@@ -208,10 +212,14 @@ proptest! {
     #[test]
     fn valid_bounded_shapes_round_trip_with_consistent_components(
         rows in 1u16..=10000, projects in 1u8..=4,
-        kind in 0u8..3, fingerprint in any::<bool>(), value_bytes in 0u16..=768
+        kind in 0u8..3, requested_mode in 0u8..3, value_bytes in 0u16..=768
     ) {
         let kind = match kind { 0 => Kind::Integer, 1 => Kind::ShortText, _ => Kind::LongText };
-        let mode = if fingerprint && kind != Kind::LongText { Mode::Fingerprint } else { Mode::State };
+        let mode = match requested_mode {
+            1=>Mode::IndexOnly,
+            2 if kind!=Kind::LongText=>Mode::Fingerprint,
+            _=>Mode::State,
+        };
         let mut report = fixture(mode, kind, rows, projects);
         report.config.value_bytes = value_bytes;
         let bytes = serde_json::to_vec(&report).unwrap();

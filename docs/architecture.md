@@ -47,7 +47,9 @@ access. Checksums detect accidental corruption; they do not authenticate data.
 ## Transaction boundary
 
 The managed-directory transaction API holds one exclusive journal owner. A
-transaction stages a bounded state copy and shared immutable pages. Commit writes
+transaction stages bounded outer metadata and shared immutable pages/tables.
+Its first write detaches only the affected row table and physical-location map;
+old readers retain the previous objects. Commit writes
 changed full pages and a commit marker, syncs WAL, then publishes committed state.
 Rollback/drop discard staged memory; a failed write aborts the transaction.
 Recovery checks that redo never rewrites older history, then reconstructs tables.
@@ -57,6 +59,8 @@ repeated images with a complete baseline, preserving history and transaction IDs
 The database directory stays locked across journal inode replacement.
 See [ADR 0006](adr/0006-retained-journal.md) and [ADR 0008](adr/0008-self-contained-journal-compaction.md).
 MVCC, history vacuuming and background rotation are pending.
+See [ADR 0041](adr/0041-shared-relational-snapshot-tables.md) for sharing boundaries;
+this does not add concurrent managed writers or a heap reservation.
 
 ## Index boundary
 

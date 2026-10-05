@@ -111,6 +111,13 @@ buffer; both paths still materialize images and reconstruct topology. Preparatio
 reuses admitted hashes for unchanged roots instead of re-encoding them. `begin`
 still clones relational state and old views can still retain states indefinitely.
 
+The later [shared-table change](adr/0041-shared-relational-snapshot-tables.md)
+keeps immutable tables/location maps under Arc. Snapshot cloning now copies outer
+metadata/page handles; first write clones only its affected shared table/map.
+The preceding allocation descriptions are historical checkpoints. This reduces
+no-op/index-only/unrelated-table costs but does not bound retained generations
+or writes to a large table.
+
 Before this allocation change, the uninstrumented stable debug capacity binary's
 three serial cases passed in 59.68 seconds with a Linux maximum RSS of 224496 KiB
 (about 219 MiB). This is one whole-test-process observation on this machine,

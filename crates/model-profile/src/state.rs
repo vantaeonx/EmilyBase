@@ -4,7 +4,7 @@ use emilybase_commit_format::{IndexKeyType, PageAddress, Predecessor, RootBindin
 use emilybase_commit_model::{MAX_EVENTS, Model, Staged};
 use emilybase_database::{Event, EventKind};
 use emilybase_index::IndexSnapshot;
-use emilybase_model_profile::{Config, Error, Kind, PhaseKind, Report};
+use emilybase_model_profile::{Config, Error, Kind, Mode, PhaseKind, Report};
 
 fn index(base: &Model, staged: &mut Staged, kind: Kind) -> Result<(), Error> {
     let tree = staged.view()?.export_primary_tree("items")?;
@@ -100,14 +100,16 @@ pub fn measure(config: Config) -> Result<Report, Error> {
     let mut stages: Vec<_> = models.iter().map(Model::begin).collect::<Result<_, _>>()?;
     support::sample(&mut phases, PhaseKind::Staged);
     for (model, staged) in models.iter().zip(&mut stages) {
-        staged.apply(Event {
-            table_id: 1,
-            kind: EventKind::Replace(support::row(
-                config.kind,
-                0,
-                "n".repeat(config.value_bytes as usize),
-            )),
-        })?;
+        if config.mode != Mode::IndexOnly {
+            staged.apply(Event {
+                table_id: 1,
+                kind: EventKind::Replace(support::row(
+                    config.kind,
+                    0,
+                    "n".repeat(config.value_bytes as usize),
+                )),
+            })?;
+        }
         index(model, staged, config.kind)?;
     }
     support::sample(&mut phases, PhaseKind::IndexesStaged);
@@ -125,7 +127,14 @@ pub fn measure(config: Config) -> Result<Report, Error> {
             || model
                 .view()
                 .get("items", &support::key(config.kind, 0))?
-                .is_none_or(|row| row[1] != Value::Text("n".repeat(config.value_bytes as usize)))
+                .is_none_or(|row| {
+                    let prefix = if config.mode == Mode::IndexOnly {
+                        "v"
+                    } else {
+                        "n"
+                    };
+                    row[1] != Value::Text(prefix.repeat(config.value_bytes as usize))
+                })
         {
             return Err(Error::Verification);
         }

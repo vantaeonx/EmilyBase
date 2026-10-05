@@ -8,6 +8,8 @@ mod primary_rows;
 mod primary_rows_tests;
 mod projection;
 mod range;
+#[cfg(test)]
+mod sharing_tests;
 mod snapshot;
 mod state;
 mod text_range;

@@ -30,7 +30,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         .trim_backtraces(Some(4))
         .build();
     let report = match config.mode {
-        Mode::State => state::measure(config)?,
+        Mode::State | Mode::IndexOnly => state::measure(config)?,
         Mode::Fingerprint => fingerprint::measure(config)?,
     };
     drop(profiler);

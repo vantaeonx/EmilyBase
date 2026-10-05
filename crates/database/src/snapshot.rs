@@ -9,7 +9,8 @@ use crate::state::State;
 use crate::{DATABASE_MARKER, Error, Event, MAX_ROWS, Result};
 use crate::{EventKind, PrimaryIndexInfo, RowLocation};
 
-/// Validated in-memory relational history. Clones share immutable page images.
+/// Validated in-memory relational history. Clones share immutable pages, tables
+/// and per-table location maps. First mutation detaches only the affected table.
 /// Mutating a snapshot alone provides no persistence or commit acknowledgment.
 #[derive(Clone)]
 pub struct Snapshot {

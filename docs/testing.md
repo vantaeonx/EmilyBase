@@ -1537,3 +1537,60 @@ or a demonstrated source failure. Run 37363639971 was requested again; its final
 result and this block's own CI are tracked separately. Prior 7fec4d3 has all four
 jobs green, run 37269289274. See
 [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md).
+
+
+## Shared immutable relational tables
+
+On 2026-10-05 all 602 main workspace tests pass in complete stable 1.99.0 and
+minimum Rust 1.89.0 runs, including 17 ignored child helpers invoked by parents.
+Workspace/feature/fuzz strict Clippy, workspace/fuzz formatting, locked build,
+minimum feature/fuzz checks and cached advisories pass. Eleven SDK unit and seven
+native SDK cases pass against the compiled original HTTP/WAL engine. The opt-in
+release diagnostic passes six actual child-process tests and ten report cases.
+The normal runtime does not link the diagnostic allocator. Dependencies and all
+existing durable formats, hashes, ACKs and API/SDK shapes are unchanged.
+
+A pointer-identity regression first fails on the preceding eager-copy Snapshot.
+Per-table copy-on-write now shares immutable tables and physical-location maps;
+first valid row mutation detaches only that table/map. Rejections preserve shared
+rows, locations, exact pages and history digests. Drop/recreation keeps historical
+IDs/maps separate. Four real writer threads mutate independent cloned snapshots;
+they do not acquire simultaneous managed WAL ownership. Ten new database cases
+include all supported value types, long keys, old borrowed rows/locations and full
+10000 global rows with eight historical views and an unrelated one-row update.
+A 32-case independent snapshot model checks accepted/refused/rolled-back mutations,
+current/historical rows and exact physical replay through shared generations.
+
+Four new managed cases cover begin/no-op/rollback/abort, exact WAL preservation,
+old readers, commit/reopen/checkpoint/compaction under both WAL versions and a
+24-case independent committed row model. The new property initially assumed key
+zero stayed present after deletion; its minimized delete/reinsert-rollback fixture
+exposed a test-helper unwrap. The helper now handles absent rows, and a separate
+deterministic empty-table test preserves this case. This was a test fixture repair,
+not an engine fault. Generated regression artifacts are ignored. Three prototype
+cases check shared index-only publication, changed/unchanged table identity through
+prepare/publish and exact-base refusal of a stale index-only candidate.
+
+ASan `profile_report` completes 6478927 runs in 46 seconds, 8192-byte input/RSS512
+caps, default quarantine, final RSS373 MiB. `commit_model` completes 15049 runs in
+46 seconds, 256-byte input/RSS512 caps, default quarantine, final RSS496 MiB.
+Both finish without failure; these are bounded smoke campaigns, not full audits.
+The seeded index-only report also round-trips with the earlier preserved reports.
+
+Actual four-model release measurements lower the requested-byte sample at begin
+from 984941760 to 573235312. Index-only staging retains shared rows; dropping old
+views releases 647520 bytes in that shape. Its peak675834188 still includes model
+construction. Row-write mode still copies each large affected table/map and peaks
+at985288974. These observations do not select a numeric quota or measure parallel
+worker/replay/backup transients. See [profile follow-up](model-allocation-profiles.md#shared-table-follow-up).
+
+The logical block adds 1030 Rust lines and removes 30 (net1000): totals are 43736
+physical Rust (41777 without blank/comment-only lines), 1207 SDK and 718 Python,
+or45661 combined source lines. Heap/lifetime/worker reservations, complete shared
+WAL records/replay and production gates remain open. See
+[ADR0041](adr/0041-shared-relational-snapshot-tables.md).
+
+The preceding d4f476c has its minimum-Rust, allocation-diagnostic and advisory CI
+jobs green, run37367805472. Stable and container jobs could not acquire hosted
+runners before any steps; only those jobs were requested again. No full green
+result is claimed for that run or this block until all jobs actually finish.

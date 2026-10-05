@@ -168,3 +168,35 @@ fn actual_report_codec_checks_lengths_unknown_fields_counter_extremes_and_round_
     assert!(!error.contains("private-marker"));
     assert!(!error.contains("extra_private_field"));
 }
+
+#[test]
+fn read_only_index_publication_keeps_rows_shared_with_retained_model_views() {
+    for mode in ["state", "index-only"] {
+        let report = run(&[
+            "--mode",
+            mode,
+            "--case",
+            "long-text",
+            "--rows",
+            "512",
+            "--projects",
+            "4",
+            "--value-bytes",
+            "768",
+            "--retain-old",
+        ]);
+        let built = report.phases[0].heap;
+        let staged = report.phases[1].heap;
+        assert!(staged.current_bytes >= built.current_bytes);
+        // Four page-handle vectors and bounded metadata, not copies of long rows.
+        assert!(staged.current_bytes - built.current_bytes < 65536);
+        let held = report.phases[4].heap.current_bytes;
+        let released = report.phases[5].heap.current_bytes;
+        if mode == "index-only" {
+            assert!(held - released < 65536);
+        } else {
+            // An actual row write still detaches the affected table and locations.
+            assert!(held - released > 4 * 512 * 3072);
+        }
+    }
+}

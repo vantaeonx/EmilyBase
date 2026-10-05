@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 use emilybase_catalog::{Key, Row, Schema};
 
@@ -12,7 +13,7 @@ pub(crate) struct Table {
 
 #[derive(Clone)]
 pub(crate) struct State {
-    pub tables: BTreeMap<u64, Table>,
+    pub tables: BTreeMap<u64, Arc<Table>>,
     pub next_id: u64,
     pub row_count: usize,
     pub event_count: usize,
@@ -37,7 +38,10 @@ impl State {
     }
 
     pub fn table(&self, name: &str) -> Result<&Table> {
-        self.tables.get(&self.table_id(name)?).ok_or(Error::NoTable)
+        self.tables
+            .get(&self.table_id(name)?)
+            .map(Arc::as_ref)
+            .ok_or(Error::NoTable)
     }
 
     /// The same constraints protect live operations and persisted event replay.
@@ -101,10 +105,10 @@ impl State {
             EventKind::Create(schema) => {
                 self.tables.insert(
                     event.table_id,
-                    Table {
+                    Arc::new(Table {
                         schema,
                         rows: BTreeMap::new(),
-                    },
+                    }),
                 );
                 self.next_id += 1;
             }
@@ -115,13 +119,13 @@ impl State {
             EventKind::Insert(row) | EventKind::Replace(row) => {
                 let table = self.tables.get_mut(&event.table_id).ok_or(Error::NoTable)?;
                 let key = table.schema.key(&row)?;
-                if table.rows.insert(key, row).is_none() {
+                if Arc::make_mut(table).rows.insert(key, row).is_none() {
                     self.row_count += 1;
                 }
             }
             EventKind::Delete(key) => {
                 let table = self.tables.get_mut(&event.table_id).ok_or(Error::NoTable)?;
-                table.rows.remove(&key);
+                Arc::make_mut(table).rows.remove(&key);
                 self.row_count -= 1;
             }
             EventKind::Root => return Err(Error::Event("repeated root marker")),
