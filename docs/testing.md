@@ -1333,3 +1333,39 @@ runtime WAL version, old page/index/backup bytes, HTTP or SDK shape change.
 Root metadata alone does not prove topology, live pointers or durability. Combined
 budgets, the staged state model, one commit fence, migration, power-loss and
 security/production gates remain open. See [ADR 0037](adr/0037-experimental-commit-namespaces.md).
+
+## Complete staged table/index model
+
+On 2026-10-05 all 557 main Rust tests pass on stable 1.99.0 and Rust 1.89.0,
+with 17 ignored native child helpers invoked by their parent tests. Workspace/
+fuzz formatting and warning-denied Clippy, locked build and seven native SDK
+checks pass. Cached known-advisory checks pass without warnings (135/106 packages,
+1290 advisories); only the original local model package is added. The previous
+5f10236 has all four GitHub jobs green, run 37266455924, including the actual
+release container. The new model block's own container CI is not yet confirmed.
+
+The model has eleven focused integration cases, a counter-exhaustion unit case
+and a 32-case generated two-table reference-map property. It exercises insert/
+replace/delete, rollback, abort after earlier successful events and invalid late
+pointers. Before publication, every selected stable index is checked against
+current keys/physical row images and exact root/schema/count/base metadata.
+Old views, untouched table roots and refused plans retain exact state/images.
+Stale prepared writers and equal-transaction divergent forks fail closed.
+Other cases cover changed/missing/extra roots, foreign trees, obsolete pointers,
+owner/key type/exact-base mismatch, duplicate/unstable candidates, long-text
+coverage, drop/recreation namespaces, split/merge/arena reuse and 256-event bounds.
+
+The first focused run exposed an owner-error fixture whose transaction was too
+old even for codec construction. It was changed to a future owner, so preparation
+now exercises the intended owner refusal. The corrected focused and both complete
+workspace runs pass. No runtime engine defect was hidden or claimed fixed.
+
+This logical block adds 1002 Rust lines, including its tests: totals are 40333
+Rust (38542 excluding blank/comment-only lines), 1207 SDK and 718 Python, or
+42258 combined source lines. Both prototypes remain outside normal server
+dependencies. The model performs memory publication only: no file/WAL write,
+durable ACK, migration or existing format/API change occurs. Its reuse of existing
+physical/topology validators is explicit; the row-map reference is independent
+test data. Combined budgets, full-capacity staged memory, typed retirement WAL
+records, one synced fence, recovery/backup/migration and broader security/power-
+loss/production gates remain open. See [ADR 0038](adr/0038-staged-table-index-model.md).

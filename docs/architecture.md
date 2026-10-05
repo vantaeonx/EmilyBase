@@ -69,6 +69,14 @@ does not change durable selection. Complete topology/live-row validation and a
 single shared commit fence remain pending. See
 [ADR 0037](adr/0037-experimental-commit-namespaces.md).
 
+The separate `commit-model` prototype stages validated relational events and full
+index/root selections. Preparation checks exact predecessors and every current
+key/pointer image; a state digest rejects stale or divergent memory publication.
+One immutable Arc swap preserves historical views. It is absent from runtime
+server/WAL dependencies and provides no durable ACK. Combined capacity/memory
+admission and a synced shared writer remain separate gates. See
+[ADR 0038](adr/0038-staged-table-index-model.md).
+
 The `index` crate implements original B+ tree routing, leaf/internal splits,
 replacement, deletion with rotations/merges/root collapse, sorted bulk loading
 and linked-leaf scans over a bounded arena of page IDs. The standard map addresses

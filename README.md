@@ -171,6 +171,12 @@ does not enable a new WAL version or write indexes in managed transactions.
 See [experimental metadata](docs/commit-metadata-format.md) and
 [ADR 0037](docs/adr/0037-experimental-commit-namespaces.md).
 
+The separate `commit-model` prototype stages complete relational/index changes,
+validates every selected tree against current row images and publishes one immutable
+memory state after exact-base checks. Old views and refused plans remain unchanged.
+It has no file/WAL writes or durable acknowledgments; combined budgets and a shared
+durable writer remain pending. See [ADR 0038](docs/adr/0038-staged-table-index-model.md).
+
 The synchronous project registry creates private isolated database directories,
 issues scoped high-entropy API keys and rotates them with atomic metadata publication.
 Live capabilities pin registry/project/data directory identities; replacement
