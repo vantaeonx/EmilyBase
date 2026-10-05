@@ -1,0 +1,37 @@
+[package]
+name = "emilybase-model-profile"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[features]
+heap-profile = ["dep:dhat"]
+
+[[bin]]
+name = "emilybase-model-profile"
+path = "src/main.rs"
+required-features = ["heap-profile"]
+test = false
+bench = false
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+sha2 = "0.10"
+dhat = { version = "=0.3.3", optional = true }
+emilybase-catalog = { path = "../catalog" }
+emilybase-database = { path = "../database" }
+emilybase-commit-model = { path = "../commit-model" }
+emilybase-commit-format = { path = "../commit-format" }
+emilybase-index = { path = "../index" }
+
+[dev-dependencies]
+proptest = "1"
+
+[lints]
+workspace = true

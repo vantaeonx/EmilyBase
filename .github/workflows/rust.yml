@@ -66,6 +66,23 @@ jobs:
         run: cargo +stable audit --deny warnings
       - name: Check fuzz lockfile against the same database
         run: cargo +stable audit --no-fetch --file fuzz/Cargo.lock --deny warnings
+  profiles:
+    name: Synthetic allocation diagnostics
+    runs-on: ubuntu-latest
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install profile toolchains
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy
+          rustup toolchain install 1.89.0 --profile minimal
+      - name: Strict opt-in diagnostics checks
+        run: cargo clippy --locked -p emilybase-model-profile --all-targets --features heap-profile -- -D warnings
+      - name: Real release diagnostic processes and report admission
+        run: cargo test --release --locked -p emilybase-model-profile --features heap-profile
+      - name: Minimum Rust diagnostic compatibility
+        run: cargo +1.89.0 check --locked -p emilybase-model-profile --all-targets --features heap-profile
   container:
     runs-on: ubuntu-latest
     steps:

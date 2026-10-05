@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/storage", "crates/catalog", "crates/database", "crates/wal", "crates/transactions", "crates/backup", "crates/cli", "crates/index", "crates/query", "crates/auth", "crates/server", "crates/commit-format", "crates/commit-model"]
+members = ["crates/storage", "crates/catalog", "crates/database", "crates/wal", "crates/transactions", "crates/backup", "crates/cli", "crates/index", "crates/query", "crates/auth", "crates/server", "crates/commit-format", "crates/commit-model", "crates/model-profile"]
 resolver = "2"
 
 [workspace.package]

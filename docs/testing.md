@@ -21,6 +21,7 @@ cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_li
 cargo +nightly fuzz run owned_journal -- -max_total_time=45 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run commit_metadata -- -max_total_time=45 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run commit_model -- -max_total_time=45 -max_len=256 -rss_limit_mb=512
+cargo +nightly fuzz run profile_report -- -max_total_time=45 -max_len=8192 -rss_limit_mb=512
 cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run row_locations -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run primary_lookup -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
@@ -1483,3 +1484,56 @@ admission/reporting does not enforce a heap quota or reserve memory for four ser
 workers. Decoding, retained views, replay/compaction, complete WAL-byte budgeting,
 one durable fence and broader production gates remain open. See
 [ADR 0039](adr/0039-combined-model-index-images.md).
+
+
+## Opt-in allocation diagnostics
+
+On 2026-10-05 the new release diagnostic passes five actual child-process cases
+and ten report admission/property cases. The ten decoder cases also pass on
+minimum Rust 1.89.0; its feature-enabled all-target check passes. Default workspace
+and opt-in strict Clippy, locked workspace build, stable fuzz Clippy and both
+format checks pass. Minimum fuzz-bin compilation passes. The prior 575 engine
+cases remain checked from the preceding implementation block; this change adds
+only a separate opt-in diagnostic and does not change runtime engine behavior.
+Default tests do not activate its five feature-gated native cases; the added
+fifth CI job explicitly enables them. No default zero-test binary run is counted.
+
+The new report checks reproduce then repair acceptance of an impossible block
+count at peak. They preserve valid decreases in blocks-at-byte-peak, refuse
+regressed allocation/byte-peak counters, test checked differences through u64::MAX,
+verify exact modes/components and reject unknown fields at every nested object.
+Three 128-case properties cover bounded shapes, row-dependent image limits and
+arbitrary JSON input. Four preserved actual 10000-row reports pass the bounded
+Rust decoder. Separate actual binary cases check old/new values, cleanup, digest
+equality, lower streamed traffic and error redaction. Reports are unsigned
+observations, not authenticated measurements or numeric admission proofs.
+
+The seeded ASan `profile_report` campaign completes 6540395 executions in 46
+seconds with 8192-byte input and 512-MiB RSS caps, default quarantine, without
+failure. Fuzz campaigns are bounded smoke tests. Workspace/fuzz cached advisory
+checks pass without warnings (152/123 packages, 1290 advisories). Existing
+third-party versions are unchanged; pinned dhat 0.3.3 and its profiler dependencies
+are added only for the diagnostic. Normal server/CLI dependency graphs exclude
+the diagnostic and its allocator. No authored unsafe code is introduced.
+
+Four actual local release workloads verify 10000-row shapes. The four held
+long-key models peak at 985295630 requested bytes and drop from 985283384 to
+572932520 current bytes after old-view release. Construction/publication are
+serial, so this does not measure overlapping worker transients. A 768-page
+short-key fingerprint comparison requests 21805352 full-encoding bytes versus
+18651432 streaming bytes; hashes match. Separate process RSS and reproduction
+are recorded in [allocation profiles](model-allocation-profiles.md). Timings,
+encoded components, requested heap and process RSS remain distinct quantities.
+
+This block adds 1040 physical Rust lines: totals are 42736 Rust (40809 excluding
+blank/comment-only lines), 1207 SDK and 718 Python, or 44661 combined source lines.
+WAL/database/index formats, runtime durable selection and API/SDK shapes stay
+unchanged. Heap reservation, retained-view lifetimes, replay/history/compaction,
+shared durable records and production gates remain open.
+
+The preceding 971dac8 CI attempt could not acquire hosted runners; all jobs were
+cancelled before any steps. This is an infrastructure failure, not a test pass
+or a demonstrated source failure. Run 37363639971 was requested again; its final
+result and this block's own CI are tracked separately. Prior 7fec4d3 has all four
+jobs green, run 37269289274. See
+[ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md).

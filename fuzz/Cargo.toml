@@ -21,6 +21,7 @@ emilybase-database = { path = "../crates/database" }
 emilybase-wal = { path = "../crates/wal" }
 emilybase-commit-format = { path = "../crates/commit-format" }
 emilybase-commit-model = { path = "../crates/commit-model" }
+emilybase-model-profile = { path = "../crates/model-profile" }
 emilybase-transactions = { path = "../crates/transactions" }
 emilybase-index = { path = "../crates/index" }
 emilybase-query = { path = "../crates/query" }
@@ -193,6 +194,13 @@ bench = false
 [[bin]]
 name = "component_counts"
 path = "fuzz_targets/component_counts.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "profile_report"
+path = "fuzz_targets/profile_report.rs"
 test = false
 doc = false
 bench = false

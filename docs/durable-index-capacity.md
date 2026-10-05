@@ -83,7 +83,7 @@ revalidated a reconstructed arena and allocated a complete EBIF buffer.
 `fingerprint` hashed that encoding; model preparation hashed every selected index,
 including unchanged roots. `begin` clones the relational snapshot. These are
 explicit transient allocations; the follow-up below removes some of them.
-an encoded-byte cap alone would not bound them or arbitrarily retained old views.
+An encoded-byte cap alone would not bound them or arbitrarily retained old views.
 
 No combined numeric budget is selected here. A later implementation must first
 measure representative and adversarial staged/replay allocations, address retained
@@ -116,3 +116,15 @@ three serial cases passed in 59.68 seconds with a Linux maximum RSS of 224496 Ki
 (about 219 MiB). This is one whole-test-process observation on this machine,
 including decoded states/retained views/test allocations. It is not a worst-case
 heap proof, a throughput benchmark or a four-worker server reservation.
+
+## Follow-up: requested-allocation measurements
+
+The opt-in [release diagnostic](model-allocation-profiles.md) now records actual
+allocation counters on bounded synthetic shapes. Four held 10000-row models with
+3072-byte keys and 768-byte values peak at 985295630 requested bytes; after releasing
+their old views, current requested bytes fall from 985283384 to 572932520. This
+confirms substantial relational clone/retention costs independently of image caps.
+Construction/publication remain serial, and this is not a worker or worst-case
+reservation. Full-versus-streamed hashes match while streaming reduces measured
+allocation traffic. Heap admission, lifetime management and WAL/replay budgets
+remain open. See [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md).

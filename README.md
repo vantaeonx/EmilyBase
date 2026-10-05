@@ -182,7 +182,15 @@ checked encoded component sizes and reuses immutable validated index hashes.
 Full 128-table capacity accepts 1536 fragmented pages. These are image/component
 bounds, with heap/server reservation still open. See
 [ADR 0039](docs/adr/0039-combined-model-index-images.md).
-It has no file/WAL writes or durable acknowledgments; combined budgets and a shared
+
+An opt-in release diagnostic now measures requested allocations for synthetic
+model stages and retained views. Four held 10000-row long-key models peak near
+940 MiB in one local shape; this is a measured clone/retention cost, not a memory
+quota or parallel-worker bound. Full and streamed fingerprints match, with lower
+allocation traffic on the streamed path. The diagnostic allocator is absent from
+server/CLI runtime dependencies. See [reproduction and actual reports](docs/model-allocation-profiles.md)
+and [ADR 0040](docs/adr/0040-opt-in-model-allocation-diagnostics.md).
+The model has no file/WAL writes or durable acknowledgments; combined budgets and a shared
 durable writer remain pending. See [ADR 0038](docs/adr/0038-staged-table-index-model.md).
 
 The synchronous project registry creates private isolated database directories,

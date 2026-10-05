@@ -1,0 +1,106 @@
+# Synthetic model allocation profiles
+
+This opt-in tool measures the original in-memory prototype. It neither writes a
+database nor enables the proposed durable index writer. Use synthetic data only.
+See [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md).
+
+## Reproduce
+
+From the repository root, on Linux with the declared Rust floor or current stable:
+
+```sh
+cargo build --release --locked -p emilybase-model-profile --features heap-profile
+target/release/emilybase-model-profile --help
+target/release/emilybase-model-profile --mode fingerprint --case short-text --rows 10000
+target/release/emilybase-model-profile --case short-text --rows 10000 --value-bytes 768 --retain-old
+target/release/emilybase-model-profile --case long-text --rows 10000 --value-bytes 768 --retain-old
+target/release/emilybase-model-profile --case long-text --rows 10000 --value-bytes 768 --projects 4 --retain-old
+cargo test --release --locked -p emilybase-model-profile --features heap-profile
+```
+
+The binary emits one version-1 JSON report to stdout. Shell redirection can retain
+that report; the profiler itself does not create allocation trace files. Inputs
+are limited to 1..10000 rows, 1..4 projects and 0..768 value bytes. Fingerprint mode
+supports integer and 256-byte text keys and refuses retained-view/long-key options.
+No passwords, API keys, row values, paths or backtraces appear in reports. There
+is no CLI argument for loading a real project, external data or server credentials.
+
+`state` creates a two-column table and fills it in batches of at most 256 events.
+It captures built state, relational cloning, row/index staging, preparation,
+publication, old-view release and final model release. One row is replaced in
+each project; old/new values and total rows must agree before success. Table
+history accumulates throughout construction and is included in the observation.
+
+`--projects 4` holds four independently scoped models and all four private stages
+at once. Their construction and publication are serial. It does **not** execute
+four simultaneous workers or measure their overlapping temporary peaks. It also
+does not model arbitrarily many retained reader generations.
+
+## Counter meanings
+
+The pinned [dhat HeapStats API](https://docs.rs/dhat/latest/dhat/struct.HeapStats.html)
+counts requested live bytes/blocks, cumulative allocated bytes/blocks, and a
+global byte peak. `peak_blocks` is the number of blocks **at that byte peak**;
+it need not increase monotonically and is not the maximum observed block count.
+The peak is cumulative from profiler start and cannot be subtracted to produce a
+phase-local peak. The [builder testing mode](https://docs.rs/dhat/latest/dhat/struct.ProfilerBuilder.html)
+suppresses automatic output. The allocator is linked only into the feature-gated
+binary; report decoding and the runtime server use their usual allocators.
+
+Counters include model construction and small diagnostic/report collections.
+They do not include the profiler's own internal bookkeeping, stack memory,
+allocator fragmentation or all process mappings. Report serialization runs after
+the profiler is dropped. The process maximum RSS, measured separately with Linux
+`/usr/bin/time -v`, includes instrumentation and is a different quantity.
+
+Component counts are exact encoded standalone objects: history page images,
+one EBIF header per index and one 192-byte root. They neither equal heap bytes
+nor describe a future WAL envelope. The bounded decoder verifies consistency;
+an unsigned report is not evidence that a third party really ran the workload.
+
+## Observed local release runs, 2026-10-05
+
+Rust 1.99.0 stable, default optimized release profile, Linux, dhat 0.3.3. Every
+run exits successfully and verifies its synthetic state. Reports below preserve
+the actual counters; the preserved files also pass the bounded Rust decoder.
+The timings include instrumentation and are not comparative throughput results.
+
+| Workload | Built requested bytes | Peak requested bytes | Published with old view | After old-view release | Final requested bytes | Maximum process RSS, KiB | Elapsed |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 10000 short keys, fingerprint comparison | 3283048 | 10785752 | n/a | n/a | 488 | 17452 | 0.08 s |
+| 10000 short keys, 768-byte values, one model | 36105412 | 68678052 | 61165396 | 36079490 | 608 | 91924 | 137.11 s |
+| 10000 long keys, 768-byte values, one model | 143229196 | 246327380 | 246321182 | 143233466 | 608 | 255036 | 2.27 s |
+| Same long-key shape, four held models | 572915440 | 985295630 | 985283384 | 572932520 | 608 | 1008592 | 9.79 s |
+
+The four-model run peaks near 940 MiB of requested allocations. The old-view
+release lowers current requested bytes by 412350864. This is a concrete retention
+cost in this shape, not the system's worst-case heap or an acceptable server quota.
+Remaining few hundred bytes are diagnostic/report collections still alive at
+the final sample, not a database-state leak.
+
+The fingerprint tree has 768 pages and a 3149824-byte EBIF. Full encoding requests
+21805352 bytes in 21056 allocation calls; streaming requests 18651432 bytes in
+21054 calls. The difference is 3153920 bytes and two calls; both hashes match.
+The streaming path still allocates image vectors and reconstructed topology.
+The shared cumulative peak includes the full-encoding baseline, so this run proves
+lower allocation traffic, not a separately measured streaming peak.
+
+The short-key state ends with 3334 history pages, 792 selected index pages and
+16904384 encoded component bytes. Each long-key state has 10001 history pages,
+one empty index page and 40972480 encoded component bytes. These selected states
+include one replace and are distinct from the separately tested dense rebuild.
+
+Preserved reports: [fingerprint](measurements/2026-10-05-model-profile/fingerprint-short.json),
+[short state](measurements/2026-10-05-model-profile/state-short.json),
+[long state](measurements/2026-10-05-model-profile/state-long.json),
+[four long states](measurements/2026-10-05-model-profile/state-long-four.json).
+
+## Remaining admission work
+
+Address state cloning and retained-reader lifetimes before selecting a numeric
+reservation. Measure concurrent transient stages, replay and long history,
+fragmented/mixed tables, compaction and backup on representative hardware. Then
+test a real rejection/release mechanism independently of these measurements.
+Encoded-image admission, the four HTTP worker permits and diagnostic row bounds
+do not enforce a common heap quota. Shared durable WAL records/replay and broader
+power-loss, security, backup/upgrade and load acceptance remain open.

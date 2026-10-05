@@ -22,7 +22,7 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 ## Next increments
 
-The declared Linux Rust floor is now verified on 1.89.0 with all 575 main tests;
+The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.
 
@@ -65,6 +65,12 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
    streaming/reuse and full 128-table fragmented-capacity checks now execute.
    These cover image counts, not heap/replay/worker/WAL reservation. See
    [ADR 0039](adr/0039-combined-model-index-images.md).
+   Opt-in release allocation diagnostics now measure real synthetic stages,
+   retained views and full-versus-streamed fingerprints. Four held long-key
+   models peak near 940 MiB in one local shape; serial construction does not
+   measure concurrent worker transients. Heap/lifetime admission remains open.
+   See [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md) and
+   [profiles](model-allocation-profiles.md).
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 

@@ -83,6 +83,14 @@ images and immutable selections cache validated hashes. This does not bound
 decoded/retained heap or reserve memory for concurrent server workers. See
 [ADR 0039](adr/0039-combined-model-index-images.md).
 
+The separate opt-in `model-profile` release binary measures bounded synthetic
+state cloning, retained readers and canonical fingerprint allocation traffic.
+Its optional diagnostic allocator is absent from server/CLI runtime dependencies.
+Held project contexts are built serially; this is not parallel-worker or worst-case
+heap admission. Count-only bounded reports and real child-process checks execute.
+See [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md) and
+[measured shapes](model-allocation-profiles.md).
+
 The `index` crate implements original B+ tree routing, leaf/internal splits,
 replacement, deletion with rotations/merges/root collapse, sorted bulk loading
 and linked-leaf scans over a bounded arena of page IDs. The standard map addresses
