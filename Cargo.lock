@@ -303,6 +303,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "emilybase-commit-format"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "emilybase-database",
+ "emilybase-index",
+ "emilybase-storage",
+ "proptest",
+ "sha2",
+ "thiserror",
+]
+
+[[package]]
 name = "emilybase-database"
 version = "0.1.0"
 dependencies = [

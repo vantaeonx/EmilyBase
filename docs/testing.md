@@ -19,6 +19,7 @@ cargo +nightly fuzz run file_format -- -max_total_time=30 -max_len=4096 -rss_lim
 cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run owned_journal -- -max_total_time=45 -max_len=20000 -rss_limit_mb=512
+cargo +nightly fuzz run commit_metadata -- -max_total_time=45 -max_len=4096 -rss_limit_mb=512
 cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run row_locations -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run primary_lookup -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
@@ -1295,3 +1296,40 @@ This separate test checkpoint adds 173 Rust lines: totals are 38284 Rust
 (36616 without blank/comment-only lines), 1207 SDK and 718 Python, or 40209
 combined source lines including tests. Wider recovery/power-loss/security gates
 remain open; source line counts are measurements, not development targets.
+
+## Experimental namespace/root codec
+
+On 2026-10-05 all 544 main Rust tests pass on stable 1.99.0 and Rust 1.89.0;
+17 ignored native child entry helpers are called by their parent tests. Workspace
+and fuzz format/strict Clippy, locked build and seven native SDK checks pass.
+Both cached dependency-advisory checks pass without warnings (134/106 packages,
+1290 advisories). Only the original local codec package and its dependency edges
+are added; third-party versions are unchanged. The prior 31c50c4 has all four
+GitHub jobs green, run 37208062741. This new block's own CI remains unconfirmed.
+
+The new standalone `commit-format` package has eleven focused tests and three
+256-case properties. Tests freeze address/root hashes independently constructed
+with Python struct/zlib; exercise all byte cuts, every single-bit change, trailing
+bytes and unknown versions/domains/key types; repair CRCs before testing reserved,
+identity, page, count, predecessor and overflow admission. Database-global history
+and per-table primary pages never alias. Sparse root IDs and the long-text count
+path remain explicit. Exact predecessor checks include real standalone tree
+fingerprints, wrong namespaces/key types, root movement and independent revision/
+transaction progression. These are namespace/metadata checks, not a complete
+independent table/index transaction model or durable-index implementation.
+
+The new ASan `commit_metadata` target completes 23753661 executions in 46 seconds
+without failure, with default quarantine, 4096-byte input cap and 512-MiB RSS cap
+(final RSS 283 MiB). Synthetic valid EBNS/EBIR seeds and repaired envelopes reach
+structural field checks. Corpora remain ignored. This is a bounded smoke campaign.
+The first full workspace run was interrupted during compilation by the execution
+environment; its incomplete output is not a test pass. The restarted complete
+stable run and the subsequent minimum-toolchain run both pass.
+
+The block adds 1047 physical Rust lines, including tests/fuzz: totals are 39331
+Rust (37597 without blank/comment-only lines), 1207 SDK and 718 Python, or 41256
+combined source lines. The codec is absent from normal server dependencies; no
+runtime WAL version, old page/index/backup bytes, HTTP or SDK shape change.
+Root metadata alone does not prove topology, live pointers or durability. Combined
+budgets, the staged state model, one commit fence, migration, power-loss and
+security/production gates remain open. See [ADR 0037](adr/0037-experimental-commit-namespaces.md).

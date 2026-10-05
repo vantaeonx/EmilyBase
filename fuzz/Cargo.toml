@@ -19,6 +19,7 @@ emilybase-storage = { path = "../crates/storage" }
 emilybase-catalog = { path = "../crates/catalog" }
 emilybase-database = { path = "../crates/database" }
 emilybase-wal = { path = "../crates/wal" }
+emilybase-commit-format = { path = "../crates/commit-format" }
 emilybase-transactions = { path = "../crates/transactions" }
 emilybase-index = { path = "../crates/index" }
 emilybase-query = { path = "../crates/query" }
@@ -170,6 +171,13 @@ bench = false
 [[bin]]
 name = "owned_journal"
 path = "fuzz_targets/owned_journal.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "commit_metadata"
+path = "fuzz_targets/commit_metadata.rs"
 test = false
 doc = false
 bench = false

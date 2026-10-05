@@ -1,0 +1,21 @@
+[package]
+name = "emilybase-commit-format"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+crc32fast = "1.5"
+thiserror = "2"
+
+[dev-dependencies]
+emilybase-storage = { path = "../storage" }
+emilybase-index = { path = "../index" }
+emilybase-database = { path = "../database" }
+proptest = "1"
+sha2 = "0.10"
+
+[lints]
+workspace = true

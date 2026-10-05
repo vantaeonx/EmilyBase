@@ -60,6 +60,15 @@ MVCC, history vacuuming and background rotation are pending.
 
 ## Index boundary
 
+The standalone experimental `commit-format` crate provides typed database/domain/
+table/page addresses and fixed-size root bindings. Relational history remains
+database-global because a page can contain multiple tables' events; primary pages
+have a table namespace. Exact predecessor validation distinguishes a tree revision
+from a database transaction. It is outside runtime WAL/server dependencies and
+does not change durable selection. Complete topology/live-row validation and a
+single shared commit fence remain pending. See
+[ADR 0037](adr/0037-experimental-commit-namespaces.md).
+
 The `index` crate implements original B+ tree routing, leaf/internal splits,
 replacement, deletion with rotations/merges/root collapse, sorted bulk loading
 and linked-leaf scans over a bounded arena of page IDs. The standard map addresses

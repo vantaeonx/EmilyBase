@@ -22,7 +22,7 @@ No PostgreSQL compatibility guarantee. No production release. No real-data impor
 
 ## Next increments
 
-The declared Linux Rust floor is now verified on 1.89.0 with all 530 main tests;
+The declared Linux Rust floor is now verified on 1.89.0 with all 544 main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.
 
@@ -52,6 +52,10 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
 3. Integrate the bounded B+ tree with table/WAL allocation and atomic transaction replay.
    [ADR 0031](adr/0031-atomic-index-wal-proposal.md) proposes the commit/domain
    boundary and required evidence; no new format or migration is enabled.
+   The standalone namespace/root codecs are implemented separately in
+   `commit-format`; runtime WAL selection remains unchanged. Next add an
+   independent staged table/index state model before choosing combined budgets
+   or enabling a writer. See [ADR 0037](adr/0037-experimental-commit-namespaces.md).
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 

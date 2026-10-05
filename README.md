@@ -163,6 +163,14 @@ Dedicated SQL process-kill, both-version backup/restore, actual work/output boun
 and independent read/join models execute. The pure read API accepts one SELECT
 over a validated snapshot. Wider crash/fault campaigns and durable indexes remain open.
 
+The experimental `commit-format` crate implements fixed-size typed page addresses
+and root metadata for the planned shared table/index commit. Database-global
+history pages and per-table primary pages have separate namespaces; roots bind
+exact predecessor revisions, transactions and fingerprints. This standalone codec
+does not enable a new WAL version or write indexes in managed transactions.
+See [experimental metadata](docs/commit-metadata-format.md) and
+[ADR 0037](docs/adr/0037-experimental-commit-namespaces.md).
+
 The synchronous project registry creates private isolated database directories,
 issues scoped high-entropy API keys and rotates them with atomic metadata publication.
 Live capabilities pin registry/project/data directory identities; replacement
