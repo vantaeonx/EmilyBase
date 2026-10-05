@@ -199,6 +199,8 @@ fn preserved_synthetic_release_reports_pass_bounded_admission() {
             .as_slice(),
         include_bytes!("../../../docs/measurements/2026-10-05-shared-tables/state-long-four.json")
             .as_slice(),
+        include_bytes!("../../../docs/measurements/2026-10-05-shared-rows/state-long-four.json")
+            .as_slice(),
     ] {
         let report = decode_report(bytes).unwrap();
         assert_eq!(report.config.rows, 10000);

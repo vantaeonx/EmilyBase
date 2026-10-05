@@ -50,13 +50,13 @@ impl Snapshot {
                 .map_err(|_| Error::PrimaryIndex("text range lookup failed"))?;
             let expected = table
                 .rows
-                .range(bounds)
+                .range::<Key, _>(bounds)
                 .filter(|(key, _)| eligible(key))
                 .take(limit);
             if !entries
                 .iter()
                 .map(|(key, _)| key)
-                .eq(expected.map(|(key, _)| key))
+                .eq(expected.map(|(key, _)| key.as_ref()))
             {
                 return Err(Error::PrimaryIndex("text range key mismatch"));
             }
@@ -75,7 +75,7 @@ impl Snapshot {
         // Every returned row still resolves its actual current physical image.
         table
             .rows
-            .range(bounds)
+            .range::<Key, _>(bounds)
             .take(limit)
             .map(|(key, _)| {
                 let location = self

@@ -140,3 +140,28 @@ timing difference nor RSS establishes throughput or a server reservation.
 Actual later reports: [shared row writes](measurements/2026-10-05-shared-tables/state-long-four.json)
 and [shared index-only stages](measurements/2026-10-05-shared-tables/index-only-four.json).
 The preserved earlier reports remain historical observations and are not replaced.
+
+## Shared row-body/key follow-up
+
+[ADR 0042](adr/0042-shared-row-bodies-and-live-keys.md) shares immutable keys and
+row bodies when a table/location map detaches. A later run uses the same optimized
+Linux/Rust/dhat configuration and four long-key 10000-row models, 768-byte values,
+one actual replacement per model and retained old views.
+
+| Sample | Table sharing only | Shared bodies/keys inside detached maps |
+| --- | ---: | ---: |
+| Built requested bytes | 572912112 | 574193520 |
+| At begin, requested bytes | 573235312 | 574516720 |
+| Indexes staged, requested bytes | 985285656 | 581144248 |
+| Published with old views, bytes | 985276728 | 581135320 |
+| Old views released, bytes | 572929192 | 574210600 |
+| Global requested-byte peak | 985288974 | 581147606 |
+| Maximum instrumented process RSS, KiB | 1008768 | 623532 |
+| Instrumented elapsed | 9.31 s | 3.88 s |
+
+The requested peak falls by 404141368 bytes, about 385 MiB. Baseline grows by
+1281408 bytes in this shape because ownership representation/allocation costs
+change. These are measured tradeoffs, not a universal upper bound or throughput
+claim. Retained generations still own map structures and changed rows; no
+reservation policy is enabled. [The actual report](measurements/2026-10-05-shared-rows/state-long-four.json)
+passes the same bounded decoder alongside earlier historical reports.

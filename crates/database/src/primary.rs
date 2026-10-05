@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 use std::sync::{Arc, OnceLock};
 
-use emilybase_catalog::{Key, Row};
+use crate::state::Rows;
+use emilybase_catalog::Key;
 use emilybase_index::{BPlusTree, MAX_KEY_BYTES, RecordPointer};
 
 use crate::location::{Change, Locations};
@@ -121,7 +122,7 @@ impl PrimaryIndexes {
     pub(crate) fn tree(
         &self,
         table_id: u64,
-        rows: &BTreeMap<Key, Row>,
+        rows: &Rows,
         locations: &Locations,
     ) -> Result<&BPlusTree> {
         let cache = self
@@ -137,7 +138,7 @@ impl PrimaryIndexes {
     pub(crate) fn info(
         &self,
         table_id: u64,
-        rows: &BTreeMap<Key, Row>,
+        rows: &Rows,
         locations: &Locations,
     ) -> Result<PrimaryIndexInfo> {
         let tree = self.tree(table_id, rows, locations)?;
@@ -155,11 +156,11 @@ impl PrimaryIndexes {
 
 fn build(
     table_id: u64,
-    rows: &BTreeMap<Key, Row>,
+    rows: &Rows,
     locations: &Locations,
 ) -> std::result::Result<BPlusTree, &'static str> {
     let mut entries = Vec::with_capacity(rows.len());
-    for key in rows.keys().filter(|key| eligible(key)) {
+    for key in rows.keys().map(Arc::as_ref).filter(|key| eligible(key)) {
         let location = locations
             .get(table_id, key)
             .ok_or("missing live row location")?;

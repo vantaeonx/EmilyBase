@@ -9,6 +9,8 @@ mod primary_rows_tests;
 mod projection;
 mod range;
 #[cfg(test)]
+mod row_sharing_tests;
+#[cfg(test)]
 mod sharing_tests;
 mod snapshot;
 mod state;

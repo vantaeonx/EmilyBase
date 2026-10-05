@@ -61,6 +61,9 @@ See [ADR 0006](adr/0006-retained-journal.md) and [ADR 0008](adr/0008-self-contai
 MVCC, history vacuuming and background rotation are pending.
 See [ADR 0041](adr/0041-shared-relational-snapshot-tables.md) for sharing boundaries;
 this does not add concurrent managed writers or a heap reservation.
+Detached table/location maps also keep immutable key and row-body Arc handles.
+Only map structure and replaced rows are private copies; public borrowed/owned
+row APIs are unchanged. See [ADR 0042](adr/0042-shared-row-bodies-and-live-keys.md).
 
 ## Index boundary
 

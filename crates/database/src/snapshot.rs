@@ -132,7 +132,7 @@ impl Snapshot {
         let table = self.state.table(name)?;
         table.schema.validate_key(key)?;
         if !eligible(key) {
-            return Ok(table.rows.get(key));
+            return Ok(table.rows.get(key).map(Arc::as_ref));
         }
         let table_id = self.table_id(name)?;
         let tree = self
@@ -207,7 +207,11 @@ impl Snapshot {
         if table.schema.key(&row)? != *key {
             return Err(Error::StaleLocation);
         }
-        let current = table.rows.get(key).ok_or(Error::StaleLocation)?;
+        let current = table
+            .rows
+            .get(key)
+            .map(Arc::as_ref)
+            .ok_or(Error::StaleLocation)?;
         if current != &row {
             return Err(Error::StaleLocation);
         }
@@ -224,6 +228,7 @@ impl Snapshot {
             .rows
             .values()
             .take(limit)
+            .map(Arc::as_ref)
             .cloned()
             .collect())
     }

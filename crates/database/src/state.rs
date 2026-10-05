@@ -8,8 +8,11 @@ use crate::{Error, Event, EventKind, MAX_EVENTS, MAX_ROWS, MAX_TABLES, Result};
 #[derive(Clone)]
 pub(crate) struct Table {
     pub schema: Schema,
-    pub rows: BTreeMap<Key, Row>,
+    pub rows: Rows,
 }
+
+/// Map structure detaches per table; immutable keys and row bodies stay shared.
+pub(crate) type Rows = BTreeMap<Arc<Key>, Arc<Row>>;
 
 #[derive(Clone)]
 pub(crate) struct State {
@@ -119,7 +122,11 @@ impl State {
             EventKind::Insert(row) | EventKind::Replace(row) => {
                 let table = self.tables.get_mut(&event.table_id).ok_or(Error::NoTable)?;
                 let key = table.schema.key(&row)?;
-                if Arc::make_mut(table).rows.insert(key, row).is_none() {
+                if Arc::make_mut(table)
+                    .rows
+                    .insert(Arc::new(key), Arc::new(row))
+                    .is_none()
+                {
                     self.row_count += 1;
                 }
             }

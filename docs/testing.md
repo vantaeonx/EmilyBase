@@ -1594,3 +1594,40 @@ The preceding d4f476c has its minimum-Rust, allocation-diagnostic and advisory C
 jobs green, run37367805472. Stable and container jobs could not acquire hosted
 runners before any steps; only those jobs were requested again. No full green
 result is claimed for that run or this block until all jobs actually finish.
+
+
+## Shared immutable row bodies and keys
+
+On 2026-10-05 all 611 main tests pass in complete stable 1.99.0 and minimum
+Rust 1.89.0 runs, with the 17 native child helpers invoked by parents. Strict
+workspace/feature/fuzz Clippy, workspace/fuzz formatting, locked build, minimum
+fuzz compilation, cached advisories and SDK eleven unit/seven native checks pass.
+The release diagnostic passes six actual child-process and ten report cases.
+No dependency, stored format, checksum, fingerprint, WAL fence or API shape changes.
+
+A row-pointer regression first fails on table-only sharing. Detached maps now
+retain immutable key/body Arc handles and own only structure and changed bodies.
+Nine new cases include unchanged same-table row/key identity, delete/reinsertion,
+64 held generations, weak-reference release, isolated owned scan mutation and
+raw-file CRUD/reopen. Full 10000-row cases cover integer/256-byte/3072-byte keys,
+current locations, bounded borrowed intervals and reverse traversal. A separate
+32-case reference model checks successful/refused/discarded changes and exact
+replay while preserving unrelated row bodies. The prior full-table-copy allocation
+assertion fails because its expected cost is removed; the updated small native
+workload instead caps retained map/body overhead, with independent row identity
+and measured reports supporting the reduction. No functional engine fault is claimed.
+
+The ASan model-sequence campaign completes 3947 executions in 46 seconds, input
+cap256/RSS512 MiB, default quarantine, final RSS494 MiB, without failure. This
+is a bounded smoke campaign. The real four-model long-key release run peaks at
+581147606 requested bytes versus the prior985288974; built bytes grow to574193520.
+Instrumented Linux maxRSS623532 KiB/elapsed3.88s remain separate process observations,
+not admission/throughput proof. Preserved actual reports pass bounded decoding.
+
+This small completed optimization checkpoint adds470 Rust lines and removes22
+(net448), without padding toward a line quota. Totals:44184 physical Rust,42212
+without blank/comment-only lines,1207 SDK and718 Python;46109 combined source lines.
+Map-structure copying, derived tree copies, retained generations, replay/worker
+reservation and durable-index writer gates remain open. Own CI is tracked separately;
+no full green result is claimed while hosted jobs are unconfirmed. See
+[ADR 0042](adr/0042-shared-row-bodies-and-live-keys.md).

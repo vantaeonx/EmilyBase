@@ -40,7 +40,11 @@ impl Snapshot {
         {
             return Err(Error::PrimaryIndex("import entry count"));
         }
-        let mut expected = table.rows.keys().filter(|key| eligible(key));
+        let mut expected = table
+            .rows
+            .keys()
+            .map(std::sync::Arc::as_ref)
+            .filter(|key| eligible(key));
         let entries = tree
             .cursor(None, None)
             .map_err(|_| Error::PrimaryIndex("import range"))?;

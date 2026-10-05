@@ -33,7 +33,7 @@ impl Snapshot {
             .map_err(|_| Error::PrimaryIndex("range lookup failed"))?;
         let expected = table
             .rows
-            .range((
+            .range::<Key, _>((
                 lower
                     .as_ref()
                     .map_or(std::ops::Bound::Unbounded, std::ops::Bound::Included),
@@ -47,7 +47,7 @@ impl Snapshot {
         if !entries
             .iter()
             .map(|(key, _)| key)
-            .eq(expected.map(|(key, _)| key))
+            .eq(expected.map(|(key, _)| key.as_ref()))
         {
             return Err(Error::PrimaryIndex("range key mismatch"));
         }

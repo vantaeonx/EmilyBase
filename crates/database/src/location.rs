@@ -41,7 +41,7 @@ impl RowLocation {
 }
 
 #[derive(Clone, Default)]
-pub(crate) struct Locations(BTreeMap<u64, Arc<BTreeMap<Key, RowLocation>>>);
+pub(crate) struct Locations(BTreeMap<u64, Arc<BTreeMap<Arc<Key>, RowLocation>>>);
 pub(crate) enum Change {
     Put(u64, Key, RowLocation),
     Delete(u64, Key),
@@ -70,7 +70,7 @@ impl Locations {
     pub(crate) fn apply(&mut self, change: Change) {
         match change {
             Change::Put(table_id, key, location) => {
-                Arc::make_mut(self.0.entry(table_id).or_default()).insert(key, location);
+                Arc::make_mut(self.0.entry(table_id).or_default()).insert(Arc::new(key), location);
             }
             Change::Delete(table_id, key) => {
                 if let Some(rows) = self.0.get_mut(&table_id) {
@@ -141,5 +141,21 @@ mod sharing_tests {
             assert!(!Arc::ptr_eq(&original.0[&1], &branch.0[&1]));
             assert_eq!(original.get(1, &key), Some(location(1, 1)));
         }
+    }
+
+    #[test]
+    fn detached_location_maps_keep_unchanged_long_key_allocations() {
+        let mut original = maps();
+        let first = Key::Text("я".repeat(1536));
+        let second = Key::Text("ю".repeat(1536));
+        original.apply(Change::Put(1, second.clone(), location(1, 2)));
+        let mut branch = original.clone();
+        branch.apply(Change::Put(1, first, location(1, 3)));
+        let before = original.0[&1].get_key_value(&second).unwrap().0;
+        let after = branch.0[&1].get_key_value(&second).unwrap().0;
+        assert!(Arc::ptr_eq(before, after));
+        assert_eq!(branch.get(1, &second), Some(location(1, 2)));
+        branch.apply(Change::Delete(1, second.clone()));
+        assert_eq!(original.get(1, &second), Some(location(1, 2)));
     }
 }

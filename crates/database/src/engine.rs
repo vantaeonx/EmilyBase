@@ -104,7 +104,7 @@ impl Database {
         self.ready()?;
         let table = self.state.table(name)?;
         table.schema.validate_key(key)?;
-        Ok(table.rows.get(key))
+        Ok(table.rows.get(key).map(std::sync::Arc::as_ref))
     }
 
     /// Replace all values while retaining the original primary key.
@@ -143,6 +143,7 @@ impl Database {
             .rows
             .values()
             .take(limit)
+            .map(std::sync::Arc::as_ref)
             .cloned()
             .collect())
     }

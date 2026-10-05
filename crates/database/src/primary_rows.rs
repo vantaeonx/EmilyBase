@@ -4,6 +4,7 @@ use emilybase_catalog::{Key, Row};
 use emilybase_index::{BPlusTree, RangeCursor};
 use std::collections::btree_map::Range;
 use std::ops::Bound;
+use std::sync::Arc;
 
 enum Projection<'a> {
     Interval(RangeCursor<'a>),
@@ -17,7 +18,7 @@ pub struct PrimaryRows<'a> {
     snapshot: &'a Snapshot,
     name: &'a str,
     table_id: u64,
-    rows: Option<Range<'a, Key, Row>>,
+    rows: Option<Range<'a, Arc<Key>, Arc<Row>>>,
     projection: Projection<'a>,
     emitted: usize,
     upper_hint: usize,
@@ -58,7 +59,7 @@ impl Snapshot {
                 Projection::Points(tree)
             };
             (
-                Some(table.rows.range((
+                Some(table.rows.range::<Key, _>((
                     lower.map_or(Bound::Unbounded, Bound::Included),
                     upper.map_or(Bound::Unbounded, Bound::Excluded),
                 ))),
@@ -97,6 +98,7 @@ impl<'a> PrimaryRows<'a> {
             }
             return Ok(None);
         };
+        let key = key.as_ref();
         let location = self
             .snapshot
             .locations

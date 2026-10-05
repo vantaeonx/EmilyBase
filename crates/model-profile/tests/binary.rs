@@ -195,8 +195,9 @@ fn read_only_index_publication_keeps_rows_shared_with_retained_model_views() {
         if mode == "index-only" {
             assert!(held - released < 65536);
         } else {
-            // An actual row write still detaches the affected table and locations.
-            assert!(held - released > 4 * 512 * 3072);
+            // Map nodes and replaced rows detach; unchanged keys/bodies stay shared.
+            assert!(held - released > 0);
+            assert!(held - released < 512 * 1024);
         }
     }
 }

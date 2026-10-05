@@ -75,6 +75,10 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
    affected table on first write. Read-only/index-only stages avoid eager row
    copies, while writes to a large table still copy that table. Lifetime/worker
    reservation remains open. See [ADR 0041](adr/0041-shared-relational-snapshot-tables.md).
+   Detached maps now share unchanged keys/row bodies too; full-boundary identity,
+   owned result isolation and release checks accompany the lower synthetic peak.
+   Structural map copies, retained generations and numeric admission remain open.
+   See [ADR 0042](adr/0042-shared-row-bodies-and-live-keys.md).
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 
