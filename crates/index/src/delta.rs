@@ -18,7 +18,13 @@ pub struct SnapshotDelta {
 impl IndexSnapshot {
     /// Bind a delta to the exact canonical base, including its revision/root.
     pub fn fingerprint(&self) -> Result<[u8; 32]> {
-        Ok(Sha256::digest(self.encode()?).into())
+        let images = self.validated_images()?;
+        let mut digest = Sha256::new();
+        digest.update(self.header(images.len()));
+        for image in &images {
+            digest.update(image);
+        }
+        Ok(digest.finalize().into())
     }
 
     pub fn delta_to(&self, tree: &BPlusTree) -> Result<SnapshotDelta> {

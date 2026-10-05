@@ -78,10 +78,11 @@ An admission design must separately account for:
 5. Rejection before writes, including a late oversized candidate after earlier
    accepted changes; exact prior table/index state and file bytes must survive.
 
-Current `IndexSnapshot::encode` materializes images, revalidates a reconstructed
-arena and allocates a complete EBIF buffer. `fingerprint` hashes that encoding.
-Model preparation hashes every selected index, including unchanged roots, and
-`begin` clones the relational snapshot. These are explicit transient allocations;
+At the preceding checkpoint, `IndexSnapshot::encode` materialized images,
+revalidated a reconstructed arena and allocated a complete EBIF buffer.
+`fingerprint` hashed that encoding; model preparation hashed every selected index,
+including unchanged roots. `begin` clones the relational snapshot. These are
+explicit transient allocations; the follow-up below removes some of them.
 an encoded-byte cap alone would not bound them or arbitrarily retained old views.
 
 No combined numeric budget is selected here. A later implementation must first
@@ -93,3 +94,25 @@ admission is a separate mechanism and cannot authorize mandatory WAL state.
 
 Recovery cuts/kills, one synced fence, backup/compaction/migration and physical
 power-loss/security/load gates remain open after this capacity checkpoint.
+
+## Follow-up: combined image bound and canonical hash reuse
+
+[ADR 0039](adr/0039-combined-model-index-images.md) now implements a 2048-page
+aggregate bound for staged candidates and complete selected model states. It
+derives a loose 1760-page bound from existing occupancy, 10000 global rows and
+128 roots. Full 128-table capacity selects 1536 fragmented pages. Reported EBIF
+objects are capped at 8912896 bytes plus 24576 root bytes; those component caps
+do not cover history or heap. Earlier loose per-object arithmetic remains a
+description of why independent maxima were insufficient.
+
+Fingerprinting now streams admitted page images/header, and immutable selections
+cache their validated canonical hashes. `encode` still constructs a full EBIF
+buffer; both paths still materialize images and reconstruct topology. Preparation
+reuses admitted hashes for unchanged roots instead of re-encoding them. `begin`
+still clones relational state and old views can still retain states indefinitely.
+
+Before this allocation change, the uninstrumented stable debug capacity binary's
+three serial cases passed in 59.68 seconds with a Linux maximum RSS of 224496 KiB
+(about 219 MiB). This is one whole-test-process observation on this machine,
+including decoded states/retained views/test allocations. It is not a worst-case
+heap proof, a throughput benchmark or a four-worker server reservation.

@@ -77,6 +77,12 @@ server/WAL dependencies and provides no durable ACK. Combined capacity/memory
 admission and a synced shared writer remain separate gates. See
 [ADR 0038](adr/0038-staged-table-index-model.md).
 
+The prototype also caps combined staged/selected index images to 2048 pages and
+reports exact standalone component lengths. Snapshot fingerprints stream canonical
+images and immutable selections cache validated hashes. This does not bound
+decoded/retained heap or reserve memory for concurrent server workers. See
+[ADR 0039](adr/0039-combined-model-index-images.md).
+
 The `index` crate implements original B+ tree routing, leaf/internal splits,
 replacement, deletion with rotations/merges/root collapse, sorted bulk loading
 and linked-leaf scans over a bounded arena of page IDs. The standard map addresses

@@ -3,10 +3,14 @@
 
 use emilybase_index::{BPlusTree, IndexSnapshot, Key, MAX_INDEX_ENTRIES, PAGE_SIZE, RecordPointer};
 use libfuzzer_sys::fuzz_target;
+use sha2::{Digest, Sha256};
 
 fn check(bytes: &[u8]) {
     if let Ok(snapshot) = IndexSnapshot::decode(bytes) {
         assert_eq!(snapshot.encode().unwrap(), bytes);
+        snapshot.validate().unwrap();
+        let canonical_hash: [u8; 32] = Sha256::digest(bytes).into();
+        assert_eq!(snapshot.fingerprint().unwrap(), canonical_hash);
         assert_eq!(snapshot.tree.validate().unwrap(), snapshot.tree.len());
         let mut tree = snapshot.tree.clone();
         let next = Key::Text("fuzz-synthetic".into());

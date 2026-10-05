@@ -177,6 +177,11 @@ memory state after exact-base checks. Old views and refused plans remain unchang
 Full 10000-row model cases cover integers and text keys at both the 256-byte
 tree boundary and 3072-byte relational boundary. Dense integer/short-text index
 rebuilds select 768 pages. See [capacity evidence](docs/durable-index-capacity.md).
+The model bounds combined candidate/selected index images to 2048 pages, exposes
+checked encoded component sizes and reuses immutable validated index hashes.
+Full 128-table capacity accepts 1536 fragmented pages. These are image/component
+bounds, with heap/server reservation still open. See
+[ADR 0039](docs/adr/0039-combined-model-index-images.md).
 It has no file/WAL writes or durable acknowledgments; combined budgets and a shared
 durable writer remain pending. See [ADR 0038](docs/adr/0038-staged-table-index-model.md).
 

@@ -7,12 +7,13 @@ use crate::{Error, Result};
 pub struct Selection {
     pub(crate) binding: RootBinding,
     pub(crate) index: IndexSnapshot,
+    pub(crate) index_fingerprint: [u8; 32],
 }
 
 impl Selection {
     pub(crate) fn new(binding: RootBinding, index: IndexSnapshot) -> Result<Self> {
         // Validate the complete bounded stable-ID arena, not only a root header.
-        index.encode()?;
+        let index_fingerprint = index.fingerprint()?;
         if binding.revision() != index.revision
             || binding.address().page() != index.tree.root_id()
             || binding.pages() as usize != index.tree.page_count()
@@ -20,7 +21,11 @@ impl Selection {
         {
             return Err(Error::Selection("root/index image mismatch"));
         }
-        Ok(Self { binding, index })
+        Ok(Self {
+            binding,
+            index,
+            index_fingerprint,
+        })
     }
 
     pub fn binding(&self) -> RootBinding {
@@ -29,5 +34,10 @@ impl Selection {
 
     pub fn index(&self) -> &IndexSnapshot {
         &self.index
+    }
+
+    /// Computed during complete admission; immutable selections cannot stale it.
+    pub fn index_fingerprint(&self) -> [u8; 32] {
+        self.index_fingerprint
     }
 }

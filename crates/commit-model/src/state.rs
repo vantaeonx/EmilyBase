@@ -6,7 +6,7 @@ use emilybase_commit_format::{DatabaseId, IndexKeyType, PageAddress};
 use emilybase_database::Snapshot;
 use sha2::{Digest, Sha256};
 
-use crate::{Error, Prepared, Result, Selection, Staged};
+use crate::{EncodedComponents, Error, Prepared, Result, Selection, Staged};
 
 pub(crate) struct State {
     pub database: DatabaseId,
@@ -46,6 +46,10 @@ impl Model {
     pub fn fingerprint(&self) -> [u8; 32] {
         self.state.fingerprint
     }
+    /// Inspect standalone encoded lengths; this does not reserve server memory.
+    pub fn encoded_components(&self) -> Result<EncodedComponents> {
+        self.state.encoded_components()
+    }
     pub fn begin(&self) -> Result<Staged> {
         Staged::new(Arc::clone(&self.state))
     }
@@ -62,6 +66,25 @@ impl Model {
 }
 
 impl State {
+    pub fn encoded_components(&self) -> Result<EncodedComponents> {
+        Self::components(&self.relational, &self.selected)
+    }
+
+    fn components(
+        relational: &Snapshot,
+        selected: &BTreeMap<u64, Arc<Selection>>,
+    ) -> Result<EncodedComponents> {
+        let index_pages = selected.values().try_fold(0u64, |sum, selection| {
+            sum.checked_add(selection.index.tree.page_count() as u64)
+                .ok_or(Error::Limit)
+        })?;
+        EncodedComponents::from_counts(
+            relational.page_count() as u64,
+            selected.len() as u64,
+            index_pages,
+        )
+    }
+
     pub fn validated(
         database: DatabaseId,
         transaction: u64,
@@ -72,6 +95,7 @@ impl State {
         if schemas.len() != selected.len() || selected.len() > emilybase_database::MAX_TABLES {
             return Err(Error::Selection("incomplete or extra table roots"));
         }
+        Self::components(&relational, &selected)?;
         for schema in schemas {
             let table = relational.table_id(&schema.name)?;
             let selection = selected
@@ -105,7 +129,7 @@ impl State {
         digest.update((selected.len() as u32).to_le_bytes());
         for selection in selected.values() {
             digest.update(selection.binding.encode()?);
-            digest.update(selection.index.fingerprint()?);
+            digest.update(selection.index_fingerprint);
         }
         Ok(Arc::new(Self {
             database,

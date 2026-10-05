@@ -11,7 +11,24 @@ pub struct IndexSnapshot {
 }
 
 impl IndexSnapshot {
+    /// Complete snapshot admission without allocating the final EBIF envelope.
+    /// Page images and topology-validation allocations are still required.
+    pub fn validate(&self) -> Result<()> {
+        self.validated_images().map(|_| ())
+    }
+
     pub fn encode(&self) -> Result<Vec<u8>> {
+        let images = self.validated_images()?;
+        let mut bytes = self.header(images.len()).to_vec();
+        bytes.reserve(images.len() * PAGE_SIZE);
+        for image in images {
+            bytes.extend_from_slice(&image);
+        }
+        Ok(bytes)
+    }
+
+    /// Both encoding and hashing use the same complete admission checks.
+    pub(crate) fn validated_images(&self) -> Result<Vec<[u8; PAGE_SIZE]>> {
         if self.revision == 0 || !self.tree.has_stable_ids() {
             return Err(Error::Layout("snapshot requires revision and stable IDs"));
         }
@@ -21,21 +38,22 @@ impl IndexSnapshot {
         let images = self.tree.page_images()?;
         // Revalidate the arena's bounded ID domain, not only its tree topology.
         BPlusTree::from_stable_pages(self.tree.root_id(), &images)?;
-        let mut bytes = vec![0; PAGE_SIZE];
+        Ok(images)
+    }
+
+    /// Called only after image admission; no untrusted count reaches this helper.
+    pub(crate) fn header(&self, image_count: usize) -> [u8; PAGE_SIZE] {
+        let mut bytes = [0; PAGE_SIZE];
         bytes[..8].copy_from_slice(b"EBIF\0\0\0\0");
         bytes[8..10].copy_from_slice(&SNAPSHOT_VERSION.to_le_bytes());
         bytes[12..16].copy_from_slice(&(PAGE_SIZE as u32).to_le_bytes());
         bytes[16..24].copy_from_slice(&self.revision.to_le_bytes());
         bytes[24..32].copy_from_slice(&self.tree.root_id().to_le_bytes());
-        bytes[32..36].copy_from_slice(&(images.len() as u32).to_le_bytes());
+        bytes[32..36].copy_from_slice(&(image_count as u32).to_le_bytes());
         bytes[40..48].copy_from_slice(&(self.tree.len() as u64).to_le_bytes());
         let checksum = header_crc(&bytes);
         bytes[60..64].copy_from_slice(&checksum.to_le_bytes());
-        bytes.reserve(images.len() * PAGE_SIZE);
-        for image in images {
-            bytes.extend_from_slice(&image);
-        }
-        Ok(bytes)
+        bytes
     }
 
     pub fn decode(bytes: &[u8]) -> Result<Self> {

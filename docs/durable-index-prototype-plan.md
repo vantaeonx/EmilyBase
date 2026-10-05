@@ -56,6 +56,11 @@ pages, 10000 global live rows and a 64-MiB WAL. A full dense 10000-row rebuild r
 Full-capacity integer, 256-byte text and 3072-byte excluded-text model cases now
 execute. [Capacity arithmetic and admission gaps](durable-index-capacity.md)
 separate existing encoded object sizes from unimplemented WAL/heap budgets.
+The model now also admits at most 2048 combined live index pages and exposes
+checked standalone component reports; canonical hashes avoid a redundant full
+envelope and immutable selections reuse them. See
+[ADR 0039](adr/0039-combined-model-index-images.md). Shared heap/WAL reservation
+and old-view lifetimes remain open, so increment 3 is not complete.
 
 Calculate combined encoded bytes and peak staged/replay memory for a full rebuild,
 multi-table transactions, long keys and compaction. Select explicit per-domain

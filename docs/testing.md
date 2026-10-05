@@ -1429,3 +1429,57 @@ blank/comment-only lines), 1207 SDK and 718 Python, or 42627 combined source lin
 allocation sites without selecting a new WAL layout or claiming a measured heap
 limit. Combined budgets, mixed fragmentation, shared durable publication,
 recovery/backup/migration and broader production acceptance remain open.
+
+## Combined index images and canonical hash allocation
+
+On 2026-10-05 the complete stable 1.99.0 workspace run passes 574 main tests;
+the subsequently added four-reader case passes separately on stable. The complete
+minimum Rust 1.89.0 run includes it and passes all 575 main tests. Both have 17
+ignored native child helpers invoked by parent tests. Workspace/model/fuzz strict
+Clippy, all format checks, locked build, eleven SDK unit and seven native SDK
+cases pass. Cached advisory checks pass without warnings (135/107 packages,
+1290 advisories). Third-party versions/lockfiles are unchanged. The prior 7fec4d3
+has all four GitHub jobs green, run 37269289274; this block's own CI is unconfirmed.
+
+Two deliberately failing regressions first reproduce missing aggregate admission:
+counts above 2048 were accepted, and a late excess image reached invalid-revision
+validation instead of budget refusal. Combined candidate/complete-state checks now
+abort the stage before that image validation. Valid states retain full row capacity:
+a real 10000-row/128-table rebuild selects 1536 fragmented pages (6815744 EBIF bytes)
+and resolves every current pointer/value. An independently assembled 1024-page
+arena permits the exact 2048-candidate-page boundary; the next page refuses after
+an earlier staged row, preserving the original state.
+
+Independent forest properties cover 32 cases with integer/exact-256-byte UTF-8
+keys and both branch grouping strategies, checking the occupancy-derived bound
+of at most 1760 valid selected pages. A 256-case u128 arithmetic reference checks
+accepted/refused counts and exact bytes. Actual serialized components, drop/
+recreation, rollback/abort and 32 generated transaction sequences check reports
+and canonical cached-state hashes. Four real reader threads retain old rows,
+pointers, roots and component counts through 32 serial memory publications.
+
+Four new fingerprint cases pass before and after refactoring. They freeze two
+EBIF SHA-256 digests constructed independently with Python struct/zlib, compare
+streaming fingerprints directly with full encoded bytes for sparse/full trees,
+check equivalent invalid admission and exercise 32 generated mutation cases.
+The new hash path does not allocate a final EBIF Vec; image vectors/topology
+reconstruction still allocate. Immutable selections reuse validated canonical
+hashes, while a detached mutable snapshot cannot change their cached state.
+
+ASan `component_counts` completes 34724445 runs in 46 seconds, 64-byte input and
+512-MiB RSS caps, default quarantine, final RSS 275 MiB. The updated `index_snapshot`
+target completes 117599 runs in 52 seconds, 69632-byte input and 512-MiB RSS caps,
+default quarantine, final RSS 426 MiB; accepted/repaired envelopes exercise exact
+canonical hashes and complete delta replay. Both finish without failure. These
+are bounded smoke checks. Minimum-toolchain fuzz compilation passes with locked
+`cargo check`; a requested minimum Clippy invocation found that component absent,
+so no minimum Clippy pass is claimed. Stable fuzz Clippy passes without warnings.
+
+This logical block adds 1008 Rust lines and removes 14 (net 994): totals are 41696
+physical Rust (39828 excluding blank/comment-only lines), 1207 SDK and 718 Python,
+or 43621 combined source lines. EBIX/EBIF, hashes/delta bases, runtime WAL selection,
+backup/API/SDK shapes and third-party versions remain unchanged. Aggregate image
+admission/reporting does not enforce a heap quota or reserve memory for four server
+workers. Decoding, retained views, replay/compaction, complete WAL-byte budgeting,
+one durable fence and broader production gates remain open. See
+[ADR 0039](adr/0039-combined-model-index-images.md).

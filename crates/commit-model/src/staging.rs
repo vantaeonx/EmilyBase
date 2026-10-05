@@ -6,7 +6,7 @@ use emilybase_database::{Event, EventKind, Snapshot};
 use emilybase_index::IndexSnapshot;
 
 use crate::state::State;
-use crate::{Error, MAX_EVENTS, Result, Selection};
+use crate::{EncodedComponents, Error, MAX_EVENTS, MAX_SELECTED_INDEX_PAGES, Result, Selection};
 
 pub struct Staged {
     base: Arc<State>,
@@ -15,6 +15,7 @@ pub struct Staged {
     events: usize,
     touched: BTreeSet<u64>,
     candidates: BTreeMap<u64, Selection>,
+    candidate_pages: usize,
     aborted: bool,
 }
 
@@ -38,6 +39,7 @@ impl Staged {
             events: 0,
             touched: BTreeSet::new(),
             candidates: BTreeMap::new(),
+            candidate_pages: 0,
             aborted: false,
         })
     }
@@ -90,8 +92,14 @@ impl Staged {
             if self.candidates.contains_key(&table) {
                 return Err(Error::Selection("duplicate staged index"));
             }
+            let candidate_pages = self
+                .candidate_pages
+                .checked_add(index.tree.page_count())
+                .filter(|pages| *pages <= MAX_SELECTED_INDEX_PAGES)
+                .ok_or(Error::Limit)?;
             self.candidates
                 .insert(table, Selection::new(binding, index)?);
+            self.candidate_pages = candidate_pages;
             Ok(())
         })();
         if result.is_err() {
@@ -118,7 +126,7 @@ impl Staged {
                     match previous {
                         Some(previous) => candidate
                             .binding
-                            .verify_predecessor(previous.binding, previous.index.fingerprint()?)?,
+                            .verify_predecessor(previous.binding, previous.index_fingerprint)?,
                         None if candidate.binding.revision() == 1
                             && candidate.binding.predecessor().is_none() => {}
                         None => return Err(Error::Selection("new table has a predecessor")),
@@ -157,6 +165,11 @@ impl Staged {
 }
 
 impl Prepared {
+    /// Complete selected-state component lengths, excluding WAL and heap.
+    pub fn encoded_components(&self) -> Result<EncodedComponents> {
+        self.next.encoded_components()
+    }
+
     pub fn view(&self) -> &Snapshot {
         &self.next.relational
     }

@@ -1,13 +1,18 @@
 //! Experimental synchronous in-memory table/index transaction model.
 //! This module writes no files or WAL and provides no durable commit acknowledgment.
+mod components;
 mod selection;
 mod staging;
 mod state;
 
+pub use components::EncodedComponents;
 pub use selection::Selection;
 pub use staging::{Prepared, Staged};
 pub use state::Model;
 pub const MAX_EVENTS: usize = 256;
+/// Combined live image bound, distinct from the per-table 1024-page arena bound.
+/// This is an encoded-index limit, not a Rust heap or server memory reservation.
+pub const MAX_SELECTED_INDEX_PAGES: usize = 2048;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
