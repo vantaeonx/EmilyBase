@@ -49,7 +49,9 @@ There is no restore/import API, network route or stable migration in this model.
 
 Current per-table image and event bounds do not select combined encoded/memory
 budgets. Preparing a complete state performs full validation and hashing; this is
-not a throughput claim. Worst-case staged candidate memory, full-capacity rebuild,
+not a throughput claim. Integer/256-byte-text dense rebuilds and 3072-byte-text
+exclusions now execute at the global 10000-row limit in the memory model. See
+[capacity arithmetic](../durable-index-capacity.md). Worst-case staged candidate memory,
 multi-worker budgets, typed retirement WAL records, one synced commit fence,
 recovery/backup/migration and power-loss/security/production gates remain open.
 Runtime WAL 1/2, managed state, index sidecars and all existing formats are unchanged.

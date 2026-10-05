@@ -1399,3 +1399,33 @@ The separate test checkpoint adds 179 Rust lines: totals are 40512 Rust
 combined source lines. The unchanged implementation's 557 main tests pass on
 both toolchains from the preceding block; its own CI status is tracked separately.
 No WAL write, durable index, migration or format/API change is enabled.
+
+## Full-capacity staged model checkpoint
+
+On 2026-10-05 the three new capacity cases pass on stable 1.99.0 (28.14 seconds)
+and minimum Rust 1.89.0 (30.12 seconds); model warning-denied Clippy and workspace
+format checks pass. The preceding f7c6be4 has all four GitHub jobs green, run
+37268406775, including complete stable/minimum suites and the release container.
+This checkpoint has 557 previously full-suite-checked tests plus three newly
+checked focused cases; its own full-suite/container CI is not yet confirmed.
+
+Real staged states reach 10000 global rows, in batches of at most 256 events.
+Integer and exactly 256-byte text keys accept an index-only dense 768-page rebuild;
+its EBIF image is exactly 3149824 bytes. Every short text key/value/current physical
+pointer is checked. An untouched second table keeps its root and old views remain
+unchanged. Exactly 3072-byte keys retain all 10000 rows/physical locations through
+the relational path, while the one-page tree reports zero covered and 10000
+excluded keys. Overflow inserts abort without changing the selected state.
+
+The first expanded test compilation compared the tree's Result return value with
+an Option. Assertions now unwrap successful short-key lookup and check the expected
+oversized-key error on direct long-key lookup. Both complete three-case runs then
+pass. Runtime source and existing formats are unchanged; this was a test fixture
+compilation correction, not an engine repair or durability proof.
+
+The checkpoint adds 190 Rust test lines: totals are 40702 Rust (38903 excluding
+blank/comment-only lines), 1207 SDK and 718 Python, or 42627 combined source lines.
+[Capacity arithmetic](durable-index-capacity.md) records current objects and
+allocation sites without selecting a new WAL layout or claiming a measured heap
+limit. Combined budgets, mixed fragmentation, shared durable publication,
+recovery/backup/migration and broader production acceptance remain open.

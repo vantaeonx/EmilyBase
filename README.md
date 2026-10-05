@@ -174,6 +174,9 @@ See [experimental metadata](docs/commit-metadata-format.md) and
 The separate `commit-model` prototype stages complete relational/index changes,
 validates every selected tree against current row images and publishes one immutable
 memory state after exact-base checks. Old views and refused plans remain unchanged.
+Full 10000-row model cases cover integers and text keys at both the 256-byte
+tree boundary and 3072-byte relational boundary. Dense integer/short-text index
+rebuilds select 768 pages. See [capacity evidence](docs/durable-index-capacity.md).
 It has no file/WAL writes or durable acknowledgments; combined budgets and a shared
 durable writer remain pending. See [ADR 0038](docs/adr/0038-staged-table-index-model.md).
 

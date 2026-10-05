@@ -50,8 +50,12 @@ semantics. There is no new secondary-index DDL in this increment.
 ## Increment 3: capacity before writer admission
 
 Current limits include 256 table events/pages per transaction, 1024 index arena
-pages, 10000 table rows and a 64-MiB WAL. A full dense 10000-row rebuild requires
+pages, 10000 global live rows and a 64-MiB WAL. A full dense 10000-row rebuild requires
 768 index pages. Do not silently use the table-page bound for index images.
+
+Full-capacity integer, 256-byte text and 3072-byte excluded-text model cases now
+execute. [Capacity arithmetic and admission gaps](durable-index-capacity.md)
+separate existing encoded object sizes from unimplemented WAL/heap budgets.
 
 Calculate combined encoded bytes and peak staged/replay memory for a full rebuild,
 multi-table transactions, long keys and compaction. Select explicit per-domain

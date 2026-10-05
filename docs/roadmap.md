@@ -55,10 +55,12 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
    The standalone namespace/root codecs are implemented separately in
    `commit-format`; runtime WAL selection remains unchanged. The
    staged table/index state model is now implemented in a separate `commit-model`
-   prototype, with an independent generated reference row map. Combined budgets,
-   typed durable records, full-capacity and recovery/migration acceptance remain
+   prototype, with an independent generated reference row map. Full 10000-row
+   integer/short-text/long-text capacity cases execute; combined encoded/heap
+   budgets, typed durable records and recovery/migration acceptance remain
    before writer enablement. See [ADR 0037](adr/0037-experimental-commit-namespaces.md)
-   and [ADR 0038](adr/0038-staged-table-index-model.md).
+   and [ADR 0038](adr/0038-staged-table-index-model.md), plus
+   [capacity arithmetic](durable-index-capacity.md).
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 
