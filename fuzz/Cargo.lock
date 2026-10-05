@@ -185,6 +185,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "emilybase-commit-model"
+version = "0.1.0"
+dependencies = [
+ "emilybase-catalog",
+ "emilybase-commit-format",
+ "emilybase-database",
+ "emilybase-index",
+ "sha2",
+ "thiserror",
+]
+
+[[package]]
 name = "emilybase-database"
 version = "0.1.0"
 dependencies = [
@@ -204,6 +216,7 @@ dependencies = [
  "emilybase-backup",
  "emilybase-catalog",
  "emilybase-commit-format",
+ "emilybase-commit-model",
  "emilybase-database",
  "emilybase-index",
  "emilybase-query",

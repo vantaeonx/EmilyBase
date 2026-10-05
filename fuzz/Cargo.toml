@@ -20,6 +20,7 @@ emilybase-catalog = { path = "../crates/catalog" }
 emilybase-database = { path = "../crates/database" }
 emilybase-wal = { path = "../crates/wal" }
 emilybase-commit-format = { path = "../crates/commit-format" }
+emilybase-commit-model = { path = "../crates/commit-model" }
 emilybase-transactions = { path = "../crates/transactions" }
 emilybase-index = { path = "../crates/index" }
 emilybase-query = { path = "../crates/query" }
@@ -178,6 +179,13 @@ bench = false
 [[bin]]
 name = "commit_metadata"
 path = "fuzz_targets/commit_metadata.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "commit_model"
+path = "fuzz_targets/commit_model.rs"
 test = false
 doc = false
 bench = false

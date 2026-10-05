@@ -20,6 +20,7 @@ cargo +nightly fuzz run catalog_records -- -max_total_time=30 -max_len=4096 -rss
 cargo +nightly fuzz run wal_records -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run owned_journal -- -max_total_time=45 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run commit_metadata -- -max_total_time=45 -max_len=4096 -rss_limit_mb=512
+cargo +nightly fuzz run commit_model -- -max_total_time=45 -max_len=256 -rss_limit_mb=512
 cargo +nightly fuzz run managed_recovery -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run row_locations -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
 cargo +nightly fuzz run primary_lookup -- -max_total_time=30 -max_len=20000 -rss_limit_mb=512
@@ -1369,3 +1370,32 @@ physical/topology validators is explicit; the row-map reference is independent
 test data. Combined budgets, full-capacity staged memory, typed retirement WAL
 records, one synced fence, recovery/backup/migration and broader security/power-
 loss/production gates remain open. See [ADR 0038](adr/0038-staged-table-index-model.md).
+
+## Generated table/index model sequence fuzz checkpoint
+
+On 2026-10-05 the new `commit_model` target passes warning-denied fuzz Clippy,
+formatting and locked compilation of all fuzz binaries on minimum Rust 1.89.0.
+The cached fuzz-lock advisory check passes without warnings (107 packages,
+1290 advisories). Only the existing local model dependency edge is added; no
+runtime source, workspace lock or third-party version changes.
+
+Two default-quarantine ASan campaigns complete without failure: 41559 executions
+in 46 seconds, then 15903 in 46 seconds after adding synthetic 32-command seeds.
+The second corpus reaches the exact command bound, including all-long text keys
+and rollback mixtures. Input is capped at 256 bytes/32 operations and RSS at
+512 MiB; final instrumented-process RSS is 448/486 MiB. Coverage/quarantine are
+part of that process, so these figures are not a runtime memory-admission proof.
+The campaigns are bounded smoke checks, not complete security/load acceptance.
+
+Each sequence compares accepted rows and eligible/excluded counts with an
+independent sorted map. It exercises inserts/replaces/deletes, rollback, absent/
+duplicate keys, i64 boundaries, NUL/long UTF-8 keys and exact-state retention.
+Valid headers with altered predecessor fingerprints, foreign database owners
+or future transaction owners are refused after earlier staging succeeds. Old
+views remain unchanged. Only memory models and ignored synthetic corpora are used.
+
+The separate test checkpoint adds 179 Rust lines: totals are 40512 Rust
+(38718 without blank/comment-only lines), 1207 SDK and 718 Python, or 42437
+combined source lines. The unchanged implementation's 557 main tests pass on
+both toolchains from the preceding block; its own CI status is tracked separately.
+No WAL write, durable index, migration or format/API change is enabled.
