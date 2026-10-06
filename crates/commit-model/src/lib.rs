@@ -14,9 +14,11 @@ pub use admission::{
 };
 pub use components::EncodedComponents;
 pub use images::{
-    AdmittedEnvelope, EnvelopeLimit, EnvelopeLimits, EnvelopePool, EnvelopeUsage,
+    AdmittedEnvelope, AdmittedPlan, DecodedPlanLimit, DecodedPlanLimits, DecodedPlanPool,
+    DecodedPlanUsage, EnvelopeLimit, EnvelopeLimits, EnvelopePool, EnvelopeUsage,
     IMAGE_PLAN_HEADER_BYTES, IMAGE_PLAN_MAX_BYTES, IMAGE_PLAN_VERSION, ImagePlan,
-    MAX_ENVELOPE_BUFFERS, MAX_ENVELOPE_BYTES, PageWrite, PlanCounts, RetiredRoot, RootChange,
+    MAX_DECODED_PLAN_BYTES, MAX_DECODED_PLAN_VECTOR_BYTES, MAX_DECODED_PLANS, MAX_ENVELOPE_BUFFERS,
+    MAX_ENVELOPE_BYTES, PageWrite, PlanCounts, RetiredRoot, RootChange,
 };
 pub use selection::Selection;
 pub use staging::{Prepared, Staged};
@@ -68,6 +70,14 @@ pub enum Error {
     EnvelopeAdmission(EnvelopeLimit),
     #[error("experimental envelope admission lock is poisoned")]
     EnvelopePoisoned,
+    #[error("invalid decoded plan admission configuration")]
+    DecodedConfiguration,
+    #[error("decoded plan admission refused: {0:?}")]
+    DecodedAdmission(DecodedPlanLimit),
+    #[error("decoded plan admission lock is poisoned")]
+    DecodedPoisoned,
+    #[error("decoded vector capacity disagrees with its reservation")]
+    DecodedAllocationShape,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

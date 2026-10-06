@@ -20,6 +20,12 @@ pub use envelopes::{
     AdmittedEnvelope, EnvelopeLimit, EnvelopeLimits, EnvelopePool, EnvelopeUsage,
     MAX_ENVELOPE_BUFFERS, MAX_ENVELOPE_BYTES,
 };
+#[path = "decoded_plans.rs"]
+mod decoded;
+pub use decoded::{
+    AdmittedPlan, DecodedPlanLimit, DecodedPlanLimits, DecodedPlanPool, DecodedPlanUsage,
+    MAX_DECODED_PLAN_BYTES, MAX_DECODED_PLAN_VECTOR_BYTES, MAX_DECODED_PLANS,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlanCounts {

@@ -26,6 +26,9 @@ bodies across clones, private candidates and old snapshots. Changed pages detach
 without altering historical readers; numeric model/worker admission stays open.
 [Primary export](docs/shared-primary-export.md) also admits a shared stable-ID map
 without reconstructing a complete image set, retaining full live row/pointer checks.
+An optional [decoded plan pool](docs/decoded-plan-admission.md) reserves complete
+typed image/address/root vector payloads before owned decode and holds them until
+the last shared owner drops. Models, scratch and total heap remain outside that cap.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

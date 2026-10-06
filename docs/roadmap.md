@@ -392,3 +392,13 @@ Native warmed-cache allocation regression, owner identity, refusal/import parity
 generated histories, actual thread writers and automatic model rebuild/replay
 execute. Decoded plan/model/cache/transient/worker reservation and the combined
 durable writer still require separate work.
+
+## Follow-up: admitted decoded physical image vectors
+
+The optional [DecodedPlanPool](decoded-plan-admission.md) now reserves complete
+typed vector payload and owner slots after borrowed structural preflight and before
+owned decoding. Exact capacity checks, last shared-owner release, independent-copy
+charges, corruption/base refusal, actual concurrent races and native diagnostic
+guards execute under [ADR0053](adr/0053-admitted-decoded-image-vectors.md).
+Model/cache/staging/transient/worker heap, encoded/raw caller copies and the combined
+durable writer remain outside this admission and require separate work.

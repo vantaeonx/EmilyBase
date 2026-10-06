@@ -239,3 +239,10 @@ path = "fuzz_targets/index_delta_sequences.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "decoded_admission"
+path = "fuzz_targets/decoded_admission.rs"
+test = false
+doc = false
+bench = false

@@ -179,3 +179,16 @@ Sharing does not close decoded/transient/worker byte reservation or durability.
 image reconstruction from primary export while retaining complete arena and exact
 relational coverage checks. Warm-cache regression and same-config observations
 are preserved separately; decoded plan/model/transient/worker quotas stay open.
+
+## Follow-up: retained decoded vector payload
+
+[ADR 0053](adr/0053-admitted-decoded-image-vectors.md) adds explicit owner slots
+and typed vector-payload reservation before owned EBIP decoding. Exact capacity
+checks include image bodies, addresses, roots, padding and child-vector headers.
+Immutable shared handles consume one physical charge; independently decoded copies
+consume separate charges. The optional native operation observes 1228576 reserved
+vector bytes and 1228776 requested live/peak bytes, with 200 owner/control bytes
+outside that accounting. Disabled decode observes 3292 transient bytes and no owned
+image vectors. These fixture observations are not allocator-wide peak guarantees.
+Model/cache/staging/transient/worker budgets and the combined durable writer remain
+open; serialized source, raw caller copies and replay outputs stay separate.

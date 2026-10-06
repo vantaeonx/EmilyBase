@@ -259,3 +259,11 @@ The subsequent [primary projection](shared-primary-export.md) converts the deriv
 arena through a fully checked private stable-ID map sharing immutable pages. Exact
 live key/pointer coverage and long-key exclusions still verify; the source cache
 retains its own policy. No complete image reconstruction is needed for export.
+
+The optional [DecodedPlanPool](decoded-plan-admission.md) separately reserves
+decoded EBIP vector payload and physical owner slots before materialization.
+Shared immutable handles retain one charge until the last owner releases the
+actual vectors; independent decodes charge independent copies. Serialized source
+budgets stay separate. Model/cache/staging/replay/transient memory is outside this
+pool, and exact base replay remains mandatory under
+[ADR 0053](adr/0053-admitted-decoded-image-vectors.md).

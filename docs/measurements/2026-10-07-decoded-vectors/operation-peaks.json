@@ -1,0 +1,37 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "parent_commit": "817bd1b8eee4feca58cc1ca1c6f721430721d77c",
+  "source_sha256": {
+    "crates/commit-model/src/decoded_plans.rs": "bf519b68e3e0d3ce39f35d9eb0027a859e31a35f76cbba7eaf352f0f90379bac",
+    "crates/commit-model/src/images.rs": "ebe8e486d18c9eaa30b958de90b2f599af1a0cd137e3475691260807726448e3",
+    "crates/model-profile/tests/decoded_plan.rs": "70d7bf7bd0ef758e2c8e28959e90fef4fde624cea9c0133bdb584a36e26484ff"
+  },
+  "synthetic_fixture": {
+    "history_images": 256,
+    "primary_images": 41,
+    "inserted_rows": 256,
+    "text_value_bytes": 3072
+  },
+  "decoded_vector_payload_bytes": 1228576,
+  "requested_accepted_live_bytes": 1228776,
+  "requested_accepted_peak_bytes": 1228776,
+  "requested_disabled_peak_bytes": 3292,
+  "shared_clone_handles": 4,
+  "shared_clone_additional_requested_bytes": 0,
+  "requested_after_last_owner_release_bytes": 0,
+  "scope": "isolated optional operation; retained source, models and pools precede profiler",
+  "excluded": [
+    "inline owner/control allocation from vector quota",
+    "allocator rounding and overhead",
+    "profiler bookkeeping",
+    "OS stacks",
+    "source bytes",
+    "model state",
+    "cache and staging",
+    "replay output and scratch"
+  ],
+  "claim": "workload observation, not process or allocator-wide quota"
+}

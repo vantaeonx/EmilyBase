@@ -2078,3 +2078,46 @@ excluding blanks/comment-only lines),1207 SDK and718 Python, or54946 source line
 Documentation/configuration/locks/build output are excluded. Numeric decoded plan/
 model/cache/transient/worker reservation, complete durable writer and production
 acceptance remain open. Runtime file/WAL/backup/ACK meanings are unchanged.
+
+## Retained decoded vector admission (2026-10-07)
+
+Complete stable 1.99.0 and minimum Rust 1.89.0 workspace runs each pass 760 tests,
+with 17 ignored helpers and no failures. Separately, 36 optional release diagnostic
+checks pass on both toolchains. Both formatting checks, strict workspace/fuzz/
+feature Clippy, minimum-toolchain fuzz bins and locked workspace build pass.
+
+Five private cases cover unexpected spare capacity, poison, unwind, actual Weak
+last-owner release and maximal checked arithmetic permits. Twelve integration
+cases cover explicit/disabled limits, exact byte boundaries, pointer identity,
+independent copies, source lifetimes, malformed input and wrong/stale replay bases.
+The object-cap case retains 4096 actual independently decoded owners. Two actual
+eight-thread races hold every successful reservation through coordinated checks;
+an independent 64-case property model distinguishes physical owners from handles.
+Maximal arithmetic checks do not claim actual simultaneous maximal heap workloads.
+
+The isolated optional native fixture has 256 history and 41 primary images. Its
+reserved vector payload is 1228576 bytes; requested live/peak bytes are 1228776.
+The additional 200 owner/control bytes are excluded from vector admission. Four
+cloned handles allocate no additional bytes and retain one reservation. Last-owner
+drop returns operation-local requested current bytes to zero. Disabled admission
+observes 3292 transient bytes before refusal and no owned image vectors, guarded
+against a regression to full materialization before quota checks. Fixtures,
+source, pools, model construction, stacks, profiler and allocator overhead are
+excluded; this is not a process heap/RSS quota or a cold replay observation.
+
+The dedicated decoded_admission ASan campaign completes 33336 executions in 46
+seconds with observed final RSS 163 MiB, a 512-MiB guard and 512-byte input cap.
+Its independent owner/handle model checks exact charges, corruption refusal,
+sharing/copies/release and complete replay. Observed corpus growth limit is 25
+bytes. ASan quarantine is 64 MiB with a 256-KiB thread-local quarantine. The short
+campaign is not exhaustive; synthetic corpus/logs remain outside Git.
+
+Two initial test-fixture compilation errors (a captured model moved into a thread
+iterator and a usize/u64 diagnostic comparison) were corrected before these
+complete successful runs. They are not counted as passing checks.
+
+The logical block adds 987 net Rust lines, giving 54008 physical Rust lines (51545
+excluding blanks/comment-only lines), 1207 SDK and 718 Python, or 55933 source
+lines. Documentation/configuration/locks/build output are excluded. Serialized
+buffers and model lifetimes keep independent accounting. Model/cache/staging/
+transient/worker reservation and the complete durable writer remain open.
