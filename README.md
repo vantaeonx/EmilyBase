@@ -4,6 +4,10 @@ An experimental Apache-2.0 database and future self-hosted backend platform in
 Rust. The storage engine is original code; no existing database engine is used
 as internal storage or as a required runtime dependency.
 
+Opt-in [image replay diagnostics](docs/image-replay-profiles.md) observe physical
+plan/output retention and release. Byte reservation and durability gates remain
+open before a shared table/index writer can be enabled.
+
 **Early development. Not production-ready. Use synthetic data only.**
 
 Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is

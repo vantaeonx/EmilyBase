@@ -1,5 +1,11 @@
 # Roadmap and acceptance gates
 
+2026-10-06: opt-in physical plan/replay allocation samples are preserved with
+bounded version-2 report admission. They expose full-history reconstruction costs
+and release behavior; numeric transient admission and durable writer gates remain
+open. See [observations](image-replay-profiles.md) and
+[ADR 0045](adr/0045-image-plan-and-replay-allocation-diagnostics.md).
+
 The minimal stage-1 core is implemented and tested. Later acceptance gates remain
 open; a table engine is not a completed transaction engine or backend platform.
 

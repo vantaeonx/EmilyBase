@@ -6,7 +6,7 @@ use emilybase_database::{Event, EventKind};
 use emilybase_index::IndexSnapshot;
 use emilybase_model_profile::{Config, Error, Kind, Mode, PhaseKind, Report};
 
-fn index(base: &Model, staged: &mut Staged, kind: Kind) -> Result<(), Error> {
+pub(crate) fn index(base: &Model, staged: &mut Staged, kind: Kind) -> Result<(), Error> {
     let tree = staged.view()?.export_primary_tree("items")?;
     let info = staged.view()?.verify_primary_tree("items", &tree)?;
     let previous = base.selection(1);
@@ -38,7 +38,7 @@ fn index(base: &Model, staged: &mut Staged, kind: Kind) -> Result<(), Error> {
     Ok(())
 }
 
-fn build(config: Config, project: u8) -> Result<Model, Error> {
+pub(crate) fn build(config: Config, project: u8) -> Result<Model, Error> {
     let mut model = Model::new([project + 1; 16])?;
     let mut create = model.begin()?;
     create.apply(Event {
@@ -162,5 +162,6 @@ pub fn measure(config: Config) -> Result<Report, Error> {
         phases,
         components_per_project,
         comparison: None,
+        images_per_project: None,
     })
 }

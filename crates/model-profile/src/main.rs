@@ -1,4 +1,5 @@
 mod fingerprint;
+mod images;
 mod state;
 mod support;
 
@@ -32,6 +33,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let report = match config.mode {
         Mode::State | Mode::IndexOnly => state::measure(config)?,
         Mode::Fingerprint => fingerprint::measure(config)?,
+        Mode::Replay | Mode::IndexReplay => images::measure(config)?,
     };
     drop(profiler);
     report.validate()?;

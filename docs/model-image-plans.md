@@ -79,3 +79,7 @@ deltas can materialize full temporary envelopes. Their peak costs and concurrent
 replay/worker/backup reservation need further work. No wire decoder or runtime
 migration is added. See [ADR 0044](adr/0044-validated-physical-image-plans.md),
 [prototype gates](durable-index-prototype-plan.md) and [capacity](durable-index-capacity.md).
+
+The opt-in [replay observations](image-replay-profiles.md) now measure owned plans,
+independent outputs and exact release samples. Small image counts do not bound
+full reconstructed-state memory; no byte reservation follows from these samples.

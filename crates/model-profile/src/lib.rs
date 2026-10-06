@@ -1,6 +1,6 @@
 //! Synthetic, opt-in allocation diagnostics. No runtime server dependency.
 mod report;
-pub use report::{Comparison, Components, Heap, Phase, PhaseKind, Report};
+pub use report::{Comparison, Components, Heap, ImageComponents, Phase, PhaseKind, Report};
 pub const MAX_REPORT_BYTES: usize = 8192;
 
 /// Bounded diagnostic JSON admission. Errors do not echo the supplied document.
@@ -22,6 +22,8 @@ pub enum Mode {
     State,
     IndexOnly,
     Fingerprint,
+    Replay,
+    IndexReplay,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Serialize, Deserialize)]

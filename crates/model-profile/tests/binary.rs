@@ -201,3 +201,142 @@ fn read_only_index_publication_keeps_rows_shared_with_retained_model_views() {
         }
     }
 }
+
+#[test]
+fn real_image_replay_reports_count_bodies_and_release_owned_transients() {
+    for mode in ["replay", "index-replay"] {
+        for kind in ["integer", "short-text", "long-text"] {
+            let report = run(&[
+                "--mode",
+                mode,
+                "--case",
+                kind,
+                "--rows",
+                "256",
+                "--projects",
+                "4",
+                "--value-bytes",
+                "768",
+                "--retain-old",
+            ]);
+            assert_eq!(report.version, 2);
+            assert!(report.comparison.is_none());
+            assert_eq!(report.images_per_project.as_ref().unwrap().len(), 4);
+            for image in report.images_per_project.as_ref().unwrap() {
+                assert_eq!(image.changed_roots, 1);
+                assert_eq!(image.retired_tables, 0);
+                assert_eq!(image.history_pages, u64::from(mode == "replay"));
+                if mode == "index-replay" || kind == "long-text" {
+                    assert_eq!(image.primary_pages, 0);
+                    assert_eq!(image.retired_pages, 0);
+                } else {
+                    assert!(image.primary_pages > 0);
+                }
+                assert_eq!(
+                    image.image_body_bytes,
+                    (image.history_pages + image.primary_pages) * 4096
+                );
+            }
+            let sample = |phase| {
+                report
+                    .phases
+                    .iter()
+                    .find(|p| p.phase == phase)
+                    .unwrap()
+                    .heap
+            };
+            let plans = sample(PhaseKind::PlansBuilt);
+            let replayed = sample(PhaseKind::Replayed);
+            let released = sample(PhaseKind::ReplayReleased);
+            assert!(replayed.current_bytes > plans.current_bytes);
+            assert!(replayed.current_bytes > released.current_bytes);
+            assert!(released.current_bytes.abs_diff(plans.current_bytes) < 65536);
+            assert!(sample(PhaseKind::PlansReleased).current_bytes < released.current_bytes);
+            // Cumulative counters cover all preceding work, not a phase-local peak.
+            assert!(replayed.allocated_bytes > plans.allocated_bytes);
+        }
+    }
+}
+
+#[test]
+fn changed_history_replay_detaches_rows_while_index_only_replay_shares_them() {
+    let run_mode = |mode| {
+        run(&[
+            "--mode",
+            mode,
+            "--case",
+            "long-text",
+            "--rows",
+            "1024",
+            "--projects",
+            "4",
+            "--value-bytes",
+            "768",
+            "--retain-old",
+        ])
+    };
+    let history = run_mode("replay");
+    let index = run_mode("index-replay");
+    let held_delta = |report: &Report| {
+        let planned = report
+            .phases
+            .iter()
+            .find(|p| p.phase == PhaseKind::PlansBuilt)
+            .unwrap();
+        let replayed = report
+            .phases
+            .iter()
+            .find(|p| p.phase == PhaseKind::Replayed)
+            .unwrap();
+        replayed.heap.current_bytes - planned.heap.current_bytes
+    };
+    assert!(held_delta(&history) > 32 * 1024 * 1024);
+    assert!(held_delta(&index) < 128 * 1024);
+    for report in [&history, &index] {
+        let phases = &report.phases;
+        let plans = phases
+            .iter()
+            .find(|p| p.phase == PhaseKind::PlansBuilt)
+            .unwrap();
+        let released = phases
+            .iter()
+            .find(|p| p.phase == PhaseKind::ReplayReleased)
+            .unwrap();
+        assert!(
+            released
+                .heap
+                .current_bytes
+                .abs_diff(plans.heap.current_bytes)
+                < 65536
+        );
+    }
+}
+
+#[test]
+fn image_report_byte_counters_and_mode_are_checked_on_actual_process_output() {
+    let report = run(&["--mode", "replay", "--rows", "1"]);
+    let encoded = serde_json::to_vec(&report).unwrap();
+    assert_eq!(decode_report(&encoded).unwrap(), report);
+    for field in [
+        "history_pages",
+        "primary_pages",
+        "retired_pages",
+        "changed_roots",
+        "retired_tables",
+        "image_body_bytes",
+    ] {
+        let mut document = serde_json::to_value(&report).unwrap();
+        document["images_per_project"][0][field] = serde_json::json!(u64::MAX);
+        assert!(decode_report(&serde_json::to_vec(&document).unwrap()).is_err());
+    }
+    let mut wrong = serde_json::to_value(&report).unwrap();
+    wrong["version"] = serde_json::json!(1);
+    assert!(decode_report(&serde_json::to_vec(&wrong).unwrap()).is_err());
+    wrong["version"] = serde_json::json!(2);
+    wrong["images_per_project"][0]["private-field"] = serde_json::json!("private-marker");
+    let error = decode_report(&serde_json::to_vec(&wrong).unwrap())
+        .unwrap_err()
+        .to_string();
+    assert!(!error.contains("private-field"));
+    assert!(!error.contains("private-marker"));
+}

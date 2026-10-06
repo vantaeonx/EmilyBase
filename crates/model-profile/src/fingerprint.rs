@@ -60,5 +60,6 @@ pub fn measure(config: Config) -> Result<Report, Error> {
         phases,
         components_per_project,
         comparison,
+        images_per_project: None,
     })
 }

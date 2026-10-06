@@ -1,6 +1,7 @@
 //! Codec fixtures exercise admission, not measured allocations.
 use emilybase_model_profile::{
-    Comparison, Components, Config, Heap, Kind, Mode, Phase, PhaseKind, Report, decode_report,
+    Comparison, Components, Config, Heap, ImageComponents, Kind, Mode, Phase, PhaseKind, Report,
+    decode_report,
 };
 use proptest::prelude::*;
 
@@ -11,6 +12,19 @@ fn fixture(mode: Mode, kind: Kind, rows: u16, projects: u8) -> Report {
             PhaseKind::Staged,
             PhaseKind::IndexesStaged,
             PhaseKind::Prepared,
+            PhaseKind::Published,
+            PhaseKind::OldViewsReleased,
+            PhaseKind::Released,
+        ],
+        Mode::Replay | Mode::IndexReplay => &[
+            PhaseKind::Built,
+            PhaseKind::Staged,
+            PhaseKind::IndexesStaged,
+            PhaseKind::Prepared,
+            PhaseKind::PlansBuilt,
+            PhaseKind::Replayed,
+            PhaseKind::ReplayReleased,
+            PhaseKind::PlansReleased,
             PhaseKind::Published,
             PhaseKind::OldViewsReleased,
             PhaseKind::Released,
@@ -56,7 +70,11 @@ fn fixture(mode: Mode, kind: Kind, rows: u16, projects: u8) -> Report {
         None
     };
     Report {
-        version: 1,
+        version: if matches!(mode, Mode::Replay | Mode::IndexReplay) {
+            2
+        } else {
+            1
+        },
         config: Config {
             mode,
             kind,
@@ -68,6 +86,23 @@ fn fixture(mode: Mode, kind: Kind, rows: u16, projects: u8) -> Report {
         phases,
         components_per_project: vec![component; projects as usize],
         comparison,
+        images_per_project: if matches!(mode, Mode::Replay | Mode::IndexReplay) {
+            let history_pages = u64::from(mode == Mode::Replay);
+            let primary_pages = u64::from(mode == Mode::Replay && kind != Kind::LongText);
+            Some(vec![
+                ImageComponents {
+                    history_pages,
+                    primary_pages,
+                    retired_pages: 0,
+                    changed_roots: 1,
+                    retired_tables: 0,
+                    image_body_bytes: (history_pages + primary_pages) * 4096,
+                };
+                usize::from(projects)
+            ])
+        } else {
+            None
+        },
     }
 }
 
@@ -201,6 +236,12 @@ fn preserved_synthetic_release_reports_pass_bounded_admission() {
             .as_slice(),
         include_bytes!("../../../docs/measurements/2026-10-05-shared-rows/state-long-four.json")
             .as_slice(),
+        include_bytes!("../../../docs/measurements/2026-10-06-image-replay/replay-long-four.json")
+            .as_slice(),
+        include_bytes!(
+            "../../../docs/measurements/2026-10-06-image-replay/index-replay-long-four.json"
+        )
+        .as_slice(),
     ] {
         let report = decode_report(bytes).unwrap();
         assert_eq!(report.config.rows, 10000);
@@ -214,12 +255,14 @@ proptest! {
     #[test]
     fn valid_bounded_shapes_round_trip_with_consistent_components(
         rows in 1u16..=10000, projects in 1u8..=4,
-        kind in 0u8..3, requested_mode in 0u8..3, value_bytes in 0u16..=768
+        kind in 0u8..3, requested_mode in 0u8..5, value_bytes in 0u16..=768
     ) {
         let kind = match kind { 0 => Kind::Integer, 1 => Kind::ShortText, _ => Kind::LongText };
         let mode = match requested_mode {
             1=>Mode::IndexOnly,
             2 if kind!=Kind::LongText=>Mode::Fingerprint,
+            3=>Mode::Replay,
+            4=>Mode::IndexReplay,
             _=>Mode::State,
         };
         let mut report = fixture(mode, kind, rows, projects);
@@ -252,5 +295,144 @@ proptest! {
                 prop_assert!(error.to_string().len() < 128);
             }
         }
+    }
+}
+
+#[test]
+fn image_reports_require_version_two_and_the_complete_phase_sequence() {
+    for mode in [Mode::Replay, Mode::IndexReplay] {
+        let original = fixture(mode, Kind::ShortText, 10000, 4);
+        original.validate().unwrap();
+        let canonical = serde_json::to_vec(&original).unwrap();
+        assert!(canonical.len() <= emilybase_model_profile::MAX_REPORT_BYTES);
+        assert_eq!(decode_report(&canonical).unwrap(), original);
+        for change in 0..7 {
+            let mut value = serde_json::to_value(&original).unwrap();
+            match change {
+                0 => value["version"] = serde_json::json!(1),
+                1 => value["images_per_project"] = serde_json::Value::Null,
+                2 => value["images_per_project"]
+                    .as_array_mut()
+                    .unwrap()
+                    .pop()
+                    .map(|_| ())
+                    .unwrap(),
+                3 => {
+                    value["phases"].as_array_mut().unwrap().swap(4, 5);
+                }
+                4 => value["config"]["mode"] = serde_json::json!("state"),
+                5 => {
+                    value.as_object_mut().unwrap().remove("images_per_project");
+                }
+                _ => {
+                    value["comparison"] = serde_json::json!({
+                        "full_encoding_bytes": 0, "full_encoding_blocks": 0,
+                        "streaming_bytes": 0, "streaming_blocks": 0,
+                    })
+                }
+            }
+            assert!(decode_report(&serde_json::to_vec(&value).unwrap()).is_err());
+        }
+    }
+}
+
+#[test]
+fn version_one_reports_keep_their_previous_serialized_shape() {
+    for mode in [Mode::State, Mode::IndexOnly, Mode::Fingerprint] {
+        let original = fixture(mode, Kind::Integer, 30, 2);
+        let value = serde_json::to_value(&original).unwrap();
+        assert!(value.get("images_per_project").is_none());
+        let mut wrong = fixture(mode, Kind::Integer, 30, 2);
+        wrong.images_per_project =
+            fixture(Mode::IndexReplay, Kind::Integer, 30, 2).images_per_project;
+        assert!(wrong.validate().is_err());
+        wrong.images_per_project = None;
+        wrong.version = 2;
+        assert!(wrong.validate().is_err());
+        assert_eq!(
+            decode_report(&serde_json::to_vec(&value).unwrap()).unwrap(),
+            original
+        );
+    }
+}
+
+#[test]
+fn image_shapes_refuse_repaired_body_totals_for_impossible_workloads() {
+    for kind in [Kind::Integer, Kind::ShortText, Kind::LongText] {
+        for mode in [Mode::Replay, Mode::IndexReplay] {
+            let original = fixture(mode, kind, 10000, 4);
+            for field in [
+                "history_pages",
+                "primary_pages",
+                "retired_pages",
+                "changed_roots",
+                "retired_tables",
+                "image_body_bytes",
+            ] {
+                for number in [u64::MAX, 1025, 9437185] {
+                    let mut value = serde_json::to_value(&original).unwrap();
+                    value["images_per_project"][0][field] = serde_json::json!(number);
+                    assert!(decode_report(&serde_json::to_vec(&value).unwrap()).is_err());
+                }
+            }
+            let mut wrong = fixture(mode, kind, 10000, 4);
+            let image = &mut wrong.images_per_project.as_mut().unwrap()[0];
+            image.history_pages = u64::from(mode == Mode::IndexReplay);
+            image.image_body_bytes = (image.history_pages + image.primary_pages) * 4096;
+            assert!(wrong.validate().is_err());
+        }
+    }
+}
+
+#[test]
+fn nested_image_fields_and_truncated_version_two_reports_never_echo_input() {
+    let report = fixture(Mode::Replay, Kind::LongText, 10000, 4);
+    let bytes = serde_json::to_vec(&report).unwrap();
+    for cut in 0..bytes.len() {
+        assert!(decode_report(&bytes[..cut]).is_err());
+    }
+    let mut value = serde_json::to_value(&report).unwrap();
+    value["images_per_project"][0]["private-field"] = serde_json::json!("private-marker");
+    let error = decode_report(&serde_json::to_vec(&value).unwrap())
+        .unwrap_err()
+        .to_string();
+    assert!(!error.contains("private-field"));
+    assert!(!error.contains("private-marker"));
+}
+
+#[test]
+fn complete_image_report_accepts_extreme_consistent_counters_without_overflow() {
+    let mut report = fixture(Mode::Replay, Kind::Integer, 10000, 4);
+    for phase in &mut report.phases {
+        phase.heap = Heap {
+            current_bytes: u64::MAX,
+            current_blocks: u64::MAX,
+            peak_bytes: u64::MAX,
+            peak_blocks: u64::MAX,
+            allocated_bytes: u64::MAX,
+            allocated_blocks: u64::MAX,
+        };
+    }
+    let bytes = serde_json::to_vec(&report).unwrap();
+    assert!(bytes.len() <= emilybase_model_profile::MAX_REPORT_BYTES);
+    // Counter consistency is admission of an unsigned document, not proof that
+    // these counters were observed or permission to allocate that amount.
+    assert_eq!(decode_report(&bytes).unwrap(), report);
+}
+
+#[test]
+fn preserved_small_image_replay_observation_matches_its_workload() {
+    let report = decode_report(include_bytes!(
+        "../../../docs/measurements/2026-10-06-image-replay/replay-short-four.json"
+    ))
+    .unwrap();
+    assert_eq!(report.version, 2);
+    assert_eq!(report.config.mode, Mode::Replay);
+    assert_eq!(report.config.rows, 225);
+    assert_eq!(report.config.projects, 4);
+    for image in report.images_per_project.unwrap() {
+        assert_eq!(image.history_pages, 1);
+        assert_eq!(image.primary_pages, 1);
+        assert_eq!(image.image_body_bytes, 8192);
     }
 }

@@ -1,5 +1,8 @@
 # Synthetic model allocation profiles
 
+Physical plan retention and independent memory replay are measured separately in
+[image replay profiles](image-replay-profiles.md), including exact release samples.
+
 This opt-in tool measures the original in-memory prototype. It neither writes a
 database nor enables the proposed durable index writer. Use synthetic data only.
 See [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md).

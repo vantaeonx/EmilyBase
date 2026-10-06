@@ -1727,3 +1727,40 @@ buffers and full-history reconstruction still need byte/transient reservations.
 No new durable writer or production gate is completed. See
 [ADR 0044](adr/0044-validated-physical-image-plans.md) and
 [image plans](model-image-plans.md).
+
+## Physical replay allocation checkpoint
+
+On 2026-10-06 the opt-in release diagnostics pass nine actual-process tests and
+sixteen report tests (25 total), including six integer/short/long row/index-replay
+commands, retention/release comparisons and malformed real report counters.
+Minimum Rust 1.89.0 passes all sixteen report tests and compiles the feature.
+Strict workspace/feature/fuzz Clippy, formatting and locked workspace build pass.
+The production engine is unchanged from the complete 649-test stable/minimum
+checkpoint; that earlier full run is not relabeled as a new full-suite result.
+
+The 128-case codec property now includes both replay modes. Version-two reports
+check exact phases and workload-specific image counts, reject repaired impossible
+totals/mode/version, unknown nested fields and all truncations, and accept extreme
+consistent u64 counters without overflow. Existing version-one JSON shape and
+all preserved historical observations remain accepted. Three new real release
+reports pass the bounded decoder. No lockfile, external dependency or stored
+database/WAL format changes.
+
+The extended report decoder ASan campaign, seeded with the three actual synthetic
+reports, completes 5474976 executions in 46 seconds under 8192-byte input and
+512-MiB RSS caps, default quarantine, final RSS326 MiB, without failure. This is a
+bounded smoke campaign. Reports are unsigned observations, not memory admission.
+
+Four held long-key 10000-row states need only 16384 changed page-body bytes, but
+holding independent history replay adds 573246472 requested live bytes. Releasing
+the outputs restores the exact plans-built sample. Same-shape index-only replay
+adds 328544 requested bytes and releases them. The instrumented global peaks/RSS
+include construction; simultaneous worker transient bounds remain unmeasured.
+See [preserved profiles](image-replay-profiles.md) and
+[ADR 0045](adr/0045-image-plan-and-replay-allocation-diagnostics.md).
+
+This separate diagnostics block adds 544 Rust lines and removes nine (net535),
+bringing totals to 47578 physical Rust lines (45408 excluding blank/comment-only
+lines), 1207 SDK and718 Python, or49503 source lines. The smaller logical commit
+records a measured prerequisite rather than padding to a line target. Numeric
+byte/transient reservations and the shared durable writer remain open.
