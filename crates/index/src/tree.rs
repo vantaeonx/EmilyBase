@@ -48,6 +48,19 @@ impl BPlusTree {
     pub fn has_stable_ids(&self) -> bool {
         self.stable_ids
     }
+    /// Fully admit a stable-ID view without materializing all physical images.
+    /// The private map is copied; immutable page bodies remain shared. Existing
+    /// IDs/root/keys/pointers and wire bytes are preserved, including sparse IDs.
+    /// Only the returned tree changes allocation/deletion policy.
+    pub fn to_stable(&self) -> Result<Self> {
+        if self.pages.is_empty() || self.pages.len() > MAX_INDEX_PAGES {
+            return Err(Error::Limit);
+        }
+        let mut admitted = self.clone();
+        admitted.stable_ids = true;
+        crate::IndexSnapshot::validate_tree(1, &admitted)?;
+        Ok(admitted)
+    }
     pub fn len(&self) -> usize {
         self.len
     }

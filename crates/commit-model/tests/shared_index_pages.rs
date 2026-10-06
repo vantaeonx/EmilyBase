@@ -275,3 +275,87 @@ fn parallel_independent_replay_retains_shared_index_after_source_and_plan_releas
         );
     }
 }
+
+#[test]
+fn automatic_root_rebuild_uses_shared_validated_derived_pages() {
+    let mut model = populated();
+    let old = model.clone();
+    let mut staged = model.begin().unwrap();
+    staged.rebuild_index("items").unwrap();
+    let prepared = staged.prepare().unwrap();
+    for number in [0, 50, 119] {
+        let bound = Key::Integer(number);
+        let key = prepared
+            .selection(1)
+            .unwrap()
+            .index()
+            .tree
+            .cursor(Some(&bound), None)
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .0;
+        assert!(std::ptr::eq(key, borrowed_key(&old, number)));
+    }
+    let plan = prepared.image_plan().unwrap();
+    assert_eq!(plan.counts().unwrap().changed_roots(), 1);
+    assert_eq!(plan.counts().unwrap().primary_pages(), 0);
+    assert_eq!(plan.counts().unwrap().history_pages(), 0);
+    let replayed = ImagePlan::decode(&plan.encode().unwrap())
+        .unwrap()
+        .replay(&old)
+        .unwrap();
+    model.publish(prepared).unwrap();
+    assert_eq!(model.fingerprint(), replayed.fingerprint());
+    for number in [0, 50, 119] {
+        assert!(std::ptr::eq(
+            borrowed_key(&old, number),
+            borrowed_key(&model, number)
+        ));
+        assert!(std::ptr::eq(
+            borrowed_key(&model, number),
+            borrowed_key(&replayed, number)
+        ));
+    }
+}
+
+#[test]
+fn automatic_write_rebuild_detaches_only_its_changed_primary_leaf() {
+    let mut model = populated();
+    let old = model.clone();
+    let mut staged = model.begin().unwrap();
+    staged
+        .apply(Event {
+            table_id: 1,
+            kind: EventKind::Replace(vec![Value::Integer(0), Value::Text("updated".into())]),
+        })
+        .unwrap();
+    staged.rebuild_index("items").unwrap();
+    let prepared = staged.prepare().unwrap();
+    let plan = prepared.image_plan().unwrap();
+    assert_eq!(plan.counts().unwrap().primary_pages(), 1);
+    let replayed = plan.replay(&old).unwrap();
+    assert!(std::ptr::eq(
+        borrowed_key(&old, 119),
+        borrowed_key(&replayed, 119)
+    ));
+    assert!(!std::ptr::eq(
+        borrowed_key(&old, 0),
+        borrowed_key(&replayed, 0)
+    ));
+    model.publish(prepared).unwrap();
+    assert_eq!(model.fingerprint(), replayed.fingerprint());
+    assert_eq!(
+        old.view().get("items", &Key::Integer(0)).unwrap().unwrap()[1],
+        Value::Text("v".repeat(256))
+    );
+    assert_eq!(
+        model
+            .view()
+            .get("items", &Key::Integer(0))
+            .unwrap()
+            .unwrap()[1],
+        Value::Text("updated".into())
+    );
+}

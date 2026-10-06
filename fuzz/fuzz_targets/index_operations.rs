@@ -1,6 +1,6 @@
 #![no_main]
 #![forbid(unsafe_code)]
-use emilybase_index::{BPlusTree, Error, Key, MAX_INDEX_ENTRIES, RecordPointer};
+use emilybase_index::{BPlusTree, Error, IndexSnapshot, Key, MAX_INDEX_ENTRIES, RecordPointer};
 use libfuzzer_sys::fuzz_target;
 use std::collections::BTreeMap;
 
@@ -24,6 +24,7 @@ fuzz_target!(|bytes: &[u8]| {
         .map(|(k, v)| (k.clone(), *v))
         .collect::<Vec<_>>();
     let mut tree = BPlusTree::from_sorted(&initial).unwrap();
+    let mut retained = Vec::new();
     for (step, op) in bytes[1..].as_chunks::<6>().0.iter().enumerate() {
         let number = i16::from_le_bytes([op[1], op[2]]) as i64;
         let key = if op[0] & 4 == 0 {
@@ -67,7 +68,27 @@ fuzz_target!(|bytes: &[u8]| {
                 .map(|(k, v)| (k.clone(), *v))
                 .collect::<Vec<_>>()
         );
+        if step % 13 == 0 {
+            let admitted = tree.to_stable().unwrap();
+            let legacy =
+                BPlusTree::from_stable_pages(tree.root_id(), &tree.page_images().unwrap()).unwrap();
+            assert_eq!(admitted, legacy);
+            let snapshot = IndexSnapshot {
+                revision: step as u64 + 1,
+                tree: admitted,
+            };
+            let encoded = snapshot.encode().unwrap();
+            assert_eq!(IndexSnapshot::decode(&encoded).unwrap(), snapshot);
+            if retained.len() == 4 {
+                retained.remove(0);
+            }
+            retained.push((snapshot, encoded));
+        }
         if step % 17 == 0 {
+            for (snapshot, encoded) in &retained {
+                snapshot.validate().unwrap();
+                assert_eq!(snapshot.encode().unwrap(), *encoded);
+            }
             tree = BPlusTree::from_pages(tree.root_id(), &tree.page_images().unwrap()).unwrap();
         }
     }

@@ -381,3 +381,14 @@ capacity refusal, independent state histories and actual concurrent model replay
 execute under [ADR0051](adr/0051-shared-immutable-index-pages.md). Frozen bytes and
 durable ACKs stay unchanged. Numeric map/page/transient/worker admission, cheaper
 validated primary export and the combined durable writer remain open.
+
+## Follow-up: shared validated primary projection
+
+[Primary export](shared-primary-export.md) now performs complete stable arena
+admission through a private map of shared immutable pages, then verifies every
+eligible live row/current pointer. Dense source policy, sparse IDs, original bytes
+and long-key fallback remain intact under [ADR0052](adr/0052-validated-shared-primary-export.md).
+Native warmed-cache allocation regression, owner identity, refusal/import parity,
+generated histories, actual thread writers and automatic model rebuild/replay
+execute. Decoded plan/model/cache/transient/worker reservation and the combined
+durable writer still require separate work.

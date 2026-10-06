@@ -275,6 +275,10 @@ fn preserved_index_page_experiments_have_the_same_full_parallel_workload() {
             "../../../docs/measurements/2026-10-06-shared-index-pages/shared-pages.json"
         )
         .as_slice(),
+        include_bytes!(
+            "../../../docs/measurements/2026-10-07-primary-export/index-replay-short-four.json"
+        )
+        .as_slice(),
     ]
     .map(|bytes| decode_report(bytes).unwrap());
     for report in &samples {

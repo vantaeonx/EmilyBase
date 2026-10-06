@@ -254,3 +254,8 @@ Dense remapping can still detach many pages. This reduces repeated decoded copie
 but does not reserve model/transient/worker heap or change runtime WAL decisions.
 See [ADR0051](adr/0051-shared-immutable-index-pages.md) and
 [observations](shared-index-pages.md).
+
+The subsequent [primary projection](shared-primary-export.md) converts the derived
+arena through a fully checked private stable-ID map sharing immutable pages. Exact
+live key/pointer coverage and long-key exclusions still verify; the source cache
+retains its own policy. No complete image reconstruction is needed for export.

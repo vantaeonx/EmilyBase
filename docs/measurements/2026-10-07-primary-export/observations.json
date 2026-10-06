@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "rust": "1.99.0",
+  "dhat": "0.3.3",
+  "baseline_index_revision": "4ef4a0dc53fab29adec9abebd5b9cdf04d0313ff",
+  "current_source_sha256": {
+    "crates/index/src/tree.rs": "663d58c091f41e48d51063b6372e5d3e8a19eb1da3e165aca7c6a0049b373053",
+    "crates/database/src/projection.rs": "a1467710461efb9f9588e0d7f6fbb6dc5414ed3aea797373a0e0a7595f258544"
+  },
+  "primary_fixture": {
+    "rows": 10000,
+    "text_key_bytes": 256,
+    "index_pages": 768,
+    "warm_cache_excluded": true,
+    "operation_includes_second_coverage_verification": true
+  },
+  "before_primary_requested_peak_bytes": 7480176,
+  "after_primary_requested_peak_bytes": 51680,
+  "after_primary_requested_total_bytes": 26894632,
+  "after_primary_requested_total_blocks": 142614,
+  "instrumented_elapsed_seconds": 35.74,
+  "maximum_rss_kib": 191952,
+  "elapsed_is_not_throughput": true
+}

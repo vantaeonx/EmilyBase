@@ -22,6 +22,26 @@ fn verify(snapshot: Snapshot, input: &[u8]) {
         assert_eq!(info.entries, short);
         assert_eq!(info.excluded_long_keys, rows.len() - short);
         assert!(info.pages > 0);
+        let exported = snapshot.export_primary_tree(&schema.name).unwrap();
+        assert_eq!(
+            snapshot
+                .verify_primary_tree(&schema.name, &exported)
+                .unwrap(),
+            info
+        );
+        let stable = exported.to_stable().unwrap();
+        assert_eq!(stable, exported);
+        for row in rows.iter().take(32) {
+            let key = schema.key(row).unwrap();
+            if !matches!(&key,Key::Text(text) if text.len() > MAX_KEY_BYTES) {
+                let location = snapshot.row_location(&schema.name, &key).unwrap().unwrap();
+                let pointer = stable.get(&key).unwrap().unwrap();
+                assert_eq!(
+                    (pointer.page_id, pointer.slot_id),
+                    (location.page_id, location.slot_id)
+                );
+            }
+        }
         let replay = Snapshot::from_pages(snapshot.pages().cloned().collect()).unwrap();
         assert_eq!(replay.primary_index_info(&schema.name).unwrap(), info);
         for row in rows.iter().take(32) {

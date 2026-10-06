@@ -14,16 +14,15 @@ impl Snapshot {
             hash.finalize().into()
         })
     }
-    /// Export a validated stable-ID copy of the current eligible primary tree.
+    /// Export a fully validated private stable-ID map of the eligible primary
+    /// tree. Immutable page bodies may share ownership with its derived cache.
     pub fn export_primary_tree(&self, name: &str) -> Result<BPlusTree> {
         let table = self.state.table(name)?;
         let tree = self
             .primary_indexes
             .tree(self.table_id(name)?, &table.rows, &self.locations)?;
-        let images = tree
-            .page_images()
-            .map_err(|_| Error::PrimaryIndex("tree export failed"))?;
-        let tree = BPlusTree::from_stable_pages(tree.root_id(), &images)
+        let tree = tree
+            .to_stable()
             .map_err(|_| Error::PrimaryIndex("stable tree export failed"))?;
         self.verify_primary_tree(name, &tree)?;
         Ok(tree)

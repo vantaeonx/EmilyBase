@@ -99,5 +99,7 @@ current state before verifying them.
 EBIF/EBIX/EBIP bytes and frozen hashes stay unchanged. Stored database pages,
 WAL1/2, backups and commit acknowledgments keep their existing meanings. Exported
 relational primary trees still pass their current complete owned export path;
-this increment does not silently change that API's admission. Numeric decoded
+this increment does not silently change that API's admission.
+[ADR0052](adr/0052-validated-shared-primary-export.md) subsequently admits a shared
+stable view through the same full arena/live-pointer checks without complete images. Numeric decoded
 state/transient/worker quotas and the combined durable writer remain open.

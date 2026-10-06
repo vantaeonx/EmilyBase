@@ -24,6 +24,8 @@ bytes and full topology. Private candidate/retained state still needs admission.
 Original [immutable index pages](docs/shared-index-pages.md) now share unchanged
 bodies across clones, private candidates and old snapshots. Changed pages detach
 without altering historical readers; numeric model/worker admission stays open.
+[Primary export](docs/shared-primary-export.md) also admits a shared stable-ID map
+without reconstructing a complete image set, retaining full live row/pointer checks.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

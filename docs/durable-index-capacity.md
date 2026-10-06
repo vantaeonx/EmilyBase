@@ -174,3 +174,8 @@ identity and Weak release checks execute alongside full original admission.
 Full-capacity isolated and four-project replay observations include map/reference
 overhead and preserve their exact boundaries in [the report](shared-index-pages.md).
 Sharing does not close decoded/transient/worker byte reservation or durability.
+
+[ADR0052](adr/0052-validated-shared-primary-export.md) now also removes full physical
+image reconstruction from primary export while retaining complete arena and exact
+relational coverage checks. Warm-cache regression and same-config observations
+are preserved separately; decoded plan/model/transient/worker quotas stay open.
