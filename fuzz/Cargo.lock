@@ -288,6 +288,7 @@ dependencies = [
  "emilybase-commit-format",
  "emilybase-database",
  "emilybase-index",
+ "emilybase-storage",
  "sha2",
  "thiserror",
 ]

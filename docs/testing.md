@@ -1685,3 +1685,45 @@ The production Rust source/runtime is unchanged from the preceding full 631-test
 stable/minimum checkpoint. This separate QA block adds 380 Rust lines; totals are
 45850 physical Rust (43781 without blank/comment-only lines), 1207 SDK and718
 Python, or47775 combined. No dependency/version changes; corpora are ignored.
+
+## Validated physical image-plan checkpoint
+
+On 2026-10-06 all 649 main workspace tests pass in complete stable 1.99.0 and
+minimum Rust 1.89.0 runs, with 17 ignored child helpers invoked by their parents.
+The opt-in release diagnostics pass all six real-process cases and ten report
+cases. Workspace/fuzz formatting, strict workspace/feature/fuzz Clippy, minimum
+fuzz/feature compilation, locked build and cached dependency-advisory checks pass
+(152/123 dependencies and 1290 cached advisories).
+
+Eighteen new cases cover independent physical replay, equal page numbers across
+history/two tables, retained views, omitted unchanged roots, index-only plans,
+retirement/recreation, long-key exclusions and independent row-operation models.
+Every byte of real history/index images is damaged separately. Repaired checksums
+cannot authorize committed history rewrites or another table's row pointer.
+Exact base/next fingerprints, adjacent transactions, image/retirement ordering and
+complete root coverage refuse partial or foreign state. A real dense 10000-row
+arena readdresses/replays all 768 index pages; a separate case replays exactly
+256 newly appended long-value history pages. The capacity fixture's initial
+792-page incremental shape was corrected to an explicit dense rebuild; that
+failed fixture assertion is not counted as a successful test.
+
+The extended component-count ASan campaign completes 24453158 executions in
+46 seconds with a 64-byte input/512-MiB RSS cap, default quarantine, RSS278 MiB.
+The extended commit-model campaign initially fails its 512-MiB process cap at
+RSS519 MiB with default quarantine: the tool reports about 240 MB quarantined
+and 25 MB live allocations. The retained artifact passes one separate execution
+under the same cap; that fixed-input run is not fuzzing. A subsequent campaign
+with ASan still enabled, an explicit 64-MiB quarantine and 256-KiB thread-local
+quarantine completes 7009 executions in 46 seconds, with the original 256-byte
+input/512-MiB RSS cap and final RSS222 MiB. These are bounded smoke campaigns,
+not a proof of a process-wide heap quota, a leak audit or durability acceptance.
+
+The logical block adds 1194 Rust lines and removes one (net1193). Totals are
+47043 physical Rust lines (44891 excluding blank/comment-only lines), 1207 SDK
+and718 Python, or48968 combined. Lockfiles add only the model's dependency on
+the original workspace storage crate; external versions are unchanged. Plans
+write no files or WAL and do not escape ModelPool admission. Owned plan/replay
+buffers and full-history reconstruction still need byte/transient reservations.
+No new durable writer or production gate is completed. See
+[ADR 0044](adr/0044-validated-physical-image-plans.md) and
+[image plans](model-image-plans.md).

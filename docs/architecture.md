@@ -207,3 +207,12 @@ publication with equal state digests. The wrapper exposes borrowed rows instead 
 clonable raw snapshots. It is independent of managed WAL and HTTP ownership, and
 counts model lifetimes rather than heap/RSS. Read/build temporaries and caller-owned
 copies need separate budgeting. See [ADR 0043](adr/0043-bounded-model-lifetimes.md).
+
+
+Raw prepared memory transactions now retain an exact base for physical image
+planning. ImagePlan omits unchanged roots/pages, scopes original EBPG/EBIX images
+by database/domain/table and binds both state fingerprints. Independent replay
+preserves old history slots, rebuilds original tree deltas and validates complete
+row/pointer coverage before returning a new raw Model. Owned plans/replay temporaries
+are outside ModelPool; there is no outer wire envelope or durable fence. See
+[ADR 0044](adr/0044-validated-physical-image-plans.md).

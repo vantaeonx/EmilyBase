@@ -64,6 +64,10 @@ and runtime old-view lifetimes remain open, so increment 3 is not complete.
 An optional [ModelPool](model-lifetimes.md) now tests explicit retained/pending
 state, reader and writer count reservations; raw models and server/replay
 transients remain outside its boundary. This does not select a byte quota.
+Raw [physical image plans](model-image-plans.md) also now reconstruct changed
+history/index/root components against an exact base and next state, with explicit
+separate count bounds. They select no outer wire format and close no writer or
+numeric heap/replay gate.
 
 Calculate combined encoded bytes and peak staged/replay memory for a full rebuild,
 multi-table transactions, long keys and compaction. Select explicit per-domain

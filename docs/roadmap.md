@@ -84,6 +84,11 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
    release, descendant-held identity and actual thread contention are tested.
    Numeric heap/transient/replay/server admission is still open; no durable gate
    is completed. See [ADR 0043](adr/0043-bounded-model-lifetimes.md).
+   Raw prepared states now materialize typed changed physical components and
+   independently replay both projections against exact base/next fingerprints.
+   Dense 10000-row/768-index-image and 256-appended-history-image cases keep
+   domain bounds separate. No wire framing or durable writer is enabled. See
+   [ADR 0044](adr/0044-validated-physical-image-plans.md).
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 

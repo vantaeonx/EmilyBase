@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }
+emilybase-storage = { path = "../storage" }
 emilybase-index = { path = "../index" }
 emilybase-commit-format = { path = "../commit-format" }
 sha2 = "0.10"

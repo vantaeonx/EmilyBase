@@ -2,6 +2,7 @@
 //! This module writes no files or WAL and provides no durable commit acknowledgment.
 mod admission;
 mod components;
+mod images;
 mod selection;
 mod staging;
 mod state;
@@ -12,6 +13,7 @@ pub use admission::{
     ModelReader,
 };
 pub use components::EncodedComponents;
+pub use images::{ImagePlan, PageWrite, PlanCounts, RetiredRoot, RootChange};
 pub use selection::Selection;
 pub use staging::{Prepared, Staged};
 pub use state::Model;
@@ -46,6 +48,8 @@ pub enum Error {
     DuplicateDatabase,
     #[error("model admission lock is poisoned")]
     AdmissionPoisoned,
+    #[error("invalid experimental image plan: {0}")]
+    Plan(&'static str),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -211,6 +211,14 @@ owner identity. This count-based prototype writes no files and is not a heap-byt
 or server quota. See [model lifetimes](docs/model-lifetimes.md) and
 [ADR 0043](docs/adr/0043-bounded-model-lifetimes.md).
 
+Raw prepared memory states can materialize changed physical history/index images
+and independently replay both projections against their exact base. Plans enforce
+separate image bounds, preserve committed slots and reject partial/foreign roots.
+The real 10000-row/768-image case keeps the 256-history-image bound separate.
+This adds no wire format or durable acknowledgment. See
+[physical plans](docs/model-image-plans.md) and
+[ADR 0044](docs/adr/0044-validated-physical-image-plans.md).
+
 The synchronous project registry creates private isolated database directories,
 issues scoped high-entropy API keys and rotates them with atomic metadata publication.
 Live capabilities pin registry/project/data directory identities; replacement

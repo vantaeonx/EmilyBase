@@ -149,7 +149,15 @@ fuzz_target!(|bytes: &[u8]| {
                 staged.index(binding, index).unwrap();
                 let prepared = staged.prepare().unwrap();
                 assert_eq!(live.fingerprint(), fingerprint);
+                let plan = prepared.image_plan().unwrap();
+                let replayed = plan.replay(&live).unwrap();
+                assert_eq!(replayed.fingerprint(), plan.next_fingerprint());
                 live.publish(prepared).unwrap();
+                assert_eq!(replayed.fingerprint(), live.fingerprint());
+                assert_eq!(
+                    replayed.view().scan("items", 10000).unwrap(),
+                    live.view().scan("items", 10000).unwrap()
+                );
                 if operation == 2 {
                     expected.remove(&key);
                 } else {

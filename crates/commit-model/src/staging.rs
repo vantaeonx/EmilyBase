@@ -26,6 +26,7 @@ pub struct Prepared {
     pub(crate) base: [u8; 32],
     pub(crate) next: Arc<State>,
     retired_tables: Vec<u64>,
+    pub(crate) previous: Arc<State>,
 }
 
 impl Staged {
@@ -208,6 +209,7 @@ impl Staged {
             base: self.base.fingerprint,
             next,
             retired_tables,
+            previous: self.base,
         })
     }
 }
