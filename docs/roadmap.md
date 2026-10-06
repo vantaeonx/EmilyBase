@@ -79,6 +79,11 @@ checks. This is build/test compatibility, not a stable file-format upgrade gate.
    owned result isolation and release checks accompany the lower synthetic peak.
    Structural map copies, retained generations and numeric admission remain open.
    See [ADR 0042](adr/0042-shared-row-bodies-and-live-keys.md).
+   Optional model-pool admission now reserves distinct retained/pending generations
+   and limits reader objects, global writers and one writer per project. Refusal,
+   release, descendant-held identity and actual thread contention are tested.
+   Numeric heap/transient/replay/server admission is still open; no durable gate
+   is completed. See [ADR 0043](adr/0043-bounded-model-lifetimes.md).
 4. Add Kotlin client SDK, then extend
    random network/media/publication campaigns and registry backup streaming/encryption.
 

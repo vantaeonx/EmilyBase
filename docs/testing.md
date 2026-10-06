@@ -1631,3 +1631,39 @@ Map-structure copying, derived tree copies, retained generations, replay/worker
 reservation and durable-index writer gates remain open. Own CI is tracked separately;
 no full green result is claimed while hosted jobs are unconfirmed. See
 [ADR 0042](adr/0042-shared-row-bodies-and-live-keys.md).
+
+## Experimental model lifetime reservations
+
+On 2026-10-06 all 631 main workspace tests pass in complete stable 1.99.0 and
+minimum Rust 1.89.0 runs, with 17 ignored native helpers invoked by their parents.
+An initial stable run ended with SIGTERM before completion; it is not counted as
+successful. The separate 12-case network recovery run and the subsequent complete
+stable run pass. Workspace/fuzz formatting, strict workspace/feature/fuzz Clippy,
+locked build and cached dependency-advisory checks pass (152/123 dependencies,
+1290 cached advisories). No runtime dependency or existing stored format changes.
+
+Twenty new cases exercise the optional ModelPool: validated count configuration,
+atomic create/writer/generation reservations, duplicate identity, disabled access,
+fallible reader cloning, same-generation sharing, retained historical values and
+last-reader release. Prepared states keep both reservations; discard, empty/failed
+prepare, aborted writes/rebuilds, unwind and foreign publication return their slots.
+A dropped project cannot free its namespace while a descendant remains alive.
+Equal ID/fingerprint in another pool cannot authorize publication. Automatic
+original-tree rebuilds cover a non-first text primary key, 3072-byte exclusions,
+drop/same-name recreation and exact successor roots.
+
+Eight held project threads admit exactly four global writers before release/retry.
+Eight callers to one project admit exactly one writer and four reader objects.
+The independent 32-case operation model predicts unique current/historical
+transaction generations plus pending reservations, checking refusal/counters and
+all historical values after each operation. Internal poison refuses public access
+while leases still clean up. Weak references confirm the actual generation/state
+objects disappear after their last reader before an admission slot is reused.
+
+The completed logical block adds 1287 Rust lines and removes one (net1286), with
+45470 physical Rust lines (43411 without blank/comment-only lines), 1207 SDK and
+718 Python lines: 47395 combined. This is a count-based memory prototype, not a
+numeric heap/RSS, HTTP-worker, replay or WAL-buffer quota. Caller-owned copies and
+raw models remain outside its boundary. No durable index or production gate is
+completed. See [ADR 0043](adr/0043-bounded-model-lifetimes.md) and
+[model lifetimes](model-lifetimes.md).

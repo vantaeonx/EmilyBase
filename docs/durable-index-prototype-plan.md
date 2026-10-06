@@ -60,7 +60,10 @@ The model now also admits at most 2048 combined live index pages and exposes
 checked standalone component reports; canonical hashes avoid a redundant full
 envelope and immutable selections reuse them. See
 [ADR 0039](adr/0039-combined-model-index-images.md). Shared heap/WAL reservation
-and old-view lifetimes remain open, so increment 3 is not complete.
+and runtime old-view lifetimes remain open, so increment 3 is not complete.
+An optional [ModelPool](model-lifetimes.md) now tests explicit retained/pending
+state, reader and writer count reservations; raw models and server/replay
+transients remain outside its boundary. This does not select a byte quota.
 
 Calculate combined encoded bytes and peak staged/replay memory for a full rebuild,
 multi-table transactions, long keys and compaction. Select explicit per-domain

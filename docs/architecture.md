@@ -194,3 +194,16 @@ asynchronously, then executes all filesystem work in blocking tasks. Permits
 and ownership survive a client disconnect after a blocking commit starts.
 See [ADR 0012](adr/0012-isolated-projects.md),
 [ADR 0013](adr/0013-bounded-http-transport.md) and [HTTP limits](server.md).
+
+
+## Experimental model lifetime coordinator
+
+The optional synchronous ModelPool owns its synthetic models and uses private
+leases to admit project identities, reader objects, active writers and distinct
+current/retained/pending generations. Reservations occur before construction or
+staging, remain through prepare, and transfer/release on publish/discard. Old readers
+retain both their generation and project namespace. Instance checks prevent cross-pool
+publication with equal state digests. The wrapper exposes borrowed rows instead of
+clonable raw snapshots. It is independent of managed WAL and HTTP ownership, and
+counts model lifetimes rather than heap/RSS. Read/build temporaries and caller-owned
+copies need separate budgeting. See [ADR 0043](adr/0043-bounded-model-lifetimes.md).

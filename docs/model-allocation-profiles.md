@@ -102,6 +102,9 @@ Address state cloning and retained-reader lifetimes before selecting a numeric
 reservation. Measure concurrent transient stages, replay and long history,
 fragmented/mixed tables, compaction and backup on representative hardware. Then
 test a real rejection/release mechanism independently of these measurements.
+The optional [lifetime coordinator](model-lifetimes.md) now tests count-based
+reservation/release for retained/pending generations, readers and writers. It does
+not assign measured-byte costs or claim a heap/server reservation.
 Encoded-image admission, the four HTTP worker permits and diagnostic row bounds
 do not enforce a common heap quota. Shared durable WAL records/replay and broader
 power-loss, security, backup/upgrade and load acceptance remain open.

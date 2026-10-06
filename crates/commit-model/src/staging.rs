@@ -1,7 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use emilybase_commit_format::{MAX_TRANSACTION, RootBinding};
+use emilybase_catalog::DataType;
+use emilybase_commit_format::{
+    IndexKeyType, MAX_TRANSACTION, PageAddress, Predecessor, RootBinding,
+};
 use emilybase_database::{Event, EventKind, Snapshot};
 use emilybase_index::IndexSnapshot;
 
@@ -101,6 +104,51 @@ impl Staged {
                 .insert(table, Selection::new(binding, index)?);
             self.candidate_pages = candidate_pages;
             Ok(())
+        })();
+        if result.is_err() {
+            self.aborted = true;
+        }
+        result
+    }
+
+    /// Rebuild an original primary tree and bind its exact predecessor without
+    /// exposing a clonable relational snapshot to an admitted stage's caller.
+    pub fn rebuild_index(&mut self, name: &str) -> Result<()> {
+        self.ready()?;
+        let result = (|| {
+            let table = self.relational.table_id(name)?;
+            let previous = self.base.selected.get(&table);
+            let revision = previous
+                .map_or(Some(1), |value| value.binding.revision().checked_add(1))
+                .ok_or(Error::Limit)?;
+            let predecessor = previous
+                .map(|value| {
+                    Predecessor::new(
+                        value.binding.revision(),
+                        value.binding.transaction(),
+                        value.index_fingerprint,
+                    )
+                })
+                .transpose()?;
+            let schema = self.relational.schema(name)?;
+            let key_type = match schema.columns.get(usize::from(schema.primary_key)) {
+                Some(column) if column.data_type == DataType::Integer => IndexKeyType::Integer,
+                Some(column) if column.data_type == DataType::Text => IndexKeyType::Text,
+                _ => return Err(Error::Selection("primary key type")),
+            };
+            let tree = self.relational.export_primary_tree(name)?;
+            let info = self.relational.verify_primary_tree(name, &tree)?;
+            let binding = RootBinding::new(
+                PageAddress::primary(self.base.database, table, tree.root_id())?,
+                key_type,
+                revision,
+                self.transaction,
+                info.entries as u64,
+                info.excluded_long_keys as u64,
+                info.pages as u32,
+                predecessor,
+            )?;
+            self.index(binding, IndexSnapshot { revision, tree })
         })();
         if result.is_err() {
             self.aborted = true;

@@ -1,10 +1,16 @@
 //! Experimental synchronous in-memory table/index transaction model.
 //! This module writes no files or WAL and provides no durable commit acknowledgment.
+mod admission;
 mod components;
 mod selection;
 mod staging;
 mod state;
 
+pub use admission::{
+    AdmissionLimit, AdmissionLimits, AdmissionUsage, AdmittedPrepared, AdmittedStage,
+    MAX_LIFETIME_SLOTS, MAX_MODEL_PROJECTS, MAX_MODEL_WRITERS, ModelPool, ModelProject,
+    ModelReader,
+};
 pub use components::EncodedComponents;
 pub use selection::Selection;
 pub use staging::{Prepared, Staged};
@@ -32,6 +38,14 @@ pub enum Error {
     Selection(&'static str),
     #[error("prepared model does not match the exact current state")]
     Conflict,
+    #[error("invalid model admission configuration")]
+    AdmissionConfiguration,
+    #[error("model admission refused: {0:?}")]
+    Admission(AdmissionLimit),
+    #[error("database identity is already registered in this model pool")]
+    DuplicateDatabase,
+    #[error("model admission lock is poisoned")]
+    AdmissionPoisoned,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

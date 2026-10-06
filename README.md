@@ -197,12 +197,19 @@ Relational snapshot clones now share immutable tables and per-table physical
 location maps. First mutation detaches only the affected table; unrelated rows
 and historical views keep their objects. No-op/read-only/index-only stages avoid
 eagerly copying all rows. A write still copies the affected shared map structure, so
-heap/lifetime admission remains open. Keys and unchanged row bodies now remain
+heap/server admission remains open. Keys and unchanged row bodies now remain
 shared inside a detached table/map as well; only map structure and changed rows
 are newly owned. The synthetic four-model row-write peak falls to about 554 MiB.
 Existing durable formats/ACKs are unchanged. See
-[ADR 0042](docs/adr/0042-shared-row-bodies-and-live-keys.md).
-See [ADR 0041](docs/adr/0041-shared-relational-snapshot-tables.md).
+[ADR 0042](docs/adr/0042-shared-row-bodies-and-live-keys.md) and
+[ADR 0041](docs/adr/0041-shared-relational-snapshot-tables.md).
+
+An optional `ModelPool` now admits registered projects, distinct retained/pending
+memory generations, reader objects and writers before staging. Private leases
+release on discard/failure or after the last old reader; publication checks exact
+owner identity. This count-based prototype writes no files and is not a heap-byte
+or server quota. See [model lifetimes](docs/model-lifetimes.md) and
+[ADR 0043](docs/adr/0043-bounded-model-lifetimes.md).
 
 The synchronous project registry creates private isolated database directories,
 issues scoped high-entropy API keys and rotates them with atomic metadata publication.
