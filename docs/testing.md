@@ -1896,3 +1896,37 @@ backup format, managed write/ACK or real-data permission changes.
 The logical block adds1086 and removes2 Rust lines (net1084), giving49779 physical
 Rust lines (47543 excluding blanks/comment-only lines),1207 SDK and718 Python,
 or51704 source lines. Documentation/configuration/locks/build output are excluded.
+
+
+## Retained serialized payload admission (2026-10-06)
+
+Complete stable1.99.0 and minimum Rust1.89.0 workspace runs pass702 tests each,
+with17 ignored helpers and no failures. Five private cleanup/arithmetic/weak-ledger
+cases and thirteen integration cases include exact bytes/one-byte-short, mixed
+sizes, real4096 retained copies, source independence, admitted preparation and
+writer lifetime. Two barrier-coordinated eight-thread cases hold winners while
+observing exact object/byte usage. An independent64-case sequence predicts every
+live payload/object charge and verifies each retained envelope against the base.
+Six maximal permits fit64 MiB and a seventh refuses before allocation; no six
+maximum heap workloads are allocated by that arithmetic test.
+
+Both format checks, strict workspace/fuzz/optional-feature Clippy, locked build,
+minimum fuzz bins and optional-feature compatibility pass. All32 release diagnostic
+checks pass separately. The independent envelope_admission ASan campaign completes
+25854 runs in46 seconds, final observed RSS155 MiB, with512-MiB guard and512-byte
+maximum input. Generated histories have at most64 actions; the short corpus's
+observed growth limit is20 bytes, so this is not exhaustive512-byte coverage.
+Quarantine is64 MiB plus256-KiB thread-local quarantine. Corpus/output stay private.
+
+EnvelopePool reserves complete serialized payload lengths and object slots before
+encoded output allocation, including fallible explicit clones. Failed encoding,
+unwinding and poisoned cleanup release exactly once. Borrowed full preflight
+precedes copying external encoded bytes. Admitted preparation serializes without
+exporting raw state or releasing its active writer early. Raw physical plans,
+source/caller copies, decoded/retained models, caches, transient scratch, capacity
+rounding, OS stacks and whole-process/server/WAL admission remain outside this
+quota. No managed format, commit/ACK behavior or production gate changes.
+
+The logical block adds950 and removes3 Rust lines(net947), giving50726 physical
+Rust lines(48427 excluding blanks/comment-only lines),1207 SDK and718 Python,
+or52651 source lines. Documentation/configuration/locks/build output are excluded.

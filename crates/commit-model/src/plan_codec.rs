@@ -32,6 +32,14 @@ impl PlanCounts {
 }
 
 impl ImagePlan {
+    /// Complete structural preflight without owning page-image vectors. Exact
+    /// base/topology/live-pointer authorization still belongs to replay.
+    pub fn inspect_encoded(bytes: &[u8]) -> Result<PlanCounts> {
+        let header = Header::read(bytes)?;
+        scan(&header, bytes, false)?;
+        Ok(header.counts)
+    }
+
     /// Canonical standalone bytes. No path, file write, fsync or ACK is involved.
     pub fn encode(&self) -> Result<Vec<u8>> {
         let counts = self.counts()?;

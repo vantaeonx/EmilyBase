@@ -70,3 +70,12 @@ this change. See [ADR 0043](adr/0043-bounded-model-lifetimes.md).
 The independent `model_admission` ASan sequence target also checks orphaned
 registrations, recreation, disabled capacities, prepared publication and complete
 release. Its bounded execution evidence is in [testing](testing.md#model-admission-sequence-fuzz-checkpoint).
+
+## Follow-up: retained serialized payload reservation
+
+The optional [EnvelopePool](image-buffer-admission.md) now atomically reserves
+complete EBIP byte lengths and buffer slots before encode/copy, including admitted
+clones. Admitted preparation can serialize without releasing writer/generation
+leases or exposing raw state. Raw plans, decoded/retained model state, temporary
+validation and whole-process/server/WAL admission remain outside this scope;
+[ADR 0049](adr/0049-admitted-serialized-image-buffers.md) closes no durable gate.

@@ -225,3 +225,10 @@ path = "fuzz_targets/image_plan.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "envelope_admission"
+path = "fuzz_targets/envelope_admission.rs"
+test = false
+doc = false
+bench = false

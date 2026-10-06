@@ -15,6 +15,9 @@ measure actual scoped workers; numeric runtime memory reservation remains pendin
 The standalone [EBIP image envelope](docs/image-plan-format.md) now bounds complete
 physical-plan bytes and checks nested scope/count/CRC before owning page vectors.
 It requires full exact-state replay afterward and selects no new runtime WAL.
+An optional [envelope pool](docs/image-buffer-admission.md) also reserves complete
+serialized output bytes before encode/copy and charges explicit clones until drop.
+Decoded models, raw plans and whole-process memory remain outside that quota.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

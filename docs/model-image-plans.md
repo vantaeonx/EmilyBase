@@ -86,3 +86,12 @@ is added. See [ADR 0044](adr/0044-validated-physical-image-plans.md),
 The opt-in [replay observations](image-replay-profiles.md) now measure owned plans,
 independent outputs and exact release samples. Small image counts do not bound
 full reconstructed-state memory; no byte reservation follows from these samples.
+
+## Follow-up: retained serialized payload reservation
+
+The optional [EnvelopePool](image-buffer-admission.md) now atomically reserves
+complete EBIP byte lengths and buffer slots before encode/copy, including admitted
+clones. Admitted preparation can serialize without releasing writer/generation
+leases or exposing raw state. Raw plans, decoded/retained model state, temporary
+validation and whole-process/server/WAL admission remain outside this scope;
+[ADR 0049](adr/0049-admitted-serialized-image-buffers.md) closes no durable gate.

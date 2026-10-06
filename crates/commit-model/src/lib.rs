@@ -14,8 +14,9 @@ pub use admission::{
 };
 pub use components::EncodedComponents;
 pub use images::{
-    IMAGE_PLAN_HEADER_BYTES, IMAGE_PLAN_MAX_BYTES, IMAGE_PLAN_VERSION, ImagePlan, PageWrite,
-    PlanCounts, RetiredRoot, RootChange,
+    AdmittedEnvelope, EnvelopeLimit, EnvelopeLimits, EnvelopePool, EnvelopeUsage,
+    IMAGE_PLAN_HEADER_BYTES, IMAGE_PLAN_MAX_BYTES, IMAGE_PLAN_VERSION, ImagePlan,
+    MAX_ENVELOPE_BUFFERS, MAX_ENVELOPE_BYTES, PageWrite, PlanCounts, RetiredRoot, RootChange,
 };
 pub use selection::Selection;
 pub use staging::{Prepared, Staged};
@@ -61,6 +62,12 @@ pub enum Error {
     PlanChecksum,
     #[error("experimental image envelope allocation refused")]
     PlanAllocation,
+    #[error("invalid experimental envelope admission configuration")]
+    EnvelopeConfiguration,
+    #[error("experimental envelope admission refused: {0:?}")]
+    EnvelopeAdmission(EnvelopeLimit),
+    #[error("experimental envelope admission lock is poisoned")]
+    EnvelopePoisoned,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

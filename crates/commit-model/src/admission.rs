@@ -7,7 +7,9 @@ use emilybase_catalog::{Key, Row, Schema};
 use emilybase_commit_format::{DatabaseId, RootBinding};
 use emilybase_database::{Event, RowLocation};
 
-use crate::{EncodedComponents, Error, Model, Prepared, Result, Staged};
+use crate::{
+    AdmittedEnvelope, EncodedComponents, EnvelopePool, Error, Model, Prepared, Result, Staged,
+};
 
 pub const MAX_LIFETIME_SLOTS: usize = 4096;
 pub const MAX_MODEL_WRITERS: usize = 4;
@@ -419,6 +421,12 @@ impl AdmittedStage {
 }
 
 impl AdmittedPrepared {
+    /// Own only admitted serialized bytes. The temporary raw physical plan is
+    /// outside this byte pool; no clonable Model or Snapshot escapes.
+    pub fn encode_in(&self, pool: &EnvelopePool) -> Result<AdmittedEnvelope> {
+        pool.encode(&self.inner.image_plan()?)
+    }
+
     pub fn transaction(&self) -> u64 {
         self.inner.transaction()
     }

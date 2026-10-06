@@ -224,3 +224,12 @@ lengths and nested physical components before materializing images; full replay
 still selects no durable fence. See
 [ADR 0044](adr/0044-validated-physical-image-plans.md) and
 [ADR 0048](adr/0048-bounded-physical-image-envelope.md).
+
+## Follow-up: retained serialized payload reservation
+
+The optional [EnvelopePool](image-buffer-admission.md) now atomically reserves
+complete EBIP byte lengths and buffer slots before encode/copy, including admitted
+clones. Admitted preparation can serialize without releasing writer/generation
+leases or exposing raw state. Raw plans, decoded/retained model state, temporary
+validation and whole-process/server/WAL admission remain outside this scope;
+[ADR 0049](adr/0049-admitted-serialized-image-buffers.md) closes no durable gate.

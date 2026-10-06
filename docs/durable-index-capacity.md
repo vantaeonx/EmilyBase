@@ -145,3 +145,12 @@ model replay remains mandatory. This is serialized length admission only. Numeri
 heap/lifetime/worker reservation and the combined durable writer stay open under
 [ADR 0048](adr/0048-bounded-physical-image-envelope.md); old runtime formats stay
 unchanged and no stage acceptance is marked complete.
+
+## Follow-up: retained serialized payload reservation
+
+The optional [EnvelopePool](image-buffer-admission.md) now atomically reserves
+complete EBIP byte lengths and buffer slots before encode/copy, including admitted
+clones. Admitted preparation can serialize without releasing writer/generation
+leases or exposing raw state. Raw plans, decoded/retained model state, temporary
+validation and whole-process/server/WAL admission remain outside this scope;
+[ADR 0049](adr/0049-admitted-serialized-image-buffers.md) closes no durable gate.

@@ -14,6 +14,12 @@ use crate::{Error, MAX_EVENTS, MAX_SELECTED_INDEX_PAGES, Model, Prepared, Result
 #[path = "plan_codec.rs"]
 mod codec;
 pub use codec::{IMAGE_PLAN_HEADER_BYTES, IMAGE_PLAN_MAX_BYTES, IMAGE_PLAN_VERSION};
+#[path = "envelopes.rs"]
+mod envelopes;
+pub use envelopes::{
+    AdmittedEnvelope, EnvelopeLimit, EnvelopeLimits, EnvelopePool, EnvelopeUsage,
+    MAX_ENVELOPE_BUFFERS, MAX_ENVELOPE_BYTES,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlanCounts {
