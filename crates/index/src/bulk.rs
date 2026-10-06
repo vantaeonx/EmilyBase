@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::ops::Range;
+use std::sync::Arc;
 
 use crate::page::Body;
 use crate::{
@@ -44,7 +45,7 @@ impl BPlusTree {
             let next = (position + 1 < groups.len()).then_some(id + 1);
             let minimum = entries[range.start].0.clone();
             let page = IndexPage::leaf(id, entries[range.clone()].to_vec(), next)?;
-            tree.pages.insert(id, page);
+            tree.pages.insert(id, Arc::new(page));
             level.push((id, minimum));
         }
         while level.len() > 1 {

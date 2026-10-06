@@ -1,5 +1,6 @@
 use crate::page::Body;
 use crate::{BPlusTree, Error, IndexPage, Key, MAX_INDEX_PAGES, MAX_TREE_HEIGHT, RecordPointer};
+use std::sync::Arc;
 
 fn tree() -> BPlusTree {
     BPlusTree::from_sorted(
@@ -75,11 +76,14 @@ fn wrong_leaf_links_missing_interior_pages_and_malformed_values_fail_and_fuse() 
     let mut missing = original.clone();
     missing.pages.remove(&middle);
     let mut wrong = original.clone();
-    if let Body::Leaf { next, .. } = &mut wrong.pages.get_mut(&middle).unwrap().body {
+    if let Body::Leaf { next, .. } = &mut Arc::make_mut(wrong.pages.get_mut(&middle).unwrap()).body
+    {
         *next = None;
     }
     let mut values = original.clone();
-    if let Body::Leaf { values, .. } = &mut values.pages.get_mut(&middle).unwrap().body {
+    if let Body::Leaf { values, .. } =
+        &mut Arc::make_mut(values.pages.get_mut(&middle).unwrap()).body
+    {
         values.pop();
     }
     for bad in [missing, wrong, values] {
@@ -103,7 +107,7 @@ fn terminal_successor_and_inaccurate_counts_cannot_loop_or_invent_entries() {
         .filter(|p| p.is_leaf())
         .last()
         .unwrap();
-    if let Body::Leaf { next, .. } = &mut last.body {
+    if let Body::Leaf { next, .. } = &mut Arc::make_mut(last).body {
         *next = Some(999);
     }
     assert_fused_error(&terminal, false);
@@ -116,7 +120,8 @@ fn cyclic_missing_roots_and_height_limits_reject_without_panicking() {
     assert!(missing.cursor(None, None).is_err());
     let mut cycle = tree();
     let root = cycle.root;
-    if let Body::Branch { children } = &mut cycle.pages.get_mut(&root).unwrap().body {
+    if let Body::Branch { children } = &mut Arc::make_mut(cycle.pages.get_mut(&root).unwrap()).body
+    {
         children[0] = root;
     }
     assert!(cycle.cursor(None, None).is_err());
@@ -135,10 +140,12 @@ fn cyclic_missing_roots_and_height_limits_reject_without_panicking() {
     )
     .unwrap();
     deep.pages.clear();
-    deep.pages.insert(leaf.id, leaf);
+    deep.pages.insert(leaf.id, Arc::new(leaf));
     for id in (1..=MAX_TREE_HEIGHT as u64).rev() {
-        deep.pages
-            .insert(id, IndexPage::branch(id, Vec::new(), vec![id + 1]).unwrap());
+        deep.pages.insert(
+            id,
+            Arc::new(IndexPage::branch(id, Vec::new(), vec![id + 1]).unwrap()),
+        );
     }
     assert!(matches!(deep.cursor(None, None), Err(Error::Limit)));
 }

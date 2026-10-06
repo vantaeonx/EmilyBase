@@ -65,3 +65,6 @@ pub(crate) fn validate_key(key: &Key) -> Result<()> {
 
 #[cfg(test)]
 mod snapshot_tests;
+
+#[cfg(test)]
+mod shared_pages_tests;

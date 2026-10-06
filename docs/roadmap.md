@@ -371,3 +371,13 @@ admission remove redundant complete images/trees in delta generation/application
 Isolated full-capacity allocation guards and independent corruption/state models
 execute under [ADR 0050](adr/0050-streamed-index-snapshot-admission.md). Candidate
 map/retained/transient/worker quotas and the shared durable writer remain open.
+
+## Follow-up: shared immutable index arena
+
+[Original index pages](shared-index-pages.md) now share immutable decoded bodies
+across snapshots while keeping private page maps and changed-page publication.
+Pointer/owner identity, last-owner release, stable reuse/dense remapping, atomic
+capacity refusal, independent state histories and actual concurrent model replay
+execute under [ADR0051](adr/0051-shared-immutable-index-pages.md). Frozen bytes and
+durable ACKs stay unchanged. Numeric map/page/transient/worker admission, cheaper
+validated primary export and the combined durable writer remain open.

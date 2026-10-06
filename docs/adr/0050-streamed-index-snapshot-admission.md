@@ -42,6 +42,8 @@ Raw/repaired envelope and generated delta sanitizer targets exercise input admis
 Optional instrumentation stays outside normal binaries and writes no test heap
 traces. See [observations and complete boundaries](../streamed-index-admission.md).
 
-Private candidate map copies still own complete decoded pages. Retained models,
+At this decision, private candidate map copies still own complete decoded pages.
+[ADR0051](0051-shared-immutable-index-pages.md) subsequently shares immutable page
+bodies while retaining private maps and complete admission. Retained models,
 raw/serialized plan pools, caches, staging and OS stacks require separate admission.
 This optimization selects no new format and completes no production/recovery gate.

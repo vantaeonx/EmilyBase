@@ -55,6 +55,9 @@ that scratch, while decode/apply permit encoded length plus1 MiB. All measured
 operation-local current bytes return to zero in that run. Values can differ with
 toolchains, allocator or scheduling; these are regression guards for this fixture,
 not whole-process/RSS, stack, fragmentation, server or worst-case heap quotas.
+These numbers preserve the ADR0050 implementation before subsequent
+[shared page ownership](shared-index-pages.md). Application now shares unchanged
+page bodies and its isolated guard is128 KiB; decode keeps its output plus1 MiB.
 The fixture, profiler bookkeeping and any previously untracked allocations are
 excluded. The allocator is linked only to the feature-gated native test process.
 Normal server/CLI use neither this allocator nor its optional dependency.

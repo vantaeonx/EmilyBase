@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
 
 use crate::{BPlusTree, Error, IndexPage, IndexSnapshot, MAX_INDEX_PAGES, PAGE_SIZE, Result};
 use sha2::{Digest, Sha256};
@@ -86,10 +87,10 @@ impl SnapshotDelta {
                 return Err(Error::Layout("delta upsert IDs"));
             }
             let page = IndexPage::decode(image, id)?;
-            if base.tree.pages.get(&id) == Some(&page) {
+            if base.tree.pages.get(&id).map(Arc::as_ref) == Some(&page) {
                 return Err(Error::Layout("delta unchanged page"));
             }
-            changes.insert(id, page);
+            changes.insert(id, Arc::new(page));
             previous = id;
         }
         let mut pages = base.tree.pages.clone();

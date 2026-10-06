@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "rust": "1.99.0",
+  "dhat": "0.3.3",
+  "instrumented_elapsed_is_not_throughput": true,
+  "before_stream_index_revision": "6ae2ebfee2dec784157b48ba507c4581d50b2854",
+  "after_stream_index_revision": "b9237d5eb67a0398a90dbc10501364af4b480aaa",
+  "shared_pages_index_source_sha256": {
+    "crates/index/src/bulk.rs": "99a0ccc2e4219a35303f2d10ef0a9d9b3b72cc8ca3d37d970a760113a3aa9fa6",
+    "crates/index/src/cursor.rs": "dad10d5c1beefb6b1862cbdd5bd3f5672318b9ed60319199be387f953aa31da7",
+    "crates/index/src/cursor_tests.rs": "d81004fc02bbb3a47b7eb0523f441dbad7c59f94bfa064c5e5dc69849d8500aa",
+    "crates/index/src/delta.rs": "9faa87a1d698eb37e177290b87811fa7844f2086d99e421d1e36ea71657fa40b",
+    "crates/index/src/lib.rs": "8feefa3b954d7a44ecb825f63bb08bce58b45b8b6ead435a9b39569b8380da70",
+    "crates/index/src/mutations.rs": "08a230c69add8bb2b01634a8dbcdc9e9682c676d01948f30ea5192ea9858328c",
+    "crates/index/src/page.rs": "06a5db29a625b759291348ba681cc037de55ba81d1dbac16978b2b74fda7466f",
+    "crates/index/src/shared_pages_tests.rs": "b0faeea782795e15f6ef93a25fe4c777071d1cacedd962f93f649f29e5e0f202",
+    "crates/index/src/snapshot.rs": "a21414e404a33da794f06dd34ee147a1624ab16f31b153650d429fc4f1d8d33c",
+    "crates/index/src/snapshot_tests.rs": "a057dfee8eb763dc5f0c2eec03595ff5652abdca8c030aa8ab88d00744a9b323",
+    "crates/index/src/store.rs": "9cc39b5faefd849d1627b294d8f49c6853a3d4cf366778807b314b00e0afca5b",
+    "crates/index/src/store_tests.rs": "1388a9ca7b01b0e22d426ef59a5faa9a6e9d9c8e8aa9b25b83054ec46f29e8c1",
+    "crates/index/src/tree.rs": "edaeb3a2d53f4fa8f2024ee63de27244dd889f47da75c7a8d18fd4a046277df2"
+  },
+  "after_stream_binding_verified": true,
+  "elapsed_seconds": {
+    "before_stream": 577.51,
+    "after_stream": 595.18,
+    "shared_pages": 35.81
+  },
+  "maximum_rss_kib": {
+    "before_stream": 263760,
+    "after_stream": 225700,
+    "shared_pages": 205852
+  },
+  "operation_fixture": {
+    "keys": 10000,
+    "text_key_bytes": 256,
+    "index_pages": 768,
+    "excluded_retained_fixtures": true
+  },
+  "operation_peak_requested_bytes": {
+    "before_clone": 3282472,
+    "before_apply": 3307848,
+    "clone": 26304,
+    "apply": 55912,
+    "decode": 3285872,
+    "validate": 25376,
+    "fingerprint": 25376,
+    "encode": 3154096,
+    "unchanged_delta": 25376,
+    "one_page_delta": 25376,
+    "parallel_four": 95704
+  }
+}

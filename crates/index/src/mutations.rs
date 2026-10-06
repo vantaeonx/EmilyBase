@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 use crate::page::Body;
 use crate::{
@@ -21,7 +22,7 @@ impl BPlusTree {
         };
         let old = std::mem::replace(&mut values[position], value);
         page.validate()?;
-        self.pages.insert(id, page);
+        self.publish_page(page);
         Ok(old)
     }
 
@@ -70,7 +71,7 @@ impl BPlusTree {
             }
         }
         self.refresh(&mut page)?;
-        self.pages.insert(id, page);
+        self.publish_page(page);
         Ok(())
     }
 
@@ -146,8 +147,8 @@ impl BPlusTree {
         }
         self.refresh(&mut left)?;
         self.refresh(&mut right)?;
-        self.pages.insert(left_id, left);
-        self.pages.insert(right_id, right);
+        self.publish_page(left);
+        self.publish_page(right);
         Ok(())
     }
 
@@ -170,7 +171,7 @@ impl BPlusTree {
             _ => return Err(Error::Layout("sibling kinds")),
         }
         self.refresh(&mut left)?;
-        self.pages.insert(left_id, left);
+        self.publish_page(left);
         self.pages.remove(&right_id);
         Ok(())
     }
@@ -190,7 +191,7 @@ impl BPlusTree {
         };
         let mut pages = BTreeMap::new();
         for source in self.pages.values() {
-            let mut page = source.clone();
+            let mut page = source.as_ref().clone();
             page.id = map_id(page.id)?;
             match &mut page.body {
                 Body::Leaf { next, .. } => *next = next.map(map_id).transpose()?,
@@ -200,7 +201,12 @@ impl BPlusTree {
                     }
                 }
             }
-            pages.insert(page.id, page);
+            let retained = if &page == source.as_ref() {
+                Arc::clone(source)
+            } else {
+                Arc::new(page)
+            };
+            pages.insert(retained.id, retained);
         }
         self.root = map_id(self.root)?;
         self.pages = pages;

@@ -36,6 +36,16 @@ fn full_capacity_short_key_validation_hashing_and_deltas_avoid_complete_temporar
     let original = base.encode().unwrap();
     let expected: [u8; 32] = Sha256::digest(&original).into();
     let local_cap = 128 * 1024;
+    let cloning = transient(|| {
+        let cloned = base.clone();
+        assert_eq!(cloned, base);
+    });
+    assert_eq!(cloning.curr_bytes, 0);
+    assert!(
+        cloning.max_bytes < local_cap,
+        "clone peak {}",
+        cloning.max_bytes
+    );
     let validate = transient(|| base.validate().unwrap());
     assert_eq!(validate.curr_bytes, 0);
     assert!(
@@ -100,14 +110,15 @@ fn full_capacity_short_key_validation_hashing_and_deltas_avoid_complete_temporar
         assert_eq!(result.tree.get(&key).unwrap(), Some(next));
     });
     assert_eq!(applied.curr_bytes, 0);
-    let apply_cap = original.len() + 1024 * 1024;
+    let apply_cap = local_cap;
     assert!(
         applied.max_bytes < apply_cap,
         "apply peak {}, cap {}",
         applied.max_bytes,
         apply_cap
     );
-    let independent: [IndexSnapshot; 4] = std::array::from_fn(|_| base.clone());
+    let independent: [IndexSnapshot; 4] =
+        std::array::from_fn(|_| IndexSnapshot::decode(&original).unwrap());
     let parallel = transient(|| {
         let gate = std::sync::Barrier::new(5);
         std::thread::scope(|scope| {
@@ -139,7 +150,8 @@ fn full_capacity_short_key_validation_hashing_and_deltas_avoid_complete_temporar
     assert_eq!(base.tree.get(&key).unwrap(), Some(entries[5000].1));
     assert_eq!(base.fingerprint().unwrap(), expected);
     eprintln!(
-        "requested peaks: validate={} hash={} encode={} decode={} no_op={} one_page={} apply={} parallel={}",
+        "requested peaks: clone={} validate={} hash={} encode={} decode={} no_op={} one_page={} apply={} parallel={}",
+        cloning.max_bytes,
         validate.max_bytes,
         hash.max_bytes,
         encoding.max_bytes,

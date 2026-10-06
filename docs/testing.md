@@ -1971,3 +1971,56 @@ The distinct coherent optimization block adds762 and removes40 Rust lines(net722
 giving51448 physical Rust lines(49116 excluding blanks/comment-only lines),1207 SDK
 and718 Python, or53373 source lines. Documentation/configuration/locks/build output
 are excluded. It is committed at the complete tested boundary without padding.
+
+
+## Shared immutable index page ownership (2026-10-06/07)
+
+Completed stable1.99.0 and minimum Rust1.89.0 workspace runs pass728 tests each,
+with17 ignored helpers and no failures. Separately34 optional release diagnostic
+checks pass on both toolchains. Both formatting checks, strict workspace/fuzz/
+feature Clippy, minimum fuzz bins and locked workspace build pass. An interrupted
+compilation was restarted; only the later complete runs count as successful.
+
+Ten private arena cases observe actual page/key addresses, unchanged-owner
+preservation, one-leaf replacement, splits/merges/root collapse, stable ID reuse,
+dense remapping, Weak last-owner release, exhausted-arena refusal and four actual
+thread writers. The independent48-case mixed-key model preserves up to eight
+historical snapshots through accepted/discarded mutations and full replay. Its
+initial text fixture accidentally exceeded256 bytes with its embedded NUL and
+correctly received KeySize; reducing that fixture to255 bytes made the intended
+valid-key history execute. Four model integration cases cover root-only EBIP
+replay, one-page row-pointer change, stale predecessor refusal and four scoped
+workers retaining valid output after source/plan release.
+
+Before ownership changes, the isolated clone regression fails at3282472 requested
+bytes. The new full10000-key256-byte-text/768-page fixture observes clone26304,
+apply55912 and decode3285872 bytes. Validate/hash/delta remain25376; encode3154096
+includes its3149824 output. Four real workers over separately decoded fixtures
+observe95704 bytes; all operation-local current bytes return to zero. Clone/apply
+now use128-KiB transient guards. These measurements exclude retained fixtures,
+OS stacks, profiler bookkeeping and allocator overhead; they are not heap quotas.
+
+Three strict-decoded preserved reports use the same four-project/10000-row/768-byte
+index-replay config with actual parallel workers and retained old views. Their
+index sources are pre-stream6ae2ebf, post-streamb9237d5 and the current shared-page
+source hashes. Old post-stream source binding was checked against its published
+commit before preserving the output. Requested peaks are196255216/172314032/
+163075408 bytes; cumulative allocation is144137749368/142777335992/10046597208.
+The1016-byte/four-block final coordinator/runtime residue remains observable.
+Instrumented elapsed times and RSS are preserved separately and make no throughput
+or production capacity claim. Raw heap traces and host paths are excluded.
+
+The extended index_delta_sequences ASan campaign completes26001 runs in46 seconds,
+final observed RSS154MiB,512-MiB guard and512-byte input cap. Up to four historical
+views retain independent expected rows and exact bytes after current-state release.
+Its observed corpus growth limit is29 bytes. The image_plan ASan campaign completes
+41560 runs in46 seconds, RSS169MiB,512-MiB guard and16384-byte input cap; observed
+growth limit33 bytes. Both use64-MiB quarantine and256-KiB thread-local quarantine;
+these short campaigns are not exhaustive. Corpus and logs remain private.
+
+The logical block adds809 net Rust lines, giving52257 physical Rust lines(49890
+excluding blanks/comment-only lines),1207 SDK and718 Python, or54182 source lines.
+Documentation/configuration/locks/build output are excluded. Immutable sharing
+reduces redundant decoded copies without changing frozen EBIF/EBIX/EBIP, runtime
+WAL1/2, backups or durable ACKs. Numeric decoded/transient/worker admission and
+the combined durable table-index writer remain open under ADR0031.

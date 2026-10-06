@@ -243,3 +243,14 @@ admission remove redundant complete images/trees in delta generation/application
 Isolated full-capacity allocation guards and independent corruption/state models
 execute under [ADR 0050](adr/0050-streamed-index-snapshot-admission.md). Candidate
 map/retained/transient/worker quotas and the shared durable writer remain open.
+
+## Immutable index page ownership
+
+The bounded original B+ arena now retains private Arc-backed immutable page bodies
+across tree clones. Each clone owns its map/root/count; mutations and delta replay
+replace only changed bodies while complete topology and physical checks remain.
+Historical readers retain prior pages even if a newer arena reuses their IDs.
+Dense remapping can still detach many pages. This reduces repeated decoded copies
+but does not reserve model/transient/worker heap or change runtime WAL decisions.
+See [ADR0051](adr/0051-shared-immutable-index-pages.md) and
+[observations](shared-index-pages.md).

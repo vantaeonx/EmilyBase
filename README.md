@@ -21,6 +21,9 @@ Decoded models, raw plans and whole-process memory remain outside that quota.
 Standalone [index validation/deltas](docs/streamed-index-admission.md) now stream
 physical checks and avoid redundant complete image sets while preserving frozen
 bytes and full topology. Private candidate/retained state still needs admission.
+Original [immutable index pages](docs/shared-index-pages.md) now share unchanged
+bodies across clones, private candidates and old snapshots. Changed pages detach
+without altering historical readers; numeric model/worker admission stays open.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

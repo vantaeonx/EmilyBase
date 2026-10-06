@@ -4,11 +4,14 @@ use crate::{
     PAGE_SIZE, RecordPointer, Result, validate_key,
 };
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
 
-/// Bounded original tree with linked leaves. Mutations stage a copy; persistence is external.
+/// Bounded original tree with linked leaves and shared immutable decoded pages.
+/// Clones copy the bounded page map and retain page handles. Mutations stage a map
+/// and replace changed pages; persistence and memory admission are external.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BPlusTree {
-    pub(crate) pages: BTreeMap<u64, IndexPage>,
+    pub(crate) pages: BTreeMap<u64, Arc<IndexPage>>,
     pub(crate) root: u64,
     pub(crate) len: usize,
     pub(crate) stable_ids: bool,
@@ -30,7 +33,7 @@ impl BPlusTree {
             },
         };
         Self {
-            pages: BTreeMap::from([(1, root)]),
+            pages: BTreeMap::from([(1, Arc::new(root))]),
             root: 1,
             len: 0,
             stable_ids: false,
@@ -59,8 +62,20 @@ impl BPlusTree {
     }
 
     pub(crate) fn page(&self, id: u64) -> Result<&IndexPage> {
-        self.pages.get(&id).ok_or(Error::Layout("missing child"))
+        self.pages
+            .get(&id)
+            .map(Arc::as_ref)
+            .ok_or(Error::Layout("missing child"))
     }
+    /// Retain an existing immutable page when a visited branch did not change.
+    /// Equality includes keys, row pointers and every child/leaf link; an arena
+    /// ID reused after reclamation must receive its new page contents.
+    pub(crate) fn publish_page(&mut self, page: IndexPage) {
+        if self.pages.get(&page.id).map(Arc::as_ref) != Some(&page) {
+            self.pages.insert(page.id, Arc::new(page));
+        }
+    }
+
     pub(crate) fn allocate(&mut self, keys: Vec<Key>, body: Body) -> Result<u64> {
         if self.pages.len() == MAX_INDEX_PAGES {
             return Err(Error::Limit);
@@ -72,7 +87,8 @@ impl BPlusTree {
         } else {
             self.pages.len() as u64 + 1
         };
-        self.pages.insert(id, IndexPage { id, keys, body });
+        self.pages
+            .insert(id, Arc::new(IndexPage { id, keys, body }));
         Ok(id)
     }
     pub(crate) fn find_leaf(&self, key: Option<&Key>) -> Result<u64> {
@@ -185,7 +201,7 @@ impl BPlusTree {
         } else {
             None
         };
-        self.pages.insert(id, page);
+        self.publish_page(page);
         Ok(split)
     }
 
@@ -211,7 +227,7 @@ impl BPlusTree {
             .collect()
     }
     pub fn page_images(&self) -> Result<Vec<[u8; PAGE_SIZE]>> {
-        self.pages.values().map(IndexPage::encode).collect()
+        self.pages.values().map(|page| page.encode()).collect()
     }
 
     /// Import dense page IDs with complete topology, separator and leaf-chain validation.
@@ -224,7 +240,7 @@ impl BPlusTree {
             .enumerate()
             .map(|(i, image)| {
                 let id = i as u64 + 1;
-                Ok((id, IndexPage::decode(image, id)?))
+                Ok((id, Arc::new(IndexPage::decode(image, id)?)))
             })
             .collect::<Result<BTreeMap<_, _>>>()?;
         let mut tree = Self {
@@ -248,7 +264,7 @@ impl BPlusTree {
             if id <= previous || id > MAX_INDEX_PAGES as u64 {
                 return Err(Error::PageId);
             }
-            pages.insert(id, IndexPage::decode(image, id)?);
+            pages.insert(id, Arc::new(IndexPage::decode(image, id)?));
             previous = id;
         }
         let mut tree = Self {

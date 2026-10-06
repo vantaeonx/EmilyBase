@@ -260,6 +260,74 @@ fn preserved_synthetic_release_reports_pass_bounded_admission() {
     }
 }
 
+#[test]
+fn preserved_index_page_experiments_have_the_same_full_parallel_workload() {
+    let samples = [
+        include_bytes!(
+            "../../../docs/measurements/2026-10-06-shared-index-pages/before-stream.json"
+        )
+        .as_slice(),
+        include_bytes!(
+            "../../../docs/measurements/2026-10-06-shared-index-pages/after-stream.json"
+        )
+        .as_slice(),
+        include_bytes!(
+            "../../../docs/measurements/2026-10-06-shared-index-pages/shared-pages.json"
+        )
+        .as_slice(),
+    ]
+    .map(|bytes| decode_report(bytes).unwrap());
+    for report in &samples {
+        assert_eq!(report.version, 3);
+        assert_eq!(report.config.mode, Mode::IndexReplay);
+        assert_eq!(report.config.kind, Kind::ShortText);
+        assert_eq!(report.config.rows, 10000);
+        assert_eq!(report.config.projects, 4);
+        assert_eq!(report.config.value_bytes, 768);
+        assert!(report.config.retain_old);
+        assert!(report.config.parallel);
+        assert_eq!(report.phases.len(), 11);
+        assert_eq!(report.phases.last().unwrap().heap.current_bytes, 1016);
+        assert_eq!(report.phases.last().unwrap().heap.current_blocks, 4);
+        assert!(
+            report
+                .images_per_project
+                .as_ref()
+                .unwrap()
+                .iter()
+                .all(|image| {
+                    image.history_pages == 0
+                        && image.primary_pages == 0
+                        && image.retired_pages == 0
+                        && image.changed_roots == 1
+                        && image.retired_tables == 0
+                        && image.image_body_bytes == 0
+                })
+        );
+        assert_eq!(
+            report.components_per_project,
+            samples[0].components_per_project
+        );
+    }
+    // Historical observations are fixtures, not universal numeric memory caps.
+    let after = &samples[2];
+    let selected = after
+        .phases
+        .iter()
+        .find(|p| p.phase == PhaseKind::IndexesStaged)
+        .unwrap();
+    let replayed = after
+        .phases
+        .iter()
+        .find(|p| p.phase == PhaseKind::Replayed)
+        .unwrap();
+    assert!(replayed.heap.current_bytes - selected.heap.current_bytes < 256 * 1024);
+    assert!(
+        after.phases.last().unwrap().heap.allocated_bytes
+            < samples[1].phases.last().unwrap().heap.allocated_bytes / 10
+    );
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(128))]
 

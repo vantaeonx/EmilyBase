@@ -31,6 +31,7 @@ fuzz_target!(|input: &[u8]| {
         tree: BPlusTree::new_stable(),
     };
     let mut expected = BTreeMap::new();
+    let mut retained = Vec::new();
     for command in input[1..].as_chunks::<4>().0.iter().take(48) {
         let operation = command[0] % 4;
         let number = command[1];
@@ -56,6 +57,16 @@ fuzz_target!(|input: &[u8]| {
             },
             slot_id: u16::from_le_bytes([command[2], command[3]]),
         };
+        if command[2] & 7 == 0 {
+            if retained.len() == 4 {
+                retained.remove(usize::from(command[3]) % 4);
+            }
+            retained.push((live.clone(), expected.clone(), live.encode().unwrap()));
+        }
+        for (snapshot, rows, encoded) in &retained {
+            verify(snapshot, rows);
+            assert_eq!(snapshot.encode().unwrap(), *encoded);
+        }
         let before = live.encode().unwrap();
         let old = live.clone();
         let mut target = live.tree.clone();
@@ -105,5 +116,13 @@ fuzz_target!(|input: &[u8]| {
             expected = candidate;
         }
         verify(&live, &expected);
+    }
+    drop(live);
+    drop(expected);
+    // Last historical owners remain usable after all mutable working state
+    // disappears; sanitizer leak checks also observe release on target exit.
+    for (snapshot, rows, encoded) in retained {
+        verify(&snapshot, &rows);
+        assert_eq!(snapshot.encode().unwrap(), encoded);
     }
 });
