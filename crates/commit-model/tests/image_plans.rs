@@ -426,3 +426,53 @@ fn maximum_256_new_history_pages_replay_as_a_contiguous_append() {
         );
     }
 }
+
+#[test]
+fn history_replay_keeps_unchanged_row_bodies_and_old_pages_shared() {
+    let mut base = model(&[("left", DataType::Integer), ("right", DataType::Integer)]);
+    let value = "λ".repeat(1536);
+    let mut stage = base.begin().unwrap();
+    for key in 0..16 {
+        insert(&mut stage, 1, key, &value);
+        insert(&mut stage, 2, key, &value);
+    }
+    indexes(&base, &mut stage, &["left", "right"]);
+    base.publish(stage.prepare().unwrap()).unwrap();
+    let before = base.fingerprint();
+    let mut stage = base.begin().unwrap();
+    stage
+        .apply(Event {
+            table_id: 1,
+            kind: EventKind::Replace(vec![Value::Integer(0), Value::Text("n".repeat(3072))]),
+        })
+        .unwrap();
+    indexes(&base, &mut stage, &["left"]);
+    let prepared = stage.prepare().unwrap();
+    let plan = prepared.image_plan().unwrap();
+    let replayed = plan.replay(&base).unwrap();
+    for (name, key) in [("left", 1), ("right", 0)] {
+        assert!(std::ptr::eq(
+            base.view().get(name, &Key::Integer(key)).unwrap().unwrap(),
+            replayed
+                .view()
+                .get(name, &Key::Integer(key))
+                .unwrap()
+                .unwrap(),
+        ));
+    }
+    assert!(std::ptr::eq(
+        base.view().pages().next().unwrap(),
+        replayed.view().pages().next().unwrap(),
+    ));
+    assert!(!std::ptr::eq(
+        base.view().get("left", &Key::Integer(0)).unwrap().unwrap(),
+        replayed
+            .view()
+            .get("left", &Key::Integer(0))
+            .unwrap()
+            .unwrap(),
+    ));
+    assert_eq!(base.fingerprint(), before);
+    base.publish(prepared).unwrap();
+    assert_eq!(base.fingerprint(), replayed.fingerprint());
+}

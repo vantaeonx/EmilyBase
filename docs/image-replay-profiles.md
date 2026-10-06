@@ -71,3 +71,7 @@ Preserved reports: [long row replay](measurements/2026-10-06-image-replay/replay
 [short row replay](measurements/2026-10-06-image-replay/replay-short-four.json).
 Byte/transient admission, optimized history replay, shared durable fences,
 crash/backup/upgrade and security gates remain open.
+
+The subsequent [shared append observations](shared-history-replay.md) repeat the
+same row-replay shapes while retaining unchanged immutable pages/bodies. Earlier
+reports above remain historical; numeric transient and durable gates stay open.

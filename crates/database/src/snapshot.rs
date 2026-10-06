@@ -1,5 +1,8 @@
 use std::sync::{Arc, OnceLock};
 
+#[path = "append.rs"]
+mod append;
+
 use emilybase_catalog::{Key, Row, Schema};
 use emilybase_storage::{Error as StorageError, MAX_PAGES, Page};
 

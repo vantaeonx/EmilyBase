@@ -259,7 +259,7 @@ fn real_image_replay_reports_count_bodies_and_release_owned_transients() {
 }
 
 #[test]
-fn changed_history_replay_detaches_rows_while_index_only_replay_shares_them() {
+fn history_replay_detaches_maps_while_retaining_unchanged_row_bodies() {
     let run_mode = |mode| {
         run(&[
             "--mode",
@@ -290,7 +290,9 @@ fn changed_history_replay_detaches_rows_while_index_only_replay_shares_them() {
             .unwrap();
         replayed.heap.current_bytes - planned.heap.current_bytes
     };
-    assert!(held_delta(&history) > 32 * 1024 * 1024);
+    // Affected map structures detach, without copying every long body/key.
+    assert!(held_delta(&history) > 128 * 1024);
+    assert!(held_delta(&history) < 2 * 1024 * 1024);
     assert!(held_delta(&index) < 128 * 1024);
     for report in [&history, &index] {
         let phases = &report.phases;

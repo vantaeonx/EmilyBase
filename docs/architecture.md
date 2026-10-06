@@ -1,5 +1,10 @@
 # Technical design
 
+Memory image replay now applies only a bounded canonical tail append over its
+validated base, retaining immutable prior pages/rows. Complete model/root/state
+validation still surrounds that operation. This changes no stored decoder or
+durable selection; see [ADR 0046](adr/0046-shared-tail-history-replay.md).
+
 EmilyBase will provide project-isolated relational storage and a backend API.
 The engine is original Rust code. PostgreSQL wire or SQL compatibility is not
 promised. Initial operating-system target: Linux with a local filesystem.

@@ -1764,3 +1764,46 @@ bringing totals to 47578 physical Rust lines (45408 excluding blank/comment-only
 lines), 1207 SDK and718 Python, or49503 source lines. The smaller logical commit
 records a measured prerequisite rather than padding to a line target. Numeric
 byte/transient reservations and the shared durable writer remain open.
+
+## Shared canonical history append checkpoint
+
+On 2026-10-06 complete stable 1.99.0 and minimum Rust 1.89.0 workspace runs pass
+all 668 main tests, with 17 child helpers ignored by the runner and invoked by
+their parents. The opt-in release suite passes all nine real-process and sixteen
+report tests. Workspace/fuzz formatting, strict workspace/feature/fuzz Clippy,
+minimum fuzz/feature compilation and locked build pass. No lockfile/external
+dependency or stored page/WAL decoder changes.
+
+The row/page sharing regression first fails against full reconstruction, then
+passes after bounded append replay. Twelve new database cases include independent
+48-case append/full-replay/map properties, preserved old tables/rows/pages,
+later-event rollback, old-prefix rewriting, deleted/empty slots, gaps/order/IDs,
+noncanonical packing, root/malformed events, non-first text keys and recreation.
+Real 256-record/page, 10000-row, 128-table and 100000-event limits are reached;
+refusal preserves the base and successful removal reclaims row/table capacity.
+Existing every-byte image damage, exact namespace/base/root/state checks and
+full 768-page and 256-history-page replay tests still pass. Public plan refusal
+categories for committed rewrites and earlier/gapped pages remain unchanged.
+
+The new history_append ASan campaign completes 14210 executions in59 seconds;
+the updated commit_model completes 3046 in50 seconds. Both keep ASan enabled
+with explicit 64-MiB/256-KiB quarantine, a512-MiB RSS cap, respective 8192/256-byte
+input caps and final RSS232/201 MiB. The append target compares accepted operations
+with a separate row map and complete original history replay, includes non-first
+integer/256-/3072-byte text keys, discard and CRC-repaired images, and checks that
+all refusals/attempts preserve the base. Soft 45-second campaign requests can
+finish later while executing an input. These short campaigns are not audits.
+
+Two preserved repeat allocation observations verify the same synthetic long/short
+shapes and exact transient release. Four long-key 10000-row models now add
+6941800 requested live bytes at replay instead of573246472; the image-body sum
+remains16384. Requested global peak is588108552, instrumented maximum RSS623460
+KiB. Numeric process-wide/transient/worker reservations are still unimplemented.
+See [shared replay observations](shared-history-replay.md) and
+[ADR0046](adr/0046-shared-tail-history-replay.md).
+
+The logical block adds781 Rust lines and removes27 (net754), giving48332 physical
+Rust lines (46132 excluding blanks/comment-only lines),1207 SDK and718 Python,
+or50257 source lines. It commits a complete verified optimization without line
+padding. No combined durable writer, real-project migration or production gate
+is enabled.

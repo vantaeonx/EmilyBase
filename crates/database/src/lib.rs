@@ -26,6 +26,9 @@ pub use snapshot::Snapshot;
 pub const MAX_TABLES: usize = 128;
 pub const MAX_ROWS: usize = 10000;
 pub const MAX_EVENTS: usize = 100000;
+/// Independent bounds for a single in-memory physical history append.
+pub const MAX_APPEND_EVENTS: usize = 256;
+pub const MAX_APPEND_PAGES: usize = 256;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

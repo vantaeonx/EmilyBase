@@ -357,8 +357,7 @@ impl ImagePlan {
         if self.history.is_empty() {
             return Ok(base.clone());
         }
-        let base_count = base.page_count();
-        let mut pages: Vec<_> = base.pages().cloned().collect();
+        let mut pages = Vec::with_capacity(self.history.len());
         let mut previous_id = 0;
         for write in &self.history {
             let address = write.address;
@@ -372,31 +371,22 @@ impl ImagePlan {
             previous_id = address.page();
             let page = Page::decode(&write.image, address.page())
                 .map_err(emilybase_database::Error::from)?;
-            let id = usize::try_from(address.page()).map_err(|_| Error::Limit)?;
-            if id == base_count {
-                let old = pages.last_mut().ok_or(Error::Plan("empty base history"))?;
-                if page.slot_count() <= old.slot_count() {
-                    return Err(Error::Plan("history does not append records"));
-                }
-                for slot in 0..old.slot_count() {
-                    if old
-                        .get(slot as u16)
-                        .map_err(emilybase_database::Error::from)?
-                        != page
-                            .get(slot as u16)
-                            .map_err(emilybase_database::Error::from)?
-                    {
-                        return Err(Error::Plan("committed history rewrite"));
-                    }
-                }
-                *old = page;
-            } else if id == pages.len() + 1 {
-                pages.push(page);
-            } else {
-                return Err(Error::Plan("history page gap or earlier rewrite"));
-            }
+            pages.push(page);
         }
-        Ok(Snapshot::from_pages(pages)?)
+        base.replay_append_pages(&pages)
+            .map_err(|error| match error {
+                emilybase_database::Error::Event("committed history rewrite") => {
+                    Error::Plan("committed history rewrite")
+                }
+                emilybase_database::Error::Event("history append starts outside tail")
+                | emilybase_database::Error::Event("noncontiguous or deleted append slots") => {
+                    Error::Plan("history page gap or earlier rewrite")
+                }
+                emilybase_database::Error::Event("history append does not extend tail") => {
+                    Error::Plan("history does not append records")
+                }
+                other => other.into(),
+            })
     }
 }
 

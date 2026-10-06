@@ -7,6 +7,9 @@ as internal storage or as a required runtime dependency.
 Opt-in [image replay diagnostics](docs/image-replay-profiles.md) observe physical
 plan/output retention and release. Byte reservation and durability gates remain
 open before a shared table/index writer can be enabled.
+The memory [history append](docs/shared-history-replay.md) now shares unchanged
+pages/row bodies and validates canonical new records instead of rebuilding all
+prior history. Existing stored formats and acknowledgments remain unchanged.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

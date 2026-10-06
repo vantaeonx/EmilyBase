@@ -74,8 +74,9 @@ rebuild, so the full 768-page test constructs its shape explicitly.
 The API is deliberately limited to raw Model/Prepared. ModelPool readers and
 prepared leases expose no clonable raw state or plan/replay output. Plan buffers,
 caller-owned copies and independently replayed models are outside that pool.
-History replay currently rebuilds the entire bounded page/catalog state; index
-deltas can materialize full temporary envelopes. Their peak costs and concurrent
+History replay now [shares immutable prior history](shared-history-replay.md) and
+applies only new canonical records; index deltas can still materialize full
+temporary envelopes. Their peak costs and concurrent
 replay/worker/backup reservation need further work. No wire decoder or runtime
 migration is added. See [ADR 0044](adr/0044-validated-physical-image-plans.md),
 [prototype gates](durable-index-prototype-plan.md) and [capacity](durable-index-capacity.md).

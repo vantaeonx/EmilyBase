@@ -242,6 +242,8 @@ fn preserved_synthetic_release_reports_pass_bounded_admission() {
             "../../../docs/measurements/2026-10-06-image-replay/index-replay-long-four.json"
         )
         .as_slice(),
+        include_bytes!("../../../docs/measurements/2026-10-06-shared-replay/replay-long-four.json")
+            .as_slice(),
     ] {
         let report = decode_report(bytes).unwrap();
         assert_eq!(report.config.rows, 10000);
