@@ -1842,3 +1842,20 @@ This separate logical block adds371 Rust lines and removes8(net363). Totals are
 Python, or50620 source lines. The normal server does not enable the feature or
 allocator. ModelPool byte/transient admission and the shared durable writer remain
 open; real project data is not loaded.
+
+## Parallel residue owner checkpoint
+
+On2026-10-06 a separate local release trace on Rust1.99.0 invokes the actual
+feature-gated parallel helper three times over four synthetic empty-table plans,
+drops every output and then every plan/base. It observes48 additional live bytes,
+with exactly one48-byte block remaining. The actual allocation stack identifies
+the standard channel readiness recv_timeout's thread-local
+`std::sync::mpmc::context::Inner`; no model-state allocation remains in this
+minimal trace. Three groups do not grow the residue. This is targeted owner
+evidence, not an exhaustive leak audit or a byte reservation.
+
+Checked public evidence includes counts/type only. Raw local trace paths/process
+identity remain outside Git. No Rust source, dependency, stored format or report
+fixture changes; the preceding32 diagnostic tests and complete668-test core
+checkpoint retain their original scope. Source totals stay48695 Rust/50620
+combined. See [owner follow-up](parallel-replay-profiles.md).

@@ -60,3 +60,22 @@ and complete durable/crash/security gates remain open. No real project is loaded
 
 Reports: [parallel row replay](measurements/2026-10-06-parallel-replay/replay-long-four.json),
 [parallel index replay](measurements/2026-10-06-parallel-replay/index-replay-long-four.json).
+
+## Residual owner follow-up
+
+A separate minimal synthetic program on the same Rust1.99.0 uses pinned dhat with
+allocation backtraces. It builds four empty-table physical plans, invokes the same
+parallel helper three times, drops each group, then drops all plans and bases.
+Current requested bytes increase by48 after the groups; only48 bytes in one block
+remain before process exit. The live allocation's stack identifies
+`std::sync::mpmc::context::Inner`, allocated by the coordinator's readiness
+`recv_timeout` through the standard channel's thread-local Context. No model-state
+allocation remains in this minimal trace. Repeating the group does not grow that
+residue here. This is one traced shape, not a general leak or memory-quota proof.
+
+The earlier reports remain unchanged. The raw trace contains local paths/process
+identity and stays outside the public repository. Only the checked
+[count/owner summary](measurements/2026-10-06-parallel-replay/residue-owner.json)
+is published. The previous untraced/exact-equality failure describes the earlier
+checkpoint, and this follow-up supplies its owner evidence. Byte/transient,
+broader workload and durability gates remain open.

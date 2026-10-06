@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "rust": "1.99.0",
+  "profiler": "dhat 0.3.3",
+  "workload": "synthetic empty-table physical replay",
+  "project_scopes_per_group": 4,
+  "completed_groups": 3,
+  "live_increase_bytes": 48,
+  "final_requested_bytes": 48,
+  "final_blocks": 1,
+  "owner": "std::sync::mpmc::context::Inner",
+  "origin": "readiness recv_timeout coordinator context"
+}

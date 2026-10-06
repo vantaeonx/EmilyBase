@@ -50,3 +50,13 @@ throughput improvement. Numeric transient/lifetime admission, a single durable
 fence, crash/backup/upgrade and security gates remain open.
 
 See [parallel replay observations](../parallel-replay-profiles.md).
+
+## Subsequent owner evidence
+
+A separate three-group, four-empty-table-scope trace on Rust1.99.0 identifies the
+sole live48-byte block as the standard channel coordinator's thread-local
+`std::sync::mpmc::context::Inner` created by readiness recv_timeout. All model/plan
+objects are dropped and no model-state block remains in that minimal trace.
+The earlier observations stay unchanged; this establishes the owner in that
+shape and does not close a global leak or memory-budget gate. The raw allocation
+trace stays private; the linked observations retain only count/type evidence.
