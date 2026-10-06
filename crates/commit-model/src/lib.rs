@@ -13,7 +13,10 @@ pub use admission::{
     ModelReader,
 };
 pub use components::EncodedComponents;
-pub use images::{ImagePlan, PageWrite, PlanCounts, RetiredRoot, RootChange};
+pub use images::{
+    IMAGE_PLAN_HEADER_BYTES, IMAGE_PLAN_MAX_BYTES, IMAGE_PLAN_VERSION, ImagePlan, PageWrite,
+    PlanCounts, RetiredRoot, RootChange,
+};
 pub use selection::Selection;
 pub use staging::{Prepared, Staged};
 pub use state::Model;
@@ -50,6 +53,14 @@ pub enum Error {
     AdmissionPoisoned,
     #[error("invalid experimental image plan: {0}")]
     Plan(&'static str),
+    #[error("invalid experimental image envelope length")]
+    PlanLength,
+    #[error("unsupported experimental image envelope version {0}")]
+    PlanVersion(u16),
+    #[error("experimental image envelope checksum mismatch")]
+    PlanChecksum,
+    #[error("experimental image envelope allocation refused")]
+    PlanAllocation,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -1,6 +1,8 @@
 use emilybase_catalog::{DataType, Key, Value};
 use emilybase_commit_format::Domain;
-use emilybase_commit_model::{Error, MAX_EVENTS, MAX_SELECTED_INDEX_PAGES, Model, PlanCounts};
+use emilybase_commit_model::{
+    Error, ImagePlan, MAX_EVENTS, MAX_SELECTED_INDEX_PAGES, Model, PlanCounts,
+};
 use emilybase_database::{Event, EventKind};
 use proptest::prelude::*;
 use std::collections::BTreeSet;
@@ -340,6 +342,9 @@ fn full_10000_row_arena_readdressing_replays_768_images_beyond_table_page_bound(
     let plan = prepared.image_plan().unwrap();
     assert!(plan.history().is_empty());
     assert_eq!(plan.counts().unwrap().primary_pages(), 768);
+    let envelope = plan.encode().unwrap();
+    assert!(envelope.len() > 256 * 4160);
+    let plan = ImagePlan::decode(&envelope).unwrap();
     assert_eq!(plan.counts().unwrap().image_body_bytes(), 3145728);
     assert!(plan.counts().unwrap().primary_pages() > MAX_EVENTS);
     let replayed = plan.replay(&base).unwrap();
@@ -408,6 +413,12 @@ fn maximum_256_new_history_pages_replay_as_a_contiguous_append() {
     stage.rebuild_index("items").unwrap();
     let plan = stage.prepare().unwrap().image_plan().unwrap();
     assert_eq!(plan.counts().unwrap().history_pages(), 256);
+    let envelope = plan.encode().unwrap();
+    assert_eq!(
+        plan.counts().unwrap().envelope_bytes().unwrap(),
+        envelope.len() as u64
+    );
+    let plan = ImagePlan::decode(&envelope).unwrap();
     for (index, write) in plan.history().iter().enumerate() {
         assert_eq!(write.address().page() as usize, count + index + 1);
     }

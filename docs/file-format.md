@@ -69,3 +69,10 @@ tear a page or leave an incomplete append. The initial pager detects corruption;
 it cannot repair it. The separate managed transaction layer uses its mandatory
 WAL for recovery and rollback; this raw pager does not implement those guarantees.
 Do not equate an individual page-write result with a durable transaction commit.
+
+## Separate experimental physical plans
+
+[EBIP-1](image-plan-format.md) encodes bounded memory-model image plans separately.
+Managed raw/database/WAL files do not select or contain it; their existing versions
+and recovery decisions are unchanged. Structural envelope admission still requires
+full exact-base replay before selecting any model state.

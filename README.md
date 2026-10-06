@@ -12,6 +12,9 @@ pages/row bodies and validates canonical new records instead of rebuilding all
 prior history. Existing stored formats and acknowledgments remain unchanged.
 Optional [parallel replay observations](docs/parallel-replay-profiles.md) also
 measure actual scoped workers; numeric runtime memory reservation remains pending.
+The standalone [EBIP image envelope](docs/image-plan-format.md) now bounds complete
+physical-plan bytes and checks nested scope/count/CRC before owning page vectors.
+It requires full exact-state replay afterward and selects no new runtime WAL.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

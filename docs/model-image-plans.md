@@ -77,8 +77,10 @@ caller-owned copies and independently replayed models are outside that pool.
 History replay now [shares immutable prior history](shared-history-replay.md) and
 applies only new canonical records; index deltas can still materialize full
 temporary envelopes. Their peak costs and concurrent
-replay/worker/backup reservation need further work. No wire decoder or runtime
-migration is added. See [ADR 0044](adr/0044-validated-physical-image-plans.md),
+replay/worker/backup reservation need further work. The standalone
+[EBIP-1 envelope](image-plan-format.md) now checks complete serialized sizes and
+nested scopes/pages before copying owned image vectors; no runtime migration
+is added. See [ADR 0044](adr/0044-validated-physical-image-plans.md),
 [prototype gates](durable-index-prototype-plan.md) and [capacity](durable-index-capacity.md).
 
 The opt-in [replay observations](image-replay-profiles.md) now measure owned plans,

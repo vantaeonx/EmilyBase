@@ -100,3 +100,13 @@ no-clobber output, explicit unsupported downgrade and frozen old-format fixtures
 Real-data migration, production readiness and completed hardware/security/load
 gates require separate evidence and authorization. Update ADR 0031's status only
 after its acceptance criteria actually execute and pass.
+
+## Follow-up: complete standalone image envelope
+
+[EBIP-1](image-plan-format.md) now accounts for complete changed physical components
+including addresses, roots, retirements and its outer digest, bounded to9770208
+bytes. Nested preflight precedes owned image-vector construction; complete exact
+model replay remains mandatory. This is serialized length admission only. Numeric
+heap/lifetime/worker reservation and the combined durable writer stay open under
+[ADR 0048](adr/0048-bounded-physical-image-envelope.md); old runtime formats stay
+unchanged and no stage acceptance is marked complete.

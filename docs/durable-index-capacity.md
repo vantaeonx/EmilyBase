@@ -135,3 +135,13 @@ Construction/publication remain serial, and this is not a worker or worst-case
 reservation. Full-versus-streamed hashes match while streaming reduces measured
 allocation traffic. Heap admission, lifetime management and WAL/replay budgets
 remain open. See [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md).
+
+## Follow-up: complete standalone image envelope
+
+[EBIP-1](image-plan-format.md) now accounts for complete changed physical components
+including addresses, roots, retirements and its outer digest, bounded to9770208
+bytes. Nested preflight precedes owned image-vector construction; complete exact
+model replay remains mandatory. This is serialized length admission only. Numeric
+heap/lifetime/worker reservation and the combined durable writer stay open under
+[ADR 0048](adr/0048-bounded-physical-image-envelope.md); old runtime formats stay
+unchanged and no stage acceptance is marked complete.

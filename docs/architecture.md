@@ -219,5 +219,8 @@ planning. ImagePlan omits unchanged roots/pages, scopes original EBPG/EBIX image
 by database/domain/table and binds both state fingerprints. Independent replay
 preserves old history slots, rebuilds original tree deltas and validates complete
 row/pointer coverage before returning a new raw Model. Owned plans/replay temporaries
-are outside ModelPool; there is no outer wire envelope or durable fence. See
-[ADR 0044](adr/0044-validated-physical-image-plans.md).
+are outside ModelPool. The standalone EBIP-1 envelope now checks complete byte
+lengths and nested physical components before materializing images; full replay
+still selects no durable fence. See
+[ADR 0044](adr/0044-validated-physical-image-plans.md) and
+[ADR 0048](adr/0048-bounded-physical-image-envelope.md).

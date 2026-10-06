@@ -342,3 +342,13 @@ synchronous work. Authorization remains free of filesystem operations. Actual HT
 tests verify generic refusal, preserved old/replacement data, healthy siblings and
 explicit reopen. Formats are unchanged; broader hostile-admin filesystem/audit
 and production gates remain open. See [ADR 0019](adr/0019-pin-project-directory-identities.md).
+
+## Follow-up: complete standalone image envelope
+
+[EBIP-1](image-plan-format.md) now accounts for complete changed physical components
+including addresses, roots, retirements and its outer digest, bounded to9770208
+bytes. Nested preflight precedes owned image-vector construction; complete exact
+model replay remains mandatory. This is serialized length admission only. Numeric
+heap/lifetime/worker reservation and the combined durable writer stay open under
+[ADR 0048](adr/0048-bounded-physical-image-envelope.md); old runtime formats stay
+unchanged and no stage acceptance is marked complete.

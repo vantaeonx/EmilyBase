@@ -218,3 +218,10 @@ path = "fuzz_targets/history_append.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "image_plan"
+path = "fuzz_targets/image_plan.rs"
+test = false
+doc = false
+bench = false

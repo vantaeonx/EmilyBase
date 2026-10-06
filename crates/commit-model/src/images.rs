@@ -11,6 +11,10 @@ use emilybase_storage::Page;
 use crate::state::State;
 use crate::{Error, MAX_EVENTS, MAX_SELECTED_INDEX_PAGES, Model, Prepared, Result, Selection};
 
+#[path = "plan_codec.rs"]
+mod codec;
+pub use codec::{IMAGE_PLAN_HEADER_BYTES, IMAGE_PLAN_MAX_BYTES, IMAGE_PLAN_VERSION};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlanCounts {
     history: usize,

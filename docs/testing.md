@@ -1859,3 +1859,40 @@ identity remain outside Git. No Rust source, dependency, stored format or report
 fixture changes; the preceding32 diagnostic tests and complete668-test core
 checkpoint retain their original scope. Source totals stay48695 Rust/50620
 combined. See [owner follow-up](parallel-replay-profiles.md).
+
+
+## Complete standalone physical image envelopes (2026-10-06)
+
+Stable1.99.0 and minimum Rust1.89.0 complete workspace runs pass684 tests each,
+with17 intentionally ignored helpers and no failures. The15 new codec cases
+include two independent32-case properties, every-byte cuts/damage, repaired public
+digests, nested count disagreement, root/history ordering, namespace substitutions,
+retirement overlap, exact fingerprints and frozen424-byte compatibility. Existing
+full-capacity768-index-image and256-history-page cases now pass through actual
+EBIP encode/decode before independent replay. 128 created/retired roots and
+nonfirst text keys with UTF-8/NUL/256/3072-byte boundaries execute.
+
+Strict workspace/fuzz/optional-feature Clippy, both format checks, locked workspace
+build, minimum-toolchain fuzz bins and optional-feature compatibility pass.
+All32 release diagnostic checks pass separately. The dedicated image_plan ASan
+campaign completes11705 runs in46 seconds, final observed RSS177 MiB, under
+512-MiB guard and16384-byte maximum input. Its bounded generated histories and
+frozen/raw corpus exercise parser admission/replay; the short campaign is not a
+whole-format exhaustiveness or allocator-quota claim. Quarantine is64 MiB with
+256-KiB thread-local quarantine; corpus/output remain outside Git.
+
+The first new nested-counter fixture expected rejection after writing an unchanged
+zero retirement count. Its failing assertion is not counted as green; the fixture
+now skips unchanged fields. One fuzz-target lint was repaired before the final
+strict pass. No engine defect or successful recovery is inferred from those
+intermediate failures.
+
+Complete serialized EBIP-1 input is capped at9770208 bytes including metadata;
+preflight scans all nested records before allocating owned image vectors.
+Decoded-state, retained-view, simultaneous buffer, worker and process memory gates
+remain open, as does ADR0031's single durable decision. No runtime WAL version,
+backup format, managed write/ACK or real-data permission changes.
+
+The logical block adds1086 and removes2 Rust lines (net1084), giving49779 physical
+Rust lines (47543 excluding blanks/comment-only lines),1207 SDK and718 Python,
+or51704 source lines. Documentation/configuration/locks/build output are excluded.
