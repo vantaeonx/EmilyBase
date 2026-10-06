@@ -1,4 +1,4 @@
-use crate::{BPlusTree, Error, MAX_INDEX_ENTRIES, MAX_INDEX_PAGES, PAGE_SIZE, Result};
+use crate::{BPlusTree, Error, IndexPage, MAX_INDEX_ENTRIES, MAX_INDEX_PAGES, PAGE_SIZE, Result};
 
 pub const SNAPSHOT_VERSION: u16 = 1;
 pub const MAX_SNAPSHOT_BYTES: usize = (MAX_INDEX_PAGES + 1) * PAGE_SIZE;
@@ -11,34 +11,60 @@ pub struct IndexSnapshot {
 }
 
 impl IndexSnapshot {
-    /// Complete snapshot admission without allocating the final EBIF envelope.
-    /// Page images and topology-validation allocations are still required.
+    /// Complete admission with one temporary physical page at a time. Topology
+    /// scratch remains bounded by the arena; no complete image set is created.
     pub fn validate(&self) -> Result<()> {
-        self.validated_images().map(|_| ())
+        Self::validate_tree(self.revision, &self.tree)
     }
 
     pub fn encode(&self) -> Result<Vec<u8>> {
-        let images = self.validated_images()?;
-        let mut bytes = self.header(images.len()).to_vec();
-        bytes.reserve(images.len() * PAGE_SIZE);
-        for image in images {
-            bytes.extend_from_slice(&image);
+        Self::validate_structure(self.revision, &self.tree)?;
+        let mut bytes = Vec::new();
+        bytes
+            .try_reserve_exact((self.tree.page_count() + 1) * PAGE_SIZE)
+            .map_err(|_| Error::Allocation)?;
+        bytes.extend_from_slice(&self.header(self.tree.page_count()));
+        for page in self.tree.pages.values() {
+            bytes.extend_from_slice(&Self::checked_image(page)?);
         }
         Ok(bytes)
     }
 
-    /// Both encoding and hashing use the same complete admission checks.
-    pub(crate) fn validated_images(&self) -> Result<Vec<[u8; PAGE_SIZE]>> {
-        if self.revision == 0 || !self.tree.has_stable_ids() {
+    /// Shared by hashing, encoding and borrowed delta-target admission.
+    pub(crate) fn validate_tree(revision: u64, tree: &BPlusTree) -> Result<()> {
+        Self::validate_structure(revision, tree)?;
+        for page in tree.pages.values() {
+            Self::checked_image(page)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn validate_structure(revision: u64, tree: &BPlusTree) -> Result<()> {
+        if revision == 0 || !tree.has_stable_ids() {
             return Err(Error::Layout("snapshot requires revision and stable IDs"));
         }
-        if self.tree.validate()? != self.tree.len() {
+        if tree.page_count() == 0 || tree.page_count() > MAX_INDEX_PAGES {
+            return Err(Error::Limit);
+        }
+        for (id, page) in &tree.pages {
+            if *id == 0 || *id > MAX_INDEX_PAGES as u64 || *id != page.id() {
+                return Err(Error::PageId);
+            }
+        }
+        if tree.validate()? != tree.len() {
             return Err(Error::Layout("snapshot entry count"));
         }
-        let images = self.tree.page_images()?;
-        // Revalidate the arena's bounded ID domain, not only its tree topology.
-        BPlusTree::from_stable_pages(self.tree.root_id(), &images)?;
-        Ok(images)
+        Ok(())
+    }
+
+    /// Preserve original local wire/CRC admission without cloning the complete
+    /// arena. Topology and bounded map/page identities are checked separately.
+    pub(crate) fn checked_image(page: &IndexPage) -> Result<[u8; PAGE_SIZE]> {
+        let image = page.encode()?;
+        if IndexPage::decode(&image, page.id())? != *page {
+            return Err(Error::Layout("snapshot page round trip"));
+        }
+        Ok(image)
     }
 
     /// Called only after image admission; no untrusted count reaches this helper.
@@ -94,8 +120,8 @@ impl IndexSnapshot {
         {
             return Err(Error::Layout("snapshot bounds"));
         }
-        let images: Vec<_> = bytes[PAGE_SIZE..].as_chunks::<PAGE_SIZE>().0.to_vec();
-        let tree = BPlusTree::from_stable_pages(number64(bytes, 24)?, &images)?;
+        let images = bytes[PAGE_SIZE..].as_chunks::<PAGE_SIZE>().0;
+        let tree = BPlusTree::from_stable_pages(number64(bytes, 24)?, images)?;
         if tree.len() as u64 != entries {
             return Err(Error::Layout("snapshot entry count"));
         }

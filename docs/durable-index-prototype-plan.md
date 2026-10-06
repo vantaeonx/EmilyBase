@@ -119,3 +119,13 @@ clones. Admitted preparation can serialize without releasing writer/generation
 leases or exposing raw state. Raw plans, decoded/retained model state, temporary
 validation and whole-process/server/WAL admission remain outside this scope;
 [ADR 0049](adr/0049-admitted-serialized-image-buffers.md) closes no durable gate.
+
+## Follow-up: streamed standalone index verification
+
+[Complete index admission](streamed-index-admission.md) now checks bounded map/page
+identity, topology and physical round trips one page at a time. Fingerprints and
+wire bytes stay frozen. Borrowed target validation and direct private-candidate
+admission remove redundant complete images/trees in delta generation/application.
+Isolated full-capacity allocation guards and independent corruption/state models
+execute under [ADR 0050](adr/0050-streamed-index-snapshot-admission.md). Candidate
+map/retained/transient/worker quotas and the shared durable writer remain open.

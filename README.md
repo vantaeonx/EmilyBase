@@ -18,6 +18,9 @@ It requires full exact-state replay afterward and selects no new runtime WAL.
 An optional [envelope pool](docs/image-buffer-admission.md) also reserves complete
 serialized output bytes before encode/copy and charges explicit clones until drop.
 Decoded models, raw plans and whole-process memory remain outside that quota.
+Standalone [index validation/deltas](docs/streamed-index-admission.md) now stream
+physical checks and avoid redundant complete image sets while preserving frozen
+bytes and full topology. Private candidate/retained state still needs admission.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

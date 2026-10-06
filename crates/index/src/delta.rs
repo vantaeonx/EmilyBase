@@ -18,11 +18,11 @@ pub struct SnapshotDelta {
 impl IndexSnapshot {
     /// Bind a delta to the exact canonical base, including its revision/root.
     pub fn fingerprint(&self) -> Result<[u8; 32]> {
-        let images = self.validated_images()?;
+        Self::validate_structure(self.revision, &self.tree)?;
         let mut digest = Sha256::new();
-        digest.update(self.header(images.len()));
-        for image in &images {
-            digest.update(image);
+        digest.update(self.header(self.tree.page_count()));
+        for page in self.tree.pages.values() {
+            digest.update(Self::checked_image(page)?);
         }
         Ok(digest.finalize().into())
     }
@@ -30,13 +30,8 @@ impl IndexSnapshot {
     pub fn delta_to(&self, tree: &BPlusTree) -> Result<SnapshotDelta> {
         let base_fingerprint = self.fingerprint()?;
         let revision = self.revision.checked_add(1).ok_or(Error::Limit)?;
-        let target = Self {
-            revision,
-            tree: tree.clone(),
-        };
-        target.encode()?;
-        let upserts = target
-            .tree
+        Self::validate_tree(revision, tree)?;
+        let upserts = tree
             .pages
             .iter()
             .filter(|(id, page)| self.tree.pages.get(id) != Some(page))
@@ -107,17 +102,23 @@ impl SnapshotDelta {
         if pages.len() > MAX_INDEX_PAGES {
             return Err(Error::Limit);
         }
-        let images = pages
-            .values()
-            .map(IndexPage::encode)
-            .collect::<Result<Vec<_>>>()?;
-        let tree = BPlusTree::from_stable_pages(self.root, &images)?;
-        if tree.len() != self.entries {
-            return Err(Error::Layout("delta entry count"));
-        }
-        Ok(IndexSnapshot {
+        let tree = BPlusTree {
+            pages,
+            root: self.root,
+            len: self.entries,
+            stable_ids: true,
+        };
+        let next = IndexSnapshot {
             revision: self.revision,
             tree,
-        })
+        };
+        // The owned candidate uses exactly the same complete topology, identity
+        // and physical round-trip checks as a snapshot. Never publish a partial
+        // map merely because every individual delta page decoded successfully.
+        next.validate().map_err(|error| match error {
+            Error::Layout("snapshot entry count") => Error::Layout("delta entry count"),
+            other => other,
+        })?;
+        Ok(next)
     }
 }

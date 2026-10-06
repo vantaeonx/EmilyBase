@@ -52,6 +52,8 @@ pub enum Error {
     NoKey,
     #[error("index capacity exceeded")]
     Limit,
+    #[error("index output allocation refused")]
+    Allocation,
 }
 
 pub(crate) fn validate_key(key: &Key) -> Result<()> {
@@ -60,3 +62,6 @@ pub(crate) fn validate_key(key: &Key) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod snapshot_tests;

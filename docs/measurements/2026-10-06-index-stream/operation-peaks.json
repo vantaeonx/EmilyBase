@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "rust": "1.99.0",
+  "dhat": "0.3.3",
+  "keys": 10000,
+  "text_key_bytes": 256,
+  "index_pages": 768,
+  "fixtures_excluded": true,
+  "before_requested_peak_bytes": {
+    "validate": 7502704
+  },
+  "after_requested_peak_bytes": {
+    "validate": 25376,
+    "fingerprint": 25376,
+    "encode": 3154096,
+    "decode": 3308400,
+    "unchanged_delta": 25376,
+    "one_page_delta": 25376,
+    "apply": 3307848,
+    "parallel_four": 96360
+  }
+}

@@ -232,3 +232,10 @@ path = "fuzz_targets/envelope_admission.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "index_delta_sequences"
+path = "fuzz_targets/index_delta_sequences.rs"
+test = false
+doc = false
+bench = false

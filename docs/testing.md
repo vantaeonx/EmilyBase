@@ -1930,3 +1930,44 @@ quota. No managed format, commit/ACK behavior or production gate changes.
 The logical block adds950 and removes3 Rust lines(net947), giving50726 physical
 Rust lines(48427 excluding blanks/comment-only lines),1207 SDK and718 Python,
 or52651 source lines. Documentation/configuration/locks/build output are excluded.
+
+
+## Streamed index snapshot and delta admission (2026-10-06)
+
+Complete stable1.99.0 and minimum Rust1.89.0 workspace runs pass713 tests each,
+with17 ignored helpers and no failures. All33 optional release diagnostics pass
+on both toolchains, including a separate native allocator test with full10000-key
+256-byte-text fixtures and four real scoped workers. Strict workspace/fuzz/feature
+Clippy, both formats, minimum fuzz bins and locked workspace build pass.
+
+Before index changes, the isolated full-capacity test fails with a7502704-byte
+validation peak. Streaming complete admission reduces its observed validation,
+fingerprint and no-op/one-page delta peaks to25376 requested bytes. Encode/decode/
+apply retain only their necessary output/candidate and bounded scratch; one native
+sample gives3154096/3308400/3307848 bytes. Four independent retained fixtures are
+built outside profiling; four actual workers observe96360 transient bytes. All
+operation-local current bytes return to zero in that run. These workload guards
+exclude retained fixtures, stacks and profiler/allocator overhead and are not
+whole-process limits. The first compile fixtures required two pointer-result/borrow
+corrections and a usize counter correction before executing; only subsequent
+completed runs are counted.
+
+Six private cases include64 generated arena/corruption histories against the old
+materialized-import oracle. Five integration cases include48 independent mixed-key
+histories, sparse collapse/reuse, exact-base/terminal revision and byte preservation.
+The manually packed1024-page arena reaches physical capacity with6678 rows and
+one changed page. Original frozen format hashes and complete model/envelope
+capacity checks still pass; managed file/WAL/backup/ACK formats remain unchanged.
+
+Generated index_delta_sequences ASan completes23894 runs in46 seconds, RSS161MiB,
+512-MiB guard/512-byte input cap. Its observed corpus growth limit is43 bytes.
+Raw/CRC-repaired index_snapshot ASan completes1664931 runs in46 seconds, RSS156MiB,
+512-MiB guard/69632-byte cap; observed growth limit24473 bytes. The raw seed is an
+independent struct/zlib8192-byte empty snapshot matching the frozen SHA. Both use
+64-MiB quarantine and256-KiB thread-local quarantine; short runs are not exhaustive
+or hardware failure evidence. Corpus/logs remain outside Git.
+
+The distinct coherent optimization block adds762 and removes40 Rust lines(net722),
+giving51448 physical Rust lines(49116 excluding blanks/comment-only lines),1207 SDK
+and718 Python, or53373 source lines. Documentation/configuration/locks/build output
+are excluded. It is committed at the complete tested boundary without padding.
