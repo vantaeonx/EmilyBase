@@ -342,3 +342,57 @@ fn image_report_byte_counters_and_mode_are_checked_on_actual_process_output() {
     assert!(!error.contains("private-field"));
     assert!(!error.contains("private-marker"));
 }
+
+#[test]
+fn parallel_native_replay_preserves_all_four_scopes_and_releases_outputs() {
+    for mode in ["replay", "index-replay"] {
+        for kind in ["integer", "short-text", "long-text"] {
+            let report = run(&[
+                "--mode",
+                mode,
+                "--parallel",
+                "--case",
+                kind,
+                "--rows",
+                "225",
+                "--projects",
+                "4",
+                "--value-bytes",
+                "768",
+                "--retain-old",
+            ]);
+            assert!(report.config.parallel);
+            assert_eq!(report.version, 3);
+            assert_eq!(report.images_per_project.as_ref().unwrap().len(), 4);
+            let before = report
+                .phases
+                .iter()
+                .find(|p| p.phase == PhaseKind::PlansBuilt)
+                .unwrap()
+                .heap;
+            let held = report
+                .phases
+                .iter()
+                .find(|p| p.phase == PhaseKind::Replayed)
+                .unwrap()
+                .heap;
+            let released = report
+                .phases
+                .iter()
+                .find(|p| p.phase == PhaseKind::ReplayReleased)
+                .unwrap()
+                .heap;
+            assert!(held.current_bytes > before.current_bytes);
+            assert!(held.current_bytes > released.current_bytes);
+            assert!(before.current_bytes.abs_diff(released.current_bytes) < 65536);
+        }
+    }
+    for mode in ["state", "index-only", "fingerprint"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_emilybase-model-profile"))
+            .args(["--mode", mode, "--parallel"])
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert!(output.stdout.is_empty());
+    }
+}

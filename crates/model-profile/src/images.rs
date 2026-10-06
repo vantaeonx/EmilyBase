@@ -91,11 +91,15 @@ pub fn measure(config: Config) -> Result<Report, Error> {
         })
         .collect::<Result<Vec<_>, emilybase_commit_model::Error>>()?;
     support::sample(&mut phases, PhaseKind::PlansBuilt);
-    let replayed = plans
-        .iter()
-        .zip(&models)
-        .map(|(plan, base)| plan.replay(base))
-        .collect::<Result<Vec<_>, _>>()?;
+    let replayed = if config.parallel {
+        emilybase_model_profile::replay_parallel(&plans, &models)?
+    } else {
+        plans
+            .iter()
+            .zip(&models)
+            .map(|(plan, base)| plan.replay(base))
+            .collect::<Result<Vec<_>, _>>()?
+    };
     support::sample(&mut phases, PhaseKind::Replayed);
     let prefix = if config.mode == Mode::Replay {
         "n"
@@ -132,7 +136,7 @@ pub fn measure(config: Config) -> Result<Report, Error> {
     drop(models);
     support::sample(&mut phases, PhaseKind::Released);
     Ok(Report {
-        version: 2,
+        version: if config.parallel { 3 } else { 2 },
         config,
         phases,
         components_per_project,

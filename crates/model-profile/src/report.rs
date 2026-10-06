@@ -110,7 +110,14 @@ impl Report {
     pub fn validate(&self) -> Result<(), Error> {
         self.config.validate()?;
         let replay = matches!(self.config.mode, Mode::Replay | Mode::IndexReplay);
-        if self.version != if replay { 2 } else { 1 }
+        let version = if self.config.parallel {
+            3
+        } else if replay {
+            2
+        } else {
+            1
+        };
+        if self.version != version
             || self.components_per_project.len() != self.config.projects as usize
         {
             return Err(Error::Report("version or project count"));

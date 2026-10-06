@@ -69,3 +69,6 @@ and [short keys](measurements/2026-10-06-shared-replay/replay-short-four.json).
 Historical reports are preserved. Numeric transient/replay/worker admission,
 selected WAL encoding, one durable fence, crash/backup/upgrade and security gates
 remain open.
+
+Subsequent [parallel observations](parallel-replay-profiles.md) launch actual
+scoped workers with a shared start, while preserving these serial observations.

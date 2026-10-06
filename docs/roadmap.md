@@ -12,6 +12,11 @@ append/full-recovery/row-model checks and retains exact refusal/release gates.
 Byte/transient reservations and the combined durable writer remain pending under
 [ADR 0046](adr/0046-shared-tail-history-replay.md).
 
+Optional [parallel observations](parallel-replay-profiles.md) now launch four
+real scoped replay workers and check cancellation, ordering and group refusal.
+This is diagnostic evidence, not server integration or worst-case byte admission;
+those gates remain open under [ADR 0047](adr/0047-scoped-parallel-replay-observations.md).
+
 The minimal stage-1 core is implemented and tested. Later acceptance gates remain
 open; a table engine is not a completed transaction engine or backend platform.
 

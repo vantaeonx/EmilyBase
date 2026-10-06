@@ -82,6 +82,7 @@ fn fixture(mode: Mode, kind: Kind, rows: u16, projects: u8) -> Report {
             projects,
             value_bytes: 0,
             retain_old: false,
+            parallel: false,
         },
         phases,
         components_per_project: vec![component; projects as usize],
@@ -244,6 +245,14 @@ fn preserved_synthetic_release_reports_pass_bounded_admission() {
         .as_slice(),
         include_bytes!("../../../docs/measurements/2026-10-06-shared-replay/replay-long-four.json")
             .as_slice(),
+        include_bytes!(
+            "../../../docs/measurements/2026-10-06-parallel-replay/replay-long-four.json"
+        )
+        .as_slice(),
+        include_bytes!(
+            "../../../docs/measurements/2026-10-06-parallel-replay/index-replay-long-four.json"
+        )
+        .as_slice(),
     ] {
         let report = decode_report(bytes).unwrap();
         assert_eq!(report.config.rows, 10000);
@@ -257,7 +266,8 @@ proptest! {
     #[test]
     fn valid_bounded_shapes_round_trip_with_consistent_components(
         rows in 1u16..=10000, projects in 1u8..=4,
-        kind in 0u8..3, requested_mode in 0u8..5, value_bytes in 0u16..=768
+        kind in 0u8..3, requested_mode in 0u8..5, value_bytes in 0u16..=768,
+        parallel in any::<bool>()
     ) {
         let kind = match kind { 0 => Kind::Integer, 1 => Kind::ShortText, _ => Kind::LongText };
         let mode = match requested_mode {
@@ -269,6 +279,10 @@ proptest! {
         };
         let mut report = fixture(mode, kind, rows, projects);
         report.config.value_bytes = value_bytes;
+        if matches!(mode, Mode::Replay | Mode::IndexReplay) && parallel {
+            report.config.parallel = true;
+            report.version = 3;
+        }
         let bytes = serde_json::to_vec(&report).unwrap();
         prop_assert_eq!(decode_report(&bytes).unwrap(), report);
     }
@@ -437,4 +451,30 @@ fn preserved_small_image_replay_observation_matches_its_workload() {
         assert_eq!(image.primary_pages, 1);
         assert_eq!(image.image_body_bytes, 8192);
     }
+}
+
+#[test]
+fn parallel_reports_require_version_three_and_supported_modes() {
+    for mode in [Mode::Replay, Mode::IndexReplay] {
+        let mut report = fixture(mode, Kind::LongText, 10000, 4);
+        report.config.parallel = true;
+        report.version = 3;
+        let bytes = serde_json::to_vec(&report).unwrap();
+        assert_eq!(decode_report(&bytes).unwrap(), report);
+        for version in [0, 1, 2, 4, u16::MAX] {
+            report.version = version;
+            assert!(report.validate().is_err());
+        }
+        report.version = 3;
+        report.config.parallel = false;
+        assert!(report.validate().is_err());
+    }
+    for mode in [Mode::State, Mode::IndexOnly, Mode::Fingerprint] {
+        let mut report = fixture(mode, Kind::Integer, 30, 1);
+        report.config.parallel = true;
+        report.version = 3;
+        assert!(report.validate().is_err());
+    }
+    let serial = serde_json::to_value(fixture(Mode::Replay, Kind::Integer, 30, 1)).unwrap();
+    assert!(serial["config"].get("parallel").is_none());
 }

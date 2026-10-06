@@ -10,6 +10,8 @@ open before a shared table/index writer can be enabled.
 The memory [history append](docs/shared-history-replay.md) now shares unchanged
 pages/row bodies and validates canonical new records instead of rebuilding all
 prior history. Existing stored formats and acknowledgments remain unchanged.
+Optional [parallel replay observations](docs/parallel-replay-profiles.md) also
+measure actual scoped workers; numeric runtime memory reservation remains pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

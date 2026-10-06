@@ -1,6 +1,10 @@
 //! Synthetic, opt-in allocation diagnostics. No runtime server dependency.
 mod report;
+#[cfg(feature = "heap-profile")]
+mod workers;
 pub use report::{Comparison, Components, Heap, ImageComponents, Phase, PhaseKind, Report};
+#[cfg(feature = "heap-profile")]
+pub use workers::replay as replay_parallel;
 pub const MAX_REPORT_BYTES: usize = 8192;
 
 /// Bounded diagnostic JSON admission. Errors do not echo the supplied document.
@@ -53,6 +57,13 @@ pub struct Config {
     pub value_bytes: u16,
     #[arg(long)]
     pub retain_old: bool,
+    #[arg(long)]
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub parallel: bool,
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
 }
 
 impl Config {
@@ -68,6 +79,9 @@ impl Config {
         if self.mode == Mode::Fingerprint && (self.kind == Kind::LongText || self.retain_old) {
             return Err(Error::Unsupported);
         }
+        if self.parallel && !matches!(self.mode, Mode::Replay | Mode::IndexReplay) {
+            return Err(Error::ParallelMode);
+        }
         Ok(self)
     }
 }
@@ -78,6 +92,10 @@ pub enum Error {
     Config,
     #[error("fingerprint mode accepts integer/short-text cases and no retained model view")]
     Unsupported,
+    #[error("parallel diagnostics require replay or index-replay mode")]
+    ParallelMode,
+    #[error("diagnostic replay worker failed: {0}")]
+    Worker(&'static str),
     #[error("allocation counters regressed")]
     Counter,
     #[error("allocation instrumentation is not active")]

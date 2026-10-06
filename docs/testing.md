@@ -1807,3 +1807,38 @@ Rust lines (46132 excluding blanks/comment-only lines),1207 SDK and718 Python,
 or50257 source lines. It commits a complete verified optimization without line
 padding. No combined durable writer, real-project migration or production gate
 is enabled.
+
+## Scoped parallel replay diagnostic checkpoint
+
+On2026-10-06 the feature-gated release suite passes32 tests: five coordination,
+ten native-process and seventeen report cases. Minimum Rust1.89.0 passes all
+seventeen report tests and compiles the feature. Strict workspace/feature/fuzz
+Clippy, formatting and locked build pass. The production engine is unchanged
+from the preceding complete668-test stable/minimum checkpoint; this separate
+diagnostic run is not relabeled as a new full-core run. No lockfile or external
+dependency changes.
+
+Four real waiters exercise cancellation and poison cleanup. Actual scoped model
+outputs keep exact identity/order; one foreign input refuses the group after all
+workers join. Empty/mismatched/excessive groups refuse before spawn. Native tests
+exercise all integer/short/long row/index modes with four workers, retained values
+and bounded release, and reject parallel flags on other modes. Version-three
+reports require the flag/mode; version-one/two defaults retain their JSON shapes.
+The128-case codec property includes serial/parallel choices. Preserved actual
+reports pass the same bounded decoder. OS thread-resource exhaustion was not
+forced; cancellation mechanics are tested separately.
+
+The extended report ASan campaign, seeded with both actual version-three reports,
+completes5813997 executions in46 seconds with8192-byte input/512-MiB RSS caps,
+default quarantine, final RSS334 MiB, without failure. This is a smoke campaign.
+The attempted exact-baseline release assertion fails on an observed48-byte
+residual; it is not counted as green. The final checks retain a bounded tolerance.
+Its allocation owner is not traced; no zero-leak or numeric heap claim follows.
+See [parallel observations](parallel-replay-profiles.md) and
+[ADR0047](adr/0047-scoped-parallel-replay-observations.md).
+
+This separate logical block adds371 Rust lines and removes8(net363). Totals are
+48695 physical Rust(46477 excluding blanks/comment-only lines),1207 SDK and718
+Python, or50620 source lines. The normal server does not enable the feature or
+allocator. ModelPool byte/transient admission and the shared durable writer remain
+open; real project data is not loaded.

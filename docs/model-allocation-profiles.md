@@ -2,6 +2,8 @@
 
 Physical plan retention and independent memory replay are measured separately in
 [image replay profiles](image-replay-profiles.md), including exact release samples.
+Actual scoped worker overlap is observed separately in
+[parallel replay profiles](parallel-replay-profiles.md).
 
 This opt-in tool measures the original in-memory prototype. It neither writes a
 database nor enables the proposed durable index writer. Use synthetic data only.
