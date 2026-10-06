@@ -8,9 +8,9 @@ mod staging;
 mod state;
 
 pub use admission::{
-    AdmissionLimit, AdmissionLimits, AdmissionUsage, AdmittedPrepared, AdmittedStage,
-    MAX_LIFETIME_SLOTS, MAX_MODEL_PROJECTS, MAX_MODEL_WRITERS, ModelPool, ModelProject,
-    ModelReader,
+    AdmissionLimit, AdmissionLimits, AdmissionUsage, AdmittedPrepared, AdmittedReplay,
+    AdmittedStage, MAX_LIFETIME_SLOTS, MAX_MODEL_PROJECTS, MAX_MODEL_WRITERS, ModelPool,
+    ModelProject, ModelReader,
 };
 pub use components::EncodedComponents;
 pub use images::{

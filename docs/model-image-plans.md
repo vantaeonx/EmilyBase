@@ -105,3 +105,15 @@ admission remove redundant complete images/trees in delta generation/application
 Isolated full-capacity allocation guards and independent corruption/state models
 execute under [ADR 0050](adr/0050-streamed-index-snapshot-admission.md). Candidate
 map/retained/transient/worker quotas and the shared durable writer remain open.
+
+
+## Follow-up: admitted destination replay lifetimes
+
+[Destination replay](admitted-model-replay.md) now reserves per-project/global
+writer exclusion and its output generation before complete physical reconstruction.
+Borrowed AdmittedPlan input keeps separate vector accounting. Non-clonable output
+retains leases through exact-instance publication/discard and exposes only borrowed
+state. Actual ownership, refusal, historical readers, generated sequences and
+thread caps execute under [ADR 0054](adr/0054-admitted-physical-replay-generations.md).
+This counts lifetimes, not model/cache/staging/transient heap or runtime workers;
+the combined durable writer and production gates remain open.

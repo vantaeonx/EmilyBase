@@ -402,3 +402,15 @@ charges, corruption/base refusal, actual concurrent races and native diagnostic
 guards execute under [ADR0053](adr/0053-admitted-decoded-image-vectors.md).
 Model/cache/staging/transient/worker heap, encoded/raw caller copies and the combined
 durable writer remain outside this admission and require separate work.
+
+
+## Follow-up: admitted destination replay lifetimes
+
+[Destination replay](admitted-model-replay.md) now reserves per-project/global
+writer exclusion and its output generation before complete physical reconstruction.
+Borrowed AdmittedPlan input keeps separate vector accounting. Non-clonable output
+retains leases through exact-instance publication/discard and exposes only borrowed
+state. Actual ownership, refusal, historical readers, generated sequences and
+thread caps execute under [ADR 0054](adr/0054-admitted-physical-replay-generations.md).
+This counts lifetimes, not model/cache/staging/transient heap or runtime workers;
+the combined durable writer and production gates remain open.

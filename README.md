@@ -406,3 +406,15 @@ The [TypeScript SDK](sdks/typescript/README.md) executes scoped SQL/explain/stat
 with runtime validation, bounded response reads and explicit unknown write outcomes.
 Node unit and actual server/restart checks run in CI. It is a local experimental
 package, not an npm release; browser/CORS and Kotlin work remain open.
+
+
+## Follow-up: admitted destination replay lifetimes
+
+[Destination replay](docs/admitted-model-replay.md) now reserves per-project/global
+writer exclusion and its output generation before complete physical reconstruction.
+Borrowed AdmittedPlan input keeps separate vector accounting. Non-clonable output
+retains leases through exact-instance publication/discard and exposes only borrowed
+state. Actual ownership, refusal, historical readers, generated sequences and
+thread caps execute under [ADR 0054](docs/adr/0054-admitted-physical-replay-generations.md).
+This counts lifetimes, not model/cache/staging/transient heap or runtime workers;
+the combined durable writer and production gates remain open.

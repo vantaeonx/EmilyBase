@@ -79,3 +79,15 @@ clones. Admitted preparation can serialize without releasing writer/generation
 leases or exposing raw state. Raw plans, decoded/retained model state, temporary
 validation and whole-process/server/WAL admission remain outside this scope;
 [ADR 0049](adr/0049-admitted-serialized-image-buffers.md) closes no durable gate.
+
+
+## Follow-up: admitted destination replay lifetimes
+
+[Destination replay](admitted-model-replay.md) now reserves per-project/global
+writer exclusion and its output generation before complete physical reconstruction.
+Borrowed AdmittedPlan input keeps separate vector accounting. Non-clonable output
+retains leases through exact-instance publication/discard and exposes only borrowed
+state. Actual ownership, refusal, historical readers, generated sequences and
+thread caps execute under [ADR 0054](adr/0054-admitted-physical-replay-generations.md).
+This counts lifetimes, not model/cache/staging/transient heap or runtime workers;
+the combined durable writer and production gates remain open.

@@ -1,0 +1,33 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "parent_commit": "ff9b347a9cac0866199033b1d32fc5e70ec92505",
+  "source_sha256": {
+    "crates/commit-model/src/admission.rs": "f8597632ed027206a9e2ef57234c059f86089ff22676640f926fad6a5ad7fa61",
+    "crates/commit-model/src/images.rs": "ebe8e486d18c9eaa30b958de90b2f599af1a0cd137e3475691260807726448e3",
+    "crates/model-profile/tests/admitted_replay.rs": "fc7ebde194aad76c6c17a34b36111bc8d2cf1ff452744c7b2de320ab697864b1"
+  },
+  "synthetic_fixture": {
+    "history_images": 256,
+    "primary_images": 41,
+    "inserted_rows": 256,
+    "text_value_bytes": 3072
+  },
+  "destination_generation_refusal_requested_bytes": 0,
+  "destination_project_writer_refusal_requested_bytes": 0,
+  "accepted_replay_requested_live_bytes": 1725668,
+  "accepted_replay_requested_peak_bytes": 2521808,
+  "discarded_replay_requested_current_bytes": 0,
+  "scope": "isolated destination replay; retained source, models, decoded plan and pools precede profiler",
+  "excluded": [
+    "retained fixture and first model construction",
+    "source and decoded input vectors",
+    "allocator rounding and overhead",
+    "profiler bookkeeping",
+    "OS stacks",
+    "caller copies"
+  ],
+  "claim": "count admission and workload observation, not numeric model or transient heap quota"
+}

@@ -2121,3 +2121,46 @@ excluding blanks/comment-only lines), 1207 SDK and 718 Python, or 55933 source
 lines. Documentation/configuration/locks/build output are excluded. Serialized
 buffers and model lifetimes keep independent accounting. Model/cache/staging/
 transient/worker reservation and the complete durable writer remain open.
+
+## Admitted destination replay lifetimes (2026-10-07)
+
+Complete stable 1.99.0 and minimum Rust 1.89.0 workspace runs each pass 775 tests,
+with 17 ignored helpers and no failures. Separately, 37 optional release diagnostic
+checks pass on both toolchains. Both formats, strict workspace/fuzz/feature Clippy,
+minimum fuzz bins and locked workspace build pass. Runtime WAL/file/backup bytes
+and acknowledgment behavior are unchanged; no durable gate is closed.
+
+Four private tests observe actual reconstructed state/base/namespace owner Weak
+lifetimes, exact-instance publication, discard, caller unwind and poisoned ledger
+cleanup. Eleven integration cases check source independence, stale/foreign bases,
+equal-state cross-pool publication refusal, retained-generation exhaustion,
+disabled writer, stage/replay exclusion, Unicode/long-key row changes and retired
+roots. A 48-case independent row model checks publication/discard with eight old
+views. Eight actual synchronized threads hold exactly two accepted replay results
+while checking the complete writer/generation ledger; all permits later release.
+
+The optional native operation builds retained models/source/pools before profiling.
+Generation exhaustion and existing project writer each observe zero requested
+allocation before reconstruction. Accepted 256-row/3072-byte-value replay observes
+1725668 retained requested bytes and 2521808 peak bytes; discard returns operation
+current bytes to zero. Decoded input, retained fixture, stacks and profiler/
+allocator overhead are excluded. This is count admission and a fixture observation,
+not numeric model/cache/staging/transient or whole-process heap reservation.
+
+The independent admitted_replay ASan sequence target completes 17932 executions
+in 46 seconds with observed final RSS 159 MiB, a 512-MiB guard and 512-byte input
+cap. Its owner-generation model compares old-reader transactions, pending replay,
+held stages, foreign publication and exact complete row state. Observed corpus
+growth limit is 28 bytes. ASan quarantine is 64 MiB with 256-KiB thread-local
+quarantine. This short campaign is not exhaustive; corpus/logs remain private.
+
+An initial fixture used a nonexistent Default implementation for AdmissionUsage;
+explicit zero counters fixed its compilation. Two initial runtime test fixtures
+had insufficient reader slots for their later assertions and correctly received
+Admission(Readers). Corrected limits pass the complete subsequent runs above.
+
+The logical block adds 989 net Rust lines, giving 54997 physical Rust lines (52499
+excluding blanks/comment-only lines), 1207 SDK and 718 Python, or 56922 source
+lines. Documents/configuration/locks/build output are excluded. Decoded vector
+charges remain separate; model/cache/staging/transient budgets and the combined
+durable writer remain open.

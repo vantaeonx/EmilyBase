@@ -246,3 +246,10 @@ path = "fuzz_targets/decoded_admission.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "admitted_replay"
+path = "fuzz_targets/admitted_replay.rs"
+test = false
+doc = false
+bench = false

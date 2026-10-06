@@ -192,3 +192,15 @@ outside that accounting. Disabled decode observes 3292 transient bytes and no ow
 image vectors. These fixture observations are not allocator-wide peak guarantees.
 Model/cache/staging/transient/worker budgets and the combined durable writer remain
 open; serialized source, raw caller copies and replay outputs stay separate.
+
+
+## Follow-up: admitted destination replay lifetimes
+
+[Destination replay](admitted-model-replay.md) now reserves per-project/global
+writer exclusion and its output generation before complete physical reconstruction.
+Borrowed AdmittedPlan input keeps separate vector accounting. Non-clonable output
+retains leases through exact-instance publication/discard and exposes only borrowed
+state. Actual ownership, refusal, historical readers, generated sequences and
+thread caps execute under [ADR 0054](adr/0054-admitted-physical-replay-generations.md).
+This counts lifetimes, not model/cache/staging/transient heap or runtime workers;
+the combined durable writer and production gates remain open.

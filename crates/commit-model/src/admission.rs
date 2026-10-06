@@ -8,7 +8,8 @@ use emilybase_commit_format::{DatabaseId, RootBinding};
 use emilybase_database::{Event, RowLocation};
 
 use crate::{
-    AdmittedEnvelope, EncodedComponents, EnvelopePool, Error, Model, Prepared, Result, Staged,
+    AdmittedEnvelope, AdmittedPlan, EncodedComponents, EnvelopePool, Error, Model, Prepared,
+    Result, Staged,
 };
 
 pub const MAX_LIFETIME_SLOTS: usize = 4096;
@@ -144,6 +145,16 @@ pub struct AdmittedStage {
 
 pub struct AdmittedPrepared {
     inner: Prepared,
+    base: Arc<Generation>,
+    writer: Lease,
+    generation: Lease,
+}
+
+/// Fully verified replay held under the destination's writer/generation leases.
+/// No raw clonable Model escapes. This is count admission, not heap or durability.
+pub struct AdmittedReplay {
+    // Reconstructed state drops before its reservation on discard/refusal.
+    model: Model,
     base: Arc<Generation>,
     writer: Lease,
     generation: Lease,
@@ -313,6 +324,41 @@ impl ModelProject {
         })
     }
 
+    /// Reserve writer exclusion and the output generation before physical replay.
+    /// The immutable decoded input keeps its independent vector reservation.
+    /// A failed replay releases both destination leases without publication.
+    pub fn replay(&self, plan: &AdmittedPlan) -> Result<AdmittedReplay> {
+        let (writer, generation) = self.current.lease.owner.writer()?;
+        let model = plan.plan().replay(&self.current.model)?;
+        Ok(AdmittedReplay {
+            model,
+            base: Arc::clone(&self.current),
+            writer,
+            generation,
+        })
+    }
+
+    /// Memory-only publication of independently verified replay. Destination
+    /// generation identity rejects equal-state foreign pools/recreated owners.
+    pub fn publish_replayed(&mut self, replayed: AdmittedReplay) -> Result<()> {
+        if !Arc::ptr_eq(&self.current, &replayed.base) {
+            return Err(Error::Conflict);
+        }
+        let AdmittedReplay {
+            model,
+            base,
+            writer,
+            generation,
+        } = replayed;
+        self.current = Arc::new(Generation {
+            model,
+            lease: generation,
+        });
+        drop(writer);
+        drop(base);
+        Ok(())
+    }
+
     /// Memory-only publication. Instance identity rejects foreign pools and
     /// recreated owners even if their database ID and fingerprint are equal.
     pub fn publish(&mut self, prepared: AdmittedPrepared) -> Result<()> {
@@ -440,6 +486,45 @@ impl AdmittedPrepared {
         Ok(self.inner.view().get(name, key)?)
     }
 }
+
+impl AdmittedReplay {
+    pub fn database_id(&self) -> DatabaseId {
+        self.model.database_id()
+    }
+    pub fn transaction(&self) -> u64 {
+        self.model.transaction()
+    }
+    pub fn fingerprint(&self) -> [u8; 32] {
+        self.model.fingerprint()
+    }
+    pub fn row_count(&self) -> usize {
+        self.model.view().row_count()
+    }
+    pub fn encoded_components(&self) -> Result<EncodedComponents> {
+        self.model.encoded_components()
+    }
+    pub fn table_id(&self, name: &str) -> Result<u64> {
+        Ok(self.model.view().table_id(name)?)
+    }
+    pub fn schema(&self, name: &str) -> Result<&Schema> {
+        Ok(self.model.view().schema(name)?)
+    }
+    pub fn get(&self, name: &str, key: &Key) -> Result<Option<&Row>> {
+        Ok(self.model.view().get(name, key)?)
+    }
+    pub fn row_location(&self, name: &str, key: &Key) -> Result<Option<RowLocation>> {
+        Ok(self.model.view().row_location(name, key)?)
+    }
+    pub fn binding(&self, table: u64) -> Option<RootBinding> {
+        self.model
+            .selection(table)
+            .map(|selection| selection.binding())
+    }
+}
+
+#[cfg(test)]
+#[path = "admission_replay_tests.rs"]
+mod replay_tests;
 
 #[cfg(test)]
 mod tests {
