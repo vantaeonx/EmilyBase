@@ -66,3 +66,7 @@ RSS or an estimate from the diagnostic reports. Copies callers make from rows or
 schemas, raw models, read/build temporaries, thread stacks and runtime/WAL/replay
 buffers remain outside the coordinator. No server admission gate is completed by
 this change. See [ADR 0043](adr/0043-bounded-model-lifetimes.md).
+
+The independent `model_admission` ASan sequence target also checks orphaned
+registrations, recreation, disabled capacities, prepared publication and complete
+release. Its bounded execution evidence is in [testing](testing.md#model-admission-sequence-fuzz-checkpoint).

@@ -1667,3 +1667,21 @@ numeric heap/RSS, HTTP-worker, replay or WAL-buffer quota. Caller-owned copies a
 raw models remain outside its boundary. No durable index or production gate is
 completed. See [ADR 0043](adr/0043-bounded-model-lifetimes.md) and
 [model lifetimes](model-lifetimes.md).
+
+## Model admission sequence fuzz checkpoint
+
+On 2026-10-06 the new `model_admission` ASan target completes 180786 executions
+in 46 seconds under a 256-byte input/512-MiB RSS cap, default quarantine, final
+RSS427 MiB, without failure. Its independent reference tracks project identities,
+distinct generations, readers and pending writers through create/close/recreate,
+clone/refusal, stage/prepare/publish, abort/discard and foreign publication. Orphan
+readers and prepared operations must keep their old registration charged. Every
+step checks exact counters and retained row values; complete cleanup returns zero.
+Disabled capacities and invalid database identity are included. This is a bounded
+smoke campaign, not a security or leak/heap audit.
+
+All fuzz bins pass strict Clippy, formatting and minimum Rust 1.89.0 compilation.
+The production Rust source/runtime is unchanged from the preceding full 631-test
+stable/minimum checkpoint. This separate QA block adds 380 Rust lines; totals are
+45850 physical Rust (43781 without blank/comment-only lines), 1207 SDK and718
+Python, or47775 combined. No dependency/version changes; corpora are ignored.

@@ -204,3 +204,10 @@ path = "fuzz_targets/profile_report.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "model_admission"
+path = "fuzz_targets/model_admission.rs"
+test = false
+doc = false
+bench = false
