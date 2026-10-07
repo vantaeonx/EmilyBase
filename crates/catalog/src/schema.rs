@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use serde::{Deserialize, Serialize};
 
 use crate::{DataType, Error, Key, MAX_VALUE_BYTES, Result, Value};
@@ -30,10 +28,30 @@ impl Schema {
         if self.columns.is_empty() || self.columns.len() > MAX_COLUMNS {
             return Err(Error::ColumnCount);
         }
-        let mut names = BTreeSet::new();
-        for column in &self.columns {
+        // The public count bound admits a fixed stack buffer. Sort borrowed
+        // names with original positions, then retain the original error order.
+        let mut names = [("", 0usize); MAX_COLUMNS];
+        for (index, column) in self.columns.iter().enumerate() {
+            // Oversized names must not enter comparisons before their typed
+            // refusal. Empty placeholders cannot affect any earlier valid duplicate.
+            let name = if column.name.len() <= MAX_NAME_BYTES {
+                column.name.as_str()
+            } else {
+                ""
+            };
+            names[index] = (name, index);
+        }
+        let names = &mut names[..self.columns.len()];
+        names.sort_unstable();
+        let mut duplicate = [false; MAX_COLUMNS];
+        for pair in names.windows(2) {
+            if pair[0].0 == pair[1].0 {
+                duplicate[pair[1].1] = true;
+            }
+        }
+        for (index, column) in self.columns.iter().enumerate() {
             validate_identifier(&column.name)?;
-            if !names.insert(&column.name) {
+            if duplicate[index] {
                 return Err(Error::DuplicateColumn);
             }
         }
@@ -100,3 +118,7 @@ fn validate_identifier(name: &str) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "schema_validation_tests.rs"]
+mod validation_tests;

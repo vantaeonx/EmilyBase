@@ -378,3 +378,13 @@ under [ADR0063](adr/0063-compare-physical-rows-with-borrowed-codec.md).
 Warmed1000-resolution requests fall from3344000/6416000 to104000 bytes; schema
 validation still allocates. This closes no cold-memory, combined durable writer
 or production gate and changes no stored format or acknowledgement.
+
+
+## Follow-up: bounded stack schema validation
+
+[Schema checks](stack-schema-validation.md) retain every original rule
+and error order using bounded borrowed-name arrays. Oversized names do not enter
+sort comparisons. Native schema/key and physical-resolution samples request no
+temporary heap under [ADR0064](adr/0064-bounded-stack-schema-validation.md).
+These observations exclude stacks/cold fixtures and close no numeric whole-memory,
+combined durable writer or production gate. Stored bytes and ACK are unchanged.

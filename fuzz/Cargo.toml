@@ -316,3 +316,10 @@ path = "fuzz_targets/row_match.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "schema_validation"
+path = "fuzz_targets/schema_validation.rs"
+test = false
+doc = false
+bench = false

@@ -2587,3 +2587,47 @@ blank/comment-only lines,SDK1257,Python718;64765 combined source lines. Docs/con
 locks/generated output are excluded. No EROW/ETBL/page/WAL/cache bytes, format
 versions, SQL/API/EXPLAIN, durability ACK or unsafe change. Numeric model/cache/
 staging/transient admission, combined durable writer and production gates remain.
+
+## Bounded stack schema validation (2026-10-07)
+
+A native zero-temporary-heap regression fails against published46317ba.1000 paired
+schema/key checks request208000 bytes for1/2 columns and2272000 for64 columns,
+in2000/2000/20000 blocks, peaks104/104/1136 and live zero. After bounded borrowed
+name/position arrays, every sample requests zero bytes/blocks/peak/live. The two
+preceding1000-call physical-resolution samples also request zero. Exact current
+hashes/dimensions/exclusions appear in the artifact. Fixtures/names/keys precede
+profiling; stacks, allocator rounding/overhead and profiler data are excluded.
+This proves the measured temporary heap removal, not throughput, total stack
+use, cold memory, RSS or a whole-process/transient quota. All schema rules remain.
+
+Four private checks preserve original identifier/duplicate/primary/count error
+precedence, all2016 duplicate-position pairs in64-column maximum-name schemas,
+count65 refusal, oversized later names and a256-case independent sequential-set
+model. Oversized names use placeholders before comparisons and still refuse at
+the original logical position. Inputs remain immutable; type/null/value/key
+checks execute. Schema/API/file/cache/WAL bytes and durable ACK are unchanged.
+
+The final schema_validation ASan smoke completes1524137 executions in46 seconds,
+observed RSS185 MiB, input cap512/guard512 MiB, corpus growth limit512 bytes.
+Thirty-three synthetic seeds cover empty/valid/over-count schemas, invalid table/
+column names, duplicates,63/64-byte names, primary boundaries/types/nullability.
+An independent sequential-set validator agrees with exact error categories and
+original input. Quarantine is64 MiB with256-KiB thread-local quarantine. The prior
+1247622-run smoke binds the earlier name preflight and is not relabeled as final.
+This is a bounded campaign; raw logs/corpora remain private.
+
+The first stable workspace run passes889 main tests but fails seven rustdoc
+compile targets with E0460/E0463 after code/metadata changed during the run; it is
+not a complete green result. The final oversized-name guard and fourth check were
+then frozen. Complete reruns on stable1.99.0/minimum1.89.0 each pass890 main tests,
+17 ignored helpers and no failures, including documentation compilation. Both
+final optional release suites pass47 diagnostics. Workspace/fuzz formatting,
+strict workspace/fuzz/optional Clippy, minimum fuzz bins and locked build pass.
+SDK format/11 unit/7 actual HTTP/restart checks pass. All five preceding46317ba
+hosted jobs are confirmed successful. No accepted-behavior regression was inferred
+from the intermediate metadata mismatch; final source was rechecked completely.
+
+The block adds279/removes5=274 net Rust lines. Totals:63064 physical Rust,
+60354 excluding blank/comment-only lines,SDK1257,Python718;65039 combined source
+lines. Docs/config/locks/generated output are excluded. Numeric model/cache/
+staging/transient admission, combined durable writer and production gates remain.

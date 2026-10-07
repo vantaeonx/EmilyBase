@@ -1,0 +1,84 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "46317baeabeac6f32cbf6566f66207187ff988a9",
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_sha256": {
+    "crates/catalog/src/schema.rs": "0d5b5f4e68cce919b7b2083514d433ba4e2d68bc3ea3ba28a362cc01da5f09c3",
+    "crates/catalog/src/schema_validation_tests.rs": "8c9e770cf54d490a732bba7de345b00e616a259e5877c9e3ea70bc487edda61b",
+    "crates/model-profile/tests/schema_validation.rs": "de3d227e79176cc38a56f8f1049aa2e4b716112506e83677025185dd09b297f8",
+    "crates/model-profile/tests/physical_row_match.rs": "1d8eeedcf7645efa9236f71913fe4b5b7933647d5bd6f9180733bf21e72a953c"
+  },
+  "synthetic_fixture": {
+    "schema_column_counts": [
+      1,
+      2,
+      64
+    ],
+    "paired_schema_and_key_checks_per_sample": 1000,
+    "schema_names": "bounded ASCII identifiers constructed before profiling",
+    "physical_resolutions_per_sample": 1000,
+    "physical_fixtures": "the preceding wide integer/text-key fixture constructed before profiling"
+  },
+  "baseline_schema": {
+    "schema_1": {
+      "requested_total_bytes": 208000,
+      "requested_blocks": 2000,
+      "requested_peak_bytes": 104,
+      "requested_live_bytes": 0
+    },
+    "schema_2": {
+      "requested_total_bytes": 208000,
+      "requested_blocks": 2000,
+      "requested_peak_bytes": 104,
+      "requested_live_bytes": 0
+    },
+    "schema_64": {
+      "requested_total_bytes": 2272000,
+      "requested_blocks": 20000,
+      "requested_peak_bytes": 1136,
+      "requested_live_bytes": 0
+    }
+  },
+  "samples": {
+    "schema_1": {
+      "requested_total_bytes": 0,
+      "requested_blocks": 0,
+      "requested_peak_bytes": 0,
+      "requested_live_bytes": 0
+    },
+    "schema_2": {
+      "requested_total_bytes": 0,
+      "requested_blocks": 0,
+      "requested_peak_bytes": 0,
+      "requested_live_bytes": 0
+    },
+    "schema_64": {
+      "requested_total_bytes": 0,
+      "requested_blocks": 0,
+      "requested_peak_bytes": 0,
+      "requested_live_bytes": 0
+    },
+    "physical_integer": {
+      "requested_total_bytes": 0,
+      "requested_blocks": 0,
+      "requested_peak_bytes": 0,
+      "requested_live_bytes": 0
+    },
+    "physical_text": {
+      "requested_total_bytes": 0,
+      "requested_blocks": 0,
+      "requested_peak_bytes": 0,
+      "requested_live_bytes": 0
+    }
+  },
+  "physical_baseline": "both preceding physical samples request 104000 total bytes, 1000 blocks, peak104/live0; see preceding source-bound observation",
+  "excluded": [
+    "cold fixture construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local temporary heap requests, not throughput, cold memory, RSS, total stack use or whole-process budget"
+}
