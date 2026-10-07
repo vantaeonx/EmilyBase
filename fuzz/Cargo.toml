@@ -274,3 +274,10 @@ path = "fuzz_targets/sql_primary_joins.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "ordered_primary_joins"
+path = "fuzz_targets/ordered_primary_joins.rs"
+test = false
+doc = false
+bench = false

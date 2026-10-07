@@ -185,3 +185,9 @@ Left input is borrowed; short keys use the own B+ tree, long keys keep physical
 validation through the existing map path. See [checked behavior and limits](primary-key-joins.md).
 EXPLAIN has the same fields and an additional access value; strict enum clients
 need the matching SDK update. No stored format, endpoint or SQL grammar changes.
+
+Necessary left-primary point/range filters can restrict the source for eligible
+primary_join plans. A first ORDER BY key equal to the left unique primary key
+uses its double-ended cursor and stops after accepted matches. No-sort/unique-prefix
+plans retain projected output with the original shared byte cap; other prefixes
+retain the full sorter/intermediate cap. [Details](ordered-primary-joins.md).

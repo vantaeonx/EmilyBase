@@ -129,16 +129,6 @@ impl Plan {
                 _ => return Err(ExecutionError::Limit("result rows")),
             },
         };
-        let key = if select.join.is_none() {
-            filter.as_ref().and_then(|e| {
-                primary_key(
-                    e,
-                    usize::from(snapshot.schema(&select.from.name).ok()?.primary_key),
-                )
-            })
-        } else {
-            None
-        };
         let schema = snapshot.schema(&select.from.name)?;
         let primary_join = join.as_ref().and_then(|(table, predicate)| {
             let right = snapshot.schema(table).ok()?;
@@ -148,7 +138,18 @@ impl Plan {
                 schema.columns.len() + usize::from(right.primary_key),
             )
         });
-        let primary_order = if select.join.is_none() {
+        // A unique right primary probe emits at most one row per left key.
+        // Necessary left point/range filters and its unique primary ordering
+        // therefore retain the same source semantics as a single-table read.
+        let source_access = select.join.is_none() || primary_join.is_some();
+        let key = if source_access {
+            filter
+                .as_ref()
+                .and_then(|predicate| primary_key(predicate, usize::from(schema.primary_key)))
+        } else {
+            None
+        };
+        let primary_order = if source_access {
             order
                 .first()
                 .filter(|key| key.index == usize::from(schema.primary_key))
@@ -156,7 +157,7 @@ impl Plan {
         } else {
             None
         };
-        let range = if key.is_none() && select.join.is_none() {
+        let range = if key.is_none() && source_access {
             filter.as_ref().and_then(|predicate| {
                 crate::range::primary_range(predicate, usize::from(schema.primary_key))
             })

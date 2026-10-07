@@ -1,0 +1,53 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_parent_commit": "2719a6a38abd5b9032b7493c2f9fa806298c82c2",
+  "source_sha256": {
+    "crates/query/src/plan.rs": "85f3286017a811367bfbec400e514b2a297db56fad17617a2bda2ade2efd95c2",
+    "crates/query/src/primary_join.rs": "7bbff1a0b87ba952e5b79e82f01033e4d435e4da3e6dadc79c55c596beb399c9",
+    "crates/query/src/select.rs": "ad85bedb488a436ebff1021cc449f15781a006967aabe3c6d2ffeb7fd8453566",
+    "crates/model-profile/tests/ordered_join.rs": "5c34991b51d41933c781238647e8e1b55e62b066e24ec8ae0fd898edd6b1b007"
+  },
+  "synthetic_fixture": {
+    "left_rows": 1500,
+    "right_rows": 1500,
+    "hidden_text_bytes_per_row": 3072,
+    "limit": 2,
+    "fixture_and_both_caches": "constructed before profiling"
+  },
+  "samples": {
+    "ordered": {
+      "requested_live_output_bytes": 348,
+      "requested_peak_bytes": 8411,
+      "requested_after_result_release_bytes": 0
+    },
+    "range": {
+      "requested_live_output_bytes": 348,
+      "requested_peak_bytes": 8769,
+      "requested_after_result_release_bytes": 0
+    },
+    "point": {
+      "requested_live_output_bytes": 284,
+      "requested_peak_bytes": 8222,
+      "requested_after_result_release_bytes": 0
+    }
+  },
+  "logical_work_fixture": {
+    "left_rows": 200,
+    "right_rows": 200,
+    "two_ordered_matches_visits": 6,
+    "one_left_point_visits": 4,
+    "two_left_range_matches_visits": 12,
+    "contradictory_range_visits": 0
+  },
+  "excluded": [
+    "cold fixture construction",
+    "cold primary cache construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local requested allocations and logical work, not cold memory, throughput, RSS or a process heap quota"
+}

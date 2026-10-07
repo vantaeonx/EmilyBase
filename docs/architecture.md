@@ -313,3 +313,13 @@ equality under AND is supported; other conditions keep the original fallback.
 EXPLAIN and the matching strict project SDK accept primary_join under
 [ADR 0057](adr/0057-primary-key-join-probes.md). This enables no new stored
 format, durable-index acknowledgement, chained/outer join or production gate.
+
+
+## Follow-up: stream ordered primary joins
+
+[Unique left-primary JOIN order](ordered-primary-joins.md) now uses the
+original point/range/double-ended source cursor and stops after accepted LIMIT
+matches. Streamed plans retain selected output fields while complete ON/WHERE
+and shared work/output budgets stay active. Other orders retain full stable sort
+and intermediate limits under [ADR 0058](adr/0058-streamed-primary-join-order.md).
+Stored formats, durability acknowledgements and production gates are unchanged.

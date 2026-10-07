@@ -571,7 +571,7 @@ fn sorted_primary_join_keeps_full_intermediate_byte_limit_before_limit() {
     assert!(matches!(
         query(
             &snapshot,
-            "SELECT a.id FROM left_rows AS a JOIN right_rows AS b ON a.link=b.id ORDER BY a.id LIMIT 1",
+            "SELECT a.id FROM left_rows AS a JOIN right_rows AS b ON a.link=b.id ORDER BY b.link LIMIT 1",
             &[]
         ),
         Err(ExecutionError::Limit("intermediate rows/bytes"))

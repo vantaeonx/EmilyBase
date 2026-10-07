@@ -2299,3 +2299,51 @@ The block adds 1057 net Rust and 26 SDK lines, 1083 total source lines. Current
 physical Rust is 57922 (55334 excluding blanks/comment-only lines), SDK1233,
 Python718, total59873 source lines. Documents/configuration/lockfiles/build output
 are excluded. Stored formats, durable ACK rules and production gates are unchanged.
+
+
+## Ordered, bounded primary joins (2026-10-07)
+
+The valid 1500-by-1500 wide-row regression fails ORDER BY left.id DESC LIMIT 2
+against published 2719a6a with Limit("intermediate rows/bytes"). After early source
+termination fixes it, a second narrow 1500-ID regression still fails because full
+hidden joined fields are retained; projected streaming fixes that separately.
+Both baseline failures were executed before their respective implementation fixes.
+The implicit read-script fixture originally asserted an incorrect committed flag;
+it was corrected to the existing report contract. Exact WAL bytes remain unchanged.
+
+Nine public checks cover both directions/secondary null keys, many-to-one match
+counting, necessary points/ranges/reversed comparisons, OR/NOT refusal to infer
+bounds, right/non-primary stable sorting, full intermediate-byte refusal for those
+orders, mixed255/256/257/3072-byte UTF-8/NUL keys, long-key physical paths and old
+views, integer extremes, typed empty/LIMIT0 validation and full 10000-row capacity.
+A 64-case independent map compares output and the equivalent original fallback.
+Both managed WAL versions execute 64 successive ordered reads, preserve exact WAL
+and checkpoint/reopen data. Four additional private checks inspect actual work:
+two ordered matches: 6 visits, left point: 4, two range matches: 12, contradiction: 0;
+non-primary order still visits all candidates, false filters/output caps still refuse.
+
+The release-native warmed 1500-row-per-side/3072 hidden-byte fixture observes
+requested peaks 8411/8769/8222 for ordered/range/point LIMIT 2, retained 348/348/284
+and zero after release. Exact source hashes appear in the measurement artifact.
+Fixture/both caches precede profiling; cold construction, allocator overhead/rounding,
+stacks and profiler bookkeeping are excluded. This is operation-local requested
+allocation evidence, not cold memory, throughput, RSS or a whole-process quota.
+
+The ordered_primary_joins ASan smoke completes 35480 executions in 46 seconds,
+observed RSS 180 MiB, input cap 512 bytes / guard 512 MiB, final corpus growth limit 106 bytes.
+Eight synthetic integer/text/point/range/direction seeds initialize the private
+corpus. Generated null/missing keys, long UTF-8/NUL keys, independent ordered map
+results, original fallback parity and historical fingerprints are checked.
+Quarantine is 64 MiB with 256-KiB thread-local quarantine. This short run is not
+exhaustive; raw logs and corpora are not published.
+
+Complete stable 1.99.0 and minimum 1.89.0 runs each pass 833 main tests with 17 ignored
+helpers, zero failures. Both optional release suites pass 41 diagnostics. Workspace/
+fuzz formatting, strict workspace/fuzz/optional Clippy, minimum fuzz-bin check and
+locked build pass. SDK passes 11 unit and 7 actual native HTTP/restart checks.
+No SDK enum, API route, SQL grammar, storage bytes or durable ACK change.
+
+The logical block adds 981/−21=960 net Rust lines: 58882 physical Rust, 56266 without
+blank/comment-only lines, SDK 1233 and Python 718, total 60833 source lines. Documents,
+configuration, lockfiles and generated build output are excluded. Numeric model/
+cache/staging/transient budgets, combined durable writer and production gates remain open.

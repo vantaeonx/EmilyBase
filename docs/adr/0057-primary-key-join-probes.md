@@ -64,3 +64,10 @@ not cold index construction, allocator usable-size, RSS or a process quota.
 Fallback work limits can still refuse valid expensive joins; no hash/merge join,
 left-primary reorder, secondary index, outer/chained join or PostgreSQL protocol
 is introduced. Cold cache/staging/durable-index/production gates remain open.
+
+## Subsequent extension
+
+[ADR 0058](0058-streamed-primary-join-order.md) subsequently adds necessary left
+source point/range access and proven unique-left-order projected streaming. The
+full intermediate cap remains for other sort prefixes. The evidence above records
+the earlier implementation and its exact source-bound observations.

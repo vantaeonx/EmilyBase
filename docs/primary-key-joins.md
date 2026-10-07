@@ -25,9 +25,10 @@ Missing and null probes still consume work. Every candidate and full ON/WHERE no
 uses the shared 100000-visit script budget. Unknown/ambiguous columns, type errors
 and missing bindings are refused before scanning, including LIMIT 0/empty tables.
 
-Projection, stable sort, null/tie handling and limits keep their previous meaning.
-The full intermediate-byte cap still applies when sorting before LIMIT; returned
-projection bytes also use the script-wide budget. Immutable older snapshots and
+Projection, stable sort, null/tie handling and limits keep their meaning.
+[Unique left-primary order and necessary source bounds](ordered-primary-joins.md)
+now stream projected output. Other sort prefixes keep the full intermediate-byte
+cap before LIMIT; returned projection bytes use the script-wide budget. Immutable older snapshots and
 managed staged/rollback/recovery/backup reads use the same plan.
 
 EXPLAIN returns access="primary_join", with the previous field set. The matching
