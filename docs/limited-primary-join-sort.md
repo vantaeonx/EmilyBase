@@ -42,3 +42,7 @@ is experimental software; combined durable writer and whole-memory gates remain 
 [Projected-output admission](projected-output-admission.md) subsequently checks
 selected bytes before cloning and projects final rows incrementally. Measurements
 above bind the earlier source; current admitted-refusal observations are separate.
+
+[Borrowed candidate admission](borrowed-query-candidates.md) subsequently avoids
+copying worse candidates and joined predicate payloads; observations above bind
+the preceding source. Physical source validation retains its separate costs.

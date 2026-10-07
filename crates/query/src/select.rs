@@ -101,34 +101,39 @@ pub(crate) fn project(plan: Plan, retained: Vec<Row>, budget: &mut Budget) -> Ru
 pub(crate) fn compare_rows(a: &Row, b: &Row, order: &[SortKey]) -> Ordering {
     for key in order {
         let (a, b) = (&a[key.index], &b[key.index]);
-        let order = match (a, b) {
-            (Value::Null, Value::Null) => Ordering::Equal,
-            (Value::Null, _) => {
-                if key.nulls_first {
-                    Ordering::Less
-                } else {
-                    Ordering::Greater
-                }
-            }
-            (_, Value::Null) => {
-                if key.nulls_first {
-                    Ordering::Greater
-                } else {
-                    Ordering::Less
-                }
-            }
-            _ => {
-                let order = value_order(a, b).unwrap_or(Ordering::Equal);
-                if key.descending {
-                    order.reverse()
-                } else {
-                    order
-                }
-            }
-        };
+        let order = compare_values(a, b, key);
         if !order.is_eq() {
             return order;
         }
     }
     Ordering::Equal
+}
+
+/// One comparator serves checked borrowed views and owned heap entries.
+pub(crate) fn compare_values(a: &Value, b: &Value, key: &SortKey) -> Ordering {
+    match (a, b) {
+        (Value::Null, Value::Null) => Ordering::Equal,
+        (Value::Null, _) => {
+            if key.nulls_first {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            }
+        }
+        (_, Value::Null) => {
+            if key.nulls_first {
+                Ordering::Greater
+            } else {
+                Ordering::Less
+            }
+        }
+        _ => {
+            let order = value_order(a, b).unwrap_or(Ordering::Equal);
+            if key.descending {
+                order.reverse()
+            } else {
+                order
+            }
+        }
+    }
 }

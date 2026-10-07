@@ -12,7 +12,7 @@ fn retain(plan: &Plan, row: &Row, budget: &mut Budget, selected: &mut TopK<'_>) 
     {
         return Ok(());
     }
-    selected.push(row.clone())
+    selected.offer(crate::row_view::RowView::single(row))
 }
 
 pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunResult<ResultSet> {

@@ -1,6 +1,7 @@
 use crate::ast::{Compare, Expr, Operand, Scalar};
 use crate::execute::{Budget, ExecutionError, RunResult};
 use crate::plan::Layout;
+use crate::row_view::RowView;
 use emilybase_catalog::{DataType, Row, Value};
 use std::cmp::Ordering;
 
@@ -81,8 +82,15 @@ impl Predicate {
         })
     }
     pub(crate) fn evaluate(&self, row: &Row, budget: &mut Budget) -> RunResult<Option<bool>> {
+        self.evaluate_view(RowView::single(row), budget)
+    }
+    pub(crate) fn evaluate_view(
+        &self,
+        row: RowView<'_>,
+        budget: &mut Budget,
+    ) -> RunResult<Option<bool>> {
         budget.step()?;
-        fn value<'a>(operand: &'a BoundOperand, row: &'a Row) -> RunResult<&'a Value> {
+        fn value<'a>(operand: &'a BoundOperand, row: RowView<'a>) -> RunResult<&'a Value> {
             match operand {
                 BoundOperand::Value(v) => Ok(v),
                 BoundOperand::Column(i) => row.get(*i).ok_or(ExecutionError::Plan),
@@ -111,17 +119,20 @@ impl Predicate {
                     })
                 }
             }
-            Self::Not(inner) => inner.evaluate(row, budget)?.map(|v| !v),
-            Self::And(a, b) => match (a.evaluate(row, budget)?, b.evaluate(row, budget)?) {
+            Self::Not(inner) => inner.evaluate_view(row, budget)?.map(|v| !v),
+            Self::And(a, b) => match (a.evaluate_view(row, budget)?, b.evaluate_view(row, budget)?)
+            {
                 (Some(false), _) | (_, Some(false)) => Some(false),
                 (Some(true), Some(true)) => Some(true),
                 _ => None,
             },
-            Self::Or(a, b) => match (a.evaluate(row, budget)?, b.evaluate(row, budget)?) {
-                (Some(true), _) | (_, Some(true)) => Some(true),
-                (Some(false), Some(false)) => Some(false),
-                _ => None,
-            },
+            Self::Or(a, b) => {
+                match (a.evaluate_view(row, budget)?, b.evaluate_view(row, budget)?) {
+                    (Some(true), _) | (_, Some(true)) => Some(true),
+                    (Some(false), Some(false)) => Some(false),
+                    _ => None,
+                }
+            }
         })
     }
 }

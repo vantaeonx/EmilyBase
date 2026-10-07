@@ -8,6 +8,7 @@ mod predicate;
 mod primary_join;
 mod projection;
 mod range;
+mod row_view;
 mod select;
 mod single_sort;
 mod stream;

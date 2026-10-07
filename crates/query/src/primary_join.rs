@@ -84,13 +84,12 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
             continue;
         };
         budget.step()?;
-        let mut row = left.clone();
-        row.extend(right.iter().cloned());
-        if predicate.evaluate(&row, budget)? != Some(true) {
+        let row = crate::row_view::RowView::joined(left, right);
+        if predicate.evaluate_view(row, budget)? != Some(true) {
             continue;
         }
         if let Some(filter) = &plan.filter
-            && filter.evaluate(&row, budget)? != Some(true)
+            && filter.evaluate_view(row, budget)? != Some(true)
         {
             continue;
         }
@@ -98,10 +97,10 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
             return Err(ExecutionError::Limit("intermediate rows/bytes"));
         }
         if streaming {
-            let projected = crate::projection::row(&plan.columns, &row, budget)?;
+            let projected = crate::projection::view(&plan.columns, row, budget)?;
             retained.push(projected);
         } else {
-            sorted.as_mut().ok_or(ExecutionError::Plan)?.push(row)?;
+            sorted.as_mut().ok_or(ExecutionError::Plan)?.offer(row)?;
         }
         if streaming && retained.len() >= plan.limit {
             break;

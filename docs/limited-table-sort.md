@@ -32,3 +32,7 @@ Primary-order streaming and bounded primary-join selection retain their existing
 paths; general fallback joins retain their original limits. Models, staging,
 cold caches, candidate transients, combined durable writer and production gates
 remain open. No SQL grammar, API, stored format or durable ACK changes.
+
+[Borrowed candidate admission](borrowed-query-candidates.md) subsequently avoids
+copying worse candidates and joined predicate payloads; observations above bind
+the preceding source. Physical source validation retains its separate costs.

@@ -491,3 +491,14 @@ WAL 1/2 recovery hold under [ADR 0061](adr/0061-borrowed-bounded-table-sort.md).
 The reproduced warmed 1500-row peak falls from 4842026 to 11634 requested bytes.
 This operation-local observation closes no cold-memory, transient, combined
 durable-writer or production gate. General fallback joins retain their limits.
+
+
+## Follow-up: borrow before candidate admission
+
+[Borrowed candidates](borrowed-query-candidates.md) let primary JOIN
+predicates/projection read checked source slices directly. Sorted table/JOIN heaps
+compare and charge winners before cloning; discarded candidates still consume
+the original match/work counts. Reproduced warmed allocation totals nearly halve
+under [ADR 0062](adr/0062-admit-borrowed-candidates-before-cloning.md).
+Physical validation still allocates; these operation totals are not a process
+quota. Stored formats, durability acknowledgements and production gates remain.

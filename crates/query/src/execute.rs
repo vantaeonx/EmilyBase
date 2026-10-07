@@ -87,6 +87,10 @@ pub(crate) fn row_bytes(row: &Row) -> usize {
 mod projection_budget_tests;
 
 #[cfg(test)]
+#[path = "borrowed_candidate_work.rs"]
+mod borrowed_candidate_work;
+
+#[cfg(test)]
 #[path = "single_sort_work.rs"]
 mod single_sort_work;
 

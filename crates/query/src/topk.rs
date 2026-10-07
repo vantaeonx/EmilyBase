@@ -1,7 +1,8 @@
-//! Stable bounded selection for fully evaluated, non-streamed primary joins.
+//! Stable bounded selection; admit borrowed candidates before retaining their payload.
 use crate::MAX_RESULT_ROWS;
 use crate::execute::{ExecutionError, MAX_OUTPUT_BYTES, RunResult, row_bytes};
 use crate::plan::SortKey;
+use crate::row_view::RowView;
 use emilybase_catalog::Row;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
@@ -54,36 +55,50 @@ impl<'a> TopK<'a> {
         }
     }
 
-    pub(crate) fn push(&mut self, row: Row) -> RunResult<()> {
+    #[cfg(test)]
+    fn push(&mut self, row: Row) -> RunResult<()> {
+        self.offer(RowView::single(&row))
+    }
+
+    pub(crate) fn offer(&mut self, row: RowView<'_>) -> RunResult<()> {
         if self.seen >= MAX_RESULT_ROWS {
             return Err(ExecutionError::Limit("intermediate rows/bytes"));
         }
-        let entry = Ranked {
-            row,
-            ordinal: self.seen,
-            order: self.order,
-        };
+        let ordinal = self.seen;
         self.seen += 1;
         if self.limit == 0 {
             return Ok(());
         }
-        if self.heap.len() < self.limit {
-            let bytes = self.bytes + row_bytes(&entry.row);
-            if bytes > MAX_OUTPUT_BYTES {
-                return Err(ExecutionError::Limit("intermediate rows/bytes"));
+        row.validate_order(self.order)?;
+        let replacing = self.heap.len() >= self.limit;
+        let removed = if replacing {
+            let worst = self.heap.peek().ok_or(ExecutionError::Plan)?;
+            // Equal requested keys lose to their earlier source ordinal.
+            if !row.compare(&worst.row, self.order)?.is_lt() {
+                return Ok(());
             }
-            self.heap.push(entry);
-            self.bytes = bytes;
-        } else if let Some(mut worst) = self.heap.peek_mut()
-            && entry < *worst
-        {
-            let bytes = self.bytes - row_bytes(&worst.row) + row_bytes(&entry.row);
-            if bytes > MAX_OUTPUT_BYTES {
-                return Err(ExecutionError::Limit("intermediate rows/bytes"));
-            }
-            *worst = entry;
-            self.bytes = bytes;
+            row_bytes(&worst.row)
+        } else {
+            0
+        };
+        let bytes = (self.bytes - removed)
+            .checked_add(row.bytes()?)
+            .ok_or(ExecutionError::Limit("intermediate rows/bytes"))?;
+        if bytes > MAX_OUTPUT_BYTES {
+            return Err(ExecutionError::Limit("intermediate rows/bytes"));
         }
+        // The immutable candidate is compared and charged before payload copying.
+        let entry = Ranked {
+            row: row.to_owned(),
+            ordinal,
+            order: self.order,
+        };
+        if replacing {
+            *self.heap.peek_mut().ok_or(ExecutionError::Plan)? = entry;
+        } else {
+            self.heap.push(entry);
+        }
+        self.bytes = bytes;
         Ok(())
     }
 

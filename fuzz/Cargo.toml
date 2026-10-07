@@ -302,3 +302,10 @@ path = "fuzz_targets/limited_table_sort.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "borrowed_candidates"
+path = "fuzz_targets/borrowed_candidates.rs"
+test = false
+doc = false
+bench = false

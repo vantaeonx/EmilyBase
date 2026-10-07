@@ -2490,3 +2490,54 @@ excluding blank/comment-only lines, SDK 1257 and Python 718; total 63488 source
 lines. Docs/config/lockfiles/generated output are excluded. Stored formats, durable
 ACK and SQL/API types are unchanged. Numeric model/cache/staging/transient budgets,
 combined durable writer and production acceptance remain open.
+
+## Borrowed predicate and retained-candidate admission (2026-10-07)
+
+Against published 281c01d, a native warmed fixture with two 1500-row tables,
+3072 hidden bytes and LIMIT 2 fails its actual total-allocation guards. Ordinary
+sort/sorted-primary-JOIN/false-ON-primary-JOIN request 9819837/19937652/19937358
+summed allocation bytes. After immutable row views and pre-copy winner admission,
+the same samples request 5074173/10302324/10289358. Peaks are 11634/17980/5180;
+live output 282/282/122, after-release zero. An early overly small 1-MiB guard was
+revised to account for physical validation; the final 6/12-MiB guards also fail
+before implementation and pass afterward. Exact fixture/source hashes are in
+the observation artifact. Summed requests do not describe simultaneous memory,
+throughput or RSS. Cold fixture/cache, allocator overhead/rounding, stacks and
+profiler data are excluded. Physical validation, winning candidates and keys
+still allocate; whole-memory/transient quota is not claimed.
+
+Nine new private checks cover checked split offsets/usize::MAX, all value payload
+costs/float bits, null/direction comparison parity, original three-valued predicate
+results and exact node work, both Boolean branches under work exhaustion, repeated
+joined projection at last-admitted/first-refused output bytes, typed invalid
+indices, source ordinals, heap charges and growth/replacement refusal atomicity.
+Two public checks join maximum 64-column schemas and all 128 star fields, final
+primary positions, aliases/repeated right fields, original fallback parity, full
+nullable predicates and retained old snapshots. Both WAL versions preserve staged
+changes to both sources, rollback and a write followed by cumulative output
+refusal with exact prior committed bytes. Checkpoint/reopen, verified backup/
+restore and independent writes pass. An initial test fixture used nonexistent
+snapshot/backup helper names; it was corrected to the existing view and backup
+crate APIs before these successful runs. No engine behavior was changed for it.
+
+The borrowed_candidates ASan smoke completes 50234 executions in 46 seconds,
+observed RSS 174 MiB, input cap 512 / guard 512 MiB and corpus growth limit 102 bytes.
+Thirty-two synthetic seeds exercise left/right sorts, both directions/NULL rules,
+complete nullable ON/WHERE and missing right probes. An independent last-wins map
+uses its own three-valued acceptance and stable rank order; original fallback
+results and old physical fingerprints also agree. Quarantine is 64 MiB with
+256-KiB thread-local quarantine. This bounded smoke is not an exhaustive audit;
+raw logs/corpora remain private. A focused command initially used a nonexistent
+projection test target; the correct projection_budget target passed afterward.
+
+Final stable1.99.0/minimum1.89.0 complete workspace runs each pass878 main tests,
+17 ignored helpers, no failures. Both optional release suites pass45 diagnostics.
+Workspace/fuzz formatting, strict workspace/fuzz/optional Clippy, minimum fuzz
+bins and locked build pass. SDK format/11 unit/7 actual HTTP/restart checks pass.
+All five hosted jobs of preceding281c01d are confirmed successful.
+
+The block adds879/removes65=814 net Rust lines. Totals:62327 physical Rust,
+59632 excluding blank/comment-only lines,SDK1257,Python718,64302 combined source
+lines. Docs/config/lockfiles/generated files are excluded. No stored format,
+SQL/API/EXPLAIN enum, durable ACK or unsafe change. Numeric model/cache/staging/
+transient admission, combined durable writer and production acceptance remain open.

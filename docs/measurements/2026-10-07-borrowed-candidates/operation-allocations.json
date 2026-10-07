@@ -1,0 +1,80 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_parent_commit": "281c01d3ea10d6753e7b5aa5448820f151f2912f",
+  "source_sha256": {
+    "crates/query/src/row_view.rs": "332159b1ae6a63f04d31e5fa3f8220d73611024cad869439eb929965f5078541",
+    "crates/query/src/topk.rs": "b178e98ccc71febcdb05335505e067f7d4f8028d8e0b95604b21d4907b679f5d",
+    "crates/query/src/primary_join.rs": "90517077cbf01ea7fdcc2fdab3abf697779c7fb2b22a3cf3012f3144c8c80a65",
+    "crates/query/src/single_sort.rs": "e19707f53d9fcfa6f4f92e056aeed733406481ccab5d2ec0f234d80214305d72",
+    "crates/query/src/predicate.rs": "702431d8d5981402736e32ac822468ee5bfa01b22d686996a1a202dca8275437",
+    "crates/query/src/projection.rs": "5b541b8d569d8526215b0e7d36f9bb56e2c86dfe1761aa38013d3f51c7f5bc7b",
+    "crates/query/src/select.rs": "1ec72c0969c715a9c758c853a3adb7c497fe5c59cc03cdebee7fcef301a2796c",
+    "crates/model-profile/tests/borrowed_candidates.rs": "3dda86ef088c5ddbe2ca62600f3a58ad43303115d9cdef2a4e24cd6063dd0eba"
+  },
+  "synthetic_fixture": {
+    "rows_per_table": 1500,
+    "tables": 2,
+    "hidden_text_bytes_per_row": 3072,
+    "limit": 2,
+    "rank": "ascending primary id, so first two sorted candidates already win",
+    "fixture_and_primary_cache": "constructed before profiling"
+  },
+  "baseline": {
+    "discarded_table": {
+      "requested_live_bytes": 282,
+      "requested_peak_bytes": 11634,
+      "requested_total_bytes": 9819837,
+      "requested_blocks": 9048,
+      "requested_after_release_bytes": 0
+    },
+    "discarded_join": {
+      "requested_live_bytes": 282,
+      "requested_peak_bytes": 21044,
+      "requested_total_bytes": 19937652,
+      "requested_blocks": 19583,
+      "requested_after_release_bytes": 0
+    },
+    "filtered_join": {
+      "requested_live_bytes": 122,
+      "requested_peak_bytes": 8244,
+      "requested_total_bytes": 19937358,
+      "requested_blocks": 19581,
+      "requested_after_release_bytes": 0
+    }
+  },
+  "samples": {
+    "discarded_table": {
+      "requested_live_bytes": 282,
+      "requested_peak_bytes": 11634,
+      "requested_total_bytes": 5074173,
+      "requested_blocks": 6052,
+      "requested_after_release_bytes": 0
+    },
+    "discarded_join": {
+      "requested_live_bytes": 282,
+      "requested_peak_bytes": 17980,
+      "requested_total_bytes": 10302324,
+      "requested_blocks": 13589,
+      "requested_after_release_bytes": 0
+    },
+    "filtered_join": {
+      "requested_live_bytes": 122,
+      "requested_peak_bytes": 5180,
+      "requested_total_bytes": 10289358,
+      "requested_blocks": 13581,
+      "requested_after_release_bytes": 0
+    }
+  },
+  "excluded": [
+    "cold fixture construction",
+    "cold primary cache construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "remaining": "physical source validation, key probes, selected output and winning candidates still allocate",
+  "claim": "warmed operation-local requested allocation totals/peaks, not throughput, RSS, cold memory or a process heap quota"
+}

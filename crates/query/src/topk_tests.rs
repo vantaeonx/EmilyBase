@@ -132,3 +132,57 @@ fn smaller_replacement_releases_old_payload_before_the_next_match() {
     assert_eq!(top.bytes, bytes);
     assert_eq!(top.into_rows(), [replacement]);
 }
+
+#[test]
+fn borrowed_join_candidates_keep_count_stability_and_identical_retained_charges() {
+    let order = order(false, false);
+    let mut top = TopK::new(&order, 2);
+    for (rank, id) in [(4, 0), (2, 1), (2, 2), (7, 3), (1, 4), (2, 5)] {
+        let left = vec![Value::Integer(rank)];
+        let right = vec![Value::Integer(id), Value::Text("x".repeat(3072))];
+        top.offer(RowView::joined(&left, &right)).unwrap();
+        assert_eq!(top.bytes, top.heap.iter().map(|e| row_bytes(&e.row)).sum());
+    }
+    assert_eq!(top.seen, 6);
+    assert_eq!(
+        top.into_rows()
+            .iter()
+            .map(|r| r[1].clone())
+            .collect::<Vec<_>>(),
+        [Value::Integer(4), Value::Integer(1)]
+    );
+}
+#[test]
+fn refused_borrowed_growth_and_replacement_keep_previous_rows_and_bytes() {
+    let order = order(false, false);
+    for limit in [1, 2] {
+        let mut top = TopK::new(&order, limit);
+        let initial = vec![Value::Integer(1)];
+        top.offer(RowView::single(&initial)).unwrap();
+        let before = top.bytes;
+        let huge = vec![Value::Integer(0), Value::Bytes(vec![0; MAX_OUTPUT_BYTES])];
+        assert!(matches!(
+            top.offer(RowView::single(&huge)),
+            Err(ExecutionError::Limit("intermediate rows/bytes"))
+        ));
+        assert_eq!(top.bytes, before);
+        assert_eq!(top.seen, 2);
+        assert_eq!(top.into_rows(), [initial]);
+    }
+}
+#[test]
+fn invalid_borrowed_sort_position_is_typed_before_any_candidate_is_retained() {
+    let order = vec![SortKey {
+        index: 3,
+        descending: false,
+        nulls_first: false,
+    }];
+    let mut top = TopK::new(&order, 1);
+    let candidate = vec![Value::Integer(1)];
+    assert!(matches!(
+        top.offer(RowView::single(&candidate)),
+        Err(ExecutionError::Plan)
+    ));
+    assert_eq!(top.bytes, 0);
+    assert!(top.heap.is_empty());
+}
