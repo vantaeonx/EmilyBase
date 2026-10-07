@@ -69,19 +69,33 @@ fn account_kill_worker() {
                 std::thread::park();
             }
         };
-        super::restore::restore_private_with(
-            &root.join("private.backup"),
-            &root.join("restored"),
-            PROJECT,
-            PasswordPool::new(1).unwrap(),
-            50,
-            |_| {
-                if mode == "private-restore-prepared" {
-                    barrier();
-                }
-            },
-        )
-        .unwrap();
+        let prepared = |_: &Path| {
+            if mode.ends_with("prepared") {
+                barrier();
+            }
+        };
+        if mode.contains("-bytes-") {
+            let bytes = std::fs::read(root.join("private.backup")).unwrap();
+            super::restore::restore_private_bytes_with(
+                &bytes,
+                &root.join("restored"),
+                PROJECT,
+                PasswordPool::new(1).unwrap(),
+                50,
+                prepared,
+            )
+            .unwrap();
+        } else {
+            super::restore::restore_private_with(
+                &root.join("private.backup"),
+                &root.join("restored"),
+                PROJECT,
+                PasswordPool::new(1).unwrap(),
+                50,
+                prepared,
+            )
+            .unwrap();
+        }
         let installed = AccountStore::open(
             root.join("restored"),
             PROJECT,

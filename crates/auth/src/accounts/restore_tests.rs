@@ -12,82 +12,98 @@ fn original(path: &Path) -> AccountStore {
 #[test]
 fn each_private_version_and_wal_restores_accounts_with_new_scope_before_publication() {
     let _io = TEST_IO.lock().unwrap();
-    for version in [1, 2, 3] {
-        for compacted in [false, true] {
-            let dir = tempfile::tempdir().unwrap();
-            let source = dir.path().join("source");
-            let mut store = original(&source);
-            let old_scope = match version {
-                2 => Some(store.enable_session_storage().unwrap()),
-                3 => Some(store.enable_session_clock(100).unwrap()),
-                _ => None,
-            };
-            let old_token = if version == 3 {
-                Some(
-                    store
-                        .sign_in("synthetic", b"synthetic-password", 100)
-                        .unwrap(),
-                )
-            } else {
-                None
-            };
-            if compacted {
-                store.compact().unwrap();
-            }
-            let archive = dir.path().join("private.backup");
-            let source_report = store.backup(&archive).unwrap();
-            let source_wal = store.database.committed_wal().unwrap();
-            let source_archive = std::fs::read(&archive).unwrap();
-            let target = dir.path().join("installed");
-            let report = restore::restore_private_with(
-                &archive,
-                &target,
-                tests::PROJECT,
-                PasswordPool::new(1).unwrap(),
-                50,
-                |path| {
+    for from_bytes in [false, true] {
+        for version in [1, 2, 3] {
+            for compacted in [false, true] {
+                let dir = tempfile::tempdir().unwrap();
+                let source = dir.path().join("source");
+                let mut store = original(&source);
+                let old_scope = match version {
+                    2 => Some(store.enable_session_storage().unwrap()),
+                    3 => Some(store.enable_session_clock(100).unwrap()),
+                    _ => None,
+                };
+                let old_token = if version == 3 {
+                    Some(
+                        store
+                            .sign_in("synthetic", b"synthetic-password", 100)
+                            .unwrap(),
+                    )
+                } else {
+                    None
+                };
+                if compacted {
+                    store.compact().unwrap();
+                }
+                let archive = dir.path().join("private.backup");
+                let source_report = store.backup(&archive).unwrap();
+                let source_wal = store.database.committed_wal().unwrap();
+                let source_archive = std::fs::read(&archive).unwrap();
+                let target = dir.path().join("installed");
+                let prepared = |path: &Path| {
                     assert!(!target.exists());
                     let prepared =
                         AccountStore::open(path, tests::PROJECT, PasswordPool::new(1).unwrap())
                             .unwrap();
                     assert_eq!(prepared.session_clock_floor().unwrap(), Some(50));
                     assert_ne!(prepared.session_storage_scope().unwrap(), old_scope);
-                },
-            )
-            .unwrap();
-            assert_eq!(report.database_id, source_report.database_id);
-            assert_eq!(report.wal_version, source_report.wal_version);
-            assert!(report.last_transaction > source_report.last_transaction);
-            assert_eq!(report.tables, 5);
-            let mut installed =
-                AccountStore::open(&target, tests::PROJECT, PasswordPool::new(1).unwrap()).unwrap();
-            assert_eq!(installed.session_clock_floor().unwrap(), Some(50));
-            assert_eq!(
-                installed
-                    .check_password("synthetic", b"synthetic-password")
-                    .unwrap()
-                    .unwrap()
-                    .id,
-                [7; 16]
-            );
-            if let Some(token) = old_token {
-                assert!(installed.verify_access(token.access.expose(), 50).is_err());
-                assert!(
-                    installed
-                        .refresh_session(token.refresh.expose(), 50)
-                        .is_err()
-                );
-            }
-            let renewed = installed
-                .sign_in("synthetic", b"synthetic-password", 50)
+                };
+                let report = if from_bytes {
+                    restore::restore_private_bytes_with(
+                        &source_archive,
+                        &target,
+                        tests::PROJECT,
+                        PasswordPool::new(1).unwrap(),
+                        50,
+                        prepared,
+                    )
+                } else {
+                    restore::restore_private_with(
+                        &archive,
+                        &target,
+                        tests::PROJECT,
+                        PasswordPool::new(1).unwrap(),
+                        50,
+                        prepared,
+                    )
+                }
                 .unwrap();
-            assert!(installed.verify_access(renewed.access.expose(), 50).is_ok());
-            assert_eq!(store.database.committed_wal().unwrap(), source_wal);
-            assert_eq!(std::fs::read(archive).unwrap(), source_archive);
-            drop(installed);
-            let reopened =
-                AccountStore::open(target, tests::PROJECT, PasswordPool::new(1).unwrap()).unwrap();
-            assert_eq!(reopened.session_clock_floor().unwrap(), Some(50));
+                assert_eq!(report.database_id, source_report.database_id);
+                assert_eq!(report.wal_version, source_report.wal_version);
+                assert!(report.last_transaction > source_report.last_transaction);
+                assert_eq!(report.tables, 5);
+                let mut installed =
+                    AccountStore::open(&target, tests::PROJECT, PasswordPool::new(1).unwrap())
+                        .unwrap();
+                assert_eq!(installed.session_clock_floor().unwrap(), Some(50));
+                assert_eq!(
+                    installed
+                        .check_password("synthetic", b"synthetic-password")
+                        .unwrap()
+                        .unwrap()
+                        .id,
+                    [7; 16]
+                );
+                if let Some(token) = old_token {
+                    assert!(installed.verify_access(token.access.expose(), 50).is_err());
+                    assert!(
+                        installed
+                            .refresh_session(token.refresh.expose(), 50)
+                            .is_err()
+                    );
+                }
+                let renewed = installed
+                    .sign_in("synthetic", b"synthetic-password", 50)
+                    .unwrap();
+                assert!(installed.verify_access(renewed.access.expose(), 50).is_ok());
+                assert_eq!(store.database.committed_wal().unwrap(), source_wal);
+                assert_eq!(std::fs::read(archive).unwrap(), source_archive);
+                drop(installed);
+                let reopened =
+                    AccountStore::open(target, tests::PROJECT, PasswordPool::new(1).unwrap())
+                        .unwrap();
+                assert_eq!(reopened.session_clock_floor().unwrap(), Some(50));
+            }
         }
     }
 }
@@ -212,7 +228,12 @@ fn invalid_trusted_time_scope_and_existing_destination_fail_without_replacement(
 fn interrupted_private_restore_exposes_only_a_complete_invalidated_scope() {
     let _io = TEST_IO.lock().unwrap();
     for compacted in [false, true] {
-        for mode in ["private-restore-prepared", "private-restore-commit"] {
+        for mode in [
+            "private-restore-prepared",
+            "private-restore-commit",
+            "private-restore-bytes-prepared",
+            "private-restore-bytes-commit",
+        ] {
             let dir = tempfile::tempdir().unwrap();
             let source = dir.path().join("source");
             let mut store = original(&source);
@@ -281,7 +302,7 @@ proptest! {
         let mut disabled=false;let mut epoch=2;
         for next in events {if next!=disabled {epoch+=1;disabled=next;}source.set_disabled("synthetic",next).unwrap();}
         source.compact().unwrap();let archive=dir.path().join("private.backup");source.backup(&archive).unwrap();let target=dir.path().join("installed");
-        let report=restore_private_accounts(&archive,&target,tests::PROJECT,PasswordPool::new(1).unwrap(),now).unwrap();prop_assert_eq!(report.tables,5);
+        let bytes=std::fs::read(&archive).unwrap();let report=restore_private_account_bytes(&bytes,&target,tests::PROJECT,PasswordPool::new(1).unwrap(),now).unwrap();prop_assert_eq!(report.tables,5);
         let mut restored=AccountStore::open(&target,tests::PROJECT,PasswordPool::new(1).unwrap()).unwrap();let record=restored.record("synthetic").unwrap().unwrap();
         prop_assert_eq!(record.info.disabled,disabled);prop_assert_eq!(record.info.credential_epoch,epoch);prop_assert_eq!(record.info.id,[7;16]);prop_assert_eq!(restored.session_clock_floor().unwrap(),Some(now));
         prop_assert_eq!(restored.sign_in("synthetic",b"synthetic-password",now).is_ok(),!disabled);
@@ -368,4 +389,49 @@ fn two_prepared_private_restorers_publish_one_complete_new_scope() {
         result.last_transaction
     );
     assert_eq!(std::fs::read(archive).unwrap(), before);
+}
+
+#[test]
+fn private_byte_restore_checks_scope_time_schema_and_semantics_before_publication() {
+    let _io = TEST_IO.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let mut store = original(&dir.path().join("source"));
+    let bytes = store.backup_image().unwrap();
+    let before = bytes.clone();
+    let target = dir.path().join("installed");
+    let pool = PasswordPool::new(1).unwrap();
+    assert!(matches!(
+        restore_private_account_bytes(&bytes, &target, "../scope", pool.clone(), 50),
+        Err(Error::Scope)
+    ));
+    assert!(matches!(
+        restore_private_account_bytes(&bytes, &target, tests::PROJECT, pool.clone(), u64::MAX),
+        Err(Error::Clock)
+    ));
+    assert!(matches!(
+        restore_private_account_bytes(
+            &bytes,
+            &target,
+            "22222222222222222222222222222222",
+            pool.clone(),
+            50
+        ),
+        Err(Error::ScopeMismatch)
+    ));
+    assert!(!target.exists());
+    let mut tx = store.database.begin().unwrap();
+    let mut row = tests::fixture_record("synthetic", [7; 16], 2).encode();
+    row[3] = Value::Integer(0);
+    tx.update(USERS, &Key::Text("synthetic".into()), row)
+        .unwrap();
+    tx.commit().unwrap();
+    let invalid = emilybase_backup::encode(&store.database.committed_wal().unwrap()).unwrap();
+    assert!(emilybase_backup::inspect_bytes(&invalid).is_ok());
+    assert!(matches!(
+        restore_private_account_bytes(&invalid, &target, tests::PROJECT, pool, 50),
+        Err(Error::Corrupt)
+    ));
+    assert!(!target.exists());
+    assert_eq!(bytes, before);
+    assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 1);
 }

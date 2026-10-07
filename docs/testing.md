@@ -3183,3 +3183,39 @@ SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
 oracles and both warning-denied advisory scans pass. The
 [source-bound artifact](measurements/2026-10-08-account-bundle-files/verification.json)
 records actual native/file/CLI observations and separate unfinished restore gates.
+
+## Direct original-engine/private byte restoration, 2026-10-08
+
+Three new backup cases verify direct/prepared byte images on both WAL versions,
+installed report after private preparation, exact source bytes/history and input
+lifetime. No input archive file is created. Malformed images fail before callback
+or staging; typed preparation refusal cleans owned staging, and existing foreign
+directories/symlinks are preserved. File input keeps its previous private bounded
+reader and delegates to the same staging/preparation/publication helper.
+
+The private version/WAL matrix now executes both file and byte entry points:
+12 combinations reset scope before publication and preserve restored credentials.
+The existing32-case independent disabled/epoch/time model executes the private byte
+wrapper. One new private case rejects invalid trusted project/time, wrong scope
+and an engine-valid private-invalid epoch without publishing a target. Ordinary
+byte restore intentionally retains historical private scope; the private wrapper
+is required to deny old tokens before selection.
+
+Native helpers now execute four additional ordinary byte-restore kills at synced/
+published boundaries and four additional private byte-restore kills at prepared/
+returned boundaries across WAL1/2. Selected states remain complete, restored old
+tokens fail, source credentials/history remain exact and separate verified retry
+works. No new helper is ignored by default without explicit invocation. These are
+process-kill tests, not new physical power-loss or parser ASan claims.
+
+[ADR0077](adr/0077-restore-private-byte-images.md) records shared semantics and the
+separate combined root/roster/private reset gate. HTTP accounts, whole-process
+resource admission and production acceptance remain open.
+
+Final frozen-source locked checks pass on1.99.0/1.89.0:1045 main cases/22 ignored
+helpers and53 optional release diagnostics each. Formatting and warning-denied
+workspace/profile/fuzz Clippy, minimum fuzz compilation and workspace build pass.
+SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
+oracles and both warning-denied advisory scans pass. The
+[source-bound artifact](measurements/2026-10-08-restore-bytes/verification.json)
+records actual byte-entry and native recovery observations.

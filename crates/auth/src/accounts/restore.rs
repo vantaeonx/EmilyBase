@@ -23,8 +23,45 @@ pub fn restore_private_accounts(
     )
 }
 
+/// Restore supplied sensitive private bytes directly. Complete schema/scope
+/// validation and durable fresh session incarnation precede directory publication.
+pub fn restore_private_account_bytes(
+    bytes: &[u8],
+    target: impl AsRef<Path>,
+    project: &str,
+    pool: PasswordPool,
+    now: u64,
+) -> Result<emilybase_backup::Report> {
+    restore_private_bytes_with(bytes, target.as_ref(), project, pool, now, |_| {})
+}
+
+enum Source<'a> {
+    File(&'a Path),
+    Bytes(&'a [u8]),
+}
+pub(super) fn restore_private_bytes_with(
+    bytes: &[u8],
+    target: &Path,
+    project: &str,
+    pool: PasswordPool,
+    now: u64,
+    prepared: impl FnOnce(&Path),
+) -> Result<emilybase_backup::Report> {
+    restore_input(Source::Bytes(bytes), target, project, pool, now, prepared)
+}
+
 pub(super) fn restore_private_with(
     archive: &Path,
+    target: &Path,
+    project: &str,
+    pool: PasswordPool,
+    now: u64,
+    prepared: impl FnOnce(&Path),
+) -> Result<emilybase_backup::Report> {
+    restore_input(Source::File(archive), target, project, pool, now, prepared)
+}
+fn restore_input(
+    source: Source<'_>,
     target: &Path,
     project: &str,
     pool: PasswordPool,
@@ -37,7 +74,7 @@ pub(super) fn restore_private_with(
     if now > i64::MAX as u64 {
         return Err(Error::Clock);
     }
-    match emilybase_backup::restore_prepared(archive, target, |path| {
+    let prepare = |path: &Path| {
         let mut store = AccountStore::open(path, project, pool)?;
         if store.session_clock_floor()?.is_some() {
             store.reset_session_clock(now)?;
@@ -48,7 +85,12 @@ pub(super) fn restore_private_with(
         drop(store);
         prepared(path);
         Ok::<(), Error>(())
-    }) {
+    };
+    let result = match source {
+        Source::File(archive) => emilybase_backup::restore_prepared(archive, target, prepare),
+        Source::Bytes(bytes) => emilybase_backup::restore_prepared_bytes(bytes, target, prepare),
+    };
+    match result {
         Ok(report) => Ok(report),
         Err(emilybase_backup::PreparedRestoreError::Backup(error)) => Err(Error::Backup(error)),
         Err(emilybase_backup::PreparedRestoreError::Preparation(error)) => Err(error),

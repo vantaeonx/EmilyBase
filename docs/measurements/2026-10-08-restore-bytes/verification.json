@@ -1,0 +1,83 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "da8a8545d85e4bfc6c0982c50dcac5260028c0f6",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "21ae8567d0a6f7617d685cc16253be5d2d75f7080f31c9eeb690f2b987abd0a6",
+    "crates/auth/src/accounts/recovery_tests.rs": "f9da3a55944cfa994dd01269ed347a01a0c8cf48a773aa0bdb1bcb02180f9aa7",
+    "crates/auth/src/accounts/restore.rs": "e95ec84cd79994b2195efac13adb66169f287b666b45369a7788fbf81c69f6e2",
+    "crates/auth/src/accounts/restore_tests.rs": "91cd0ca3c5e501f16c6a533e781c3142fecdbd0aadef9c961a0a49b3423eb553",
+    "crates/backup/src/lib.rs": "727d81e6a5997d71e6175a2ad1df7ba34fd1e464b72ea73761c884fba1d40878",
+    "crates/backup/src/prepared_tests.rs": "13742d4b39c9ec732d0465ff281b3935e07294a0041d6ebf492ff81cca82486a",
+    "crates/backup/src/publication_tests.rs": "4545de72a2fdc5b7906caf2ff2e457312c359169d10472423330941adec79ee8",
+    "crates/backup/src/restore.rs": "bdb17b6b69b79cfd6f32246326520f1fef1535a15ae23b38a37a899d48f422fd"
+  },
+  "protocol": {
+    "wire_format_changed": false,
+    "direct_and_prepared_byte_restore": true,
+    "file_and_byte_inputs_share_owned_publication": true,
+    "full_image_validation_before_staging": true,
+    "private_reset_before_selection": true,
+    "ordinary_restore_preserves_historical_private_scope": true,
+    "mandatory_reset_requires_wal_headroom": true,
+    "automatic_compaction": false,
+    "no_replace": true,
+    "post_rename_errors_are_publication_unknown": true
+  },
+  "matrix": {
+    "new_backup_cases": 3,
+    "new_private_cases": 1,
+    "file_byte_private_version_wal_combinations": 12,
+    "independent_private_cases": 32,
+    "additional_ordinary_byte_process_kills": 4,
+    "additional_private_byte_process_kills": 4,
+    "private_versions": [
+      1,
+      2,
+      3
+    ],
+    "wal_versions": [
+      1,
+      2
+    ],
+    "malformed_before_callback": true,
+    "typed_preparation_cleanup_and_retry": true,
+    "foreign_destination_preserved": true,
+    "source_credentials_and_bytes_preserved": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 1045,
+    "ignored_helpers_each": 22,
+    "optional_release_diagnostics_each": 53,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74"
+  },
+  "parser_campaign": {
+    "new_campaign": false,
+    "wire_format_unchanged": true
+  },
+  "source_counts": {
+    "rust": 74597,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 76703,
+    "net_rust_this_block": 276
+  },
+  "exclusions": [
+    "combined root restoration and authoritative private roster",
+    "HTTP accounts, roles and row policies",
+    "whole-process retained model, staging, transient and worker quotas",
+    "physical power loss or new parser ASan campaign",
+    "production/security acceptance gate"
+  ]
+}

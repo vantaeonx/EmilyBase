@@ -354,3 +354,111 @@ fn substituted_parent_after_prepared_publication_reports_unknown_and_preserves_t
         assert_eq!(inspect(archive).unwrap(), before);
     }
 }
+
+#[test]
+fn byte_restore_and_preparation_preserve_input_and_install_the_prepared_report() {
+    let _io = publication_tests::PROCESS_TESTS.lock().unwrap();
+    for compacted in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut source = original(&dir.path().join("source"));
+        if compacted {
+            source.compact().unwrap();
+        }
+        let bytes = encode(&source.committed_wal().unwrap()).unwrap();
+        let before = bytes.clone();
+        let expected = inspect_bytes(&bytes).unwrap();
+        let target = dir.path().join("installed");
+        let report = restore_prepared_bytes(&bytes, &target, |path| {
+            assert!(!target.exists());
+            add(path);
+            Ok::<(), Refusal>(())
+        })
+        .unwrap();
+        assert_eq!(report.last_transaction, expected.last_transaction + 1);
+        assert_eq!(report.rows, 2);
+        assert_eq!(report.database_id, expected.database_id);
+        assert_eq!(bytes, before);
+        assert_eq!(source.committed_wal().unwrap(), before[HEADER_SIZE..]);
+        let mut installed = Database::open(&target).unwrap();
+        assert_eq!(
+            inspect_bytes(&encode(&installed.committed_wal().unwrap()).unwrap()).unwrap(),
+            report
+        );
+        drop(installed);
+        let plain = dir.path().join("plain");
+        assert_eq!(restore_bytes(&bytes, &plain).unwrap(), expected);
+        drop(bytes);
+        assert_eq!(
+            Database::open(plain).unwrap().view().unwrap().row_count(),
+            1
+        );
+        // No input archive file was created anywhere in this operation.
+        assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 3);
+    }
+}
+
+#[test]
+fn invalid_byte_images_never_reach_preparation_or_create_a_target() {
+    let _io = publication_tests::PROCESS_TESTS.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let mut source = original(&dir.path().join("source"));
+    let good = encode(&source.committed_wal().unwrap()).unwrap();
+    for bytes in [
+        vec![],
+        vec![0; 128],
+        {
+            let mut bad = good.clone();
+            bad.push(0);
+            bad
+        },
+        {
+            let mut bad = good.clone();
+            bad[HEADER_SIZE] ^= 1;
+            bad
+        },
+    ] {
+        let called = std::cell::Cell::new(false);
+        let target = dir.path().join("installed");
+        assert!(matches!(
+            restore_prepared_bytes(&bytes, &target, |_| {
+                called.set(true);
+                Ok::<(), Refusal>(())
+            }),
+            Err(PreparedRestoreError::Backup(_))
+        ));
+        assert!(!called.get());
+        assert!(!target.exists());
+        assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 1);
+    }
+}
+
+#[test]
+fn byte_preparation_refusal_and_existing_targets_keep_the_source_and_foreign_state() {
+    let _io = publication_tests::PROCESS_TESTS.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let mut source = original(&dir.path().join("source"));
+    let bytes = encode(&source.committed_wal().unwrap()).unwrap();
+    let before = bytes.clone();
+    let target = dir.path().join("installed");
+    assert!(matches!(
+        restore_prepared_bytes(&bytes, &target, |path| {
+            add(path);
+            Err::<(), _>(Refusal)
+        }),
+        Err(PreparedRestoreError::Preparation(Refusal))
+    ));
+    assert!(!target.exists());
+    assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 1);
+    std::fs::create_dir(&target).unwrap();
+    std::fs::write(target.join("marker"), b"synthetic-foreign").unwrap();
+    assert!(restore_bytes(&bytes, &target).is_err());
+    let link = dir.path().join("alias");
+    std::os::unix::fs::symlink(&target, &link).unwrap();
+    assert!(restore_bytes(&bytes, link).is_err());
+    assert_eq!(
+        std::fs::read(target.join("marker")).unwrap(),
+        b"synthetic-foreign"
+    );
+    assert_eq!(bytes, before);
+    assert_eq!(source.committed_wal().unwrap(), before[HEADER_SIZE..]);
+}

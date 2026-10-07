@@ -14,6 +14,16 @@ pub fn restore(backup: impl AsRef<Path>, target: impl AsRef<Path>) -> Result<Rep
     restore_with(backup.as_ref(), target.as_ref(), || {}, || {})
 }
 
+/// Restore an immutable caller-owned image without writing an intermediate archive.
+/// Input bytes are sensitive; this does not authenticate their origin.
+pub fn restore_bytes(bytes: &[u8], target: impl AsRef<Path>) -> Result<Report> {
+    match restore_prepared_bytes(bytes, target, |_| Ok::<(), std::convert::Infallible>(())) {
+        Ok(report) => Ok(report),
+        Err(PreparedRestoreError::Backup(error)) => Err(error),
+        Err(PreparedRestoreError::Preparation(never)) => match never {},
+    }
+}
+
 /// Trusted application preparation runs against a private, descriptor-anchored
 /// directory before publication. Returned counts describe the prepared journal.
 /// The callback must close all database owners before returning. It must not
@@ -24,6 +34,16 @@ pub fn restore_prepared<E>(
     prepare: impl FnOnce(&Path) -> std::result::Result<(), E>,
 ) -> std::result::Result<Report, PreparedRestoreError<E>> {
     restore_prepared_with(backup.as_ref(), target.as_ref(), prepare, || {}, || {})
+}
+
+/// Bounded byte-image entry point using the same owned preparation/publication.
+/// The callback has the same private staging and owner-release obligations.
+pub fn restore_prepared_bytes<E>(
+    bytes: &[u8],
+    target: impl AsRef<Path>,
+    prepare: impl FnOnce(&Path) -> std::result::Result<(), E>,
+) -> std::result::Result<Report, PreparedRestoreError<E>> {
+    restore_prepared_bytes_with(bytes, target.as_ref(), prepare, || {}, || {})
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -60,7 +80,18 @@ pub(crate) fn restore_prepared_with<E>(
     synced: impl FnOnce(),
     published: impl FnOnce(),
 ) -> std::result::Result<Report, PreparedRestoreError<E>> {
-    let (mut pending, source) = stage(backup, target).map_err(PreparedRestoreError::Backup)?;
+    let bytes = files::read(backup).map_err(PreparedRestoreError::Backup)?;
+    restore_prepared_bytes_with(&bytes, target, prepare, synced, published)
+}
+
+pub(crate) fn restore_prepared_bytes_with<E>(
+    bytes: &[u8],
+    target: &Path,
+    prepare: impl FnOnce(&Path) -> std::result::Result<(), E>,
+    synced: impl FnOnce(),
+    published: impl FnOnce(),
+) -> std::result::Result<Report, PreparedRestoreError<E>> {
+    let (mut pending, source) = stage(bytes, target).map_err(PreparedRestoreError::Backup)?;
     pending.check().map_err(PreparedRestoreError::Backup)?;
     // No application credential/data is reachable under the final name yet.
     let path = descriptor_path(&pending.owner).join(".");
@@ -68,9 +99,8 @@ pub(crate) fn restore_prepared_with<E>(
     finish(&mut pending, &source, synced, published).map_err(PreparedRestoreError::Backup)
 }
 
-fn stage(backup: &Path, target: &Path) -> Result<(PendingDirectory, Report)> {
-    let bytes = files::read(backup)?;
-    let report = inspect_bytes(&bytes)?;
+fn stage(bytes: &[u8], target: &Path) -> Result<(PendingDirectory, Report)> {
+    let report = inspect_bytes(bytes)?;
     let pending = PendingDirectory::new(target)?;
     let fd = rustix::fs::openat(
         &pending.owner,

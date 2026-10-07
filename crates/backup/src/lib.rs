@@ -14,7 +14,9 @@ mod restore;
 
 pub use archive::{VerifiedBackup, decode_verified, encode, inspect_bytes};
 pub use files::{create, inspect};
-pub use restore::{PreparedRestoreError, restore, restore_prepared};
+pub use restore::{
+    PreparedRestoreError, restore, restore_bytes, restore_prepared, restore_prepared_bytes,
+};
 
 pub const BACKUP_VERSION: u16 = 1;
 pub const HEADER_SIZE: usize = 128;

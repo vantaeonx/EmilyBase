@@ -40,6 +40,20 @@ fn publication_worker() {
         let mut db = Database::open(input).unwrap();
         let result = files::create_with(&mut db, &target, synced, published);
         check_worker_result(result);
+    } else if kind == "restore-bytes" {
+        let bytes = files::read(&input).unwrap();
+        let result = restore::restore_prepared_bytes_with(
+            &bytes,
+            &target,
+            |_| Ok::<(), std::convert::Infallible>(()),
+            synced,
+            published,
+        );
+        let result = result.map_err(|error| match error {
+            crate::PreparedRestoreError::Backup(error) => error,
+            crate::PreparedRestoreError::Preparation(never) => match never {},
+        });
+        check_worker_result(result);
     } else {
         let result = restore::restore_with(&input, &target, synced, published);
         check_worker_result(result);
@@ -90,7 +104,7 @@ fn failure_opening_parent_after_restore_publication_reports_unknown_durability()
 #[test]
 fn forced_termination_never_publishes_a_partial_backup_or_restore() {
     let _guard = PROCESS_TESTS.lock().unwrap();
-    for (kind, compacted) in ["backup", "restore"]
+    for (kind, compacted) in ["backup", "restore", "restore-bytes"]
         .into_iter()
         .flat_map(|kind| [false, true].map(|compacted| (kind, compacted)))
     {

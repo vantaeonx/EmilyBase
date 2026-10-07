@@ -9,7 +9,7 @@ mod restore_tests;
 mod session_clock;
 mod sessions;
 pub use archive::{PrivateArchiveReport, inspect_private_account_backup_bytes};
-pub use restore::restore_private_accounts;
+pub use restore::{restore_private_account_bytes, restore_private_accounts};
 #[cfg(test)]
 mod sessions_tests;
 pub use sessions::{IssuedSession, SessionPrincipal};

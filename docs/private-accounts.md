@@ -145,3 +145,18 @@ records owned image lifetime, semantic validation, bounds and the future coordin
 capture requirement. Registry capture currently releases temporary data owners
 before returning; simply appending a later private image cannot prove a common
 capture boundary. Combined account/data capture and publication remain pending.
+
+
+The direct restore_private_account_bytes API accepts a bounded sensitive archive
+image without creating an intermediate input archive file. It shares the file
+wrapper's independent expected project/time validation, complete private schemas,
+durable reset/activation and owned no-replace publication. Input bytes and source
+credentials stay unchanged; old restored access/refresh tokens are denied before
+selection. Generic engine restore_bytes preserves historical private scope and
+must not replace the private wrapper. See
+[ADR0077](adr/0077-restore-private-byte-images.md). No combined root/HTTP restoration
+or whole-process memory reservation is implied.
+
+Private byte restoration needs WAL headroom for its mandatory reset/activation commit,
+just like private file restore. Capacity refusal leaves the target unpublished; no
+automatic compaction is performed.

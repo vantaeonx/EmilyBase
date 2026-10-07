@@ -89,3 +89,18 @@ the same report. Per-format bounds do not reserve a numeric whole-process heap.
 The [private inspector](private-accounts.md) applies complete account semantics
 without replaying the same payload twice. See
 [ADR0074](adr/0074-owned-verified-private-archive-inventory.md).
+
+
+## Direct byte-image restoration
+
+restore_bytes and restore_prepared_bytes accept the unchanged bounded EMILYBAK
+image directly. File restore retains its strict input file checks, then delegates
+to the same stage/replay/preparation/owned-publication path. The byte API creates
+no intermediate input archive file; it still writes/syncs the private output WAL,
+checkpoint and staged directory. Reports describe the installed prepared state,
+input bytes remain unchanged and callback/backup errors remain typed separately.
+Generic restoration preserves historical application scope. Private account images
+must use restore_private_account_bytes for complete project/schema validation and
+fresh durable session scope before publication. Caller-provided bytes supply no
+filesystem source permissions, authenticity or authority. See
+[ADR0077](adr/0077-restore-private-byte-images.md); combined root restoration remains open.

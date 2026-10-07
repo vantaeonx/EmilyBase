@@ -96,6 +96,13 @@ publishers, independent row model and real CLI credentials/immutability checks
 execute. Combined root restore/reset, automatic private roster and HTTP users
 remain separate gates; no production milestone closes.
 
+[ADR0077](adr/0077-restore-private-byte-images.md) adds direct original-engine and
+private byte-image restoration using shared owned preparation/publication. The
+private wrapper resets scope before selection; no intermediate sensitive input
+archive file is required. File/byte version matrices, independent account-state
+model and additional native kill modes execute. Combined root coordination remains
+open; no platform or production milestone closes.
+
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.

@@ -78,6 +78,10 @@ combined restore and automatic private-store discovery remain open.
 The [private bundle publisher](docs/adr/0076-owned-account-bundle-file-publication.md)
 now saves verified no-replace files; account-bundle-verify inspects them through the
 real CLI with aggregate counts only. No private credentials or rows are printed.
+The [byte restore APIs](docs/adr/0077-restore-private-byte-images.md) restore nested
+images through the same owned publisher without intermediate input archive files.
+Use the private account wrapper to reset sessions before publication; ordinary
+engine restore preserves historical private scope. Combined root restore remains open.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks
