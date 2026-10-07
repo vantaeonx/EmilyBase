@@ -1,0 +1,38 @@
+{
+  "oracle": "argon2-cffi 25.1.0; independent C implementation",
+  "purpose": "synthetic interoperability vectors, not credentials",
+  "salt_hex": "30313233343536373839616263646566",
+  "memory_kib": 19456,
+  "iterations": 2,
+  "parallelism": 1,
+  "algorithm": "argon2id",
+  "version": 19,
+  "hash_bytes": 32,
+  "vectors": [
+    {
+      "name": "ascii",
+      "input": {
+        "utf8": "synthetic-password"
+      },
+      "password_bytes": 18,
+      "digest_hex": "a4ae807f135c26201d1689dd0d26d93d04e28a91bf16dd1f3381535303db8656"
+    },
+    {
+      "name": "unicode",
+      "input": {
+        "utf8": "синтетический\u0000пароль"
+      },
+      "password_bytes": 39,
+      "digest_hex": "798f9db2e920dc9a7b72ab6fd69a2e3bc0794604becbb21b48004224b88a3ae8"
+    },
+    {
+      "name": "maximum",
+      "input": {
+        "repeat_byte_hex": "78",
+        "count": 1024
+      },
+      "password_bytes": 1024,
+      "digest_hex": "7ea5672e0ab043db9e6f6f938fe54cf98acd541d6fa612a876a13a667d0c3899"
+    }
+  ]
+}

@@ -2747,3 +2747,45 @@ Minimum Rust compiles all locked fuzz bins. The locked workspace build, SDK
 formatting/strict compilation,11 unit tests and seven actual native HTTP/restart
 checks pass against the newly built original server. All runtime sources remain
 frozen during the final workspace suites and these publication checks.
+## Bounded password verifier foundation, 2026-10-07
+
+The auth helper has 17 new unit/property cases alongside the three existing key
+cases, plus two synthetic original-engine persistence integration tests. Four
+512-case generated suites independently check raw record acceptance, opaque
+payload round trips, exact cost refusal and lease lifetime counts. Tests also
+exercise shared races, four actually held workspaces, concurrent real hashing,
+unwind release, explicit block wiping before deallocation, byte boundaries,
+Unicode/NUL, no truncation/normalization, redacted Debug and full header mutations.
+No test reads freed memory or introduces unsafe code.
+
+Three raw C Argon2 vectors match RustCrypto at identical explicit parameters.
+The optional pinned [oracle script](../tests/password_oracle.py) reproduces the
+committed artifact exactly; CI repeats that independent comparison in an isolated
+test environment. The Rust runtime does not depend on that Python/C oracle.
+Both WAL versions preserve acknowledged digest replacements, exclude rolled-back
+ones, preserve old views and restore exact bytes from independently inspected
+backups. Synthetic plaintext inputs are absent from the committed WAL. These are
+library/storage checks, not implemented account provisioning or HTTP login.
+
+Native release diagnostics on both Rust versions observe one 19,922,944-byte
+allocation for correct and wrong password verification, peak equal to that
+payload and no live heap afterward. One thousand malformed-record/empty/overlong
+rejections request no heap. Cold pool/hash fixtures, allocator overhead/stacks,
+caller input and all engine/server memory are excluded; this is not a process
+quota, throughput measurement or exhaustive erasure proof.
+
+The parser-only password_records ASan target completes 22,722,625 executions in
+46 seconds, RSS312 MiB under a512 MiB guard, input bound256 bytes, without findings.
+It never invokes the KDF on fuzz input. Full locked workspace tests pass on stable
+1.99.0 and minimum1.89.0:928 main cases,17 ignored process helpers, plus50 optional
+release diagnostic cases each with a sequential allocator runner. Formatting,
+strict workspace/optional/fuzz Clippy, minimum fuzz compilation, workspace build,
+SDK11 unit/7 real native HTTP/restart cases and pinned Python formatting pass.
+Both locked graphs pass cargo-audit0.22.2 with warnings denied and no ignored
+entries against RustSec b8a1a33e246a0a9a3b5f377248c41a503defec74 (1294 advisories).
+
+Initial test compilation exposed an unsupported generic-slice wipe call and a
+diagnostic usize/u64 mismatch; both test issues were fixed before final runs.
+No failed run is counted as a pass. [ADR0067](adr/0067-bounded-password-verifiers.md)
+and its source-bound artifact retain configuration, ownership, observations and
+remaining account/session/worker/security gates. No milestone is closed.

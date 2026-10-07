@@ -31,6 +31,7 @@ emilybase-commit-format = { path = "../commit-format" }
 emilybase-index = { path = "../index" }
 
 [dev-dependencies]
+emilybase-auth = { path = "../auth" }
 emilybase-query = { path = "../query" }
 proptest = "1"
 

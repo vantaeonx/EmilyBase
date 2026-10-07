@@ -1,0 +1,93 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "8be670f1bbc5d0ea573ba44ce3c5b9835d613eaa",
+  "source_sha256": {
+    "crates/auth/src/lib.rs": "31077bcb3cdd767bf4bca0fb1ba70f5e531c5e75082f70d2ac42c09b24423a6d",
+    "crates/auth/src/password/mod.rs": "1bebe5a8e505a764ad964f58ad5f116ee1833ef7beaf4dc1726bea51bb460cb2",
+    "crates/auth/src/password/record.rs": "561d269f66d093881d401de1d18862978acb04cd8aa8dc72a9fffb7ca31e2456",
+    "crates/auth/src/password/tests.rs": "376f312d0c086fdc1848656e88c332ea5a3556b45bd2585d6aff87aaef019a0d",
+    "crates/auth/tests/password_persistence.rs": "c0bacd2e0f676f3e8a34d5a4e0c4fda04e56b2f3a4d2e264512505665f2fe02d",
+    "crates/model-profile/tests/password_workspace.rs": "14869693b4393f30c711b4b9bbaac698f3583ee94452bcf1ec59c4cecbc21d71",
+    "fuzz/fuzz_targets/password_records.rs": "f1fa05cef8bfa30701853a918a001f0a128e4b60bcaa5050c8815bab45e38f8d",
+    "tests/password_oracle.py": "146707a43d474c2ef6a9af51587fbfec20d7f0d5b4b2015406e38d438674933c"
+  },
+  "password_policy": {
+    "algorithm": "Argon2id",
+    "version": 19,
+    "memory_kib": 19456,
+    "iterations": 2,
+    "lanes": 1,
+    "digest_bytes": 32,
+    "salt_bytes": 16,
+    "record_bytes": 72,
+    "input_bytes": [
+      1,
+      1024
+    ]
+  },
+  "pool": {
+    "maximum_operations": 4,
+    "block_payload_per_operation_bytes": 19922944,
+    "maximum_admitted_block_payload_bytes": 79691776,
+    "clones_share_admission": true,
+    "independent_pools_share_admission": false
+  },
+  "native_observation": {
+    "toolchain": "rustc 1.99.0",
+    "profile": "release",
+    "allocator_diagnostic": "dhat 0.3.3",
+    "cold_pool_and_hash_excluded": true,
+    "invalid_records_empty_oversized_inputs_1000_repeats": {
+      "requested_bytes": 0,
+      "requested_blocks": 0,
+      "live_bytes": 0
+    },
+    "correct_password": {
+      "requested_bytes": 19922944,
+      "requested_blocks": 1,
+      "peak_requested_bytes": 19922944,
+      "live_bytes_after_operation": 0
+    },
+    "wrong_password": {
+      "requested_bytes": 19922944,
+      "requested_blocks": 1,
+      "peak_requested_bytes": 19922944,
+      "live_bytes_after_operation": 0
+    }
+  },
+  "oracle": {
+    "library": "argon2-cffi 25.1.0",
+    "runtime_dependency": false,
+    "vectors": "oracle-vectors.json",
+    "reproduction": "tests/password_oracle.py",
+    "three_raw_hashes_match_rust": true
+  },
+  "bounded_parser_fuzz": {
+    "sanitizer": "AddressSanitizer",
+    "target": "password_records",
+    "runs": 22722625,
+    "seconds": 46,
+    "rss_mib": 312,
+    "rss_limit_mib": 512,
+    "max_input_bytes": 256,
+    "hashing_in_target": false
+  },
+  "advisories": {
+    "tool": "cargo-audit 0.22.2",
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74",
+    "entries": 1294,
+    "workspace_packages": 163,
+    "fuzz_packages": 134,
+    "ignored_advisories": 0,
+    "warnings_denied": true,
+    "both_actual_exit_codes": 0
+  },
+  "exclusions": [
+    "allocator rounding, overhead and profiler bookkeeping",
+    "OS stacks and caller input",
+    "pool metadata and engine/server heap",
+    "abort/kill destructor wipe guarantees",
+    "account, login, transport, session and whole-process admission controls"
+  ],
+  "claim": "bounded password-helper evidence with synthetic data; not integrated authentication, throughput or a production/security gate"
+}

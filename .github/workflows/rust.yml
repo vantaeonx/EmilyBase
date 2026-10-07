@@ -22,6 +22,16 @@ jobs:
         run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --locked --workspace
+      - name: Independent synthetic password vectors
+        run: |
+          password_oracle_dir=$(mktemp -d)
+          trap 'rm -rf "$password_oracle_dir"' EXIT
+          python3 -m venv "$password_oracle_dir/venv"
+          "$password_oracle_dir/venv/bin/python" -m pip install argon2-cffi==25.1.0 ruff==0.16.10
+          "$password_oracle_dir/venv/bin/ruff" format --check tests/password_oracle.py
+          "$password_oracle_dir/venv/bin/ruff" check tests/password_oracle.py
+          "$password_oracle_dir/venv/bin/python" tests/password_oracle.py --output "$password_oracle_dir/vectors.json"
+          cmp docs/measurements/2026-10-07-password-verifiers/oracle-vectors.json "$password_oracle_dir/vectors.json"
       - name: Build
         run: cargo build --locked --workspace
       - uses: actions/setup-node@v4

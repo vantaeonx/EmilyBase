@@ -1,4 +1,6 @@
-//! High-entropy API keys only. Passwords, user accounts and sessions are not implemented.
+//! High-entropy API keys and bounded password verifiers. User accounts and sessions
+//! are not implemented. Password helpers do not supply HTTP authentication.
+pub mod password;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;

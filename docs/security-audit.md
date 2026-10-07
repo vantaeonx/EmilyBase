@@ -20,6 +20,10 @@ recovery, backup and security acceptance gates.
   known vulnerabilities and no warnings. CI repeats these checks on changes.
   This checks known entries in the [RustSec database](https://rustsec.org/), not
   the original engine, binary contents or unknown supply-chain vulnerabilities.
+  Rechecked both lockfiles after adding password cryptography on 2026-10-07:
+  cargo-audit 0.22.2, RustSec b8a1a33e246a0a9a3b5f377248c41a503defec74,
+  1294 advisories, 163 workspace/134 fuzz packages, warnings denied and no ignored
+  entries. Both checks exit successfully with no reported vulnerabilities/warnings.
 - [x] Bounded checksummed page/WAL/index decoders, explicit format versions and
   typed rejection. Raw and checksum-repaired ASan targets have executed; short
   runs do not establish exhaustive coverage.
@@ -61,8 +65,11 @@ recovery, backup and security acceptance gates.
   request limits do not claim a complete connection admission controller.
 - [ ] Supported TLS/reverse-proxy deployment, protected master-secret handling,
   encrypted-secret design and incident/rotation procedures.
-- [ ] Password hashing, user sessions/refresh rotation, roles and row policies
+- [ ] Integrated account authentication, user sessions/refresh rotation, roles and row policies
   before presenting these as available platform features.
+  A separately tested [bounded Argon2id helper](password-verifiers.md) exists;
+  account storage/routes, throttling, enumeration resistance and independent
+  security review remain required.
 - [ ] Private object storage, signed URL validation and realtime authorization
   before enabling those future interfaces.
 

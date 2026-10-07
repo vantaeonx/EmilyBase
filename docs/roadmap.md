@@ -27,7 +27,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation and project TypeScript SDK implemented; other platform features pending |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, project TypeScript SDK and bounded password helper implemented; account/session and other platform integration pending |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
@@ -38,6 +38,13 @@ file uploads, realtime, migrations, incremental/encrypted backups, Kotlin SDK, w
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
 ## Next increments
+
+The [password verifier foundation](password-verifiers.md) supplies synchronous
+fixed-policy Argon2id, strict records, shared bounded workspaces and synthetic
+original-engine persistence/restore checks. It is a library helper, not user
+registration or HTTP login. Private per-project accounts, bounded blocking-worker
+integration, rate/enum controls, sessions, roles and row policies remain open under
+[ADR0067](adr/0067-bounded-password-verifiers.md). No platform milestone is closed.
 
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
