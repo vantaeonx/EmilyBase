@@ -1,4 +1,4 @@
-use crate::execute::{Budget, ResultSet, RunResult, row_bytes};
+use crate::execute::{Budget, ResultSet, RunResult};
 use crate::plan::Plan;
 use emilybase_catalog::{Key, Row};
 use emilybase_database::Snapshot;
@@ -10,12 +10,7 @@ fn retain(plan: &Plan, row: &Row, budget: &mut Budget, rows: &mut Vec<Row>) -> R
     {
         return Ok(());
     }
-    let projected = plan
-        .columns
-        .iter()
-        .map(|(index, _)| row[*index].clone())
-        .collect::<Row>();
-    budget.output(row_bytes(&projected))?;
+    let projected = crate::projection::row(&plan.columns, row, budget)?;
     rows.push(projected);
     Ok(())
 }

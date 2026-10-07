@@ -333,3 +333,14 @@ and every source probe still execute; work, matched-row, retained-byte and outpu
 bounds stay active under [ADR 0059](adr/0059-bounded-primary-join-sort.md).
 Other access paths keep their original limits. Stored formats, durable-index
 acknowledgement and production gates are unchanged.
+
+
+## Follow-up: admit projected payload before copying
+
+[Output admission](projected-output-admission.md) now checks the shared
+script allowance before copying each selected row. Full sorting projects
+incrementally; streamed paths use the same borrowed preflight. A reproduced
+native refusal peak falls from 99388593 to 14210993 bytes under
+[ADR0060](adr/0060-admit-projected-output-before-copy.md), with identical
+errors/committed bytes. This is logical output accounting; whole-memory, durable
+index and production gates remain open.

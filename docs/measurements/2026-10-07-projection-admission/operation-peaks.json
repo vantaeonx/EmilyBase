@@ -1,0 +1,66 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_parent_commit": "80b51ef14465ddfd2624ee896cca957bf117274b",
+  "source_sha256": {
+    "crates/query/src/execute.rs": "a432e3e57238a60c0b787534156f446375e1062faae888b116e501d565795000",
+    "crates/query/src/projection.rs": "c8a333b1ff7cde9040b884a7f85f9fe815b2295cdfbdff45ce45063bafdcb37b",
+    "crates/query/src/select.rs": "14314f37c943070f7a13ffd65b4cd8e77226c32c9e28a80977a53b682c33b457",
+    "crates/query/src/stream.rs": "b8e8f7cda957b09b823a48e237f534b8c2c29a8cb854bece1f669bc01d3b9a6e",
+    "crates/query/src/primary_join.rs": "da62f06b6151919e7e30ed2c4df23535d26258861ed3f24a98e272f0995a411f",
+    "crates/model-profile/tests/projection_budget.rs": "84c35efb4a54994f6da80105a08e3a9502a9a39243b24e001262f7cd4f728e53"
+  },
+  "synthetic_fixture": {
+    "regular_left_rows": 1500,
+    "regular_right_rows": 1500,
+    "fallback_left_rows": 1000,
+    "fallback_right_rows": 1,
+    "hidden_text_bytes_per_row": 3072,
+    "selected_copies": 32,
+    "limit": 1000,
+    "fixture_and_both_caches": "constructed before profiling"
+  },
+  "baseline": {
+    "engine_commit": "80b51ef14465ddfd2624ee896cca957bf117274b",
+    "case": "sorted_primary_join",
+    "requested_peak_bytes": 99388593,
+    "query_result": "Limit(output bytes)",
+    "requested_after_release_bytes": 0
+  },
+  "samples": {
+    "sorted_primary_join": {
+      "requested_peak_bytes": 14210993,
+      "requested_live_error_bytes": 0,
+      "requested_after_release_bytes": 0,
+      "query_result": "Limit(output bytes)"
+    },
+    "single_table_sort": {
+      "requested_peak_bytes": 12889830,
+      "requested_live_error_bytes": 0,
+      "requested_after_release_bytes": 0,
+      "query_result": "Limit(output bytes)"
+    },
+    "streamed_primary_order": {
+      "requested_peak_bytes": 8355020,
+      "requested_live_error_bytes": 0,
+      "requested_after_release_bytes": 0,
+      "query_result": "Limit(output bytes)"
+    },
+    "fallback_join": {
+      "requested_peak_bytes": 14189897,
+      "requested_live_error_bytes": 0,
+      "requested_after_release_bytes": 0,
+      "query_result": "Limit(output bytes)"
+    }
+  },
+  "excluded": [
+    "cold fixture construction",
+    "cold primary cache construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local requested allocations on refused output, not a process/transient quota"
+}

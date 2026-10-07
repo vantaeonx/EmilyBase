@@ -71,18 +71,21 @@ impl Budget {
         }
     }
 }
-pub(crate) fn row_bytes(row: &Row) -> usize {
-    24 + row
-        .iter()
-        .map(|v| {
-            32 + match v {
-                Value::Text(v) => v.len(),
-                Value::Bytes(v) => v.len(),
-                _ => 0,
-            }
-        })
-        .sum::<usize>()
+pub(crate) fn value_bytes(value: &Value) -> usize {
+    32 + match value {
+        Value::Text(value) => value.len(),
+        Value::Bytes(value) => value.len(),
+        _ => 0,
+    }
 }
+pub(crate) fn row_bytes(row: &Row) -> usize {
+    24 + row.iter().map(value_bytes).sum::<usize>()
+}
+
+#[cfg(test)]
+#[path = "projection_budget_tests.rs"]
+mod projection_budget_tests;
+
 pub(crate) fn validate_parameters(parameters: &[Value]) -> RunResult<()> {
     if parameters.len() > MAX_PARAMETERS {
         return Err(ExecutionError::Limit("bindings"));

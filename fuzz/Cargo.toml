@@ -288,3 +288,10 @@ path = "fuzz_targets/limited_join_sort.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "projection_budget"
+path = "fuzz_targets/projection_budget.rs"
+test = false
+doc = false
+bench = false

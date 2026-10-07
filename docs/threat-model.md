@@ -8,7 +8,7 @@ can ignore them. Hardware power-loss guarantees are not assumed from unit tests.
 | Threat | Initial mitigation | Remaining work |
 | --- | --- | --- |
 | Corrupt/truncated file | bounded CRC checks, strict WAL/baseline replay, fail closed | broader faults and failing-media recovery |
-| Decoder resource exhaustion | page and file bounds | broader connection/load quotas |
+| Decoder/query resource exhaustion | bounded files/parser/work, admitted logical projected payload before copying, bounded primary-JOIN retained candidates | model/cache/staging/transient and broader connection/load quotas |
 | Concurrent cooperating writers | stable directory owner, staged transactions, competing-process/compaction tests | shared readers, broader network/load quotas |
 | Partial writes | committed full-page WAL, ignored partial tail, sync before ACK | actual power loss and broader fault campaigns |
 | Accidental overwrite on creation | atomic no-clobber file/directory publication | wider publication I/O failures |

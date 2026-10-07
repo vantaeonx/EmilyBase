@@ -82,13 +82,9 @@ pub(crate) fn finish(
 
 /// Rows arrive in the final order, either from a stable sort or bounded heap.
 pub(crate) fn project(plan: Plan, retained: Vec<Row>, budget: &mut Budget) -> RunResult<ResultSet> {
-    let rows = retained
-        .into_iter()
-        .take(plan.limit)
-        .map(|row| plan.columns.iter().map(|(i, _)| row[*i].clone()).collect())
-        .collect::<Vec<Row>>();
-    for row in &rows {
-        budget.output(row_bytes(row))?;
+    let mut rows = Vec::new();
+    for row in retained.into_iter().take(plan.limit) {
+        rows.push(crate::projection::row(&plan.columns, &row, budget)?);
     }
     Ok(ResultSet {
         columns: plan.columns.into_iter().map(|(_, name)| name).collect(),

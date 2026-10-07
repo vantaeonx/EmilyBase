@@ -2395,3 +2395,50 @@ is 59822 physical/57171 excluding blank/comment-only lines, SDK 1245, Python 718
 total 61785 source lines. Documentation/configuration/locks/generated files are
 excluded. Full numeric model/cache/staging/transient admission, combined durable
 table/index writer and production gates remain open.
+
+
+## Projected output admitted before copying (2026-10-07)
+
+A valid warmed release primary-JOIN query with 1500 rows per side, 3072 hidden
+bytes, 32 selected copies and LIMIT 1000 returned Limit("output bytes") after a
+99388593-byte requested peak. The actual 32-MiB native guard failed against
+published 80b51ef before implementation. After per-row borrowed admission and
+incremental common projection, the same sample retains the same error, peaks at
+14210993 and releases to zero. Final single-table/full-sort, primary-order stream
+and fallback-JOIN peaks are 12889830/8355020/14189897, all refused with no retained
+error allocation. Exact source hashes/fixture dimensions appear in the artifact.
+Complete fixture/cache construction precedes profiling; allocator overhead/rounding,
+stacks and profiler data are excluded. This is a warmed operation-local observation,
+not cold memory, RSS, throughput or a whole-process/transient quota.
+
+Four private checks inspect actual shared byte charges before returned output:
+repeated selected cells, NULL/empty values, float bits, unchanged work, exact last
+admission/next refusal and typed invalid-index refusal before charging. Six public
+checks compare all read paths at their exact byte boundary, repeated/aliased/star
+metadata, all types, float bits, full binding on empty/LIMIT0, previous snapshots
+and an independent 64-case nullable projection model. An initial fixture requested
+1500 explicit fields and failed the existing 64-column parser cap; it was corrected
+to test that real cap without weakening the parser. Both managed WAL versions
+preserve exact committed journal/state after a staged write and cumulative output
+refusal. Rollback, checkpoint/reopen, verified backup/restore and independent copy
+writes pass. Logical output formula, API, SQL grammar and stored bytes are unchanged.
+
+The projection_budget ASan smoke completes 7881 executions in 46 seconds, observed
+RSS 398 MiB, input cap 512 bytes / guard 512 MiB, corpus growth limit 307 bytes. Sixteen
+synthetic wide/small projection and direction/null/order modes seed the private
+corpus. Independent nullable selected-cell models compute the shared charge and
+avoid constructing over-budget expected results; all read plans either agree with
+exact rows or refuse at the original logical cap. Old physical fingerprints stay
+unchanged. Quarantine is 64 MiB with 256-KiB thread-local quarantine. A small manual
+modulo lint was fixed before the recorded final campaign. This run is not exhaustive;
+logs/corpora remain private. Parser/format code is unchanged.
+
+Final stable 1.99.0 and minimum 1.89.0 complete workspace runs each pass 857 main tests,
+17 ignored helpers, no failures. Both optional release suites pass 43 diagnostics.
+Workspace/fuzz formatting, strict workspace/fuzz/optional Clippy, minimum fuzz bins
+and locked build pass. SDK 11 unit and 7 real HTTP/restart checks pass.
+
+This focused repair adds 811/−32=779 net Rust lines: 60601 physical Rust, 57934 excluding
+blank/comment-only lines, SDK 1245 and Python 718; total 62564 source lines. Docs, config,
+lockfiles and generated files are excluded. Numeric model/cache/staging/transient
+admission, combined durable writer and production acceptance remain open.

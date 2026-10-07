@@ -37,3 +37,7 @@ See [testing](testing.md) for actual suite and bounded ASan results.
 Single-table sorts and non-primary fallback joins keep their previous full-sort
 limits. No grammar, client enum, API, stored format or durable ACK changes. This
 is experimental software; combined durable writer and whole-memory gates remain open.
+
+[Projected-output admission](projected-output-admission.md) subsequently checks
+selected bytes before cloning and projects final rows incrementally. Measurements
+above bind the earlier source; current admitted-refusal observations are separate.

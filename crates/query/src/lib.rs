@@ -6,6 +6,7 @@ mod parser;
 mod plan;
 mod predicate;
 mod primary_join;
+mod projection;
 mod range;
 mod select;
 mod stream;

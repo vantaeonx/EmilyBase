@@ -147,13 +147,17 @@ and generic expected category, without SQL, literals or parameter contents.
 Execution: 100000 combined scan/probe/join-candidate and predicate-node visits per script;
 10000 result/intermediate rows per SELECT. Estimated retained intermediate row
 bytes for joins/non-primary ordering are capped at 8 MiB per SELECT; returned
-projected rows across the script share another 8 MiB cap. This is a row-memory
+projected rows across the script share another 8 MiB cap, admitted before copying
+each row. Full-sort output is projected incrementally. This is a row-memory
 estimate, not a JSON/wire-byte limit. Single-table reads with no order or a primary
 column first in ORDER BY borrow checked rows, retain projected fields only and
 stop after LIMIT TRUE matches. All predicates and later sort terms are fully
 bound, including LIMIT zero. Every consumed row/predicate node counts as work;
-LIMIT does not bypass an expensive unsuccessful filter. Other orderings/joins
-still materialize/sort and can hit intermediate limits despite a small LIMIT.
+LIMIT does not bypass an expensive unsuccessful filter. Eligible primary joins
+probe the right key: unique left-primary order streams, while other orders retain
+the best LIMIT full candidates and visit all necessary source candidates. General
+fallback joins and single-table non-primary sorts retain the full materializing
+sorter and can hit intermediate limits despite a small LIMIT.
 Source snapshots and lazy derived-tree construction remain bounded by table
 capacity, outside this output/work estimate. See [ADR 0029](adr/0029-streamed-primary-sql-order.md).
 Writes share the existing 256-event/256-page normal transaction limit; overflow
@@ -196,3 +200,8 @@ Other primary_join ordering prefixes use bounded stable selection of the best
 LIMIT full candidates. They still scan every necessary source candidate, enforce
 the original matched-row/work allowance and cap retained full-row bytes. General
 fallback/single-table sorts retain their original limits. [Details](limited-primary-join-sort.md).
+
+[Projection admission](projected-output-admission.md) counts every selected
+occurrence before cloning its payload, across all read plans and script results.
+The logical byte formula, parser/type bounds, result metadata and errors remain
+unchanged; this is not an allocator or whole-process quota.

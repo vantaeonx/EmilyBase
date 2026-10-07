@@ -1,10 +1,10 @@
 //! Probe a unique right primary key without materializing either source table.
 use crate::MAX_RESULT_ROWS;
 use crate::ast::Compare;
-use crate::execute::{Budget, ExecutionError, ResultSet, RunResult, row_bytes};
+use crate::execute::{Budget, ExecutionError, ResultSet, RunResult};
 use crate::plan::Plan;
 use crate::predicate::{BoundOperand, Predicate};
-use emilybase_catalog::{Key, Row, Value};
+use emilybase_catalog::{Key, Value};
 use emilybase_database::Snapshot;
 
 /// Only a necessary equality under AND can eliminate other right candidates.
@@ -98,12 +98,7 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
             return Err(ExecutionError::Limit("intermediate rows/bytes"));
         }
         if streaming {
-            let projected = plan
-                .columns
-                .iter()
-                .map(|(index, _)| row[*index].clone())
-                .collect::<Row>();
-            budget.output(row_bytes(&projected))?;
+            let projected = crate::projection::row(&plan.columns, &row, budget)?;
             retained.push(projected);
         } else {
             sorted.as_mut().ok_or(ExecutionError::Plan)?.push(row)?;
