@@ -3,7 +3,7 @@ mod codec;
 mod schema;
 mod value;
 
-pub use codec::{decode_row, decode_schema, encode_row, encode_schema};
+pub use codec::{decode_row, decode_schema, encode_row, encode_schema, row_matches};
 pub use schema::{Column, MAX_COLUMNS, MAX_NAME_BYTES, Schema};
 pub use value::{DataType, Key, MAX_VALUE_BYTES, Row, Value};
 

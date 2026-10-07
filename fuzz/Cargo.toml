@@ -309,3 +309,10 @@ path = "fuzz_targets/borrowed_candidates.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "row_match"
+path = "fuzz_targets/row_match.rs"
+test = false
+doc = false
+bench = false

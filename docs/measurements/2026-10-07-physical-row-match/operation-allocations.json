@@ -1,0 +1,57 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "5b416ebd97b752dc668124625432e6a986b66581",
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_sha256": {
+    "crates/catalog/src/codec.rs": "8c84d19a06d740c7797b9d1e9c2b9f45ab3bb2739ad7f407f2be8ccac2a2d6c9",
+    "crates/catalog/src/lib.rs": "50024afeb10427b293711ec0abf9edbd4f5149b9435fd787210aa61ae0e52f68",
+    "crates/database/src/event.rs": "a4bc3cc562413e575fc1ceebfa3bab190017c0e2c1db39ab984dd8833288ff20",
+    "crates/database/src/snapshot.rs": "7661c1ef14ddfcdf6fb700c5e14395afc9760f0c3740adae93eacd1111a38a60",
+    "crates/model-profile/tests/physical_row_match.rs": "1d8eeedcf7645efa9236f71913fe4b5b7933647d5bd6f9180733bf21e72a953c"
+  },
+  "synthetic_fixture": {
+    "rows_per_table": 1000,
+    "tables": 2,
+    "wide_integer_row_text_bytes": 3072,
+    "long_text_primary_key_bytes": 3072,
+    "fixture_keys_locations_and_digest": "constructed before profiling"
+  },
+  "baseline": {
+    "integer": {
+      "requested_total_bytes": 3344000,
+      "requested_blocks": 4000,
+      "requested_peak_bytes": 3240,
+      "requested_live_after_calls_bytes": 0
+    },
+    "text": {
+      "requested_total_bytes": 6416000,
+      "requested_blocks": 5000,
+      "requested_peak_bytes": 6208,
+      "requested_live_after_calls_bytes": 0
+    }
+  },
+  "samples": {
+    "integer": {
+      "requested_total_bytes": 104000,
+      "requested_blocks": 1000,
+      "requested_peak_bytes": 104,
+      "requested_live_after_calls_bytes": 0
+    },
+    "text": {
+      "requested_total_bytes": 104000,
+      "requested_blocks": 1000,
+      "requested_peak_bytes": 104,
+      "requested_live_after_calls_bytes": 0
+    }
+  },
+  "remaining": "per-call schema validation retains a small allocation; metadata and lookup costs are not removed",
+  "excluded": [
+    "cold fixture construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local requests for 1000 physical resolutions, not throughput, cold memory, RSS or process heap quota"
+}

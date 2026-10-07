@@ -78,21 +78,8 @@ impl Event {
     }
 
     pub fn decode(bytes: &[u8]) -> Result<Self> {
-        if bytes.len() < PREFIX_SIZE || bytes.len() > MAX_RECORD_SIZE || &bytes[..4] != b"ETBL" {
-            return Err(Error::Event("length or magic"));
-        }
-        let version = u16::from_le_bytes([bytes[4], bytes[5]]);
-        if version != VERSION {
-            return Err(Error::EventVersion(version));
-        }
-        if bytes[7] != 0 {
-            return Err(Error::Event("reserved byte"));
-        }
-        let mut id = [0; 8];
-        id.copy_from_slice(&bytes[8..PREFIX_SIZE]);
-        let table_id = u64::from_le_bytes(id);
-        let payload = &bytes[PREFIX_SIZE..];
-        let kind = match bytes[6] {
+        let (tag, table_id, payload) = envelope(bytes)?;
+        let kind = match tag {
             0 if payload.is_empty() => EventKind::Root,
             1 => EventKind::Create(decode_schema(payload)?),
             2 if payload.is_empty() => EventKind::Drop,
@@ -111,6 +98,24 @@ impl Event {
             return Err(Error::Event("table ID"));
         }
         Ok(Self { table_id, kind })
+    }
+    pub(crate) fn row_image_matches(
+        bytes: &[u8],
+        expected_table: u64,
+        expected: &[Value],
+    ) -> Result<bool> {
+        let (tag, table_id, payload) = envelope(bytes)?;
+        if matches!(tag, 3 | 4) {
+            let equal = emilybase_catalog::row_matches(payload, expected)?;
+            if table_id == 0 {
+                return Err(Error::Event("table ID"));
+            }
+            Ok(table_id == expected_table && equal)
+        } else {
+            // Non-row images retain the original complete kind-specific validation.
+            Self::decode(bytes)?;
+            Ok(false)
+        }
     }
 }
 
@@ -131,3 +136,25 @@ fn compact_vector<T>(vector: &mut Vec<T>) {
 #[cfg(test)]
 #[path = "event_capacity_tests.rs"]
 mod capacity_tests;
+
+#[cfg(test)]
+#[path = "row_image_tests.rs"]
+mod row_image_tests;
+
+fn envelope(bytes: &[u8]) -> Result<(u8, u64, &[u8])> {
+    if bytes.len() < PREFIX_SIZE || bytes.len() > MAX_RECORD_SIZE || &bytes[..4] != b"ETBL" {
+        return Err(Error::Event("length or magic"));
+    }
+    let version = u16::from_le_bytes([bytes[4], bytes[5]]);
+    if version != VERSION {
+        return Err(Error::EventVersion(version));
+    }
+    if bytes[7] != 0 {
+        return Err(Error::Event("reserved byte"));
+    }
+    let mut id = [0; 8];
+    id.copy_from_slice(&bytes[8..PREFIX_SIZE]);
+    let table_id = u64::from_le_bytes(id);
+    let payload = &bytes[PREFIX_SIZE..];
+    Ok((bytes[6], table_id, payload))
+}

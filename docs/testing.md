@@ -2541,3 +2541,49 @@ The block adds879/removes65=814 net Rust lines. Totals:62327 physical Rust,
 lines. Docs/config/lockfiles/generated files are excluded. No stored format,
 SQL/API/EXPLAIN enum, durable ACK or unsafe change. Numeric model/cache/staging/
 transient admission, combined durable writer and production acceptance remain open.
+
+## Shared borrowed physical-row codec (2026-10-07)
+
+A real native regression against published5b416eb resolves1000 wide rows per
+sample. Integer/wide-text and3072-byte text-primary samples request total3344000/
+6416000 bytes, peaks3240/6208, retaining zero. Both original and final128-KiB guard
+runs fail before implementation. Shared validated borrowed cells and direct
+current-key comparison reduce both totals to104000 in1000 blocks, peak104, zero
+retained. An initial16-KiB guard remains too small after repair because per-call
+schema validation still allocates; the corrected bound was independently rerun
+against the actual published baseline, then restored repaired sources and passed.
+Exact hashes/dimensions/exclusions appear in the artifact. Cold fixtures/keys/
+locations precede profiling; allocator overhead/rounding, stacks and profiler
+data are excluded. Payload copy removal is not a whole-memory/transient quota.
+
+Five new public codec checks cover all types, empty/count-mismatched rows, signed
+zeros, exact3072-byte boundaries, every truncated prefix, versions/tags/nonfinite
+floats/Boolean/UTF-8/oversized values and trailing errors after early mismatch.
+Two128-case properties verify independent generated values and arbitrary complete
+record validation. Three private ETBL checks preserve insert/replace/foreign
+identity, all truncated prefixes, envelope failures, zero table ID and malformed
+non-row payload refusal. The first private fixture passed slices to an unnecessarily
+narrow Vec-reference helper; the helper was corrected to borrowed slices. A newly
+unused import was removed before final strict lint. The original golden codecs,
+stale locations, all-type replay/old-view/SQL/WAL/backup recovery tests pass.
+
+The row_match ASan smoke completes3238754 executions in46 seconds, observed
+RSS180 MiB, input cap4096/guard512 MiB, corpus growth limit4096 bytes. Six synthetic
+seeds include empty/NULL/Boolean/text/binary records. Arbitrary and mutated records
+compare matcher results/errors with complete owned decode; independent generated
+fields verify exact matches/mismatches. This uses a shared reader and does not
+claim an independent implementation of the file format. Existing frozen-byte and
+explicit malformed-record checks supply that additional evidence. Quarantine is
+64 MiB with256-KiB thread-local quarantine. Raw logs/corpora remain private.
+
+Final stable1.99.0/minimum1.89.0 complete workspace runs pass886 main tests each,
+17 ignored helpers and no failures. Both optional release suites pass46 diagnostics.
+Workspace/fuzz formatting, strict workspace/fuzz/optional Clippy, minimum fuzz-bin
+checks and locked build pass. SDK format/11 unit/7 actual HTTP/restart checks pass.
+All five preceding5b416eb hosted CI jobs are confirmed successful.
+
+This focused codec block adds463 net Rust lines:62790 physical Rust,60085 excluding
+blank/comment-only lines,SDK1257,Python718;64765 combined source lines. Docs/config/
+locks/generated output are excluded. No EROW/ETBL/page/WAL/cache bytes, format
+versions, SQL/API/EXPLAIN, durability ACK or unsafe change. Numeric model/cache/
+staging/transient admission, combined durable writer and production gates remain.

@@ -102,20 +102,60 @@ pub fn decode_row(bytes: &[u8]) -> Result<Row> {
     }
     let mut row = Vec::with_capacity(count);
     for _ in 0..count {
-        let value = match input.byte()? {
-            0 => Value::Null,
-            1 => Value::Boolean(input.boolean()?),
-            2 => Value::Integer(i64::from_le_bytes(input.number()?)),
-            3 => Value::Float(f64::from_bits(u64::from_le_bytes(input.number()?))),
-            4 => Value::Text(input.text()?),
-            5 => Value::Bytes(input.blob()?.to_vec()),
-            _ => return Err(Error::Decode("value tag")),
-        };
-        value.validate()?;
+        let value = input.cell()?.into_owned();
         row.push(value);
     }
     input.finish()?;
     Ok(row)
+}
+
+/// Validate the complete original row encoding and compare without owning payload.
+/// A mismatch never skips validation of the remaining cells or trailing bytes.
+pub fn row_matches(bytes: &[u8], expected: &[Value]) -> Result<bool> {
+    let mut input = Reader::new(bytes, b"EROW")?;
+    let count = usize::from(input.u16()?);
+    if count > MAX_COLUMNS {
+        return Err(Error::RowLength);
+    }
+    let mut equal = count == expected.len();
+    for index in 0..count {
+        let cell = input.cell()?;
+        equal &= expected.get(index).is_some_and(|value| cell.matches(value));
+    }
+    input.finish()?;
+    Ok(equal)
+}
+
+enum Cell<'a> {
+    Null,
+    Boolean(bool),
+    Integer(i64),
+    Float(f64),
+    Text(&'a str),
+    Bytes(&'a [u8]),
+}
+impl Cell<'_> {
+    fn matches(&self, value: &Value) -> bool {
+        match (self, value) {
+            (Self::Null, Value::Null) => true,
+            (Self::Boolean(a), Value::Boolean(b)) => a == b,
+            (Self::Integer(a), Value::Integer(b)) => a == b,
+            (Self::Float(a), Value::Float(b)) => a == b,
+            (Self::Text(a), Value::Text(b)) => *a == b,
+            (Self::Bytes(a), Value::Bytes(b)) => *a == b,
+            _ => false,
+        }
+    }
+    fn into_owned(self) -> Value {
+        match self {
+            Self::Null => Value::Null,
+            Self::Boolean(v) => Value::Boolean(v),
+            Self::Integer(v) => Value::Integer(v),
+            Self::Float(v) => Value::Float(v),
+            Self::Text(v) => Value::Text(v.to_owned()),
+            Self::Bytes(v) => Value::Bytes(v.to_vec()),
+        }
+    }
 }
 
 struct Writer {
@@ -212,6 +252,37 @@ impl<'a> Reader<'a> {
     fn blob(&mut self) -> Result<&'a [u8]> {
         let size = usize::from(self.u16()?);
         self.take(size)
+    }
+
+    fn cell(&mut self) -> Result<Cell<'a>> {
+        Ok(match self.byte()? {
+            0 => Cell::Null,
+            1 => Cell::Boolean(self.boolean()?),
+            2 => Cell::Integer(i64::from_le_bytes(self.number()?)),
+            3 => {
+                let value = f64::from_bits(u64::from_le_bytes(self.number()?));
+                if !value.is_finite() {
+                    return Err(Error::Float);
+                }
+                Cell::Float(value)
+            }
+            4 => {
+                let value =
+                    std::str::from_utf8(self.blob()?).map_err(|_| Error::Decode("UTF-8"))?;
+                if value.len() > crate::MAX_VALUE_BYTES {
+                    return Err(Error::ValueSize);
+                }
+                Cell::Text(value)
+            }
+            5 => {
+                let value = self.blob()?;
+                if value.len() > crate::MAX_VALUE_BYTES {
+                    return Err(Error::ValueSize);
+                }
+                Cell::Bytes(value)
+            }
+            _ => return Err(Error::Decode("value tag")),
+        })
     }
 
     fn text(&mut self) -> Result<String> {

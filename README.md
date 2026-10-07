@@ -507,3 +507,14 @@ the original match/work counts. Reproduced warmed allocation totals nearly halve
 under [ADR 0062](docs/adr/0062-admit-borrowed-candidates-before-cloning.md).
 Physical validation still allocates; these operation totals are not a process
 quota. Stored formats, durability acknowledgements and production gates remain.
+
+
+## Follow-up: borrowed physical row comparison
+
+[Physical verification](docs/physical-row-comparison.md) shares one validating
+cell codec with original owned decode. Checked row resolution compares borrowed
+payload with immutable live state, retaining identity/digest/full-format checks
+under [ADR0063](docs/adr/0063-compare-physical-rows-with-borrowed-codec.md).
+Warmed1000-resolution requests fall from3344000/6416000 to104000 bytes; schema
+validation still allocates. This closes no cold-memory, combined durable writer
+or production gate and changes no stored format or acknowledgement.

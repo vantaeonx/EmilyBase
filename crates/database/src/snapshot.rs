@@ -3,14 +3,14 @@ use std::sync::{Arc, OnceLock};
 #[path = "append.rs"]
 mod append;
 
-use emilybase_catalog::{Key, Row, Schema};
+use emilybase_catalog::{Key, Row, Schema, Value};
 use emilybase_storage::{Error as StorageError, MAX_PAGES, Page};
 
 use crate::location::{Change, Locations};
 use crate::primary::{PrimaryIndexes, eligible};
 use crate::state::State;
 use crate::{DATABASE_MARKER, Error, Event, MAX_ROWS, Result};
-use crate::{EventKind, PrimaryIndexInfo, RowLocation};
+use crate::{PrimaryIndexInfo, RowLocation};
 
 /// Validated in-memory relational history. Clones share immutable pages, tables
 /// and per-table location maps. First mutation detaches only the affected table.
@@ -197,25 +197,26 @@ impl Snapshot {
         if !location.matches_record(bytes) {
             return Err(Error::StaleLocation);
         }
-        let event = Event::decode(bytes)?;
-        let row = match event.kind {
-            EventKind::Insert(row) | EventKind::Replace(row)
-                if event.table_id == location.table_id =>
-            {
-                row
-            }
-            _ => return Err(Error::StaleLocation),
-        };
         let table = self.state.table(name)?;
-        if table.schema.key(&row)? != *key {
-            return Err(Error::StaleLocation);
-        }
         let current = table
             .rows
             .get(key)
             .map(Arc::as_ref)
             .ok_or(Error::StaleLocation)?;
-        if current != &row {
+        // State rows are immutable and already schema validated. Compare the
+        // entire physical record using the same validating codec as owned decode.
+        if !Event::row_image_matches(bytes, location.table_id, current)? {
+            return Err(Error::StaleLocation);
+        }
+        let primary = current
+            .get(usize::from(table.schema.primary_key))
+            .ok_or(Error::StaleLocation)?;
+        let matches_key = match (key, primary) {
+            (Key::Integer(a), Value::Integer(b)) => a == b,
+            (Key::Text(a), Value::Text(b)) => a == b,
+            _ => false,
+        };
+        if !matches_key {
             return Err(Error::StaleLocation);
         }
         Ok(current)
