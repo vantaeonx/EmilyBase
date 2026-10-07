@@ -2860,3 +2860,44 @@ race failures are retained as diagnostic evidence, not counted as successful run
 The [source-bound kill artifact](measurements/2026-10-07-account-kills/verification.json)
 records boundaries, repeated runs and exclusions. Wider media/recovery, integrated
 server accounts, coordinated backups, sessions and production gates remain open.
+
+## Purpose/context-bound token primitives, 2026-10-07
+
+A102-byte canonical access/refresh token carries a public family identifier and
+an independently generated256-bit secret. Its92-byte EBSK verifier binds purpose,
+project, incarnation and family in a fixed SHA-256 preimage. Python hashlib
+independently fixes both purpose hashes/layouts; CI reproduces the synthetic
+vectors. Fourteen new unit/property cases cover format/matching, complete single
+ASCII-byte substitution matrices, header damage, versions, arbitrary Unicode,
+opaque record payloads, foreign scope, redacted formatting and owned-secret
+zeroization. Tests do not inspect freed memory or claim total-process erasure.
+
+Two new original-engine integration cases cover both WAL versions, unchanged
+rollback history, committed replacement, old views, restart and independently
+verified restore. Issued plaintext/secret hex is absent from committed journals.
+Generic restore still accepts an old verifier under its old incarnation; a
+separate expected incarnation rejects it. This is an explicit regression showing
+a pending coordinated-restore gate, not an implementation of safe session restore.
+
+ASan parser-only fuzzing completes9,937,783 executions in46 seconds, RSS303 MiB
+under512, maximum bounded input512 bytes, without findings. It never issues a
+credential, invokes a KDF or accesses storage. Native release samples on both
+Rust versions observe zero requested heap bytes across1000 matching/metadata/
+decode rounds, including malformed/oversized rejection. Issuance requests one
+102-byte output allocation, retains102 while its owner lives and returns to zero
+on drop. Caller buffers, stack/RNG internals and total heap remain outside these
+requested-payload observations.
+
+Final frozen-source locked runs pass on1.99.0 and1.89.0:960 main cases/18 ignored
+helpers and51 optional sequential release diagnostics each. Formatting, strict
+workspace/profile/fuzz Clippy, minimum fuzz compilation, workspace build, SDK11
+unit/7 native HTTP-restart cases, both independent Python oracles and both
+warning-denied advisory scans pass. Initial test compilation caught comparison
+of an opaque verifier and a temporary property reference; Clippy caught constant
+chunk iteration and a redundant byte conversion. Failed runs are not counted.
+
+[ADR0069](adr/0069-purpose-bound-token-primitives.md) and the
+[source-bound artifact](measurements/2026-10-07-session-tokens/verification.json)
+retain boundaries: durable sessions, account-state/expiry checks, single-use
+refresh, revocation, restore rotation and network admission remain pending.
+No stage or production/security gate is completed by cryptographic matching.

@@ -352,3 +352,10 @@ path = "fuzz_targets/account_records.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "session_tokens"
+path = "fuzz_targets/session_tokens.rs"
+test = false
+doc = false
+bench = false

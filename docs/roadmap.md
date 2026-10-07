@@ -53,6 +53,12 @@ the live registry. Complete account/data capture, private authorized paths,
 network admission, account policy and durable sessions are gates before HTTP
 enablement. Current registry archives do not silently claim to contain it.
 
+[ADR0069](adr/0069-purpose-bound-token-primitives.md) supplies purpose-bound
+random token issuance, strict fixed formats and independent verifier oracles.
+These primitives precede durable family migration/rotation, account-epoch/expiry
+validation, concurrency/crash tests and restore-incarnation rotation. No session
+HTTP route or existing backup format is enabled by this increment.
+
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.

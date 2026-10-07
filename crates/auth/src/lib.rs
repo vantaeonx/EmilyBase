@@ -2,6 +2,7 @@
 //! HTTP account authentication and sessions are not implemented.
 pub mod accounts;
 pub mod password;
+pub mod tokens;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;

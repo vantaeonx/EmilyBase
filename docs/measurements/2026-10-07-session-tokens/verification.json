@@ -1,0 +1,71 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "f70335a94569009dd16a1159543ceb866b99b862",
+  "source_sha256": {
+    "crates/auth/src/lib.rs": "99c646e5a969d4c858a4c1fac4030c9e87a90cf6f45965bbf2667894373bb536",
+    "crates/auth/src/tokens/mod.rs": "6bf395f1ae147f322e8a08c0cae75afa9a10c0c004c4121f837eb15c0508be27",
+    "crates/auth/src/tokens/record.rs": "57515a34db5bd1b175adf4f08ac0ce8f69424717a8d8198a7ce6da7f92b6c609",
+    "crates/auth/src/tokens/tests.rs": "439b128262a9a17d72f55c6975816c06c46cfd28a2ad73d29851ee9923327613",
+    "crates/auth/tests/token_persistence.rs": "d90b5c5492b7a46aaf662972a81ba09456d2a15a454894af352e91c52a07e16b",
+    "crates/model-profile/tests/session_token.rs": "0ee6c738cc31e3523ee98e320429aa830e2425ece8b3f1c25cd5f646f88ad8b7",
+    "fuzz/fuzz_targets/session_tokens.rs": "99347b1a6bff24cb9d369646925fa5c07b6d6c3dc0b806514d6fe79462ec3214",
+    "tests/session_token_oracle.py": "ed7c79db753a1ccd878772e2960a66c48641b83e6bbe29e1cd805fdaa877097f"
+  },
+  "format": {
+    "token_text_bytes": 102,
+    "verifier_record_bytes": 92,
+    "sha256_preimage_bytes": 106,
+    "random_secret_bits": 256,
+    "record_version": 1
+  },
+  "native_samples_each_toolchain": {
+    "match_parse_decode_1000_rounds_requested_heap_bytes": 0,
+    "issuance_allocations": 1,
+    "issued_text_requested_bytes": 102,
+    "live_requested_bytes_after_owner_drop": 0
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 960,
+    "ignored_helpers_each": 18,
+    "optional_release_diagnostics_each": 51,
+    "format_strict_workspace_profile_fuzz": true,
+    "msrv_fuzz_build": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "independent_python_oracles_reproduced": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74",
+    "both_lockfile_advisory_scans_warning_denied": true
+  },
+  "parser_asan": {
+    "executions": 9937783,
+    "seconds": 46,
+    "rss_mib": 303,
+    "rss_limit_mib": 512,
+    "max_input_bytes": 512,
+    "findings": 0
+  },
+  "persistence": {
+    "wal_versions": [
+      1,
+      2
+    ],
+    "rollback_exact_history": true,
+    "committed_replacement_and_old_view": true,
+    "reopen_verified_restore": true,
+    "plaintext_absent_from_committed_journal": true
+  },
+  "exclusions": [
+    "durable session storage and migration",
+    "expiry, refresh rotation, revocation and account-epoch checks",
+    "HTTP account authorization and full-flow timing",
+    "automatic restore-incarnation rotation",
+    "complete account/data registry backup",
+    "whole-process memory or erasure guarantee",
+    "production/security acceptance gate"
+  ]
+}

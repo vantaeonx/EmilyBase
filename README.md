@@ -55,6 +55,9 @@ The separate [private account library](docs/private-accounts.md) stores scoped
 users, password replacements and disable/epoch state on our original WAL engine.
 It is not connected to server projects or current whole-registry backups; HTTP
 signup/login, coordinated restore, sessions and account policy remain pending.
+The [token primitive library](docs/session-token-primitives.md) adds bounded
+purpose/context-bound random credentials and private versioned verifier records.
+It does not implement durable sessions, expiry, refresh rotation or revocation.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks
