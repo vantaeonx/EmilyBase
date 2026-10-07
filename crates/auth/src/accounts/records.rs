@@ -15,7 +15,7 @@ pub(super) fn validate_login(login: &str) -> Result<()> {
     Ok(())
 }
 
-fn schema(name: &str, columns: &[(&str, DataType)]) -> Schema {
+pub(super) fn schema(name: &str, columns: &[(&str, DataType)]) -> Schema {
     Schema {
         name: name.into(),
         primary_key: 0,

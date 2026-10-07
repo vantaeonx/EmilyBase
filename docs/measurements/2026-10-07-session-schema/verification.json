@@ -1,0 +1,90 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "63466ad36aa9d3e4248f5a5e4d2c2f641aa0a5e6",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "6cc7672a3f4779f1d037c3f10f5cfc27830571ca501c756a35f8ca400ca7a7fb",
+    "crates/auth/src/accounts/records.rs": "c22440ced22d676d524f2c181313e52df74179b0502a9a0ed335166b22c127df",
+    "crates/auth/src/accounts/session_schema.rs": "7d57c5f7b14efb07325fb1db35e6cde729c8adfa7cf7a539fa0e8387117243c3",
+    "crates/auth/src/accounts/session_schema_tests.rs": "fd6814ae2bbf7ff7b37d9a7fb01f9f4724eaa9706d14544aa5aec09151552abe",
+    "crates/auth/src/accounts/recovery_tests.rs": "4adeba68697bee5e8c7075983887ce9ca9cf6b8e6dd12c54c36e676096d93c0e",
+    "crates/auth/src/tokens/record.rs": "48bd7310d7b3289ef4ae639e156d31e338df01e950f8ef71ab616c8b27d9f0a8",
+    "crates/auth/src/tokens/tests.rs": "1428f576bd07d1ae26d937f36a7dbe70b4c7edd92c64184b7467c12e41f498dd",
+    "fuzz/fuzz_targets/session_records.rs": "75dfe689d412b127d3c68a20d2c7e774b094b1e0a395d5d30d15fee8b625c55f"
+  },
+  "migration": {
+    "private_versions": [
+      1,
+      2
+    ],
+    "initial_creation_version": 1,
+    "explicit_atomic_upgrade": true,
+    "noop_exact_history": true,
+    "wal_versions": [
+      1,
+      2
+    ],
+    "ack_and_staged_kills": 4,
+    "verified_four_schema_restore": true,
+    "v1_old_views_preserved": true
+  },
+  "bounds": {
+    "accounts": 1024,
+    "family_records": 4096,
+    "actual_family_capacity_fixtures": [
+      4096,
+      4097
+    ],
+    "columns_per_family": 14,
+    "access_seconds": 900,
+    "refresh_seconds": 604800,
+    "absolute_seconds": 2592000,
+    "deadline_overflow_reproduced_before_fix": true,
+    "independent_lifecycle_property_cases": 512
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 969,
+    "ignored_helpers_each": 18,
+    "optional_release_diagnostics_each": 51,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "msrv_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74"
+  },
+  "asan_campaigns": [
+    {
+      "target": "session_records",
+      "runs": 3636274,
+      "seconds": 46,
+      "rss_mib": 426,
+      "rss_limit_mib": 512,
+      "max_input_bytes": 512,
+      "findings": 0
+    },
+    {
+      "target": "session_tokens",
+      "runs": 6030070,
+      "seconds": 31,
+      "rss_mib": 276,
+      "rss_limit_mib": 512,
+      "max_input_bytes": 512,
+      "findings": 0
+    }
+  ],
+  "exclusions": [
+    "runtime sign-in, refresh, revoke/prune and principal API",
+    "trusted clock/backward-time policy and expiration enforcement",
+    "automatic coordinated restore-incarnation rotation",
+    "HTTP account authorization and full-flow timing",
+    "physical power loss or new mid-fsync kill campaign",
+    "whole-process memory reservation",
+    "production/security acceptance gate"
+  ]
+}

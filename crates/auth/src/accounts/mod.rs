@@ -1,5 +1,10 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod records;
+mod session_schema;
+#[cfg(test)]
+mod session_schema_tests;
+
+pub use session_schema::{MAX_SESSION_FAMILIES, SessionRecordInfo, inspect_session_record};
 #[cfg(all(test, target_os = "linux"))]
 mod recovery_tests;
 #[cfg(test)]
@@ -88,6 +93,7 @@ pub struct AccountStore {
     project: String,
     pool: PasswordPool,
     dummy: PasswordDigest,
+    session_scope: Option<crate::tokens::TokenScope>,
 }
 
 impl AccountStore {
@@ -119,6 +125,7 @@ impl AccountStore {
             project: project.into(),
             pool,
             dummy,
+            session_scope: None,
         })
     }
 
@@ -128,8 +135,7 @@ impl AccountStore {
         }
         let database = Database::open(path)?;
         let snapshot = database.view()?;
-        if snapshot.table_count() != 2
-            || snapshot.schema(SCOPE).map_err(|_| Error::Corrupt)? != &scope_schema()
+        if snapshot.schema(SCOPE).map_err(|_| Error::Corrupt)? != &scope_schema()
             || snapshot.schema(USERS).map_err(|_| Error::Corrupt)? != &user_schema()
         {
             return Err(Error::Corrupt);
@@ -147,21 +153,21 @@ impl AccountStore {
         }
         let [
             Value::Integer(1),
-            Value::Integer(1),
+            Value::Integer(version),
             Value::Text(stored),
             Value::Bytes(dummy),
         ] = scope.as_slice()
         else {
             return Err(Error::Corrupt);
         };
-        if !valid_project_id(stored) {
+        if !matches!(*version, 1 | 2) || !valid_project_id(stored) {
             return Err(Error::Corrupt);
         }
         if stored != project {
             return Err(Error::ScopeMismatch);
         }
         let dummy = PasswordDigest::decode(dummy).map_err(|_| Error::Corrupt)?;
-        if snapshot.row_count() > MAX_ACCOUNTS + 1 {
+        if snapshot.row_count() > MAX_ACCOUNTS + MAX_SESSION_FAMILIES + 2 {
             return Err(Error::Corrupt);
         }
         let mut identities = std::collections::BTreeSet::new();
@@ -170,15 +176,17 @@ impl AccountStore {
             .map_err(|_| Error::Corrupt)?
         {
             let record = Record::decode(row.map_err(|_| Error::Corrupt)?)?;
-            if !identities.insert(record.info.id) {
+            if !identities.insert(record.info.id) || identities.len() > MAX_ACCOUNTS {
                 return Err(Error::Corrupt);
             }
         }
+        let session_scope = session_schema::validate_inventory(snapshot, project, *version)?;
         Ok(Self {
             database,
             project: project.into(),
             pool,
             dummy,
+            session_scope,
         })
     }
 
@@ -187,12 +195,20 @@ impl AccountStore {
     }
 
     pub fn count(&self) -> Result<usize> {
-        self.database
+        let mut count = 0;
+        for row in self
+            .database
             .view()?
-            .row_count()
-            .checked_sub(1)
-            .filter(|n| *n <= MAX_ACCOUNTS)
-            .ok_or(Error::Corrupt)
+            .primary_rows(USERS, None, None)
+            .map_err(|_| Error::Corrupt)?
+        {
+            row.map_err(|_| Error::Corrupt)?;
+            count += 1;
+            if count > MAX_ACCOUNTS {
+                return Err(Error::Corrupt);
+            }
+        }
+        Ok(count)
     }
 
     fn record(&self, login: &str) -> Result<Option<Record>> {

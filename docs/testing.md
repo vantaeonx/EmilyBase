@@ -2901,3 +2901,41 @@ chunk iteration and a redundant byte conversion. Failed runs are not counted.
 retain boundaries: durable sessions, account-state/expiry checks, single-use
 refresh, revocation, restore rotation and network admission remain pending.
 No stage or production/security gate is completed by cryptographic matching.
+
+## Explicit private session schema, 2026-10-07
+
+Eight new schema/migration cases and one token-context inspection regression
+preserve version1 account reading and explicitly upgrade to version2 in one
+original WAL commit. No-op migration preserves exact journal bytes. Users,
+passwords, old v1 snapshots and account-only counts survive upgrade, compaction,
+reopen and independently verified four-schema backup/restore on both WAL versions.
+Four forced kills at staged migration and flushed post-commit acknowledgment
+recover either complete v1 or complete v2; staged cases preserve exact WAL bytes.
+The shared account filesystem/process mutex remains in force.
+
+Actual4096-family storage opens/restores and retains exact history without
+inflating account count;4097 families fail opening. Reference validation refuses
+missing users, foreign identities, future credential epochs and wrong verifier
+purposes/contexts. Older epochs/incarnations remain history, not authority.
+Nine bad metadata/schema fixtures fail with valid engine integrity. Complete
+row/type/length/grammar/time cases and an independent512-case deadline model cover
+clipping and signed limits. A dedicated near-i64::MAX test first reproduces an
+incorrect overflow rejection; clipping before addition fixes it. The large fixture
+initially exceeded the independent256-event transaction cap and now commits
+bounded256-row batches; no engine limit is weakened.
+
+Parser-only session_records ASan completes3,636,274 executions in46 seconds,
+RSS426 MiB under512; session_tokens runs6,030,070 in31 seconds,RSS276 MiB.
+Both bound input at512 bytes with no findings and no KDF, RNG or storage access.
+Final frozen-source locked tests pass on1.99.0/1.89.0:969 main cases/18 ignored
+helpers and51 optional sequential release diagnostics each. Formatting, strict
+workspace/profile/fuzz Clippy, minimum fuzz compilation, workspace build, SDK11
+unit/7 native HTTP-restart, both independent Python oracles and both warning-denied
+advisory scans pass. Initial fixture compilation/API mistakes and failed overflow/
+capacity runs are not counted as successful verification.
+
+[ADR0070](adr/0070-explicit-private-session-schema.md) and the
+[source-bound artifact](measurements/2026-10-07-session-schema/verification.json)
+record storage compatibility and open gates. Runtime sign-in/refresh/revoke/prune,
+trusted clock/expiry enforcement, account-state admission, coordinated restore
+rotation, server integration and production acceptance remain pending.

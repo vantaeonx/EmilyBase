@@ -59,6 +59,12 @@ These primitives precede durable family migration/rotation, account-epoch/expiry
 validation, concurrency/crash tests and restore-incarnation rotation. No session
 HTTP route or existing backup format is enabled by this increment.
 
+[ADR0070](adr/0070-explicit-private-session-schema.md) adds an explicit atomic
+v1-to-v2 private-store migration, complete bounded family/reference validation,
+backward v1 reading and four-schema private backup/recovery checks. Sign-in,
+refresh/revoke/prune, current-state expiry enforcement, trusted clock handling
+and coordinated restore rotation remain pending; no session route is enabled.
+
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.

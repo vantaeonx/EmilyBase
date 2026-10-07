@@ -26,36 +26,7 @@ fn account_process_kills_preserve_acknowledged_state_and_exclude_staged_changes(
             }
             let original = before.database.committed_wal().unwrap();
             drop(before);
-            let mut child = Command::new(std::env::current_exe().unwrap())
-                .args([
-                    "--exact",
-                    "accounts::recovery_tests::account_kill_worker",
-                    "--ignored",
-                    "--nocapture",
-                ])
-                .env("EMILYBASE_ACCOUNT_KILL_PATH", &path)
-                .env("EMILYBASE_ACCOUNT_KILL_MODE", mode)
-                .stdout(Stdio::piped())
-                .stderr(Stdio::null())
-                .spawn()
-                .unwrap();
-            let stdout = child.stdout.take().unwrap();
-            let (send, receive) = mpsc::sync_channel(1);
-            let reader = std::thread::spawn(move || {
-                let found = BufReader::new(stdout)
-                    .lines()
-                    .take(64)
-                    .any(|line| line.is_ok_and(|line| line.contains(READY)));
-                let _ = send.send(found);
-            });
-            let ready = receive.recv_timeout(Duration::from_secs(10));
-            // Always clean up the worker before assertions, including handshake failure.
-            let killed = child.kill();
-            let stopped = child.wait();
-            reader.join().unwrap();
-            assert!(ready.unwrap(), "worker did not reach requested boundary");
-            killed.unwrap();
-            assert!(!stopped.unwrap().success());
+            kill_worker_at(&path, mode);
             let mut recovered = AccountStore::open(&path, PROJECT, pool).unwrap();
             let info = recovered.record("synthetic").unwrap().unwrap().info;
             assert_eq!(info.id, [5; 16]);
@@ -115,6 +86,80 @@ fn account_kill_worker() {
                 std::thread::park();
             }
         }
+        "migration-commit" => {
+            store.enable_session_storage().unwrap();
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        }
+        "migration-stage" => {
+            use super::session_schema::{META, family_schema, meta_schema};
+            let mut staged = store.database.begin().unwrap();
+            staged.create_table(meta_schema()).unwrap();
+            staged.create_table(family_schema()).unwrap();
+            staged
+                .insert(
+                    META,
+                    vec![
+                        Value::Integer(1),
+                        Value::Integer(1),
+                        Value::Bytes(vec![9; 16]),
+                    ],
+                )
+                .unwrap();
+            staged
+                .update(
+                    SCOPE,
+                    &Key::Integer(1),
+                    vec![
+                        Value::Integer(1),
+                        Value::Integer(2),
+                        Value::Text(PROJECT.into()),
+                        Value::Bytes(store.dummy.encode().to_vec()),
+                    ],
+                )
+                .unwrap();
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        }
         _ => panic!("unknown synthetic worker boundary"),
     }
+}
+
+pub(super) fn kill_worker_at(path: &Path, mode: &str) {
+    let mut child = Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "accounts::recovery_tests::account_kill_worker",
+            "--ignored",
+            "--nocapture",
+        ])
+        .env("EMILYBASE_ACCOUNT_KILL_PATH", path)
+        .env("EMILYBASE_ACCOUNT_KILL_MODE", mode)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    let stdout = child.stdout.take().unwrap();
+    let (send, receive) = mpsc::sync_channel(1);
+    let reader = std::thread::spawn(move || {
+        let found = BufReader::new(stdout)
+            .lines()
+            .take(64)
+            .any(|line| line.is_ok_and(|line| line.contains(READY)));
+        let _ = send.send(found);
+    });
+    let ready = receive.recv_timeout(Duration::from_secs(10));
+    // Always clean up the worker before assertions, including handshake failure.
+    let killed = child.kill();
+    let stopped = child.wait();
+    reader.join().unwrap();
+    assert!(ready.unwrap(), "worker did not reach requested boundary");
+    killed.unwrap();
+    assert!(!stopped.unwrap().success());
 }

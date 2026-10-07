@@ -66,13 +66,20 @@ impl TokenDigest {
     /// fixed-size secret digest uses timing-safe comparison; full flow is not timed.
     pub fn matches(&self, text: &str, expected_scope: &TokenScope) -> Result<bool, TokenError> {
         let parsed = Parts::parse(text)?;
-        if &self.scope != expected_scope
-            || self.kind != parsed.metadata.kind
-            || self.family_id != parsed.metadata.family_id
-        {
+        if !self.belongs_to(
+            parsed.metadata.kind,
+            expected_scope,
+            &parsed.metadata.family_id,
+        ) {
             return Ok(false);
         }
         let actual = hash(self.kind, expected_scope, &self.family_id, &parsed.secret);
         Ok(bool::from(self.hash.ct_eq(&actual)))
+    }
+
+    /// Context metadata inspection only. This does not verify a secret or grant
+    /// permissions; authoritative callers must still use credential/state checks.
+    pub fn belongs_to(&self, kind: TokenKind, scope: &TokenScope, family: &[u8; 16]) -> bool {
+        self.kind == kind && &self.scope == scope && &self.family_id == family
     }
 }

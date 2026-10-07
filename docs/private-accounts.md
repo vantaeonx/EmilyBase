@@ -17,8 +17,8 @@ identifiers up to64 bytes; passwords remain exact bytes with Unicode/NUL support
 Display/email normalization, account-service password policy, self-service signup,
 HTTP failure behavior, enumeration resistance and throttling are pending.
 
-Opening verifies the project binding, exact two-table schema, one scope row,
-bounded users, unique identities and every private record. Unknown verifier costs,
+Opening verifies the project binding, exact version-selected schema inventory,
+one scope row, bounded users, unique identities and every private record. Unknown verifier costs,
 nonpositive epochs and invalid private data fail closed. A correctly checksummed
 ordinary database is not automatically a valid account store. The module uses
 typed engine operations and never builds SQL or filesystem names from a login.
@@ -36,3 +36,18 @@ capabilities and define durable session/revocation/restore behavior. Private
 archives still contain sensitive plaintext metadata and salted password verifiers.
 [ADR0068](adr/0068-private-project-account-store.md) records the implemented boundary
 and outstanding controls. The platform remains experimental.
+
+## Explicit session storage migration
+
+New stores still use private schema1. enable_session_storage explicitly commits
+both session schemas, incarnation metadata and private version2 as one original
+WAL transaction; repeating it changes no history. Opening either private version
+validates complete inventory. Account counts scan auth_users and remain separate
+from bounded session-family history. Verified local backup captures four schemas
+once migrated. Older readers refuse version2; no implicit downgrade is offered.
+
+SessionRecordInfo/inspect_session_record validate untrusted bounded metadata,
+verifier context and clipped time fields without verifying secrets or granting
+access. No runtime family issuance, refresh, revoke or principal API is enabled.
+Current-state/clock/expiry enforcement and coordinated restore rotation remain
+open under [ADR0070](adr/0070-explicit-private-session-schema.md).

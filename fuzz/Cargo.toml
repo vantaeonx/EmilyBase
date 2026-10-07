@@ -359,3 +359,10 @@ path = "fuzz_targets/session_tokens.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "session_records"
+path = "fuzz_targets/session_records.rs"
+test = false
+doc = false
+bench = false

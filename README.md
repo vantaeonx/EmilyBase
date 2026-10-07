@@ -58,6 +58,9 @@ signup/login, coordinated restore, sessions and account policy remain pending.
 The [token primitive library](docs/session-token-primitives.md) adds bounded
 purpose/context-bound random credentials and private versioned verifier records.
 It does not implement durable sessions, expiry, refresh rotation or revocation.
+An [explicit private-schema migration](docs/adr/0070-explicit-private-session-schema.md)
+atomically adds bounded family/metadata storage while keeping v1 stores readable.
+Strict inventory validation is implemented; session lifecycle methods are pending.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

@@ -340,3 +340,16 @@ proptest! {
         prop_assert_eq!(metadata(&text).is_ok(),accepted);
     }
 }
+
+#[test]
+fn context_inspection_never_substitutes_for_secret_verification() {
+    let (token, digest) = fixture(TokenKind::Access);
+    assert!(digest.belongs_to(TokenKind::Access, &scope(), &[0x33; 16]));
+    assert!(!digest.belongs_to(TokenKind::Refresh, &scope(), &[0x33; 16]));
+    assert!(!digest.belongs_to(TokenKind::Access, &scope(), &[0x34; 16]));
+    let mut opaque = digest.encode();
+    opaque[60] ^= 1;
+    let changed = TokenDigest::decode(&opaque).unwrap();
+    assert!(changed.belongs_to(TokenKind::Access, &scope(), &[0x33; 16]));
+    assert!(!changed.matches(token.expose(), &scope()).unwrap());
+}
