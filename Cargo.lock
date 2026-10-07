@@ -375,6 +375,7 @@ dependencies = [
  "argon2",
  "emilybase-backup",
  "emilybase-catalog",
+ "emilybase-database",
  "emilybase-transactions",
  "getrandom 0.3.4",
  "proptest",

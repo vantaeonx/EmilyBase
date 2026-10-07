@@ -1,0 +1,81 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "8c156e1307f899b6beb9b205d71f27edf6ef9e2f",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "05401701b6e8f7569e1a42581039328fe7282dd7764e9ceabdcfaa963985fbb7",
+    "crates/auth/src/accounts/records.rs": "4fc05ca34aac2c8e0ca515ed26e998d0a0a5ab9ba9ef551d8bbeb77b8a777c25",
+    "crates/auth/src/accounts/tests.rs": "115ad8634ef9d02e310f5e3bbf48a7c728dc9f27afb6dfafbba0f280ad5b9a35",
+    "crates/auth/src/lib.rs": "a92817b257051eaed8fee1b61fd5acab9605467a07b0f8601391ac4f43f8d3c6",
+    "crates/auth/Cargo.toml": "9851fc9f6e919d2b07b1f76737e71fc0d2c218c6f5af2d1385e38ff888b550d5",
+    "fuzz/fuzz_targets/account_records.rs": "6cecaa57e4c33315dd763a5fd3c700ae043518279e5bb934e429a90e089835af"
+  },
+  "private_store": {
+    "schema_version": 1,
+    "maximum_accounts": 1024,
+    "maximum_login_bytes": 64,
+    "project_id_hex_bytes": 32,
+    "identity_bytes": 16,
+    "credential_epoch_range": [
+      1,
+      9223372036854775807
+    ],
+    "exact_live_tables": 2,
+    "exact_scope_rows": 1,
+    "mandatory_original_wal": true,
+    "server_routes_attached": false,
+    "current_whole_registry_backup_includes_store": false
+  },
+  "verification": {
+    "stable": "1.99.0",
+    "minimum": "1.89.0",
+    "main_tests_each": 943,
+    "ignored_helpers_each": 17,
+    "sequential_optional_diagnostics_each": 50,
+    "generated_record_cases": 256,
+    "generated_epoch_model_cases": 64,
+    "wal_versions": [
+      1,
+      2
+    ],
+    "independent_local_restore": true,
+    "private_record_cases_with_valid_engine_checksums": 7,
+    "bad_scope_schema_cases": 8,
+    "capacity_cases": [
+      1024,
+      1025
+    ],
+    "sdk_unit": 11,
+    "sdk_native_http_restart": 7
+  },
+  "parser_fuzz": {
+    "target": "account_records",
+    "sanitizer": "AddressSanitizer",
+    "executions": 10372743,
+    "seconds": 46,
+    "rss_mib": 289,
+    "rss_limit_mib": 512,
+    "maximum_input_bytes": 256,
+    "hashing_or_io_in_target": false
+  },
+  "known_advisories": {
+    "tool": "cargo-audit 0.22.2",
+    "entries": 1294,
+    "workspace_packages": 163,
+    "fuzz_packages": 134,
+    "warnings_denied": true,
+    "ignored_entries": 0,
+    "actual_exit_codes": [
+      0,
+      0
+    ]
+  },
+  "limits": [
+    "trusted local provisioning and caller-selected private paths",
+    "no HTTP signup/login, sessions or row permissions",
+    "metadata is not an authorization capability",
+    "current registry archives do not include this separate store",
+    "password policy, full-flow timing, blocking workers and restore revocation pending",
+    "account count is not a numeric whole-process memory quota",
+    "no new physical power-loss evidence or production/security gate"
+  ]
+}

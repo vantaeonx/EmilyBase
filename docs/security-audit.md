@@ -68,8 +68,11 @@ recovery, backup and security acceptance gates.
 - [ ] Integrated account authentication, user sessions/refresh rotation, roles and row policies
   before presenting these as available platform features.
   A separately tested [bounded Argon2id helper](password-verifiers.md) exists;
-  account storage/routes, throttling, enumeration resistance and independent
+  integrated account storage/routes, throttling, enumeration resistance and independent
   security review remain required.
+  Local private account storage is implemented separately under
+  [ADR0068](adr/0068-private-project-account-store.md); authorized server paths,
+  coordinated account/data backups and session/restore revocation remain open.
 - [ ] Private object storage, signed URL validation and realtime authorization
   before enabling those future interfaces.
 

@@ -14,14 +14,15 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 argon2 = { version = "=0.6.0", default-features = false, features = ["zeroize"] }
 zeroize = { version = "1.9", features = ["alloc"] }
+emilybase-catalog = { path = "../catalog" }
+emilybase-database = { path = "../database" }
+emilybase-transactions = { path = "../transactions" }
+emilybase-backup = { path = "../backup" }
 
 [dev-dependencies]
 serde_json = "1"
 proptest = "1"
 tempfile = "3"
-emilybase-catalog = { path = "../catalog" }
-emilybase-transactions = { path = "../transactions" }
-emilybase-backup = { path = "../backup" }
 
 [lints]
 workspace = true

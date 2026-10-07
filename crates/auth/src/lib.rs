@@ -1,5 +1,6 @@
-//! High-entropy API keys and bounded password verifiers. User accounts and sessions
-//! are not implemented. Password helpers do not supply HTTP authentication.
+//! API keys, password verifiers and a separate private original-engine account store.
+//! HTTP account authentication and sessions are not implemented.
+pub mod accounts;
 pub mod password;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

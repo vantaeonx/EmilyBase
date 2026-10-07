@@ -27,7 +27,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, project TypeScript SDK and bounded password helper implemented; account/session and other platform integration pending |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; server/account/session and coordinated-backup integration pending |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
@@ -45,6 +45,13 @@ original-engine persistence/restore checks. It is a library helper, not user
 registration or HTTP login. Private per-project accounts, bounded blocking-worker
 integration, rate/enum controls, sessions, roles and row policies remain open under
 [ADR0067](adr/0067-bounded-password-verifiers.md). No platform milestone is closed.
+
+[ADR0068](adr/0068-private-project-account-store.md) adds local private scoped
+account storage over the original engine, positive credential epochs, disable
+state and verified local backup/restore. It remains separate from public SQL and
+the live registry. Complete account/data capture, private authorized paths,
+network admission, account policy and durable sessions are gates before HTTP
+enablement. Current registry archives do not silently claim to contain it.
 
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker

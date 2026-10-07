@@ -50,7 +50,11 @@ capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
 The full stage-2 acceptance gate remains open. Persistent table indexes, integrated user authentication, dashboard and Kotlin SDK are future work.
 The Rust [password helper](docs/password-verifiers.md) supplies tested Argon2id
-verifiers and bounded workspaces; accounts, HTTP login and sessions remain pending.
+verifiers and bounded workspaces; HTTP accounts, login and sessions remain pending.
+The separate [private account library](docs/private-accounts.md) stores scoped
+users, password replacements and disable/epoch state on our original WAL engine.
+It is not connected to server projects or current whole-registry backups; HTTP
+signup/login, coordinated restore, sessions and account policy remain pending.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

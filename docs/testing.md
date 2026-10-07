@@ -2789,3 +2789,41 @@ diagnostic usize/u64 mismatch; both test issues were fixed before final runs.
 No failed run is counted as a pass. [ADR0067](adr/0067-bounded-password-verifiers.md)
 and its source-bound artifact retain configuration, ownership, observations and
 remaining account/session/worker/security gates. No milestone is closed.
+
+## Private original-engine account store, 2026-10-07
+
+Fifteen new account-library cases cover project binding before I/O, canonical
+login names, strict private row shapes/policies, same-name users with distinct
+credentials in separate stores, password replacement, disabled/missing checks,
+no-op journal equality, positive epoch exhaustion and redacted reports. Missing
+identity cannot authenticate even when a synthetic raw fixture's known dummy
+digest matches. A256-case pure record property covers complete bounded metadata;
+a64-case independent flag/epoch model checks histories, no-op/failure invariants,
+compaction, reopen and independently verified restore.
+
+Actual1024-row stores reject growth before hashing;1025 rows fail opening. Seven
+semantically invalid user fixtures and eight bad scope/schema cases carry valid
+original-engine checksums yet fail account validation. Both WAL versions preserve
+old views, committed replacements/epochs, explicit rollback and local backup
+restore. Plaintext synthetic password inputs are absent from the retained WAL.
+Native private-mode, exclusive-owner, symlink and no-clobber checks execute.
+
+Parser-only account_records ASan completes10,372,743 executions in46 seconds,
+RSS289 MiB under512, maximum input256 bytes, without findings. It mutates row
+types, lengths, username, epoch and verifier policy; it never invokes a KDF or I/O.
+Locked full workspace tests pass on1.99.0 and1.89.0:943 main cases,17 ignored
+helpers,50 optional release diagnostics each with a sequential allocator runner.
+Formatting, strict workspace/optional/fuzz Clippy, minimum fuzz compilation,
+workspace build, SDK11 unit/7 actual native HTTP/restart and both warning-denied
+advisory scans pass. Initial compilation caught incorrect engine method names
+and a moved property assertion; strict Clippy caught a test range pattern.
+Final frozen-source checks pass after those fixes; no failed run is counted.
+
+[ADR0068](adr/0068-private-project-account-store.md) and the
+[source-bound artifact](measurements/2026-10-07-private-accounts/verification.json)
+keep private-store semantics distinct from future network authority. The current
+registry archive does not capture these separately created stores. Coordinated
+account/data backup, server-selected authorized paths, account password policy,
+worker/crypto admission, HTTP login, sessions/restore revocation and row policies
+remain pending. Existing engine kill tests are not new account-specific kill
+evidence; physical power-loss and production gates remain open.
