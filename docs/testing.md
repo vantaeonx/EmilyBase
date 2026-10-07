@@ -2827,3 +2827,36 @@ account/data backup, server-selected authorized paths, account password policy,
 worker/crypto admission, HTTP login, sessions/restore revocation and row policies
 remain pending. Existing engine kill tests are not new account-specific kill
 evidence; physical power-loss and production gates remain open.
+
+## Account-specific forced process termination, 2026-10-07
+
+A dedicated ignored worker is forcibly killed at two controlled boundaries for
+each existing WAL version. It parks after a successful account disable/epoch
+commit and a flushed acknowledgment, or after staging the same change without
+commit. Reopening retains the acknowledged identity/epoch/flag; the staged case
+keeps exact original committed WAL bytes. Password behavior, row count and a
+verified backup/restore of the recovered account store agree in all four cases.
+The parent uses a10-second handshake deadline and cleans up the child before any
+assertion, including handshake failure. Test-only worker environment hooks are
+absent from production builds. This is process-kill evidence, not physical
+power loss or a new account-specific torn-write campaign.
+
+Adding this worker reproduced intermittent Wal(Busy) in a neighboring valid-WAL
+fixture during parallel fork/exec. The same condition reappeared on the third
+diagnostic repetition. Linux locks follow the
+[shared open file description](https://man7.org/linux/man-pages/man2/flock.2.html):
+brief inherited descriptors can retain a lock until exec closes them. Account
+filesystem test bodies and process launch now share one test-only mutex, following
+the existing engine crash-harness discipline. Five repeated default-parallel
+account suites pass afterward (16 cases/one ignored helper per suite); KDF-only
+thread/admission tests retain their own concurrency checks. No production lock,
+permission, corruption expectation or retry path is weakened.
+
+Final full locked workspace runs pass on1.99.0 and1.89.0:944 main cases and18
+ignored helpers. Formatting and strict workspace/auth Clippy pass. The prior
+50-per-toolchain optional diagnostic runs cover unchanged production behavior;
+they are not presented as newly executed in this test-only increment. Earlier
+race failures are retained as diagnostic evidence, not counted as successful runs.
+The [source-bound kill artifact](measurements/2026-10-07-account-kills/verification.json)
+records boundaries, repeated runs and exclusions. Wider media/recovery, integrated
+server accounts, coordinated backups, sessions and production gates remain open.

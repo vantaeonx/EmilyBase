@@ -98,3 +98,10 @@ schema/scope rejection. Both WAL versions preserve old views, reopen and verifie
 restore; native filesystem tests retain permissions, ownership and no-clobber.
 Parser-only fuzzing mutates types/lengths/policy/epoch/login and never runs a KDF.
 Results and current verification limits are recorded in testing.md.
+
+Account-specific forced kills now execute at staged/no-commit and flushed
+post-commit acknowledgment boundaries for both WAL versions. Recovery and an
+independently restored recovered backup preserve the expected exact state.
+File-backed test bodies serialize with subprocess launch to exclude reproduced
+brief fork/exec descriptor inheritance. This test discipline does not alter
+production locks or establish physical power-loss/torn-write acceptance.

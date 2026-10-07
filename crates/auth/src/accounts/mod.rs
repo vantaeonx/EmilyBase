@@ -1,7 +1,12 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod records;
+#[cfg(all(test, target_os = "linux"))]
+mod recovery_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+static TEST_IO: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 use crate::password::{MAX_PASSWORD_BYTES, PasswordDigest, PasswordError, PasswordPool};
 use crate::valid_project_id;

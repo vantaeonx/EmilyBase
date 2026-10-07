@@ -2,7 +2,7 @@ use super::*;
 use emilybase_catalog::Row;
 use proptest::prelude::*;
 
-const PROJECT: &str = "11111111111111111111111111111111";
+pub(super) const PROJECT: &str = "11111111111111111111111111111111";
 const OTHER: &str = "22222222222222222222222222222222";
 
 fn fixture_digest() -> PasswordDigest {
@@ -19,7 +19,7 @@ fn fixture_digest() -> PasswordDigest {
     }
     PasswordDigest::decode(&record).unwrap()
 }
-fn fixture_record(login: &str, id: [u8; 16], epoch: u64) -> Record {
+pub(super) fn fixture_record(login: &str, id: [u8; 16], epoch: u64) -> Record {
     Record {
         info: AccountInfo {
             login: login.into(),
@@ -56,6 +56,7 @@ fn canonical_login_is_bounded_ascii_and_never_normalized_into_paths() {
 
 #[test]
 fn provisioning_password_changes_disable_and_reopen_are_real_commits() {
+    let _io = TEST_IO.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("accounts");
     let pool = PasswordPool::new(2).unwrap();
@@ -207,7 +208,7 @@ proptest! {
     }
 }
 
-fn raw_store(path: &Path, users: Vec<Row>) {
+pub(super) fn raw_store(path: &Path, users: Vec<Row>) {
     let mut database = Database::create(path).unwrap();
     let mut transaction = database.begin().unwrap();
     transaction.create_table(scope_schema()).unwrap();
@@ -235,6 +236,7 @@ fn raw_store(path: &Path, users: Vec<Row>) {
 
 #[test]
 fn same_login_in_separate_project_stores_never_crosses_credentials_or_scope() {
+    let _io = TEST_IO.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
     let (left_path, right_path) = (dir.path().join("left"), dir.path().join("right"));
     let pool = PasswordPool::new(2).unwrap();
@@ -277,6 +279,7 @@ fn same_login_in_separate_project_stores_never_crosses_credentials_or_scope() {
 
 #[test]
 fn both_wal_versions_preserve_epochs_old_views_and_verified_private_backups() {
+    let _io = TEST_IO.lock().unwrap();
     for compacted in [false, true] {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("accounts");
@@ -367,6 +370,7 @@ fn both_wal_versions_preserve_epochs_old_views_and_verified_private_backups() {
 
 #[test]
 fn full_1024_user_store_refuses_growth_before_hashing_and_oversized_store_fails_open() {
+    let _io = TEST_IO.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
     let pool = PasswordPool::new(1).unwrap();
     for count in [MAX_ACCOUNTS, MAX_ACCOUNTS + 1] {
@@ -405,6 +409,7 @@ fn full_1024_user_store_refuses_growth_before_hashing_and_oversized_store_fails_
 
 #[test]
 fn opening_rejects_semantically_invalid_users_even_with_valid_page_and_wal_checksums() {
+    let _io = TEST_IO.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
     let pool = PasswordPool::new(1).unwrap();
     let original = fixture_record("synthetic", [7; 16], 1).encode();
@@ -437,16 +442,23 @@ fn opening_rejects_semantically_invalid_users_even_with_valid_page_and_wal_check
     for (i, users) in cases.into_iter().enumerate() {
         let path = dir.path().join(format!("case-{i}"));
         raw_store(&path, users);
-        assert!(matches!(
-            AccountStore::open(&path, PROJECT, pool.clone()),
-            Err(Error::Corrupt)
-        ));
+        let opened = AccountStore::open(&path, PROJECT, pool.clone());
+        let diagnostic = match &opened {
+            Err(Error::Storage(error)) => format!("storage {error:?}"),
+            Err(error) => format!("{error:?}"),
+            Ok(_) => "accepted".into(),
+        };
+        assert!(
+            matches!(opened, Err(Error::Corrupt)),
+            "user case {i}: {diagnostic}"
+        );
         assert_eq!(pool.usage().workspace_bytes, 0);
     }
 }
 
 #[test]
 fn opening_requires_exact_scope_row_and_schema_inventory() {
+    let _io = TEST_IO.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
     let pool = PasswordPool::new(1).unwrap();
     for case in 0..8 {
@@ -504,15 +516,22 @@ fn opening_requires_exact_scope_row_and_schema_inventory() {
         }
         transaction.commit().unwrap();
         drop(database);
-        assert!(matches!(
-            AccountStore::open(&path, PROJECT, pool.clone()),
-            Err(Error::Corrupt)
-        ));
+        let opened = AccountStore::open(&path, PROJECT, pool.clone());
+        let diagnostic = match &opened {
+            Err(Error::Storage(error)) => format!("storage {error:?}"),
+            Err(error) => format!("{error:?}"),
+            Ok(_) => "accepted".into(),
+        };
+        assert!(
+            matches!(opened, Err(Error::Corrupt)),
+            "scope case {case}: {diagnostic}"
+        );
     }
 }
 
 #[test]
 fn epoch_exhaustion_and_failed_password_changes_never_modify_the_journal() {
+    let _io = TEST_IO.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("epochs");
     raw_store(
@@ -565,6 +584,7 @@ fn account_debug_and_error_reports_redact_identity_and_password_data() {
 
 #[test]
 fn directory_ownership_private_permissions_and_no_clobber_are_preserved() {
+    let _io = TEST_IO.lock().unwrap();
     use std::os::unix::fs::{PermissionsExt, symlink};
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("private");
@@ -606,6 +626,7 @@ fn directory_ownership_private_permissions_and_no_clobber_are_preserved() {
 
 #[test]
 fn matching_the_dummy_digest_still_cannot_authenticate_a_missing_identity() {
+    let _io = TEST_IO.lock().unwrap();
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("dummy");
     raw_store(&path, vec![]);
@@ -633,6 +654,7 @@ proptest! {
     fn generated_disable_history_matches_independent_epoch_model_and_reopen(
         commands in prop::collection::vec(any::<u8>(),0..32), compact in any::<bool>()
     ) {
+        let _io = TEST_IO.lock().unwrap();
         let dir=tempfile::tempdir().unwrap();let path=dir.path().join("model");
         raw_store(&path,(0..3).map(|i|fixture_record(&format!("u{i}"),[i;16],1).encode()).collect());
         let pool=PasswordPool::new(1).unwrap();let mut store=AccountStore::open(&path,PROJECT,pool.clone()).unwrap();

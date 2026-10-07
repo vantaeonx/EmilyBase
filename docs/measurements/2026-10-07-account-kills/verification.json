@@ -1,0 +1,51 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "f186637d52d8fd5a38f5cda3a7e57c914e1fd58d",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "2ea1d7f601ae70f2efb035058b96b5b34daa254f23196db8f95c67035093e365",
+    "crates/auth/src/accounts/tests.rs": "37761aed1d755e9d3f5910faa524ace026bc12ee9a2e74ea488800e6f9fe2989",
+    "crates/auth/src/accounts/recovery_tests.rs": "3bd2353308cc7e5af9834dd48919018b27ec19dad7e30ee839fc6711cd469c5f"
+  },
+  "matrix": {
+    "wal_versions": [
+      1,
+      2
+    ],
+    "boundaries": [
+      "staged record before commit",
+      "successful commit and flushed acknowledgment"
+    ],
+    "forced_kills_each_matrix": 4,
+    "handshake_deadline_seconds": 10,
+    "acknowledged_state_recovers": true,
+    "staged_change_excluded": true,
+    "staged_case_wal_exactly_unchanged": true,
+    "recovered_backup_restore_matches": true
+  },
+  "harness_regression": {
+    "observed_error": "Wal(Busy) from overlapping parallel fork/exec descriptor inheritance",
+    "reproduced_diagnostic_failure_run": 3,
+    "fix": "test-only shared I/O and process-launch mutex",
+    "repeated_default_parallel_account_suite_passes": 5,
+    "cases_each": 16,
+    "ignored_worker_each": 1,
+    "production_lock_changes": false
+  },
+  "final_checks": {
+    "toolchains": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 944,
+    "ignored_helpers_each": 18,
+    "strict_workspace_and_auth_clippy": true,
+    "formatting": true
+  },
+  "exclusions": [
+    "physical power loss",
+    "new account-specific torn-write or fsync fault campaign",
+    "full-flow network timing or authorization",
+    "production/security acceptance gate",
+    "prior 50-case optional diagnostics are not a new execution in this test-only change"
+  ]
+}
