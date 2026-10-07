@@ -3059,3 +3059,43 @@ oracles and both warning-denied advisory scans pass. No new parser ASan campaign
 is claimed for this publication-only change. The
 [source-bound artifact](measurements/2026-10-08-private-restore/verification.json)
 records counts and distinct unfinished integration/production gates.
+
+## Pure private archive inventory, 2026-10-08
+
+Eight new private account cases share semantic validation across opening, pure
+inspection and file/image export. Both WAL versions and private versions1/2/3
+preserve exact image/file bytes and source history. Twelve fully engine-valid but
+private-invalid fixtures fail all four paths. Actual1024/1025 account and4096/4097
+family boundaries execute; revoked history still counts. A64-case independent
+inventory model varies account count, version, clock and compaction. Metadata
+inspection changes no clock/scope or authority, including through revocation,
+disable, reset and partial cleanup.
+
+An owned VerifiedBackup remains readable after input drop, source mutation and
+source-directory deletion; its Debug redacts contents. Existing report, ordinary
+restore and reset-before-publication behavior use the same checked envelope and
+replay. The explicitly invoked ignored corpus helper writes six synthetic archives
+covering private versions1/2/3 on both WAL versions. It is not runtime configuration.
+
+The new private_account_archive parser-only ASan target completes85,901 executions
+in46 seconds, maximum RSS414 MiB under512, input limit262144 bytes, no findings.
+Raw archives reach wire/WAL/private validation; independently modeled short inputs
+build checksummed original-engine snapshots with version/scope/verifier/identity/
+epoch anomalies. Synthetic opaque digests establish format cases, never password
+proof. No KDF or filesystem operations run in the target. Native early scope and
+malformed-envelope refusal checks execute1000 rounds without requested heap
+bytes/allocations/live bytes; valid archive decoding is allowed to allocate.
+
+[ADR0074](adr/0074-owned-verified-private-archive-inventory.md) keeps inventory
+metadata separate from principal authority, whole-process quotas and coordinated
+capture. All data/account owners must be retained before a future common capture;
+appending an independently later account image does not prove that boundary.
+HTTP accounts, combined publication and production gates remain open.
+
+Final frozen-source locked checks pass on1.99.0/1.89.0:1014 main cases/19 ignored
+helpers and53 optional release diagnostics each. Formatting and warning-denied
+workspace/profile/fuzz Clippy, minimum fuzz compilation and workspace build pass.
+SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
+oracles and both warning-denied advisory scans pass. The
+[source-bound artifact](measurements/2026-10-08-private-inventory/verification.json)
+records parser/native observations and the distinct incomplete integration gates.

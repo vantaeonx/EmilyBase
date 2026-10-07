@@ -75,6 +75,12 @@ reset before directory publication. Current private archives can be restored wit
 old-token denial from the first published state. Combined registry/account capture
 and restoration remain the next integration gate; no HTTP route or milestone closes.
 
+[ADR0074](adr/0074-owned-verified-private-archive-inventory.md) adds owned verified
+backup snapshots, pure private inventory reports and common validation before
+private file/image export. A future combined capture must retain every data/account
+owner before its first prefix; independently appended images do not establish that
+boundary. Combined capture/publication, server authentication and memory gates remain open.
+
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.
@@ -584,3 +590,13 @@ WHERE summed requests fall64,469,242/64,468,894→9530/9182. [ADR0066](adr/0066-
 records evidence and limits. The planner retains bounded_nested_loop; this adds
 no fallback TopK or public point/range extraction. Numeric model/cache/staging/
 transient budgets, combined durable writer and production gates remain open.
+
+## Updated source planning estimate, 2026-10-08
+
+The current implementation and tests exceed74 thousand source lines while major
+platform modules remain open. Revise the original80–160 thousand planning range
+to roughly110–180 thousand total, including tests: approximately35–105 thousand
+additional lines at the current size. Dashboard, private objects, realtime, roles/
+row policies, Kotlin SDK, coordinated backups, durable engine/resource gates and
+load/security/upgrade checks drive that remaining scope. This is a rough planning
+range, not a code-volume target or completion promise; do not pad implementations.

@@ -128,3 +128,20 @@ This uses the shared engine restore_prepared protocol under
 restore deliberately has a no-op preparation and retains old metadata. Neither
 method makes current registry archives capture separate accounts; combined
 platform capture/restore and server routes remain unfinished.
+
+## Pure archive inventory and explicit export
+
+inspect_private_account_backup_bytes(bytes, expected_project) checks the complete
+private inventory without filesystem access or granting a principal. It returns
+private version, account/family counts, optional clock and original-engine report;
+all retained family history counts. Unknown/partial schemas or invalid references
+fail even when ordinary engine checksums are valid. No reset or implicit migration
+occurs. Opening, file backup and explicit backup_image use the same validator.
+
+backup_image returns sensitive committed archive bytes for trusted offline capture.
+Never put them in a public SQL/HTTP response. No encryption or total retained-heap
+quota is implied. [ADR0074](adr/0074-owned-verified-private-archive-inventory.md)
+records owned image lifetime, semantic validation, bounds and the future coordinated
+capture requirement. Registry capture currently releases temporary data owners
+before returning; simply appending a later private image cannot prove a common
+capture boundary. Combined account/data capture and publication remain pending.

@@ -1,10 +1,14 @@
 //! Separate private account storage; not attached to the server's public SQL database.
+mod archive;
+#[cfg(test)]
+mod archive_tests;
 mod records;
 mod restore;
 #[cfg(test)]
 mod restore_tests;
 mod session_clock;
 mod sessions;
+pub use archive::{PrivateArchiveReport, inspect_private_account_backup_bytes};
 pub use restore::restore_private_accounts;
 #[cfg(test)]
 mod sessions_tests;
@@ -160,61 +164,14 @@ impl AccountStore {
             return Err(Error::Scope);
         }
         let database = Database::open(path)?;
-        let snapshot = database.view()?;
-        if snapshot.schema(SCOPE).map_err(|_| Error::Corrupt)? != &scope_schema()
-            || snapshot.schema(USERS).map_err(|_| Error::Corrupt)? != &user_schema()
-        {
-            return Err(Error::Corrupt);
-        }
-        let mut scope_rows = snapshot
-            .primary_rows(SCOPE, None, None)
-            .map_err(|_| Error::Corrupt)?;
-        let scope = scope_rows
-            .next()
-            .transpose()
-            .map_err(|_| Error::Corrupt)?
-            .ok_or(Error::Corrupt)?;
-        if scope_rows.next().is_some() {
-            return Err(Error::Corrupt);
-        }
-        let [
-            Value::Integer(1),
-            Value::Integer(version),
-            Value::Text(stored),
-            Value::Bytes(dummy),
-        ] = scope.as_slice()
-        else {
-            return Err(Error::Corrupt);
-        };
-        if !matches!(*version, 1..=3) || !valid_project_id(stored) {
-            return Err(Error::Corrupt);
-        }
-        if stored != project {
-            return Err(Error::ScopeMismatch);
-        }
-        let dummy = PasswordDigest::decode(dummy).map_err(|_| Error::Corrupt)?;
-        if snapshot.row_count() > MAX_ACCOUNTS + MAX_SESSION_FAMILIES + 3 {
-            return Err(Error::Corrupt);
-        }
-        let mut identities = std::collections::BTreeSet::new();
-        for row in snapshot
-            .primary_rows(USERS, None, None)
-            .map_err(|_| Error::Corrupt)?
-        {
-            let record = Record::decode(row.map_err(|_| Error::Corrupt)?)?;
-            if !identities.insert(record.info.id) || identities.len() > MAX_ACCOUNTS {
-                return Err(Error::Corrupt);
-            }
-        }
-        let session_scope = session_schema::validate_inventory(snapshot, project, *version)?;
-        let session_clock = session_clock::validate_clock(snapshot, *version)?;
+        let state = archive::validate_snapshot(database.view()?, project)?;
         Ok(Self {
             database,
             project: project.into(),
             pool,
-            dummy,
-            session_scope,
-            session_clock,
+            dummy: state.dummy,
+            session_scope: state.session_scope,
+            session_clock: state.session_clock,
         })
     }
 
@@ -362,6 +319,7 @@ impl AccountStore {
     }
 
     pub fn backup(&mut self, destination: impl AsRef<Path>) -> Result<emilybase_backup::Report> {
+        archive::validate_snapshot(self.database.view()?, &self.project)?;
         Ok(emilybase_backup::create(&mut self.database, destination)?)
     }
 

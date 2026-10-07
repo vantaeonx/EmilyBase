@@ -373,3 +373,10 @@ path = "fuzz_targets/session_clock.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "private_account_archive"
+path = "fuzz_targets/private_account_archive.rs"
+test = false
+doc = false
+bench = false

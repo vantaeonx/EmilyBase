@@ -106,7 +106,7 @@ fn finish(
     // Refuse a changed identity and replay every prepared commit before exposure.
     let mut database = Database::open_bound(&path, Some(source.database_id))?;
     let wal = database.committed_wal()?;
-    let report = crate::archive::report(emilybase_transactions::recover_image(
+    let report = crate::archive::report(&emilybase_transactions::recover_image(
         &wal,
         Some(source.database_id),
     )?)?;

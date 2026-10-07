@@ -78,3 +78,14 @@ The [private account wrapper](private-accounts.md) validates project/schema and
 commits a fresh session scope before publication. This does not extend registry
 archives or complete combined platform restore. See
 [ADR0073](adr/0073-private-restore-reset-before-publication.md).
+
+## Owned verified replay image
+
+decode_verified validates EMILYBAK once and retains an immutable original-engine
+RecoveredImage plus its report. VerifiedBackup has redacted Debug, private
+construction and no filesystem owner or request authority. Its snapshot outlives
+input bytes and source directory. Existing inspect_bytes drops it after returning
+the same report. Per-format bounds do not reserve a numeric whole-process heap.
+The [private inspector](private-accounts.md) applies complete account semantics
+without replaying the same payload twice. See
+[ADR0074](adr/0074-owned-verified-private-archive-inventory.md).

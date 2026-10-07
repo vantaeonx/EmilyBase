@@ -1,0 +1,94 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "6b31aa4af60f6f44771f4028b5043c417c48345c",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "02615c85cd4a9614733a0d31226a3f0296c24fd871ce9659c5540bb29658faeb",
+    "crates/auth/src/accounts/archive.rs": "9e6f5c25bc66b32b1efc0a51ec0c4601ede773acdc4b9473604508f05c9fcea0",
+    "crates/auth/src/accounts/archive_tests.rs": "d02e1035ac44cd7e296ae7e9d531d282b33e45b3ab5d4e0356c06cc37903fb26",
+    "crates/backup/src/archive.rs": "c1ae5c6461cc5b2eba6878bb5b2f4fa3615e0dcfb28b9b4dca2d5256bd6a26cd",
+    "crates/backup/src/lib.rs": "e3e18303de9cad3df046657f0da6fd3281ec909db2838ae61e5825333ba910fb",
+    "crates/backup/src/restore.rs": "24262cd40f9db87a3a2621fafe516c5e4b32237ecbcfaabccfe2db1ba736785a",
+    "crates/model-profile/tests/private_account_archive.rs": "15abf44697604b618caed98bc815831e1cebfccb5981d0f796f950924a55d69d",
+    "fuzz/Cargo.toml": "0fa35a3007ea01110659a3bac1cd0d5db22afec307155b9062d9220857323411",
+    "fuzz/fuzz_targets/private_account_archive.rs": "a0d31024adfe096997149a27847bcfb9cf0cd0276fcce9fd00e0a6ac03d93413"
+  },
+  "protocol": {
+    "wire_format_changed": false,
+    "owned_readonly_verified_image": true,
+    "image_debug_redacted": true,
+    "image_survives_input_drop_source_mutation_directory_removal": true,
+    "pure_private_inventory_no_filesystem_or_authority": true,
+    "opening_file_and_image_export_share_validator": true,
+    "private_versions": [
+      1,
+      2,
+      3
+    ],
+    "account_capacity": 1024,
+    "retained_family_capacity": 4096,
+    "historical_families_still_count": true
+  },
+  "matrix": {
+    "new_account_cases": 8,
+    "independent_inventory_cases": 64,
+    "engine_valid_private_invalid_fixtures": 12,
+    "actual_account_boundary": [
+      1024,
+      1025
+    ],
+    "actual_family_boundary": [
+      4096,
+      4097
+    ],
+    "explicit_corpus_helper_cases": 1,
+    "synthetic_corpus_seeds": 6
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 1014,
+    "ignored_helpers_each": 19,
+    "optional_release_diagnostics_each": 53,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74"
+  },
+  "native_early_refusal_each_toolchain": {
+    "rounds": 1000,
+    "requested_heap_bytes": 0,
+    "allocations": 0,
+    "live_bytes": 0
+  },
+  "asan": {
+    "target": "private_account_archive",
+    "runs": 85901,
+    "seconds": 46,
+    "maximum_rss_mib": 414,
+    "rss_limit_mib": 512,
+    "max_input_bytes": 262144,
+    "findings": 0
+  },
+  "source_counts": {
+    "rust": 72391,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 74497,
+    "net_rust_this_block": 766
+  },
+  "exclusions": [
+    "coordinated registry/account ownership and capture",
+    "combined root publication and pre-traffic reset",
+    "HTTP accounts, roles and row policies",
+    "numeric whole-process retained image and worker quotas",
+    "physical power loss or new mid-fsync campaign",
+    "production/security acceptance gate"
+  ]
+}

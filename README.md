@@ -67,6 +67,9 @@ and coordinated account/data restore remain pending. The separate
 [private restore API](docs/adr/0073-private-restore-reset-before-publication.md)
 validates account schema/project and durably resets scope before atomic directory
 publication. Use it for private archives; generic engine restore retains old scope.
+A [pure private archive inspector](docs/adr/0074-owned-verified-private-archive-inventory.md)
+shares complete semantic validation with opening and explicit sensitive exports.
+Its metadata report grants no access and does not create/reset a store on disk.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

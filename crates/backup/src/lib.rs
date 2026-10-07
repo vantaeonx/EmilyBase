@@ -12,7 +12,7 @@ mod publication_tests;
 mod publish;
 mod restore;
 
-pub use archive::{encode, inspect_bytes};
+pub use archive::{VerifiedBackup, decode_verified, encode, inspect_bytes};
 pub use files::{create, inspect};
 pub use restore::{PreparedRestoreError, restore, restore_prepared};
 
