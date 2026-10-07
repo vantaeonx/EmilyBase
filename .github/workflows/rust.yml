@@ -80,7 +80,9 @@ jobs:
       - name: Strict opt-in diagnostics checks
         run: cargo clippy --locked -p emilybase-model-profile --all-targets --features heap-profile -- -D warnings
       - name: Real release diagnostic processes and report admission
-        run: cargo test --release --locked -p emilybase-model-profile --features heap-profile
+        # Allocation samples observe the process allocator, including libtest.
+        # A sequential runner prevents unrelated harness allocations entering them.
+        run: cargo test --release --locked -p emilybase-model-profile --features heap-profile -- --test-threads=1
       - name: Minimum Rust diagnostic compatibility
         run: cargo +1.89.0 check --locked -p emilybase-model-profile --all-targets --features heap-profile
   container:
