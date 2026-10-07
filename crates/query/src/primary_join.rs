@@ -1,7 +1,7 @@
 //! Probe a unique right primary key without materializing either source table.
 use crate::MAX_RESULT_ROWS;
 use crate::ast::Compare;
-use crate::execute::{Budget, ExecutionError, MAX_OUTPUT_BYTES, ResultSet, RunResult, row_bytes};
+use crate::execute::{Budget, ExecutionError, ResultSet, RunResult, row_bytes};
 use crate::plan::Plan;
 use crate::predicate::{BoundOperand, Predicate};
 use emilybase_catalog::{Key, Row, Value};
@@ -38,7 +38,7 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
     // retain only projected output, rather than all hidden joined payloads.
     let streaming = plan.order.is_empty() || plan.primary_order.is_some();
     let mut retained = Vec::new();
-    let mut bytes = 0;
+    let mut sorted = (!streaming).then(|| crate::topk::TopK::new(&plan.order, plan.limit));
     if plan.range.as_ref().is_some_and(|range| range.empty()) {
         return crate::select::finish(plan, retained, budget);
     }
@@ -106,11 +106,7 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
             budget.output(row_bytes(&projected))?;
             retained.push(projected);
         } else {
-            bytes += row_bytes(&row);
-            if bytes > MAX_OUTPUT_BYTES {
-                return Err(ExecutionError::Limit("intermediate rows/bytes"));
-            }
-            retained.push(row);
+            sorted.as_mut().ok_or(ExecutionError::Plan)?.push(row)?;
         }
         if streaming && retained.len() >= plan.limit {
             break;
@@ -123,6 +119,7 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
             affected: 0,
         })
     } else {
-        crate::select::finish(plan, retained, budget)
+        let rows = sorted.ok_or(ExecutionError::Plan)?.into_rows();
+        crate::select::project(plan, rows, budget)
     }
 }

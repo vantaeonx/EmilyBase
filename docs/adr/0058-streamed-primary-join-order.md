@@ -54,3 +54,10 @@ in [testing](../testing.md), separately from cold cache construction.
 
 No broader JOIN grammar, hash/merge join, secondary-index DDL, combined durable
 index writer, model/cache/staging/transient quota or production acceptance is implied.
+
+## Subsequent sorting extension
+
+[ADR 0059](0059-bounded-primary-join-sort.md) subsequently replaces the full sorter
+for other eligible primary_join order prefixes with bounded stable selection.
+The original retained byte/matched-row/work/output allowances remain active;
+all necessary source candidates still execute. Earlier measurements stay historical.

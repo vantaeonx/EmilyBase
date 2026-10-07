@@ -1,0 +1,45 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_parent_commit": "ef6b62e6496661dc2c91fa0b3b6a9e3b7cd0f4d7",
+  "source_sha256": {
+    "crates/query/src/topk.rs": "4b66a00c8dd36b925308e687d91e03adeae626b8ec20eda16a00afe02cc15909",
+    "crates/query/src/select.rs": "3abec165f3182d7e546447011c4618b43ad08b7f05011c6e3fced2854f367567",
+    "crates/query/src/primary_join.rs": "21b81c7f373cbda67073b17b59a2d221aae8e68742a50f40a2c40397a2c8ff6a",
+    "crates/model-profile/tests/limited_join_sort.rs": "a9558db36532cb7009ea557c8663fb5333dd356b28eff6b1a67942b46b9cde4a"
+  },
+  "synthetic_fixture": {
+    "left_rows": 1500,
+    "right_rows": 1500,
+    "hidden_text_bytes_per_row": 3072,
+    "limit": 2,
+    "fixture_and_both_caches": "constructed before profiling"
+  },
+  "samples": {
+    "right_order": {
+      "requested_live_output_bytes": 444,
+      "requested_peak_bytes": 21051,
+      "requested_after_result_release_bytes": 0
+    },
+    "left_nonprimary_order": {
+      "requested_live_output_bytes": 444,
+      "requested_peak_bytes": 21053,
+      "requested_after_result_release_bytes": 0
+    },
+    "equal_sort_keys": {
+      "requested_live_output_bytes": 444,
+      "requested_peak_bytes": 21055,
+      "requested_after_result_release_bytes": 0
+    }
+  },
+  "excluded": [
+    "cold fixture construction",
+    "cold primary cache construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local requested allocation observations, not a cold, transient or process heap quota"
+}

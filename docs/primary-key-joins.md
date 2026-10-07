@@ -27,8 +27,8 @@ and missing bindings are refused before scanning, including LIMIT 0/empty tables
 
 Projection, stable sort, null/tie handling and limits keep their meaning.
 [Unique left-primary order and necessary source bounds](ordered-primary-joins.md)
-now stream projected output. Other sort prefixes keep the full intermediate-byte
-cap before LIMIT; returned projection bytes use the script-wide budget. Immutable older snapshots and
+now stream projected output. Other primary_join sort prefixes use [bounded best-candidate selection](limited-primary-join-sort.md)
+with the retained intermediate-byte cap; returned projection bytes use the script-wide budget. Immutable older snapshots and
 managed staged/rollback/recovery/backup reads use the same plan.
 
 EXPLAIN returns access="primary_join", with the previous field set. The matching

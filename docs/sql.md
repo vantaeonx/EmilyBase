@@ -191,3 +191,8 @@ primary_join plans. A first ORDER BY key equal to the left unique primary key
 uses its double-ended cursor and stops after accepted matches. No-sort/unique-prefix
 plans retain projected output with the original shared byte cap; other prefixes
 retain the full sorter/intermediate cap. [Details](ordered-primary-joins.md).
+
+Other primary_join ordering prefixes use bounded stable selection of the best
+LIMIT full candidates. They still scan every necessary source candidate, enforce
+the original matched-row/work allowance and cap retained full-row bytes. General
+fallback/single-table sorts retain their original limits. [Details](limited-primary-join-sort.md).

@@ -41,3 +41,10 @@ bytes for ordered source, 8769 for its restricted range and 8222 for one point.
 Results retain respectively 348, 348 and 284 bytes and release to zero.
 [Exact source-bound observations](measurements/2026-10-07-ordered-joins/operation-peaks.json)
 exclude fixture/cache construction, allocator overhead, stacks and profiler data.
+
+## Subsequent sorting extension
+
+[Bounded primary-join sorting](limited-primary-join-sort.md) now retains only the
+best LIMIT full candidates for other primary_join sort prefixes. Its retained-byte
+cap stays active, while all necessary source candidates still execute. This extends
+the earlier full-sort behavior described above; other access paths are unchanged.

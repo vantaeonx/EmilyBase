@@ -541,7 +541,7 @@ fn staged_rollback_recovery_compaction_and_verified_restore_keep_primary_join_re
 }
 
 #[test]
-fn sorted_primary_join_keeps_full_intermediate_byte_limit_before_limit() {
+fn sorted_primary_join_keeps_retained_intermediate_byte_limit() {
     let mut snapshot = Snapshot::empty().unwrap();
     for (id, name) in [(1, "left_rows"), (2, "right_rows")] {
         add_table(
@@ -571,7 +571,7 @@ fn sorted_primary_join_keeps_full_intermediate_byte_limit_before_limit() {
     assert!(matches!(
         query(
             &snapshot,
-            "SELECT a.id FROM left_rows AS a JOIN right_rows AS b ON a.link=b.id ORDER BY b.link LIMIT 1",
+            "SELECT a.id FROM left_rows AS a JOIN right_rows AS b ON a.link=b.id ORDER BY b.link LIMIT 1500",
             &[]
         ),
         Err(ExecutionError::Limit("intermediate rows/bytes"))

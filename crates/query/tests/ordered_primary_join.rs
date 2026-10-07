@@ -218,7 +218,7 @@ fn left_points_and_necessary_ranges_preserve_complete_join_and_where() {
 }
 
 #[test]
-fn right_ordering_or_nonprimary_first_key_retains_full_sort_and_ties() {
+fn right_ordering_or_nonprimary_first_key_keeps_sort_ties_and_retained_limit() {
     let snapshot = small();
     for order in [
         "b.id DESC,a.id DESC",
@@ -231,7 +231,7 @@ fn right_ordering_or_nonprimary_first_key_retains_full_sort_and_ties() {
     assert!(matches!(
         query(
             &snapshot,
-            "SELECT a.id FROM l AS a JOIN r AS b ON a.link=b.id ORDER BY b.link DESC,a.id LIMIT 1",
+            "SELECT a.id FROM l AS a JOIN r AS b ON a.link=b.id ORDER BY b.link DESC,a.id LIMIT 1500",
             &[]
         ),
         Err(ExecutionError::Limit("intermediate rows/bytes"))
@@ -239,7 +239,7 @@ fn right_ordering_or_nonprimary_first_key_retains_full_sort_and_ties() {
     assert!(matches!(
         query(
             &snapshot,
-            "SELECT a.id FROM l AS a JOIN r AS b ON a.link=b.id ORDER BY a.hidden,a.id LIMIT 1",
+            "SELECT a.id FROM l AS a JOIN r AS b ON a.link=b.id ORDER BY a.hidden,a.id LIMIT 1500",
             &[]
         ),
         Err(ExecutionError::Limit("intermediate rows/bytes"))

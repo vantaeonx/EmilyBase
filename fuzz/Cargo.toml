@@ -281,3 +281,10 @@ path = "fuzz_targets/ordered_primary_joins.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "limited_join_sort"
+path = "fuzz_targets/limited_join_sort.rs"
+test = false
+doc = false
+bench = false

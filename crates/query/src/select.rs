@@ -1,6 +1,6 @@
 use crate::MAX_RESULT_ROWS;
 use crate::execute::{Budget, ExecutionError, MAX_OUTPUT_BYTES, ResultSet, RunResult, row_bytes};
-use crate::plan::Plan;
+use crate::plan::{Plan, SortKey};
 use crate::predicate::value_order;
 use emilybase_catalog::{Row, Value};
 use emilybase_database::{MAX_ROWS, Snapshot};
@@ -76,40 +76,12 @@ pub(crate) fn finish(
     budget: &mut Budget,
 ) -> RunResult<ResultSet> {
     // All sort columns resolve to schema-validated types before scanning, including empty input.
-    retained.sort_by(|a, b| {
-        for key in &plan.order {
-            let (a, b) = (&a[key.index], &b[key.index]);
-            let order = match (a, b) {
-                (Value::Null, Value::Null) => Ordering::Equal,
-                (Value::Null, _) => {
-                    if key.nulls_first {
-                        Ordering::Less
-                    } else {
-                        Ordering::Greater
-                    }
-                }
-                (_, Value::Null) => {
-                    if key.nulls_first {
-                        Ordering::Greater
-                    } else {
-                        Ordering::Less
-                    }
-                }
-                _ => {
-                    let order = value_order(a, b).unwrap_or(Ordering::Equal);
-                    if key.descending {
-                        order.reverse()
-                    } else {
-                        order
-                    }
-                }
-            };
-            if !order.is_eq() {
-                return order;
-            }
-        }
-        Ordering::Equal
-    });
+    retained.sort_by(|a, b| compare_rows(a, b, &plan.order));
+    project(plan, retained, budget)
+}
+
+/// Rows arrive in the final order, either from a stable sort or bounded heap.
+pub(crate) fn project(plan: Plan, retained: Vec<Row>, budget: &mut Budget) -> RunResult<ResultSet> {
     let rows = retained
         .into_iter()
         .take(plan.limit)
@@ -123,4 +95,41 @@ pub(crate) fn finish(
         rows,
         affected: 0,
     })
+}
+
+/// Shared null/direction/type ordering for stable full sort and bounded selection.
+/// Schema binding precedes either path, including empty input and LIMIT 0.
+pub(crate) fn compare_rows(a: &Row, b: &Row, order: &[SortKey]) -> Ordering {
+    for key in order {
+        let (a, b) = (&a[key.index], &b[key.index]);
+        let order = match (a, b) {
+            (Value::Null, Value::Null) => Ordering::Equal,
+            (Value::Null, _) => {
+                if key.nulls_first {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            }
+            (_, Value::Null) => {
+                if key.nulls_first {
+                    Ordering::Greater
+                } else {
+                    Ordering::Less
+                }
+            }
+            _ => {
+                let order = value_order(a, b).unwrap_or(Ordering::Equal);
+                if key.descending {
+                    order.reverse()
+                } else {
+                    order
+                }
+            }
+        };
+        if !order.is_eq() {
+            return order;
+        }
+    }
+    Ordering::Equal
 }

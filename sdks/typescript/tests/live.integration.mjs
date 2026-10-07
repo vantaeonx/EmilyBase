@@ -171,6 +171,18 @@ test(
             { type: "integer", value: 2 },
           ],
         ]);
+        const sortedJoin =
+          "SELECT a.id FROM t AS a JOIN t AS b ON a.id=b.id ORDER BY b.id DESC LIMIT $1";
+        assert.equal(
+          (await client.explain(sortedJoin, [{ type: "integer", value: 1 }]))
+            .access,
+          "primary_join",
+        );
+        assert.deepEqual(
+          (await client.sql(sortedJoin, [{ type: "integer", value: 1 }]))
+            .results[0].rows,
+          [[{ type: "integer", value: 2 }]],
+        );
         assert.deepEqual(
           (
             await client.sql(

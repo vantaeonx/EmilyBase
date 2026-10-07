@@ -458,3 +458,13 @@ matches. Streamed plans retain selected output fields while complete ON/WHERE
 and shared work/output budgets stay active. Other orders retain full stable sort
 and intermediate limits under [ADR 0058](adr/0058-streamed-primary-join-order.md).
 Stored formats, durability acknowledgements and production gates are unchanged.
+
+
+## Follow-up: bounded primary-join sorting
+
+[Small sorted JOIN limits](limited-primary-join-sort.md) now retain only
+the best LIMIT full candidates with stable tie/null/type ordering. Full ON/WHERE
+and every source probe still execute; work, matched-row, retained-byte and output
+bounds stay active under [ADR 0059](adr/0059-bounded-primary-join-sort.md).
+Other access paths keep their original limits. Stored formats, durable-index
+acknowledgement and production gates are unchanged.

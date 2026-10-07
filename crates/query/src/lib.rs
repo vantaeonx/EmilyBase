@@ -9,6 +9,7 @@ mod primary_join;
 mod range;
 mod select;
 mod stream;
+mod topk;
 pub use execute::{
     ExecutionError, MAX_OUTPUT_BYTES, MAX_QUERY_WORK, Report, ResultSet, RunResult, execute, query,
 };
