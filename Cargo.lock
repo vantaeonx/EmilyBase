@@ -539,6 +539,7 @@ dependencies = [
  "emilybase-database",
  "emilybase-query",
  "emilybase-transactions",
+ "emilybase-wal",
  "futures-util",
  "proptest",
  "rustix",

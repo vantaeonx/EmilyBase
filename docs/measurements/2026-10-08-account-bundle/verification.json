@@ -1,0 +1,99 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "fac4fe4b5136e3ea8ec193dd1709d1b60b8ec90d",
+  "source_sha256": {
+    "Cargo.lock": "8c61b711511d91e47a87c3294ddad23a5843075f07090ab212456ee2f905bc2a",
+    "crates/server/Cargo.toml": "292f1554b4cc90a7dce0901e931a571ce5c905f5e06a74189c4c8b34bfacf76f",
+    "crates/server/src/account_bundle.rs": "0e6abf602b0edb8219732188ce8b09f8e9b59e70916ae6a7e298815fcb902676",
+    "crates/server/src/account_bundle/tests.rs": "a01373d51708f33570292ded35e417e672b1479df6f971d607a9d77129485e86",
+    "crates/server/src/lib.rs": "b1a2307cad1248e7d85f64d9f4e7613acf3e1c905db6a381ee27abbb52303b5c",
+    "crates/server/src/projects.rs": "0c5dbb83de6185875c4ea9ab70d9ec0674d0e1dab265f7ca90d0dc69cc30d867",
+    "fuzz/Cargo.toml": "56e6d609ff846aabee866397543bbbe92a308e7fa8d9f10cb41eb4d0140b9245",
+    "fuzz/fuzz_targets/account_bundle.rs": "52a11a02ad991c8f25173c6e24eafbe13bf59b15c0a2ff09405d89d601a9bc38"
+  },
+  "protocol": {
+    "experimental_envelope": "EMILYBND-1",
+    "whole_image_byte_cap": 134217728,
+    "explicit_roster_limit": 128,
+    "automatic_private_discovery": false,
+    "all_data_owners_before_first_prefix": true,
+    "private_owners_already_held_by_caller": true,
+    "owners_retained_through_private_capture_and_final_source_checks": true,
+    "private_versions": [
+      1,
+      2,
+      3
+    ],
+    "wal_versions": [
+      1,
+      2
+    ],
+    "canonical_sorted_roster": true,
+    "complete_private_semantics_and_unique_database_identities": true,
+    "inspector_has_no_filesystem_or_request_authority": true,
+    "public_metadata_report_excludes_private_rows": true,
+    "capture_returns_sensitive_bytes": true,
+    "encoded_size_is_not_process_heap_admission": true
+  },
+  "matrix": {
+    "new_main_server_cases": 12,
+    "independent_mutation_cases": 32,
+    "new_explicit_helpers": 2,
+    "forced_process_kills": 6,
+    "capture_boundaries": [
+      "all_data_owners_locked",
+      "private_prefix_captured",
+      "capture_returned"
+    ],
+    "native_cross_process_contention_before_capture_return": true,
+    "exact_source_history_after_kill_and_restart": true,
+    "subset_and_empty_rosters": true,
+    "real_private_v1_v2_v3_and_wal1_wal2": true,
+    "overflow_and_exact_encoded_size_admission": true,
+    "actual_128_mib_archive_allocated_for_boundary_test": false,
+    "synthetic_corpus_seeds": 5
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 1026,
+    "ignored_helpers_each": 21,
+    "optional_release_diagnostics_each": 53,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74"
+  },
+  "asan": {
+    "target": "account_bundle",
+    "runs": 350066,
+    "seconds": 46,
+    "maximum_rss_mib": 414,
+    "rss_limit_mib": 512,
+    "max_input_bytes": 262144,
+    "findings": 0
+  },
+  "source_counts": {
+    "rust": 73394,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 75500,
+    "net_rust_this_block": 1003
+  },
+  "exclusions": [
+    "bundle file publication",
+    "combined root restore and mandatory private reset before traffic",
+    "authoritative attached-private-store catalog",
+    "HTTP accounts, roles and row policies",
+    "whole-process retained model, staging, transient and worker quotas",
+    "physical power loss or new commit/fsync-fault campaign",
+    "production/security acceptance gate"
+  ]
+}

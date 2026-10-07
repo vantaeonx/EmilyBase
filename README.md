@@ -70,6 +70,11 @@ publication. Use it for private archives; generic engine restore retains old sco
 A [pure private archive inspector](docs/adr/0074-owned-verified-private-archive-inventory.md)
 shares complete semantic validation with opening and explicit sensitive exports.
 Its metadata report grants no access and does not create/reset a store on disk.
+The [offline account bundle](docs/account-bundle-format.md) now captures every
+registry data database plus an explicitly supplied private roster while retaining
+all source owners across the whole operation. It validates complete nested private
+schemas, project scopes and unique database identities. Bundle bytes are sensitive;
+file publication, combined restore and automatic private-store discovery remain open.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

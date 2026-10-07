@@ -81,6 +81,13 @@ private file/image export. A future combined capture must retain every data/acco
 owner before its first prefix; independently appended images do not establish that
 boundary. Combined capture/publication, server authentication and memory gates remain open.
 
+[ADR0075](adr/0075-common-registry-private-capture.md) implements common offline
+capture of registry data plus an explicit private roster while retaining every
+source owner before the first prefix through final validation. The new EMILYBND-1
+inspector checks complete nested schemas/scopes and database identity uniqueness.
+Subset rosters are explicit. Private file publication, combined root restoration,
+authoritative roster, HTTP accounts and numeric memory gates remain open.
+
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.

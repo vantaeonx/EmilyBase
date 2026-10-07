@@ -1,4 +1,5 @@
 //! Bounded HTTP transport over a synchronous isolated-project/key registry.
+mod account_bundle;
 #[cfg(test)]
 mod durability;
 mod http;
@@ -7,6 +8,10 @@ mod projects;
 mod rate;
 mod registry_archive;
 mod registry_files;
+pub use account_bundle::{
+    ACCOUNT_BUNDLE_VERSION, AccountBundleReport, BundledAccountReport, MAX_ACCOUNT_BUNDLE_BYTES,
+    inspect_account_bundle_bytes,
+};
 pub use http::{router, serve};
 pub use projects::{AuthorizedProject, CreatedProject, ProjectInfo, ProjectStatus, ProjectStore};
 pub use registry_archive::{
@@ -39,6 +44,14 @@ pub enum Error {
     Poisoned,
     #[error("unsafe project filesystem path or permissions")]
     Path,
+    #[error("invalid account bundle: {0}")]
+    BundleFormat(&'static str),
+    #[error("unsupported account bundle version: {0}")]
+    BundleVersion(u16),
+    #[error("account bundle checksum mismatch")]
+    BundleChecksum,
+    #[error("private account storage failed")]
+    Accounts(#[from] emilybase_auth::accounts::Error),
     #[error("invalid project metadata")]
     Metadata,
     #[error("invalid registry backup: {0}")]

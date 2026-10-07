@@ -3099,3 +3099,47 @@ SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
 oracles and both warning-denied advisory scans pass. The
 [source-bound artifact](measurements/2026-10-08-private-inventory/verification.json)
 records parser/native observations and the distinct incomplete integration gates.
+
+## Common registry/private capture, 2026-10-08
+
+Twelve new server cases check the experimental EMILYBND-1 wrapper without enabling
+an HTTP account route. Exact registry/private image comparisons preserve source
+histories across private versions1/2/3 and both WAL versions. Reversed input roster
+produces the same canonical bytes; empty/subset rosters are reported explicitly.
+Metadata formatting exposes no tested synthetic login, password or API key.
+
+Boundary callbacks refuse every competing data/private open before the first data
+prefix and after a private prefix. Refused outstanding capabilities, external data
+owners, duplicate/foreign roster, corrupt private export and changed final registry
+metadata release temporary data owners and preserve caller private ownership.
+Framing/version/checksum/reserved fields, truncated/tail bytes, overflowing lengths,
+unknown/sorted/duplicate scopes and valid nested database identity aliases refuse.
+Total encoded-size admission executes exact-limit and overflow checks without
+allocating a128 MiB test archive. An independent32-case mutation model checks
+registry row counts, explicit roster, private count/time/WAL and source immutability.
+
+Six forced process kills cover all-data-owner, private-prefix and completed capture
+boundaries on both WAL versions. Cross-process opens are refused before capture
+finishes; exact acknowledged source bytes survive and owners are available after
+restart. This is capture evidence, not a new WAL commit/fsync or power-loss campaign.
+Two ignored helper tests are invoked only by parent kills or explicit seed generation.
+
+The explicitly invoked corpus helper generates five synthetic bundle seeds:
+empty registry and a three-project registry with0..3 supplied private stores.
+The account_bundle parser-only ASan target completes350,066 executions in46 seconds,
+maximum RSS414 MiB under512, input cap262144 bytes, no findings. Raw inputs and
+outer/registry checksum-repaired mutations reach nested validation. Integrity
+inspection does not certify a third party's common capture provenance or authority.
+
+[ADR0075](adr/0075-common-registry-private-capture.md) records the common ownership
+boundary and explicit roster. Numeric whole-process model/transient/output quotas,
+authoritative private catalog, file publication, combined reset-before-root-publication,
+HTTP users/roles/RLS and production acceptance remain open.
+
+Final frozen-source locked checks pass on1.99.0/1.89.0:1026 main cases/21 ignored
+helpers and53 optional release diagnostics each. Formatting and warning-denied
+workspace/profile/fuzz Clippy, minimum fuzz compilation and workspace build pass.
+SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
+oracles and both warning-denied advisory scans pass. The
+[source-bound artifact](measurements/2026-10-08-account-bundle/verification.json)
+records parser observations and distinct unfinished publication/integration gates.

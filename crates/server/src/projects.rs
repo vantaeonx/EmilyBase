@@ -130,6 +130,50 @@ impl ProjectStore {
     /// Offline consistent registry image. Contains private digests and plaintext data.
     /// Refuses outstanding capabilities and holds every database owner until capture finishes.
     pub fn backup_image(&mut self) -> Result<Vec<u8>> {
+        self.capture_registry_with(Ok)
+    }
+
+    /// A common boundary for registry data and the explicitly supplied private
+    /// roster. All account owners already exist; all data owners are acquired
+    /// before the first prefix and retained through private capture/validation.
+    /// Sensitive bytes, not automatic discovery of every platform service/store.
+    pub fn capture_account_bundle(
+        &mut self,
+        accounts: &mut [emilybase_auth::accounts::AccountStore],
+    ) -> Result<Vec<u8>> {
+        self.ready()?;
+        if accounts.len() > MAX_PROJECTS {
+            return Err(Error::Limit);
+        }
+        let mut ids = std::collections::BTreeSet::new();
+        for account in accounts.iter() {
+            if !self.projects.contains_key(account.project())
+                || !ids.insert(account.project().to_owned())
+            {
+                return Err(Error::BundleFormat("private roster project or duplicate"));
+            }
+        }
+        self.capture_registry_with(|registry| {
+            let mut private = Vec::with_capacity(accounts.len());
+            let mut total = crate::account_bundle::HEADER
+                .checked_add(registry.len())
+                .filter(|n| *n <= crate::MAX_ACCOUNT_BUNDLE_BYTES)
+                .ok_or(Error::Limit)?;
+            for account in accounts {
+                let image = account.backup_image()?;
+                total = crate::account_bundle::extend_size(total, image.len())?;
+                private.push((account.project().to_owned(), image));
+                #[cfg(test)]
+                crate::durability::checkpoint("bundle_private_prefix_captured");
+            }
+            crate::account_bundle::encode(&registry, private)
+        })
+    }
+
+    fn capture_registry_with<T>(
+        &mut self,
+        capture: impl FnOnce(Vec<u8>) -> Result<T>,
+    ) -> Result<T> {
         self.ready()?;
         if Arc::strong_count(&self.owner) != 1 {
             return Err(Error::Busy);
@@ -168,8 +212,11 @@ impl ProjectStore {
         }
         crate::registry_archive::finish(&mut bytes, self.projects.len())?;
         crate::inspect_registry_backup_bytes(&bytes)?;
+        // Explicit last use makes ownership retention span the whole callback.
+        let outcome = capture(bytes);
         self.check_backup_source()?;
-        Ok(bytes)
+        drop(databases);
+        outcome
     }
     /// Publish a verified private archive outside the registry without replacing any path.
     pub fn backup(&mut self, target: impl AsRef<Path>) -> Result<crate::RegistryBackupReport> {
