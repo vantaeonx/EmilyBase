@@ -1,0 +1,74 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "3d2b83223bf7a210eb17c67f76ad9a614bbbeae4",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "37afc513ec5295115ffc5ee8e2dff052264753fef193cff04d32461ca036add2",
+    "crates/auth/src/accounts/sessions.rs": "bd3d98e64a17c5e5f980853e3f9799d59a9b0db99932f049e784ca8048c6ff0d",
+    "crates/auth/src/accounts/sessions_tests.rs": "9ec74a05b7d714124a57ab238baac79a3639dc186cbe2385a7adba74155d4583",
+    "crates/auth/src/accounts/recovery_tests.rs": "9f6ee4160bcfeb289c8b2b274335acc5ed1d372223996d984828203b8e6d9ae1",
+    "crates/auth/src/accounts/session_schema.rs": "9265c441d79baa38c0798de4db1b6419556937ca33e8ccb5a53f158edf48c5c8",
+    "crates/auth/src/accounts/session_clock.rs": "dd6a3a3d3c03b8fb02654530eefd2f8aacb9ec07be0f3dde6ec3410b99167e7e",
+    "crates/auth/src/tokens/mod.rs": "6bf395f1ae147f322e8a08c0cae75afa9a10c0c004c4121f837eb15c0508be27"
+  },
+  "protocol": {
+    "requires_explicit_private_v3_clock": true,
+    "session_family_capacity": 4096,
+    "cleanup_records_per_commit": 128,
+    "family_id_random_attempts": 4,
+    "access_seconds": 900,
+    "refresh_seconds": 604800,
+    "absolute_seconds": 2592000,
+    "generation_range": "1..=i64::MAX",
+    "observe_trusted_time_before_credential_check": true,
+    "token_return_after_commit": true,
+    "atomic_two_verifier_refresh": true,
+    "borrowed_privately_constructed_principal": true
+  },
+  "matrix": {
+    "new_account_cases": 11,
+    "independent_sequence_cases": 32,
+    "concurrent_refresh_winners": 1,
+    "wal_versions": [
+      1,
+      2
+    ],
+    "refresh_logout_staged_ack_kills": 8,
+    "verified_recovered_backup_restore": true,
+    "staged_history_exactly_unchanged": true,
+    "corrupt_cleanup_reproduced_before_fix": true,
+    "generic_restore_old_credential_accepted_until_explicit_reset": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 990,
+    "ignored_helpers_each": 18,
+    "optional_release_diagnostics_each": 52,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74"
+  },
+  "source_counts": {
+    "rust": 70655,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 72761,
+    "net_rust_this_block": 1014
+  },
+  "exclusions": [
+    "HTTP account/session routes, roles and row policies",
+    "combined registry/account capture and pre-traffic restore reset",
+    "whole-process numeric heap or worker quotas",
+    "new parser-fuzz campaign; existing unchanged parser campaigns documented separately",
+    "physical power loss or new mid-fsync campaign",
+    "production/security acceptance gate"
+  ]
+}

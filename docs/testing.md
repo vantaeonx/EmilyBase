@@ -2979,3 +2979,48 @@ keep this metadata protocol distinct from session admission. Future checks must
 observe trusted time before every credential attempt. Runtime sign-in/refresh/
 logout/expiry, HTTP integration and coordinated restore reset remain pending.
 No broad media fault or production/security gate closes here.
+
+## Local durable session lifecycle, 2026-10-07
+
+Eleven new account cases exercise real sign-in, current-state access checks,
+refresh, logout, trusted revocation and bounded cleanup. A32-case independent
+sequence model tracks account epochs, disable state, current token generation,
+revocation and scope reset through compaction, restart and verified backup restore.
+A two-thread synchronized refresh test has exactly one winner; the old pair fails
+and the replacement admits under current state. Project-bound token records
+cannot be copied into another project's store to grant access.
+
+Strict deadline tests cover access/refresh equality, absolute clipping and durable
+clock observation before denial. Password replacement, disable/enable and scope
+reset invalidate prior credentials. Generation exhaustion, malformed/1MiB token
+input, exact no-op revocation and history capacity preserve expected state.
+An actual4096-row history reaches capacity,128-row cleanup reclaims it and issuance
+then succeeds. Invalid cleanup bounds do not change the clock or journal.
+
+A regression first failed: corrupt current account state was mistaken for an
+inactive session during cleanup. After reproducing it, the typed branch was fixed
+to propagate corruption/storage errors while accepting only explicit inactivity.
+The same fixture now preserves the family and exact equal-time journal bytes.
+
+Eight forced process kills cover staged and acknowledged refresh/logout across
+both WAL versions. Commit cases retain generation/revocation and refuse old
+credentials; staged cases keep old credentials and exact prior journal bytes.
+Independently verified recovered backups reproduce metadata. Child credentials
+use a bounded private stdin pipe, excluding command arguments, logs and environment.
+This exercises these boundaries, not physical power loss or a new mid-fsync matrix.
+
+Plaintext pairs do not appear in exported WAL. Generic private restore still admits
+the latest credential under old metadata; explicit durable reset makes it fail.
+Combined registry/account restore must guarantee that reset before traffic.
+This is a synchronous private library, without enabled HTTP account/session routes,
+roles, row policies or production acceptance. [ADR0072](adr/0072-durable-local-session-lifecycle.md)
+records lifecycle and remaining integration gates.
+
+Final frozen-source locked checks pass on1.99.0/1.89.0:990 main cases/18 ignored
+helpers and52 optional release diagnostics each. Formatting and warning-denied
+workspace/profile/fuzz Clippy, minimum fuzz compilation and workspace build pass.
+SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
+oracles and both warning-denied advisory scans pass. No new parser ASan campaign
+is claimed for this lifecycle-only change; unchanged parser evidence remains in
+the earlier sections. The [source-bound artifact](measurements/2026-10-07-session-lifecycle/verification.json)
+records actual counts and the separate unfinished platform gates.

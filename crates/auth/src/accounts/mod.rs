@@ -1,6 +1,10 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod records;
 mod session_clock;
+mod sessions;
+#[cfg(test)]
+mod sessions_tests;
+pub use sessions::{IssuedSession, SessionPrincipal};
 #[cfg(test)]
 mod session_clock_tests;
 mod session_schema;
@@ -48,6 +52,14 @@ pub enum Error {
     Denied,
     #[error("credential epoch exhausted")]
     Epoch,
+    #[error("session family capacity exhausted")]
+    SessionCapacity,
+    #[error("session generation exhausted")]
+    Generation,
+    #[error("invalid bounded session cleanup limit")]
+    Cleanup,
+    #[error("session token operation failed")]
+    Token(#[from] crate::tokens::TokenError),
     #[error("session clock storage is not enabled")]
     ClockDisabled,
     #[error("invalid or backward session time")]

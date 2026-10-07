@@ -27,13 +27,13 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; server/account/session and coordinated-backup integration pending |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions implemented; HTTP accounts/sessions and coordinated backups pending |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
 
 Durable table indexes, background journal rotation and history vacuuming,
-Extended SQL, user/session authentication, row policies,
+Extended SQL, HTTP user/session authentication, row policies,
 file uploads, realtime, migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and production deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
@@ -50,26 +50,24 @@ integration, rate/enum controls, sessions, roles and row policies remain open un
 account storage over the original engine, positive credential epochs, disable
 state and verified local backup/restore. It remains separate from public SQL and
 the live registry. Complete account/data capture, private authorized paths,
-network admission, account policy and durable sessions are gates before HTTP
+network admission and account policy are gates before HTTP
 enablement. Current registry archives do not silently claim to contain it.
 
 [ADR0069](adr/0069-purpose-bound-token-primitives.md) supplies purpose-bound
-random token issuance, strict fixed formats and independent verifier oracles.
-These primitives precede durable family migration/rotation, account-epoch/expiry
-validation, concurrency/crash tests and restore-incarnation rotation. No session
-HTTP route or existing backup format is enabled by this increment.
+random tokens, strict fixed formats and independent verifier oracles.
+[ADR0070](adr/0070-explicit-private-session-schema.md) adds explicit atomic
+private v1-to-v2 migration and bounded family/reference validation.
+[ADR0071](adr/0071-durable-session-time-watermark.md) adds private v3 time metadata,
+forward observation and atomic incarnation/time reset. These intermediate
+increments granted no session admission by themselves.
 
-[ADR0070](adr/0070-explicit-private-session-schema.md) adds an explicit atomic
-v1-to-v2 private-store migration, complete bounded family/reference validation,
-backward v1 reading and four-schema private backup/recovery checks. Sign-in,
-refresh/revoke/prune, current-state expiry enforcement, trusted clock handling
-and coordinated restore rotation remain pending; no session route is enabled.
-
-[ADR0071](adr/0071-durable-session-time-watermark.md) adds explicit private v3 clock
-metadata, durable forward observation, backward-time refusal after restart and
-atomic incarnation/time reset. Sign-in/refresh/expiry must integrate these real
-primitives; coordinated restore must run reset before traffic. No user session
-or network authorization gate is completed by metadata alone.
+[ADR0072](adr/0072-durable-local-session-lifecycle.md) integrates these foundations
+into real synchronous sign-in, current-state access verification, atomic refresh,
+logout, trusted revocation and bounded cleanup. Independent sequence, concurrent
+refresh and forced-kill/verified-restore tests execute. Current private restoration
+still requires an explicit reset before traffic. The library is not attached to
+server projects; HTTP workers/rate controls, account policy, complete account/data
+backup/restore, roles and row policies remain gates. No milestone is closed.
 
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker

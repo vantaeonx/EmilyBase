@@ -221,11 +221,73 @@ fn account_kill_worker() {
                 std::thread::park();
             }
         }
+        "session-refresh-commit"
+        | "session-refresh-stage"
+        | "session-logout-commit"
+        | "session-logout-stage" => {
+            use std::io::Read;
+            let mut input = String::new();
+            std::io::stdin()
+                .lock()
+                .take(103)
+                .read_to_string(&mut input)
+                .unwrap();
+            assert_eq!(input.len(), 102);
+            if mode == "session-refresh-commit" {
+                let next = store.refresh_session(&input, 100).unwrap();
+                assert!(store.verify_access(next.access.expose(), 100).is_ok());
+                println!("{READY}");
+                std::io::stdout().flush().unwrap();
+                loop {
+                    std::thread::park();
+                }
+            } else if mode == "session-logout-commit" {
+                store.logout_session(&input, 100).unwrap();
+                println!("{READY}");
+                std::io::stdout().flush().unwrap();
+                loop {
+                    std::thread::park();
+                }
+            } else {
+                use super::session_schema::FAMILIES;
+                use crate::tokens::{TokenKind, issue, metadata};
+                let family = metadata(&input).unwrap().family_id;
+                let key = Key::Text(family.iter().map(|b| format!("{b:02x}")).collect());
+                let mut row = store
+                    .database
+                    .view()
+                    .unwrap()
+                    .get(FAMILIES, &key)
+                    .unwrap()
+                    .unwrap()
+                    .clone();
+                if mode == "session-logout-stage" {
+                    row[13] = Value::Boolean(true);
+                } else {
+                    let scope = store.session_storage_scope().unwrap().unwrap();
+                    let (_, access) = issue(TokenKind::Access, &scope, family).unwrap();
+                    let (_, refresh) = issue(TokenKind::Refresh, &scope, family).unwrap();
+                    row[5] = Value::Integer(2);
+                    row[11] = Value::Bytes(access.encode().to_vec());
+                    row[12] = Value::Bytes(refresh.encode().to_vec());
+                }
+                let mut staged = store.database.begin().unwrap();
+                staged.update(FAMILIES, &key, row).unwrap();
+                println!("{READY}");
+                std::io::stdout().flush().unwrap();
+                loop {
+                    std::thread::park();
+                }
+            }
+        }
         _ => panic!("unknown synthetic worker boundary"),
     }
 }
 
 pub(super) fn kill_worker_at(path: &Path, mode: &str) {
+    kill_worker_with_input(path, mode, "");
+}
+pub(super) fn kill_worker_with_input(path: &Path, mode: &str, input: &str) {
     let mut child = Command::new(std::env::current_exe().unwrap())
         .args([
             "--exact",
@@ -235,9 +297,16 @@ pub(super) fn kill_worker_at(path: &Path, mode: &str) {
         ])
         .env("EMILYBASE_ACCOUNT_KILL_PATH", path)
         .env("EMILYBASE_ACCOUNT_KILL_MODE", mode)
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(input.as_bytes())
         .unwrap();
     let stdout = child.stdout.take().unwrap();
     let (send, receive) = mpsc::sync_channel(1);

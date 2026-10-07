@@ -50,20 +50,21 @@ capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
 The full stage-2 acceptance gate remains open. Persistent table indexes, integrated user authentication, dashboard and Kotlin SDK are future work.
 The Rust [password helper](docs/password-verifiers.md) supplies tested Argon2id
-verifiers and bounded workspaces; HTTP accounts, login and sessions remain pending.
-The separate [private account library](docs/private-accounts.md) stores scoped
-users, password replacements and disable/epoch state on our original WAL engine.
-It is not connected to server projects or current whole-registry backups; HTTP
-signup/login, coordinated restore, sessions and account policy remain pending.
-The [token primitive library](docs/session-token-primitives.md) adds bounded
-purpose/context-bound random credentials and private versioned verifier records.
-It does not implement durable sessions, expiry, refresh rotation or revocation.
-An [explicit private-schema migration](docs/adr/0070-explicit-private-session-schema.md)
-atomically adds bounded family/metadata storage while keeping v1 stores readable.
-Strict inventory validation is implemented; session lifecycle methods are pending.
-An optional [durable session clock](docs/adr/0071-durable-session-time-watermark.md)
-records nondecreasing trusted time and atomically resets scope/time together.
-Session checks still need to integrate it before network authentication is enabled.
+verifiers and bounded workspaces. The separate [private account library](docs/private-accounts.md)
+stores scoped users, password replacements and disable/epoch state on our original WAL engine.
+Its explicitly activated session service now implements local sign-in, access
+verification, single-use refresh rotation, logout, administrative revocation and
+bounded cleanup. Each check uses current account state, project/incarnation scope
+and a [durable trusted-time watermark](docs/adr/0071-durable-session-time-watermark.md).
+[ADR0072](docs/adr/0072-durable-local-session-lifecycle.md) records deadlines,
+commit-before-token-return behavior, concurrency and process-kill evidence.
+The [token primitive library](docs/session-token-primitives.md) supplies the
+purpose-bound random credentials and strict private verifier formats.
+Private versions1/2/3 remain readable; session checks require explicit v3 activation.
+This library remains separate from server projects and current whole-registry
+archives. HTTP signup/login/session routes, account policy, roles, row policies
+and coordinated account/data restore remain pending. Generic private restore
+retains old credentials until an explicit durable scope reset before traffic.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

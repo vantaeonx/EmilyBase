@@ -32,7 +32,7 @@ inspectable rather than being silently overwritten or discarded.
 Do not put this store inside a project's public data directory or expose it through
 a generic query route. Future integration must reserve bounded blocking workers,
 use one appropriately shared crypto pool, select private paths from authorized
-capabilities and define durable session/revocation/restore behavior. Private
+capabilities and coordinate account/data restore with durable session reset. Private
 archives still contain sensitive plaintext metadata and salted password verifiers.
 [ADR0068](adr/0068-private-project-account-store.md) records the implemented boundary
 and outstanding controls. The platform remains experimental.
@@ -48,9 +48,9 @@ once migrated. Older readers refuse version2; no implicit downgrade is offered.
 
 SessionRecordInfo/inspect_session_record validate untrusted bounded metadata,
 verifier context and clipped time fields without verifying secrets or granting
-access. No runtime family issuance, refresh, revoke or principal API is enabled.
-Current-state/clock/expiry enforcement and coordinated restore rotation remain
-open under [ADR0070](adr/0070-explicit-private-session-schema.md).
+access. The migration alone grants no access. Local runtime admission was added later
+under [ADR0072](adr/0072-durable-local-session-lifecycle.md); coordinated account/data
+restore and network integration remain open.
 
 
 ## Explicit clock activation
@@ -64,6 +64,45 @@ correction cannot retain the old credential scope. Generic restore does not run
 it automatically; coordinated restore must do so before accepting traffic.
 
 The current five-schema inventory is validated, including current-incarnation
-family issue-time bounds. These are local metadata APIs, not implemented session
-admission or permissions. [ADR0071](adr/0071-durable-session-time-watermark.md)
-records compatibility, requested-heap evidence and required lifecycle integration.
+family issue-time bounds. The local session lifecycle below now observes this metadata before credential
+checks. [ADR0071](adr/0071-durable-session-time-watermark.md) records its separate
+compatibility and requested-heap evidence.
+
+## Local durable session lifecycle
+
+After explicit enable_session_clock(now), sign_in checks the real password and
+commits a new random family before returning zeroizing access/refresh owners.
+verify_access returns a privately constructed borrowed SessionPrincipal after
+checking project/incarnation, account identity, current credential epoch,
+disabled/revoked state, secret verifier and strict deadlines. The principal borrows
+the private owner and cannot be cloned or implicitly serialized. It establishes
+an account identity; project capabilities, roles and row policies are separate gates.
+
+Access lasts at most900 seconds, refresh604800 seconds and the family2592000
+seconds from creation. Refresh clips both deadlines to the absolute lifetime,
+increments the bounded generation and atomically replaces both verifiers. Exactly
+one serialized attempt with a refresh secret succeeds; its previous access and
+refresh no longer authenticate. Storage uncertainty requires reauthentication,
+without automatic retry. logout_session accepts the current refresh credential;
+revoke_session_family is explicitly trusted local administration.
+
+Every credential attempt observes trusted service time before checking secrets,
+including denied and expired attempts. A later second commits the watermark;
+an equal observation is a no-op. A denied attempt can therefore advance the clock
+without changing a family. Caller-supplied HTTP timestamps are not supported.
+Backward time fails closed, including after restart and restored backups.
+
+All retained families count toward4096 capacity. prune_session_families deletes
+at most128 inactive families in one WAL transaction. Invalid bounds fail before
+clock observation. Missing/changed/disabled users, obsolete scope, revoked state
+or expired refresh permit cleanup; corrupt user data or storage errors propagate
+instead of being mistaken for inactivity. A limit is a count bound, not a total
+numeric heap or scanning-time quota.
+
+Password changes and disable/enable advance the account epoch, invalidating old
+families on every subsequent admission. Explicit scope/time reset invalidates
+all older incarnations. Private backup contains these rows; generic restore can
+still admit a previously current token under its old incarnation. Run durable
+reset before traffic. The existing public registry archive does not capture this
+separate store. HTTP routes, combined capture/restore, bounded server workers,
+request throttling, cookie/CORS policy, roles and row policies remain unfinished.

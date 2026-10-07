@@ -1,8 +1,10 @@
 # Session token primitives
 
 The Rust auth library can issue and compare context-bound random credentials.
-This is a cryptographic foundation. Durable sessions, expiry, refresh rotation,
-revocation and HTTP login are not implemented by this module.
+This module is a cryptographic foundation. The local [account service](private-accounts.md)
+now supplies durable sessions and expiry under ADR0072. HTTP integration remains
+open. This token module by itself does not perform expiry, refresh rotation,
+revocation or HTTP login.
 
 ```rust
 use emilybase_auth::tokens::{TokenKind, TokenScope, issue};
