@@ -415,6 +415,7 @@ dependencies = [
  "emilybase-commit-model",
  "emilybase-database",
  "emilybase-index",
+ "emilybase-query",
  "proptest",
  "serde",
  "serde_json",

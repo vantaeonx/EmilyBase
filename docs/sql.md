@@ -91,8 +91,9 @@ claim is made. See [ADR 0021](adr/0021-derived-primary-key-trees.md).
 For integer primary keys, necessary AND inequalities (`<`, `<=`, `>`, `>=`)
 select a `primary_range` plan for SELECT and filtered UPDATE/DELETE. Reversed
 operands and multiple intersecting bounds are supported without i64 overflow.
-The complete filter still executes. OR/NOT, joins and column comparisons
-retain their earlier paths; equality takes priority. Empty/contradictory
+The complete filter still executes. OR/NOT and column comparisons do not
+extract a literal primary range; equality takes priority. Eligible primary-key
+joins use the separate probe path described below. Empty/contradictory
 intervals still validate every field/type/parameter before returning rows.
 See [ADR 0022](adr/0022-integer-primary-range-plans.md).
 
@@ -143,7 +144,7 @@ so an inline byte literal currently carries at most 1536 bytes. Identifiers and
 schema validation impose additional catalog limits. SQL errors report an offset
 and generic expected category, without SQL, literals or parameter contents.
 
-Execution: 100000 combined scan/join-candidate and predicate-node visits per script;
+Execution: 100000 combined scan/probe/join-candidate and predicate-node visits per script;
 10000 result/intermediate rows per SELECT. Estimated retained intermediate row
 bytes for joins/non-primary ordering are capped at 8 MiB per SELECT; returned
 projected rows across the script share another 8 MiB cap. This is a row-memory
@@ -172,3 +173,15 @@ Arithmetic, functions, aggregates, DISTINCT, GROUP BY, subqueries, RETURNING,
 OFFSET, UNION, outer/cross joins, secondary-index DDL, ALTER, implicit casts and PostgreSQL
 protocols are unsupported. Persistent indexes and stable schema migrations need
 separate format/transaction decisions. Syntax/AST APIs are experimental.
+
+
+## Primary-key inner JOIN probes
+
+A necessary ON equality between a left column and the right unique primary
+column, including reversed equality under AND, uses access=primary_join.
+Complete ON/WHERE and all existing bounds/order/limit rules still apply. OR/NOT,
+non-primary and same-side/literal-only conditions keep bounded_nested_loop.
+Left input is borrowed; short keys use the own B+ tree, long keys keep physical
+validation through the existing map path. See [checked behavior and limits](primary-key-joins.md).
+EXPLAIN has the same fields and an additional access value; strict enum clients
+need the matching SDK update. No stored format, endpoint or SQL grammar changes.

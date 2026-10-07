@@ -54,6 +54,7 @@ pub(crate) struct Plan {
     pub key: Option<Key>,
     pub range: Option<crate::range::PrimaryRange>,
     pub join: Option<(String, Predicate)>,
+    pub primary_join: Option<usize>,
     pub filter: Option<Predicate>,
     pub columns: Vec<(usize, String)>,
     pub order: Vec<SortKey>,
@@ -139,6 +140,14 @@ impl Plan {
             None
         };
         let schema = snapshot.schema(&select.from.name)?;
+        let primary_join = join.as_ref().and_then(|(table, predicate)| {
+            let right = snapshot.schema(table).ok()?;
+            crate::primary_join::lookup_column(
+                predicate,
+                schema.columns.len(),
+                schema.columns.len() + usize::from(right.primary_key),
+            )
+        });
         let primary_order = if select.join.is_none() {
             order
                 .first()
@@ -159,6 +168,7 @@ impl Plan {
             key,
             range,
             join,
+            primary_join,
             filter,
             columns,
             order,
@@ -199,7 +209,9 @@ pub fn explain(snapshot: &Snapshot, sql: &str, parameters: &[Value]) -> RunResul
     };
     let plan = Plan::compile(snapshot, select, parameters)?;
     Ok(PlanDescription {
-        access: if plan.join.is_some() {
+        access: if plan.primary_join.is_some() {
+            "primary_join"
+        } else if plan.join.is_some() {
             "bounded_nested_loop"
         } else if plan.key.is_some() {
             "primary_key"

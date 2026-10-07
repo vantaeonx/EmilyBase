@@ -5,6 +5,7 @@ mod lexer;
 mod parser;
 mod plan;
 mod predicate;
+mod primary_join;
 mod range;
 mod select;
 mod stream;

@@ -1,0 +1,48 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_parent_commit": "ad6b15943684bf80a70ffd320712035534b879b0",
+  "source_sha256": {
+    "crates/query/src/plan.rs": "8be5cac7acbc75b4969d5ff7d56d137fa963af8f36d4bb81b60e85f6d614b34e",
+    "crates/query/src/select.rs": "ad85bedb488a436ebff1021cc449f15781a006967aabe3c6d2ffeb7fd8453566",
+    "crates/query/src/primary_join.rs": "2b244440f870b51f854d9df0809eef860e3ca5d4d8dfb678a615fc3be58211f5",
+    "crates/model-profile/tests/primary_join.rs": "e6153c2be681dc4f2a5fa3635b6eb4a60d84f5d3a1263b4592ec0a02334c7e60"
+  },
+  "synthetic_fixture": {
+    "left_rows": 4000,
+    "right_rows": 4000,
+    "hidden_text_bytes_per_row": 3072,
+    "limit": 2,
+    "fixture_and_both_caches": "constructed before profiling"
+  },
+  "reference": "equivalent ON equality OR FALSE selects bounded nested loop in the same source",
+  "samples": {
+    "nested_loop": {
+      "requested_live_output_bytes": 348,
+      "requested_peak_bytes": 25550648,
+      "requested_after_result_release_bytes": 0
+    },
+    "primary_join": {
+      "requested_live_output_bytes": 348,
+      "requested_peak_bytes": 14328,
+      "requested_after_result_release_bytes": 0
+    }
+  },
+  "logical_work_fixture": {
+    "left_rows": 200,
+    "right_rows": 200,
+    "reference_candidate_and_predicate_visits": 80000,
+    "primary_probe_candidate_and_predicate_visits": 600,
+    "complete_rows_and_output_charges": "identical"
+  },
+  "excluded": [
+    "cold fixture construction",
+    "cold primary cache construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local allocation and logical work observations, not cold memory, throughput, or process heap quota"
+}

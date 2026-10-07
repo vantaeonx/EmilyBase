@@ -261,10 +261,7 @@ fn primary_order_preserves_int_extremes_point_priority_and_join_fallback() {
         }
     }
     let sql = "SELECT a.id,b.id FROM t AS a JOIN t AS b ON a.id=b.id WHERE a.id>=0 AND a.id<10 ORDER BY a.id DESC LIMIT 2";
-    assert_eq!(
-        explain(&snapshot, sql, &[]).unwrap().access,
-        "bounded_nested_loop"
-    );
+    assert_eq!(explain(&snapshot, sql, &[]).unwrap().access, "primary_join");
     assert_eq!(
         query(&snapshot, sql, &[]).unwrap().rows,
         vec![vec![Value::Integer(9); 2], vec![Value::Integer(8); 2]]

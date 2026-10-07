@@ -7,16 +7,18 @@ use emilybase_database::{MAX_ROWS, Snapshot};
 use std::cmp::Ordering;
 
 pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunResult<ResultSet> {
-    let columns = plan.columns.iter().map(|(_, name)| name.clone()).collect();
     if plan.limit == 0 {
         return Ok(ResultSet {
-            columns,
+            columns: plan.columns.into_iter().map(|(_, name)| name).collect(),
             rows: Vec::new(),
             affected: 0,
         });
     }
     if plan.join.is_none() && (plan.order.is_empty() || plan.primary_order.is_some()) {
         return crate::stream::run(snapshot, &plan, budget);
+    }
+    if plan.primary_join.is_some() {
+        return crate::primary_join::run(snapshot, plan, budget);
     }
     let source = match &plan.key {
         Some(key) => snapshot
@@ -65,6 +67,14 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
             }
         }
     }
+    finish(plan, retained, budget)
+}
+
+pub(crate) fn finish(
+    plan: Plan,
+    mut retained: Vec<Row>,
+    budget: &mut Budget,
+) -> RunResult<ResultSet> {
     // All sort columns resolve to schema-validated types before scanning, including empty input.
     retained.sort_by(|a, b| {
         for key in &plan.order {
@@ -109,7 +119,7 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
         budget.output(row_bytes(row))?;
     }
     Ok(ResultSet {
-        columns,
+        columns: plan.columns.into_iter().map(|(_, name)| name).collect(),
         rows,
         affected: 0,
     })

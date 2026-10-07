@@ -325,3 +325,7 @@ fn run(
         affected,
     })
 }
+
+#[cfg(test)]
+#[path = "join_work.rs"]
+mod join_work;

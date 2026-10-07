@@ -2248,3 +2248,54 @@ blanks/comment-only lines, plus 1207 SDK and 718 Python, total 58790 source line
 Documents/configuration/locks/build output are excluded. Numeric model/cache/
 staging/transient budgets, combined durable-index publication and production
 acceptance remain open.
+
+
+## Primary-key inner join probes (2026-10-07)
+
+The valid 400-row-per-side regression fails against the preceding published
+implementation with Limit("query work"), then passes with primary probes. Its
+initial fixture used an incorrect event variant and was corrected before that
+baseline run. Three private checks inspect actual executor counters: complete
+200-by-200 equality output needs 600 rather than 80000 logical visits; output
+charges are equal. Null/missing probes and every ON/WHERE node still charge the
+original shared work budget and exhaustion is refused.
+
+Eleven public cases cover reversed necessary AND equality, full ON/WHERE, aliases,
+nonzero primary positions, star labels, nullable/missing/repeated foreign keys,
+ordering/limits, fallback OR/NOT/non-primary/same-side/literal conditions, complete
+empty/LIMIT0 binding/type checks, UTF-8/NUL/255/256/257/3072-byte keys and old views.
+The 64-case independent map compares complete many-to-one output and fallback
+parity. Sorted joins still refuse intermediate data above 8 MiB before LIMIT 1.
+Managed WAL 1/2 exercise staged reads, rollback with exact WAL preservation,
+commit, old readers, checkpoint/compaction, reopen, verified backup/restore and
+independent subsequent writes. Existing old-plan EXPLAIN assertions were updated
+for eligible queries after they failed in the first full run; subsequent complete
+runs below are green. Typed validation and fallback assertions remain active.
+
+A release-native warmed sample holds 4000 rows per side, 3072 hidden bytes per
+row and LIMIT2. The equivalent OR FALSE predicate selects the original fallback
+in the same source. Requested peaks are 25550648 versus 14328 bytes; both retain
+348 output bytes and return to zero after result release. Complete fixture/cache
+construction is outside the measured region, as are allocator overhead/rounding,
+stacks and profiler bookkeeping. Source-bound counters describe operation-local
+requested allocations, not cold memory, throughput, RSS or a process heap quota.
+
+The sql_primary_joins ASan campaign completes 16539 executions in 46 seconds,
+final observed RSS 199 MiB, a 512-MiB guard/512-byte input cap, growth limit146.
+Synthetic generated nullable integer/text inputs include excluded long keys,
+reversed equality, parameter filters, ordering/LIMIT, independent map results,
+fallback parity and old physical fingerprints. Quarantine is 64 MiB plus 256-KiB
+thread-local quarantine. The short campaign is not exhaustive; corpus/logs stay
+private. Unknown strict client access enums remain refused.
+
+Stable 1.99.0 and minimum Rust 1.89.0 final complete workspace runs each pass 820
+main tests, 17 ignored helpers, zero failures. Both optional release suites pass
+40 diagnostic checks. Workspace/fuzz format, strict workspace/fuzz/optional Clippy,
+minimum fuzz bins and locked workspace build pass. The updated SDK passes 11
+unit tests and seven actual HTTP/restart checks including new EXPLAIN/SELECT
+calls. OpenAPI declares primary_join without changing the previous field set.
+
+The block adds 1057 net Rust and 26 SDK lines, 1083 total source lines. Current
+physical Rust is 57922 (55334 excluding blanks/comment-only lines), SDK1233,
+Python718, total59873 source lines. Documents/configuration/lockfiles/build output
+are excluded. Stored formats, durable ACK rules and production gates are unchanged.

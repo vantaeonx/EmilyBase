@@ -217,7 +217,7 @@ fn text_ranges_keep_full_filter_type_null_alias_order_and_limit_semantics() {
         )
         .unwrap()
         .access,
-        "bounded_nested_loop"
+        "primary_join"
     );
 }
 

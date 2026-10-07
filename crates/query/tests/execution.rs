@@ -230,7 +230,7 @@ fn binding_injection_stays_data_and_resolution_runs_even_for_empty_or_zero_limit
         )
         .unwrap()
         .access,
-        "bounded_nested_loop"
+        "primary_join"
     );
     assert!(execute(&mut db, "SELECT * FROM items", &[Value::Float(f64::NAN)]).is_err());
     assert!(execute(&mut db, "SELECT * FROM items", &vec![Value::Null; 257]).is_err());

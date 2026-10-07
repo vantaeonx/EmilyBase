@@ -302,3 +302,14 @@ full capacity, format parity and standalone reopen checks execute under
 Input peaks and allocator/model/cache/staging/replay-transient budgets remain
 outside this shape guarantee; the combined durable writer and production gates
 remain open.
+
+
+## Follow-up: primary-key inner join probes
+
+[Eligible JOIN plans](primary-key-joins.md) now probe the original right
+primary index from a borrowed left scan. Complete ON/WHERE, long-key physical
+checks, ordering/limits and existing work/output bounds stay active. Necessary
+equality under AND is supported; other conditions keep the original fallback.
+EXPLAIN and the matching strict project SDK accept primary_join under
+[ADR 0057](adr/0057-primary-key-join-probes.md). This enables no new stored
+format, durable-index acknowledgement, chained/outer join or production gate.

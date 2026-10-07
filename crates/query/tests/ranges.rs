@@ -179,7 +179,7 @@ fn range_extraction_preserves_or_not_null_and_schema_validation_semantics() {
         )
         .unwrap()
         .access,
-        "bounded_nested_loop"
+        "primary_join"
     );
 }
 

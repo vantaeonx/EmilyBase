@@ -249,6 +249,13 @@ test("status and explain decode their actual wire shapes without write endpoints
     await client(rangePlan).explain("SELECT * FROM t WHERE id>=1 AND id<3"),
     rangePlan,
   );
+  const joinPlan = { ...plan, access: "primary_join", joined_table: "t" };
+  assert.deepEqual(
+    await client(joinPlan).explain(
+      "SELECT a.id FROM t AS a JOIN t AS b ON a.id=b.id",
+    ),
+    joinPlan,
+  );
   await rejects(
     client({ ...status, rows: 10001 }).status(),
     "protocol_error",

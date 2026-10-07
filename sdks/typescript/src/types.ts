@@ -22,7 +22,12 @@ export interface Status {
   rows: number;
 }
 export interface Plan {
-  access: "primary_key" | "primary_range" | "scan" | "bounded_nested_loop";
+  access:
+    | "primary_key"
+    | "primary_range"
+    | "primary_join"
+    | "scan"
+    | "bounded_nested_loop";
   table: string;
   joined_table: string | null;
   sorted: boolean;

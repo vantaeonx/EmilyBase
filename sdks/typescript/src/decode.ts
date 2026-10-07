@@ -111,6 +111,7 @@ export function plan(input: unknown): Plan {
   if (
     access !== "primary_key" &&
     access !== "primary_range" &&
+    access !== "primary_join" &&
     access !== "scan" &&
     access !== "bounded_nested_loop"
   )

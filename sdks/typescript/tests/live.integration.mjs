@@ -158,6 +158,19 @@ test(
           (await client.explain("SELECT * FROM t WHERE id>=1 AND id<3")).access,
           "primary_range",
         );
+        const joinSql =
+          "SELECT a.id,b.id FROM t AS a JOIN t AS b ON a.id=b.id ORDER BY a.id";
+        assert.equal((await client.explain(joinSql)).access, "primary_join");
+        assert.deepEqual((await client.sql(joinSql)).results[0].rows, [
+          [
+            { type: "integer", value: 1 },
+            { type: "integer", value: 1 },
+          ],
+          [
+            { type: "integer", value: 2 },
+            { type: "integer", value: 2 },
+          ],
+        ]);
         assert.deepEqual(
           (
             await client.sql(
