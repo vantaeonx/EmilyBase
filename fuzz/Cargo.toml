@@ -260,3 +260,10 @@ path = "fuzz_targets/retained_payload.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "index_retained"
+path = "fuzz_targets/index_retained.rs"
+test = false
+doc = false
+bench = false

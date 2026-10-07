@@ -36,7 +36,7 @@ impl IndexPage {
             body: Body::Leaf { values, next },
         };
         page.validate()?;
-        Ok(page)
+        Ok(page.compact_owned())
     }
 
     pub fn branch(id: u64, keys: Vec<Key>, children: Vec<u64>) -> Result<Self> {
@@ -46,7 +46,27 @@ impl IndexPage {
             body: Body::Branch { children },
         };
         page.validate()?;
-        Ok(page)
+        Ok(page.compact_owned())
+    }
+
+    /// Normalize owned payloads only when publishing an immutable page. Input
+    /// lengths bound the wire format; caller-provided capacities must not become
+    /// retained index memory. This is reported payload capacity, not an allocator
+    /// usable-size or process-memory guarantee. Exact buffers keep their address.
+    pub(crate) fn compact_owned(mut self) -> Self {
+        for key in &mut self.keys {
+            if let Key::Text(text) = key
+                && text.capacity() != text.len()
+            {
+                *text = std::mem::take(text).into_boxed_str().into_string();
+            }
+        }
+        compact_vector(&mut self.keys);
+        match &mut self.body {
+            Body::Leaf { values, .. } => compact_vector(values),
+            Body::Branch { children } => compact_vector(children),
+        }
+        self
     }
 
     pub fn id(&self) -> u64 {
@@ -258,7 +278,13 @@ impl IndexPage {
         };
         let page = Self { id, keys, body };
         page.validate()?;
-        Ok(page)
+        Ok(page.compact_owned())
+    }
+}
+
+fn compact_vector<T>(values: &mut Vec<T>) {
+    if values.capacity() != values.len() {
+        *values = std::mem::take(values).into_boxed_slice().into_vec();
     }
 }
 

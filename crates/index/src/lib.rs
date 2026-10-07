@@ -71,3 +71,6 @@ mod shared_pages_tests;
 
 #[cfg(test)]
 mod stable_view_tests;
+
+#[cfg(test)]
+mod retained_buffers_tests;

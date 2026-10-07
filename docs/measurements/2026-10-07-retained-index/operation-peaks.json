@@ -1,0 +1,51 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "before_source_commit": "fe533518499f7e29f65e5c3f4b0708d3f7c2b43e",
+  "after_source_sha256": {
+    "crates/index/src/page.rs": "a7a94cd5eff7d8b73f3ad4b1711e84051a9e77dfe09ba559d4ab2f17c0bcf308",
+    "crates/index/src/tree.rs": "c52699888fef6b338c56455a6fee80173cf6547870e0e66af44195a143935c92",
+    "crates/index/src/mutations.rs": "1c5d99acf3e8c6c536d20d2d04683be35c0cd5e3eb5be957ebec3fd163658847",
+    "crates/model-profile/tests/index_retained.rs": "17040510b1cdfc5d0dd1fced4465252ac4e1f938777f6c5bd32da14bdf3a3fb5"
+  },
+  "synthetic_fixture": {
+    "key_length_bytes": 3,
+    "key_capacity_bytes": 1048576,
+    "owned_input_vector_capacity_elements": 1024,
+    "leaf_entries": 1,
+    "branch_keys": 1,
+    "branch_children": 2
+  },
+  "before": {
+    "insert_requested_live_bytes": 1049016,
+    "regression_outcome": "three private cases and native retained guard failed",
+    "constructor_native_samples": "not reached after insert assertion failed"
+  },
+  "after": {
+    "insert": {
+      "requested_live_bytes": 323,
+      "requested_peak_bytes": 1048928,
+      "requested_after_release_bytes": 0
+    },
+    "leaf": {
+      "requested_live_bytes": 43,
+      "requested_peak_bytes": 1089696,
+      "requested_after_release_bytes": 0
+    },
+    "branch": {
+      "requested_live_bytes": 43,
+      "requested_peak_bytes": 1081344,
+      "requested_after_release_bytes": 0
+    }
+  },
+  "scope": "three isolated operations; oversized input constructed inside each profiler, empty tree and old empty view outside",
+  "excluded": [
+    "empty fixture construction",
+    "allocator rounding and overhead",
+    "profiler bookkeeping",
+    "OS stacks"
+  ],
+  "claim": "retained payload shape observations, not model, caller input, transient or process heap quotas"
+}

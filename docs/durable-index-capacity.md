@@ -215,3 +215,15 @@ histories and WAL1/2 commit/rollback/recovery checks execute under
 [ADR 0055](adr/0055-compact-retained-record-payloads.md).
 Caller input peaks and model/cache/map/staging/replay-transient budgets remain
 outside this retained-shape guarantee; durable-index and production gates stay open.
+
+
+## Follow-up: compact retained index buffers
+
+[Retained index ownership](retained-index-capacity.md) now removes caller
+spare text/key/pointer/child-vector capacity before immutable page publication.
+Reproduced constructor/insertion/native failures, both ID policies, old owners,
+full capacity, format parity and standalone reopen checks execute under
+[ADR 0056](adr/0056-compact-retained-index-buffers.md).
+Input peaks and allocator/model/cache/staging/replay-transient budgets remain
+outside this shape guarantee; the combined durable writer and production gates
+remain open.

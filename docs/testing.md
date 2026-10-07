@@ -2206,3 +2206,45 @@ The logical block adds 920 net Rust lines, giving 55917 physical Rust lines (533
 excluding blanks/comment-only lines), 1207 SDK and 718 Python, or 57842 source
 lines. Documents/configuration/locks/build output are excluded. Runtime formats,
 validation/refusal meaning and existing durable ACK rules remain unchanged.
+
+
+## Compact retained index buffers (2026-10-07)
+
+Three private constructor/insertion regressions and a native retained guard ran
+before implementation and failed. One three-byte UTF-8/NUL key backed by a
+1-MiB incoming String retained 1049016 requested bytes after insertion. After
+validated publication compaction, the same sample retains 323, peak 1048928;
+separate leaf/branch samples retain 43 each, peaks 1089696/1081344. All three
+operation-local current counters return to zero after release. Large input is
+constructed inside each profiler; the empty fixture and old empty view are outside.
+These are requested-payload observations, not allocator usable-size/RSS quotas.
+
+Thirteen private checks cover exact actual vector/text capacities, empty/maximal
+text, all branch arities, typed refusals, fast-path addresses, both arena policies,
+split/borrow/merge/root collapse, retired ID reuse, old-owner release, the full
+10000-entry/768-page arena and delta/import/snapshot parity. Their 48-case
+independent mutation model compares complete rows, exact images, equal-page
+owners and four retained views. Four public cases inspect borrowed keys before
+serialization, preserve Unicode distinctions/failed-operation addresses and
+execute standalone full/delta publication with repeated reopen. Frozen EBIX-1
+wire compatibility remains covered by the existing published-image regression.
+
+The final index_retained ASan campaign completes 4250 executions in 46 seconds,
+observed final RSS 267 MiB, 512-MiB guard and 512-byte input cap. Corpus includes
+synthetic split/merge/mixed-operation seeds; observed growth limit is 323 bytes.
+It inflates owned inputs, checks borrowed key capacities before any round trip,
+compares an independent row map, complete views and retained historical bytes.
+Quarantine is 64 MiB plus 256-KiB thread-local quarantine. An earlier equivalent
+pre-lint-syntax campaign completed 4517 runs; final source was rerun after lint
+cleanup. These short campaigns are not exhaustive; corpus/logs stay private.
+
+Complete stable 1.99.0 and minimum 1.89.0 workspace runs each pass 806 main tests
+with 17 ignored helpers and no failures. Both optional release suites pass 39
+diagnostic checks. Workspace/fuzz format checks, strict workspace/fuzz/optional
+Clippy, minimum fuzz-bin compatibility and locked workspace build pass.
+
+The logical block adds 948 net Rust lines: 56865 physical Rust lines, 54314 without
+blanks/comment-only lines, plus 1207 SDK and 718 Python, total 58790 source lines.
+Documents/configuration/locks/build output are excluded. Numeric model/cache/
+staging/transient budgets, combined durable-index publication and production
+acceptance remain open.

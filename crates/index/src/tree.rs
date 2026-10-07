@@ -85,7 +85,7 @@ impl BPlusTree {
     /// ID reused after reclamation must receive its new page contents.
     pub(crate) fn publish_page(&mut self, page: IndexPage) {
         if self.pages.get(&page.id).map(Arc::as_ref) != Some(&page) {
-            self.pages.insert(page.id, Arc::new(page));
+            self.pages.insert(page.id, Arc::new(page.compact_owned()));
         }
     }
 
@@ -101,7 +101,7 @@ impl BPlusTree {
             self.pages.len() as u64 + 1
         };
         self.pages
-            .insert(id, Arc::new(IndexPage { id, keys, body }));
+            .insert(id, Arc::new(IndexPage { id, keys, body }.compact_owned()));
         Ok(id)
     }
     pub(crate) fn find_leaf(&self, key: Option<&Key>) -> Result<u64> {

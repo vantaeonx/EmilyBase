@@ -204,7 +204,7 @@ impl BPlusTree {
             let retained = if &page == source.as_ref() {
                 Arc::clone(source)
             } else {
-                Arc::new(page)
+                Arc::new(page.compact_owned())
             };
             pages.insert(retained.id, retained);
         }
