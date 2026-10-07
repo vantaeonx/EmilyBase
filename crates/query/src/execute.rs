@@ -86,6 +86,10 @@ pub(crate) fn row_bytes(row: &Row) -> usize {
 #[path = "projection_budget_tests.rs"]
 mod projection_budget_tests;
 
+#[cfg(test)]
+#[path = "single_sort_work.rs"]
+mod single_sort_work;
+
 pub(crate) fn validate_parameters(parameters: &[Value]) -> RunResult<()> {
     if parameters.len() > MAX_PARAMETERS {
         return Err(ExecutionError::Limit("bindings"));

@@ -34,8 +34,9 @@ non-primary/tied sorts, retaining 444 bytes and releasing to zero. Exact source
 hashes and exclusions appear in [observations](measurements/2026-10-07-limited-join-sort/operation-peaks.json).
 See [testing](testing.md) for actual suite and bounded ASan results.
 
-Single-table sorts and non-primary fallback joins keep their previous full-sort
-limits. No grammar, client enum, API, stored format or durable ACK changes. This
+General non-primary fallback joins keep their previous full-sort limits.
+[Ordinary table sorting](limited-table-sort.md) subsequently uses borrowed sources
+and the same bounded selection. No grammar, client enum, API, stored format or durable ACK changes. This
 is experimental software; combined durable writer and whole-memory gates remain open.
 
 [Projected-output admission](projected-output-admission.md) subsequently checks

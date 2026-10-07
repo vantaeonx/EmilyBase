@@ -124,7 +124,8 @@ See [ADR 0028](docs/adr/0028-borrowed-live-primary-rows.md).
 Single-table SELECT now uses borrowed rows when no order is requested or the first
 ORDER BY field is the unique primary column. It reads in that direction, evaluates
 the full filter and stops after LIMIT matches, retaining projected fields only.
-Joins and other orderings keep bounded materialized sorting. Explain uses the
+Ordinary non-primary orders now borrow checked sources and keep only the best
+LIMIT full candidates. General fallback joins keep materialized limits. Explain uses the
 existing `primary_range`; `sorted` indicates requested ordering. Wide limited reads,
 script budgets, both-WAL restore and real CLI/HTTP kill replay are tested. See
 [ADR 0029](docs/adr/0029-streamed-primary-sql-order.md).
@@ -483,3 +484,15 @@ native refusal peak falls from 99388593 to 14210993 bytes under
 [ADR0060](docs/adr/0060-admit-projected-output-before-copy.md), with identical
 errors/committed bytes. This is logical output accounting; whole-memory, durable
 index and production gates remain open.
+
+
+## Follow-up: borrowed ordinary table sorting
+
+[Non-primary table orders](docs/limited-table-sort.md) now borrow checked
+source rows and retain only the best LIMIT candidates. Necessary points/ranges
+restrict access, while complete WHERE and every candidate still execute. Stable
+ties, all supported sort types, original work/match/retained/output bounds and
+WAL 1/2 recovery hold under [ADR 0061](docs/adr/0061-borrowed-bounded-table-sort.md).
+The reproduced warmed 1500-row peak falls from 4842026 to 11634 requested bytes.
+This operation-local observation closes no cold-memory, transient, combined
+durable-writer or production gate. General fallback joins retain their limits.

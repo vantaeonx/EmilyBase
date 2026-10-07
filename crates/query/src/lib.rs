@@ -9,6 +9,7 @@ mod primary_join;
 mod projection;
 mod range;
 mod select;
+mod single_sort;
 mod stream;
 mod topk;
 pub use execute::{

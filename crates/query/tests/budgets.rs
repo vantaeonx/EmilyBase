@@ -31,7 +31,7 @@ fn actual_intermediate_and_shared_output_bounds_preserve_committed_writes() {
     );
     let result = execute(
         &mut db,
-        "UPDATE t SET text='staged' WHERE id=1; SELECT id FROM t ORDER BY text,id LIMIT 1",
+        "UPDATE t SET text='staged' WHERE id=1; SELECT id FROM t ORDER BY text,id LIMIT 2800",
         &[],
     );
     assert!(matches!(

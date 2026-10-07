@@ -183,6 +183,18 @@ test(
             .results[0].rows,
           [[{ type: "integer", value: 2 }]],
         );
+        const sortedTable =
+          "SELECT id FROM t ORDER BY label DESC NULLS FIRST LIMIT $1";
+        assert.equal(
+          (await client.explain(sortedTable, [{ type: "integer", value: 1 }]))
+            .access,
+          "scan",
+        );
+        assert.deepEqual(
+          (await client.sql(sortedTable, [{ type: "integer", value: 1 }]))
+            .results[0].rows,
+          [[{ type: "integer", value: 2 }]],
+        );
         assert.deepEqual(
           (
             await client.sql(

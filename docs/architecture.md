@@ -344,3 +344,15 @@ native refusal peak falls from 99388593 to 14210993 bytes under
 [ADR0060](adr/0060-admit-projected-output-before-copy.md), with identical
 errors/committed bytes. This is logical output accounting; whole-memory, durable
 index and production gates remain open.
+
+
+## Follow-up: borrowed ordinary table sorting
+
+[Non-primary table orders](limited-table-sort.md) now borrow checked
+source rows and retain only the best LIMIT candidates. Necessary points/ranges
+restrict access, while complete WHERE and every candidate still execute. Stable
+ties, all supported sort types, original work/match/retained/output bounds and
+WAL 1/2 recovery hold under [ADR 0061](adr/0061-borrowed-bounded-table-sort.md).
+The reproduced warmed 1500-row peak falls from 4842026 to 11634 requested bytes.
+This operation-local observation closes no cold-memory, transient, combined
+durable-writer or production gate. General fallback joins retain their limits.

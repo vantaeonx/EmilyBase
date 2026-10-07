@@ -1,0 +1,60 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_parent_commit": "72c97faad5c582f6aad3af694f635c5f3b33fe31",
+  "source_sha256": {
+    "crates/query/src/single_sort.rs": "41346707e9541b22fbd8b346af18f1396bdeb68ed2696078bab35e675c7a7a62",
+    "crates/query/src/select.rs": "c28995395698dd7581faf3bbfb5c0bc610bca4066aae4889bb54a5c7595793c9",
+    "crates/query/src/topk.rs": "4b66a00c8dd36b925308e687d91e03adeae626b8ec20eda16a00afe02cc15909",
+    "crates/query/src/projection.rs": "c8a333b1ff7cde9040b884a7f85f9fe815b2295cdfbdff45ce45063bafdcb37b",
+    "crates/model-profile/tests/limited_table_sort.rs": "a8e69338fe2c3a1ea8bbd619fe2a781ff1ddabd72c128fabc7c37c9fa687d591"
+  },
+  "synthetic_fixture": {
+    "rows": 1500,
+    "hidden_text_bytes_per_row": 3072,
+    "limit": 2,
+    "fixture_and_primary_cache": "constructed before profiling"
+  },
+  "baseline": {
+    "engine_commit": "72c97faad5c582f6aad3af694f635c5f3b33fe31",
+    "case": "table_sort",
+    "requested_live_output_bytes": 282,
+    "requested_peak_bytes": 4842026,
+    "requested_after_release_bytes": 0
+  },
+  "samples": {
+    "table_sort": {
+      "requested_live_output_bytes": 282,
+      "requested_peak_bytes": 11634,
+      "requested_after_release_bytes": 0
+    },
+    "table_range": {
+      "requested_live_output_bytes": 282,
+      "requested_peak_bytes": 11990,
+      "requested_after_release_bytes": 0
+    },
+    "table_point": {
+      "requested_live_output_bytes": 250,
+      "requested_peak_bytes": 5196,
+      "requested_after_release_bytes": 0
+    }
+  },
+  "logical_work_fixture": {
+    "rows": 200,
+    "ordinary_sort_limit2_visits": 200,
+    "point_visits": 2,
+    "range10_rows_limit2_visits": 40,
+    "contradictory_range_visits": 0,
+    "false_filter_visits": 400
+  },
+  "excluded": [
+    "cold fixture construction",
+    "cold primary cache construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local requested allocations/logical visits, not cold memory, throughput, RSS or process heap quota"
+}

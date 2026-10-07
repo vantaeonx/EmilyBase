@@ -295,3 +295,10 @@ path = "fuzz_targets/projection_budget.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "limited_table_sort"
+path = "fuzz_targets/limited_table_sort.rs"
+test = false
+doc = false
+bench = false

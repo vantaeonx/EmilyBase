@@ -2442,3 +2442,51 @@ This focused repair adds 811/−32=779 net Rust lines: 60601 physical Rust, 5793
 blank/comment-only lines, SDK 1245 and Python 718; total 62564 source lines. Docs, config,
 lockfiles and generated files are excluded. Numeric model/cache/staging/transient
 admission, combined durable writer and production acceptance remain open.
+
+
+## Borrowed ordinary sorted sources (2026-10-07)
+
+A valid 2800-row/3072-hidden-byte ordinary non-primary ORDER BY LIMIT 2 fails
+with the original intermediate-byte refusal against published 72c97fa before
+implementation. A separate warmed native 1500-row sample accepts the query but
+fails its 128-KiB peak guard at 4842026 requested bytes. Both actual regressions
+pass after borrowing physically checked source rows and retaining the best LIMIT
+candidates. The final native sort/range/point requested peaks are 11634/11990/5196,
+retaining 282/282/250 and releasing to zero. Fixtures and caches precede profiling.
+Exact hashes/exclusions appear in the source-bound artifact; these are operation
+observations, not cold memory, RSS, throughput or a process/transient quota.
+
+Three private work checks establish 200 visits for 200 source rows despite LIMIT 2,
+2 for a necessary point, 40 for ten range rows and their complete filter, zero for
+contradictory/missing sources and 400 for a false filter. Work/output refusals remain.
+Seven public checks cover all supported sort types, stable ties and secondary
+orders, NULL placement, finite float bits, aliases/nonzero primary positions,
+integer boundaries, mixed UTF-8/NUL 255/256/257/3072-byte primary keys, old views,
+full empty/LIMIT0 binding and a 64-case independent nullable sorted-map model.
+Large retained/output requests still fail at the original logical limits. Two
+older wide-source refusal fixtures now request their actual large retained LIMIT;
+their staged-write rollback and unchanged committed-WAL assertions still pass.
+Both managed WAL versions preserve staged reads, explicit rollback, exact failed
+script bytes, commit/checkpoint/reopen, verified restore and independent writes.
+
+The limited_table_sort ASan smoke completes 43506 executions in 46 seconds,
+observed RSS 188 MiB, input cap 512 / guard 512 MiB and corpus growth limit 151 bytes.
+Thirty-two synthetic seeds exercise direction/null/integer-or-long-text primary
+key/point/range/OR fallback modes. An independent last-wins nullable map restores
+primary source order before its own stable rank sort; old physical fingerprints
+stay unchanged. Quarantine is 64 MiB with 256-KiB thread-local quarantine. This is
+a bounded smoke campaign; logs, corpora and raw allocator data remain private.
+
+Final stable 1.99.0 and minimum 1.89.0 complete workspace runs each pass 867 main
+tests, 17 ignored helpers and no failures. Both optional release suites pass 44
+diagnostics. Workspace/fuzz formatting, strict workspace/fuzz/optional Clippy,
+minimum fuzz-bin checks and locked build pass. SDK format/11 unit/7 real HTTP and
+restart checks pass, including a parameterized non-primary NULL-first table sort
+whose EXPLAIN keeps scan. One unused test import was removed before final lint.
+Previous commit 72c97fa also has all five hosted CI jobs confirmed successful.
+
+This block adds 912 net Rust and 12 SDK test lines: 61513 physical Rust, 58829
+excluding blank/comment-only lines, SDK 1257 and Python 718; total 63488 source
+lines. Docs/config/lockfiles/generated output are excluded. Stored formats, durable
+ACK and SQL/API types are unchanged. Numeric model/cache/staging/transient budgets,
+combined durable writer and production acceptance remain open.

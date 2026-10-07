@@ -95,7 +95,7 @@ fn projected_output_and_unordered_sorting_keep_their_real_memory_bounds() {
     }
     // Leading non-primary ordering must still read every candidate before LIMIT.
     assert!(matches!(
-        query(&snapshot, "SELECT id FROM t ORDER BY n,id LIMIT 1", &[]),
+        query(&snapshot, "SELECT id FROM t ORDER BY n,id LIMIT 2800", &[]),
         Err(ExecutionError::Limit("intermediate rows/bytes"))
     ));
     let result = query(

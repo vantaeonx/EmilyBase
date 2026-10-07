@@ -17,6 +17,9 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
     if plan.join.is_none() && (plan.order.is_empty() || plan.primary_order.is_some()) {
         return crate::stream::run(snapshot, &plan, budget);
     }
+    if plan.join.is_none() {
+        return crate::single_sort::run(snapshot, plan, budget);
+    }
     if plan.primary_join.is_some() {
         return crate::primary_join::run(snapshot, plan, budget);
     }
