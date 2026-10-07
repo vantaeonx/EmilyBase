@@ -1,0 +1,87 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "d2bab9ce8c66fef60475d8a5559afe4b7b77fb61",
+  "baseline_runtime_commit": "da65a9509a372de90fb9a52c058e996fb1471733",
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_sha256": {
+    "crates/query/src/nested_join.rs": "69cf68b83c507be40f2ac07599caf8d4dcbf8e95a9360b5699fbd1a48e01cce0",
+    "crates/query/src/select.rs": "d91527883cc57171f69f73614d79126b9e4e7d3b0a1b06a76abec880a89651ab",
+    "crates/query/src/row_view.rs": "332159b1ae6a63f04d31e5fa3f8220d73611024cad869439eb929965f5078541",
+    "crates/query/src/predicate.rs": "702431d8d5981402736e32ac822468ee5bfa01b22d686996a1a202dca8275437",
+    "crates/model-profile/tests/nested_join.rs": "39ff55e556c462c5eb12a89c411ee23777073c5ab72ce0c6892cde7e0fdcbfee",
+    "crates/model-profile/tests/primary_join.rs": "3204f38f512f41fd2a5a2ed61a29fb5b929684d7a31ddcc86c188fa0fc030ec0"
+  },
+  "synthetic_fixture": {
+    "tables": 2,
+    "rows_per_table": 100,
+    "hidden_text_bytes": 3000,
+    "nullable": false,
+    "columns_per_table": 3,
+    "primary_column": 1,
+    "samples": "nonprimary rank equality; false ON, false WHERE, sorted100 matches LIMIT2"
+  },
+  "baseline": {
+    "false_on": {
+      "requested_total_bytes": 64469242,
+      "requested_blocks": 50481,
+      "requested_peak_bytes": 632072,
+      "requested_live_bytes": 122,
+      "after_drop_bytes": 0
+    },
+    "false_where": {
+      "requested_total_bytes": 64468894,
+      "requested_blocks": 50477,
+      "requested_peak_bytes": 631720,
+      "requested_live_bytes": 122,
+      "after_drop_bytes": 0
+    },
+    "accepted": {
+      "requested_total_bytes": 64475392,
+      "requested_blocks": 50488,
+      "requested_peak_bytes": 944680,
+      "requested_live_bytes": 282,
+      "after_drop_bytes": 0
+    }
+  },
+  "samples": {
+    "false_on": {
+      "requested_total_bytes": 9530,
+      "requested_blocks": 95,
+      "requested_peak_bytes": 3960,
+      "requested_live_bytes": 122,
+      "after_drop_bytes": 0
+    },
+    "false_where": {
+      "requested_total_bytes": 9182,
+      "requested_blocks": 91,
+      "requested_peak_bytes": 3608,
+      "requested_live_bytes": 122,
+      "after_drop_bytes": 0
+    },
+    "accepted": {
+      "requested_total_bytes": 634880,
+      "requested_blocks": 402,
+      "requested_peak_bytes": 626040,
+      "requested_live_bytes": 282,
+      "after_drop_bytes": 0
+    }
+  },
+  "large_comparison": {
+    "rows_per_table": 4000,
+    "hidden_text_bytes": 3072,
+    "limit": 2,
+    "fallback_requested_peak_bytes": 80088,
+    "primary_requested_peak_bytes": 2622,
+    "fallback_before": "the prior published >16777216-byte guard passed; exact older observations remain source-bound to their own artifacts",
+    "after_drop_bytes": 0
+  },
+  "excluded": [
+    "cold fixture, derived-index and fingerprint construction",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local heap requests, not throughput, cold memory, RSS or whole-process admission"
+}

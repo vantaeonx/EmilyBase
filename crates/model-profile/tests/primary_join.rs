@@ -73,13 +73,17 @@ fn unique_primary_join_avoids_cloning_complete_wide_source_tables() {
 
     let profiler = dhat::Profiler::builder().testing().build();
     let result = query(&snapshot, slow, &[]).unwrap();
-    let baseline = dhat::HeapStats::get();
+    let fallback = dhat::HeapStats::get();
     assert_eq!(result.rows, expected);
-    assert!(baseline.max_bytes > 16 * 1024 * 1024);
+    assert!(
+        fallback.max_bytes < 256 * 1024,
+        "fallback cloned source tables: {}",
+        fallback.max_bytes
+    );
     drop(result);
-    let baseline_released = dhat::HeapStats::get();
+    let fallback_released = dhat::HeapStats::get();
     drop(profiler);
-    assert_eq!(baseline_released.curr_bytes, 0);
+    assert_eq!(fallback_released.curr_bytes, 0);
 
     let profiler = dhat::Profiler::builder().testing().build();
     let result = query(&snapshot, fast, &[]).unwrap();
@@ -98,9 +102,9 @@ fn unique_primary_join_avoids_cloning_complete_wide_source_tables() {
     assert_eq!(snapshot.page_fingerprint(), digest);
     eprintln!(
         "nested join live={} peak={} released={}; primary join live={} peak={} released={}",
-        baseline.curr_bytes,
-        baseline.max_bytes,
-        baseline_released.curr_bytes,
+        fallback.curr_bytes,
+        fallback.max_bytes,
+        fallback_released.curr_bytes,
         streamed.curr_bytes,
         streamed.max_bytes,
         streamed_released.curr_bytes

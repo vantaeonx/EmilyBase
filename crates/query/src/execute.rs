@@ -340,3 +340,7 @@ fn run(
 #[cfg(test)]
 #[path = "join_work.rs"]
 mod join_work;
+
+#[cfg(test)]
+#[path = "nested_join_work.rs"]
+mod nested_join_work;

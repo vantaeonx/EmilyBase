@@ -2685,3 +2685,65 @@ The final locked workspace build passes. SDK formatting/strict compilation and
 11 unit tests pass; seven actual native HTTP/restart checks pass against the
 newly built original server. Previous published881ca75 hosted CI completes all
 five jobs successfully; this block's hosted CI is evaluated separately after push.
+
+
+## Hosted allocation runner follow-up
+
+Hosted da65a95 run37634294902 completes four jobs successfully, while the
+allocation job fails in the older schema_validation sample: its process-wide
+allocator observes900 live bytes from the surrounding test execution. The pure
+stack validation path is unchanged. Focused d2bab9c makes allocation diagnostics
+use explicit `--test-threads=1`, also isolating libtest lifecycle allocations.
+All43 published integration diagnostic targets pass locally with published query
+sources and that option; the other five library checks passed in the preceding
+full48-check suite. Pending nested-join sources are restored byte-for-byte after
+that separate baseline check. The runner repair changes no engine or schema
+format. Its hosted result is tracked separately.
+
+
+## 2026-10-07 — borrowed nested-loop sources
+
+A real native regression first fails on da65a95. With100 rows per source and
+3000-byte hidden text, false ON/WHERE summed requests are64469242/64468894,
+peaks632072/631720, live122/drop0;100-match sorted requests64475392, peak944680,
+live282/drop0. Repaired source requests9530/9182/634880, peaks3960/3608/626040,
+live122/122/282, all zero after result drop. The cold fixture, derived indexes and
+fingerprints precede tracking. The existing4000-row-per-source two-match comparison
+now measures fallback peak80088 and primary-probe peak2622. Its obsolete >16 MiB
+waste requirement is replaced with a256 KiB fallback upper guard; older artifacts
+retain their original source hashes. [Observations](measurements/2026-10-07-borrowed-nested-join/operation-allocations.json)
+and [ADR0066](adr/0066-borrowed-nested-loop-sources.md) record scope/exclusions. These
+are summed operation allocations, not throughput, RSS, cold heap, total stack
+use, retained-model admission or a whole-process budget.
+
+The first new work assertion incorrectly assumes public point/range extraction
+for fallback joins. Inspection of the actual planner confirms full-source access
+is retained; corrected assertions verify23/33/33 work for those public left
+filters. Separate internally bound test plans verify8/21/0 without altering the
+planner. Remaining exact work/Boolean/output charge checks pass. Complete stable
+1.99.0/minimum1.89.0 suites each pass909 main tests,17 ignored process helpers,
+zero failures and all doc tests; each optional serial release suite passes49
+diagnostics. Workspace/optional/fuzz strict Clippy and formatting pass.
+
+Independent128-case nullable pair models cover OR/NOT, stable multiple sort keys,
+NULL direction, repeated fields, parameters, UTF-8/NUL, bytes and signed-zero
+bits. Real byte/row/work refusals still hold with tiny sorted LIMIT and narrow
+output. Both WAL versions preserve staged joins, late failure and explicit
+rollback, old views, restart and verified backup restore. Long text keys through
+3072 bytes, self joins, missing values, contradictions and binding at LIMIT0 pass.
+Final bounded ASan nested_join fuzzing executes86507 inputs in46 seconds, RSS185 MB,
+input512/growth151/guard512 MB,33 initial seeds. It compares independent cross-pair
+models with NULL truth, flag branches, hidden text/bytes, stable ties, equivalent
+OR-FALSE predicates and actual bounded_nested_loop EXPLAIN. No unsafe is added.
+
+Source totals:64661 physical Rust,61894 without blank/comment-only lines, SDK1257
+(455 TypeScript/802 MJS), Python718;66636 total source lines. Net Rust growth816;
+no SDK/Python change. Numeric model/cache/staging/transient limits and the combined
+durable writer remain open. SQL/HTTP/file/WAL/cache meanings and durable ACK stay
+unchanged. Hosted d2bab9c runner repair completes all five jobs successfully; the
+new engine block's hosted result is checked independently after its own push.
+
+Minimum Rust compiles all locked fuzz bins. The locked workspace build, SDK
+formatting/strict compilation,11 unit tests and seven actual native HTTP/restart
+checks pass against the newly built original server. All runtime sources remain
+frozen during the final workspace suites and these publication checks.

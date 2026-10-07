@@ -33,24 +33,6 @@ impl PrimaryRange {
             Self::Text(range) => range.empty,
         }
     }
-    pub fn scan(
-        &self,
-        snapshot: &emilybase_database::Snapshot,
-        table: &str,
-        limit: usize,
-    ) -> emilybase_database::Result<Vec<emilybase_catalog::Row>> {
-        match self {
-            Self::Integer(range) => {
-                snapshot.scan_integer_range(table, range.lower, range.upper, limit)
-            }
-            Self::Text(range) => snapshot.scan_text_range(
-                table,
-                range.lower.as_deref(),
-                range.upper.as_deref(),
-                limit,
-            ),
-        }
-    }
     fn intersect(self, other: Self) -> Option<Self> {
         match (self, other) {
             (Self::Integer(a), Self::Integer(b)) => Some(Self::Integer(a.intersect(b))),

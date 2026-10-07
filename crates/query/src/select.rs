@@ -1,9 +1,8 @@
-use crate::MAX_RESULT_ROWS;
-use crate::execute::{Budget, ExecutionError, MAX_OUTPUT_BYTES, ResultSet, RunResult, row_bytes};
+use crate::execute::{Budget, ResultSet, RunResult};
 use crate::plan::{Plan, SortKey};
 use crate::predicate::value_order;
 use emilybase_catalog::{Row, Value};
-use emilybase_database::{MAX_ROWS, Snapshot};
+use emilybase_database::Snapshot;
 use std::cmp::Ordering;
 
 pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunResult<ResultSet> {
@@ -23,54 +22,7 @@ pub(crate) fn run(snapshot: &Snapshot, plan: Plan, budget: &mut Budget) -> RunRe
     if plan.primary_join.is_some() {
         return crate::primary_join::run(snapshot, plan, budget);
     }
-    let source = match &plan.key {
-        Some(key) => snapshot
-            .get(&plan.table, key)?
-            .cloned()
-            .into_iter()
-            .collect(),
-        None => match &plan.range {
-            Some(range) if range.empty() => Vec::new(),
-            Some(range) => range.scan(snapshot, &plan.table, MAX_ROWS)?,
-            None => snapshot.scan(&plan.table, MAX_ROWS)?,
-        },
-    };
-    let joined = plan
-        .join
-        .as_ref()
-        .map(|(t, _)| snapshot.scan(t, MAX_ROWS))
-        .transpose()?;
-    let mut retained = Vec::new();
-    let mut bytes = 0;
-    'scan: for left in source {
-        let count = joined.as_ref().map_or(1, Vec::len);
-        for position in 0..count {
-            budget.step()?;
-            let mut row = left.clone();
-            if let Some(right) = &joined {
-                row.extend(right[position].clone());
-            }
-            if let Some((_, predicate)) = &plan.join
-                && predicate.evaluate(&row, budget)? != Some(true)
-            {
-                continue;
-            }
-            if let Some(predicate) = &plan.filter
-                && predicate.evaluate(&row, budget)? != Some(true)
-            {
-                continue;
-            }
-            bytes += row_bytes(&row);
-            if retained.len() >= MAX_RESULT_ROWS || bytes > MAX_OUTPUT_BYTES {
-                return Err(ExecutionError::Limit("intermediate rows/bytes"));
-            }
-            retained.push(row);
-            if plan.order.is_empty() && retained.len() >= plan.limit {
-                break 'scan;
-            }
-        }
-    }
-    finish(plan, retained, budget)
+    crate::nested_join::run(snapshot, plan, budget)
 }
 
 pub(crate) fn finish(

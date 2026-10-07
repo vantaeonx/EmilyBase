@@ -2,6 +2,7 @@
 pub mod ast;
 mod execute;
 mod lexer;
+mod nested_join;
 mod parser;
 mod plan;
 mod predicate;

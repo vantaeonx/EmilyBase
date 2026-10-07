@@ -541,3 +541,15 @@ A separate1000-pass inventory scan allocates zero. [ADR0065](docs/adr/0065-borro
 records ownership, ordering, evidence and limits. File/WAL/SQL/HTTP meanings stay
 unchanged. Numeric model/cache/staging/transient budgets and the combined durable
 writer remain open; this does not complete a production gate.
+
+
+## Follow-up: borrowed nested-loop sources
+
+[Fallback joins](docs/borrowed-nested-join.md) now retain bounded checked row
+references and evaluate complete ON/WHERE before any candidate copy. Full matched
+row limits, stable sort/source ties, pair/predicate work and projection timing
+remain unchanged. With100 rows per side and3000-byte hidden payload, false ON/
+WHERE summed requests fall64,469,242/64,468,894→9530/9182. [ADR0066](docs/adr/0066-borrowed-nested-loop-sources.md)
+records evidence and limits. The planner retains bounded_nested_loop; this adds
+no fallback TopK or public point/range extraction. Numeric model/cache/staging/
+transient budgets, combined durable writer and production gates remain open.

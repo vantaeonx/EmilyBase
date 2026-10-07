@@ -330,3 +330,10 @@ path = "fuzz_targets/schema_inventory.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "nested_join"
+path = "fuzz_targets/nested_join.rs"
+test = false
+doc = false
+bench = false
