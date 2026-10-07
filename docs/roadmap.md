@@ -523,3 +523,16 @@ sort comparisons. Native schema/key and physical-resolution samples request no
 temporary heap under [ADR0064](adr/0064-bounded-stack-schema-validation.md).
 These observations exclude stacks/cold fixtures and close no numeric whole-memory,
 combined durable writer or production gate. Stored bytes and ACK are unchanged.
+
+
+## Follow-up: borrowed complete schema inventory
+
+[Snapshot metadata](borrowed-schema-inventory.md) now supports borrowed,
+exact-size iteration in live table-ID order. Model preparation and complete root
+validation preserve every check while avoiding column copies; status reads a
+count, and cache warmup retains only bounded table names. The 128-by-64 warmed
+prepare sample falls from1,459,120 to22,192 requested bytes, peak723,160 to4,784.
+A separate1000-pass inventory scan allocates zero. [ADR0065](adr/0065-borrowed-schema-inventory.md)
+records ownership, ordering, evidence and limits. File/WAL/SQL/HTTP meanings stay
+unchanged. Numeric model/cache/staging/transient budgets and the combined durable
+writer remain open; this does not complete a production gate.

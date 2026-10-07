@@ -91,12 +91,13 @@ impl State {
         relational: Snapshot,
         selected: BTreeMap<u64, Arc<Selection>>,
     ) -> Result<Arc<Self>> {
-        let schemas = relational.schemas();
-        if schemas.len() != selected.len() || selected.len() > emilybase_database::MAX_TABLES {
+        if relational.table_count() != selected.len()
+            || selected.len() > emilybase_database::MAX_TABLES
+        {
             return Err(Error::Selection("incomplete or extra table roots"));
         }
         Self::components(&relational, &selected)?;
-        for schema in schemas {
+        for schema in relational.schema_refs() {
             let table = relational.table_id(&schema.name)?;
             let selection = selected
                 .get(&table)

@@ -364,7 +364,7 @@ impl AuthorizedProject {
         let database = Database::open(self.directory.join("data"))?;
         Ok(ProjectStatus {
             transaction: database.last_transaction(),
-            tables: database.view()?.schemas().len(),
+            tables: database.view()?.table_count(),
             rows: database.view()?.row_count(),
         })
     }

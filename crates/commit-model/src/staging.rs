@@ -163,7 +163,7 @@ impl Staged {
             return Err(Error::Empty);
         }
         let mut selected = BTreeMap::new();
-        for schema in self.relational.schemas() {
+        for schema in self.relational.schema_refs() {
             let table = self.relational.table_id(&schema.name)?;
             let previous = self.base.selected.get(&table);
             let candidate = self.candidates.remove(&table);

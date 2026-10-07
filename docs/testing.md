@@ -2631,3 +2631,57 @@ The block adds279/removes5=274 net Rust lines. Totals:63064 physical Rust,
 60354 excluding blank/comment-only lines,SDK1257,Python718;65039 combined source
 lines. Docs/config/locks/generated output are excluded. Numeric model/cache/
 staging/transient admission, combined durable writer and production gates remain.
+
+
+## 2026-10-07 — complete borrowed schema inventory
+
+A native regression first fails against881ca75: preparing one prebuilt index
+candidate with1/64/128 tables, each64 columns and zero rows, requests
+12018/729648/1459120 allocation bytes with peaks6181/361624/723160. The repaired
+source requests792/11184/22192, peaks656/2480/4784, live656/2480/4784 while the
+prepared state is held and zero after drop. A separate1000-pass scan of all128
+borrowed schemas/counts requests zero bytes/blocks. Cold fixtures/stage creation,
+allocator overhead/rounding/stacks/profiler data precede or sit outside tracking.
+See the [source-bound artifact](measurements/2026-10-07-borrowed-schema-inventory/operation-allocations.json)
+and [ADR0065](adr/0065-borrowed-schema-inventory.md); these are allocation observations,
+not throughput, cold memory, RSS, model admission or whole-process quotas.
+
+Two parallel diagnostic tests initially contaminated a process-wide allocator
+with the other fixture and test-harness teardown. The default parallel command
+actually fails; a fixture mutex alone also fails. Both samples now execute in
+one test lifetime, and the ordinary release command passes without a serial
+test-runner override. The first stable workspace build is killed with exit137
+during concurrent compilation, and is not counted as a pass. The complete stable
+rerun limits build jobs to2. Runtime source stays frozen through final suites.
+
+Stable1.99.0 and minimum1.89.0 each complete900 main tests,17 ignored process
+helpers, zero failures, and all doc tests. Each optional release suite passes48
+diagnostics. Workspace/fuzz formatting, strict workspace/optional/fuzz Clippy
+and minimum fuzz-bin compilation pass. New catalog-model property sequences
+use128 cases; deterministic tests cover128-by-64 inventories, ID gaps/recreation,
+front/back lengths and exhaustion, exact pointer identity/owned copies, old COW
+views, concurrent readers, last-table missing roots, unchanged roots and exact
+image-plan replay fingerprints. Both WAL versions preserve metadata through
+failed/rolled-back DDL, reopen and verified backup restore. Wide cache warmup
+preserves malformed optional bytes, immutable schemas and WAL bytes. Separate
+project status remains scoped across failed DDL and restart.
+
+Final bounded ASan schema_inventory fuzzing executes4396 inputs in55 seconds,
+RSS180 MB/input256/growth256/guard512 MB, starting from the accumulated corpus
+after33 deterministic originals. It compares an independent live catalog across
+create/drop, duplicate/missing refusal, COW row mutation, discarded candidates,
+old views and full physical replay. The earlier23945-input campaign predates a
+Clippy-required chunk iterator change and is not substituted for the final run.
+The harness uses bounded32 commands/eight names/1..64 columns, and no unsafe.
+
+Physical source totals:63845 Rust,61104 excluding blank/comment-only lines,
+SDK1257 (455 TypeScript+802 test MJS), Python718;65820 total source lines.
+The logical block adds781 net Rust lines, no SDK/Python changes. Numeric model/
+cache/staging/transient budgets, the combined durable writer and production
+acceptance gates stay open. Mandatory WAL/file/cache bytes and HTTP/SQL meanings
+are unchanged; borrowed metadata adds a Rust API without removing owned access.
+
+The final locked workspace build passes. SDK formatting/strict compilation and
+11 unit tests pass; seven actual native HTTP/restart checks pass against the
+newly built original server. Previous published881ca75 hosted CI completes all
+five jobs successfully; this block's hosted CI is evaluated separately after push.

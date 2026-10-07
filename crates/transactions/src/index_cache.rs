@@ -24,18 +24,24 @@ impl Database {
     /// Try current table caches within a whole-database input budget.
     /// Optional-file errors become rejected/skipped counts; WAL state is unchanged.
     pub fn warm_primary_index_caches(&mut self) -> Result<PrimaryCacheWarmup> {
-        let schemas = self.view()?.schemas();
+        // Loading a cache mutates the snapshot. Retain only bounded table names,
+        // rather than detaching every column payload to cross that borrow.
+        let names = self
+            .view()?
+            .schema_refs()
+            .map(|schema| schema.name.clone())
+            .collect::<Vec<_>>();
         let mut remaining = MAX_CACHE_WARMUP_BYTES;
         let mut report = PrimaryCacheWarmup::default();
-        for schema in schemas {
+        for table in names {
             let result = (|| {
                 self.cache_directory()?;
-                let name = self.cache_name(&schema.name)?;
+                let name = self.cache_name(&table)?;
                 let active = self.cache_file_limited(&name, &mut remaining)?;
                 self.cache_directory()?;
                 match active {
                     Some(active) => self
-                        .load_primary_index_image(&schema.name, &active.bytes)
+                        .load_primary_index_image(&table, &active.bytes)
                         .map(Some),
                     None => Ok(None),
                 }

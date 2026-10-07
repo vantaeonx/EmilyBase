@@ -123,12 +123,23 @@ impl Snapshot {
         Ok(&self.state.table(name)?.schema)
     }
 
+    /// Borrow complete schemas in ascending live table-ID order, including gaps
+    /// left by dropped tables. References cannot outlive this immutable view.
+    /// Neither creating nor consuming the iterator allocates or copies payload.
+    pub fn schema_refs(
+        &self,
+    ) -> impl ExactSizeIterator<Item = &Schema> + DoubleEndedIterator + std::iter::FusedIterator + '_
+    {
+        self.state.tables.values().map(|table| &table.schema)
+    }
+
+    pub fn table_count(&self) -> usize {
+        self.state.tables.len()
+    }
+
+    /// Explicit owned copies for callers that need metadata beyond this view.
     pub fn schemas(&self) -> Vec<Schema> {
-        self.state
-            .tables
-            .values()
-            .map(|table| table.schema.clone())
-            .collect()
+        self.schema_refs().cloned().collect()
     }
 
     pub fn get(&self, name: &str, key: &Key) -> Result<Option<&Row>> {

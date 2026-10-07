@@ -334,3 +334,74 @@ fn public_root_keeps_wal_behavior_and_final_aliases_cannot_bypass_directory_admi
     assert_eq!(database.view().unwrap().row_count(), 1);
     assert_eq!(fs::read(path.join("redo.wal")).unwrap(), wal);
 }
+
+#[test]
+fn wide_schema_warmup_handles_id_gaps_and_cache_errors_without_metadata_or_wal_changes() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("wide");
+    let mut database = Database::create(&path).unwrap();
+    let make = |name: &str| Schema {
+        name: name.into(),
+        columns: (0..64)
+            .map(|i| Column {
+                name: format!("c{i:02}_{}", "x".repeat(50)),
+                data_type: DataType::Integer,
+                nullable: false,
+            })
+            .collect(),
+        primary_key: 63,
+    };
+    let mut transaction = database.begin().unwrap();
+    for name in ["z", "a", "b"] {
+        transaction.create_table(make(name)).unwrap();
+    }
+    transaction.commit().unwrap();
+    let mut transaction = database.begin().unwrap();
+    transaction.drop_table("a").unwrap();
+    transaction.create_table(make("a")).unwrap();
+    transaction.commit().unwrap();
+    let before = database.view().unwrap().schemas();
+    let digest = database.view().unwrap().page_fingerprint();
+    let wal = database.committed_wal().unwrap();
+    database.save_primary_index_cache("z").unwrap();
+    database.save_primary_index_cache("a").unwrap();
+    let first = database.warm_primary_index_caches().unwrap();
+    assert_eq!(
+        (first.loaded, first.missing, first.rejected, first.skipped),
+        (2, 1, 0, 0)
+    );
+    database.save_primary_index_cache("b").unwrap();
+    let cache = active(&path, 3);
+    let mut corrupt = fs::read(&cache).unwrap();
+    corrupt[0] ^= 1;
+    fs::write(&cache, &corrupt).unwrap();
+    let second = database.warm_primary_index_caches().unwrap();
+    assert_eq!(
+        (
+            second.loaded,
+            second.missing,
+            second.rejected,
+            second.skipped
+        ),
+        (2, 0, 1, 0)
+    );
+    assert!(second.bytes_budgeted > first.bytes_budgeted);
+    assert_eq!(database.view().unwrap().schemas(), before);
+    assert_eq!(database.view().unwrap().page_fingerprint(), digest);
+    assert_eq!(database.committed_wal().unwrap(), wal);
+    assert_eq!(fs::read(cache).unwrap(), corrupt);
+    assert_eq!(
+        database
+            .view()
+            .unwrap()
+            .schema_refs()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["z", "b", "a"]
+    );
+    drop(database);
+    let mut reopened = Database::open(&path).unwrap();
+    assert_eq!(reopened.primary_cache_startup().unwrap(), second);
+    assert_eq!(reopened.view().unwrap().schemas(), before);
+    assert_eq!(reopened.committed_wal().unwrap(), wal);
+}

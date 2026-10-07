@@ -1,0 +1,88 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "881ca758b2dd6d4557adc05fbe9977acad08bbdf",
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "source_sha256": {
+    "crates/database/src/snapshot.rs": "538b236e6fb4ea9ce4af0ab9d6a8a377ab997a05312a8f04554be2dd16a98942",
+    "crates/commit-model/src/staging.rs": "db81adebab07a338c84dc7b54319d9aef3387c8f63850ed900d2f5e81ae72faf",
+    "crates/commit-model/src/state.rs": "3289d324af571e069ef45bedbe6dbf4ad824f090b24e3aebe5f653966c92e391",
+    "crates/transactions/src/index_cache.rs": "7a2a5877ccd28b69cb402b2ddb0e85d6d0e8404654b8e8aae81a2f54ac81ed68",
+    "crates/server/src/projects.rs": "543373b1e3a5147597d92e7caef91a010b8326b60c9af3e9b0f2f792f5de259f",
+    "crates/model-profile/tests/schema_inventory.rs": "6cff1c94c7c2c80993cee1ed238da022002abfd80e14158ce627ab8330f0b987"
+  },
+  "synthetic_fixture": {
+    "table_counts": [
+      1,
+      64,
+      128
+    ],
+    "columns_per_table": 64,
+    "column_name_bytes": 54,
+    "table_name_bytes": 53,
+    "rows": 0,
+    "operation": "prepare one prebuilt first-table index candidate against a complete validated model",
+    "borrowed_inventory_passes": 1000,
+    "borrowed_inventory_tables": 128
+  },
+  "baseline": {
+    "1": {
+      "requested_total_bytes": 12018,
+      "requested_blocks": 139,
+      "requested_peak_bytes": 6181,
+      "requested_live_bytes": 656,
+      "after_drop_bytes": 0
+    },
+    "64": {
+      "requested_total_bytes": 729648,
+      "requested_blocks": 8590,
+      "requested_peak_bytes": 361624,
+      "requested_live_bytes": 2480,
+      "after_drop_bytes": 0
+    },
+    "128": {
+      "requested_total_bytes": 1459120,
+      "requested_blocks": 17177,
+      "requested_peak_bytes": 723160,
+      "requested_live_bytes": 4784,
+      "after_drop_bytes": 0
+    }
+  },
+  "samples": {
+    "1": {
+      "requested_total_bytes": 792,
+      "requested_blocks": 5,
+      "requested_peak_bytes": 656,
+      "requested_live_bytes": 656,
+      "after_drop_bytes": 0
+    },
+    "64": {
+      "requested_total_bytes": 11184,
+      "requested_blocks": 140,
+      "requested_peak_bytes": 2480,
+      "requested_live_bytes": 2480,
+      "after_drop_bytes": 0
+    },
+    "128": {
+      "requested_total_bytes": 22192,
+      "requested_blocks": 279,
+      "requested_peak_bytes": 4784,
+      "requested_live_bytes": 4784,
+      "after_drop_bytes": 0
+    }
+  },
+  "borrowed_inventory": {
+    "requested_total_bytes": 0,
+    "requested_blocks": 0,
+    "requested_peak_bytes": 0,
+    "requested_live_bytes": 0
+  },
+  "excluded": [
+    "cold fixture and stage creation",
+    "allocator overhead and rounding",
+    "OS stacks",
+    "profiler bookkeeping"
+  ],
+  "claim": "warmed operation-local heap requests, not throughput, cold memory, RSS or whole-process admission"
+}

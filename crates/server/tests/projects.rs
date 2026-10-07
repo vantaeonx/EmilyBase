@@ -297,3 +297,67 @@ proptest! {
         }
     }
 }
+
+#[test]
+fn status_counts_only_current_tables_after_recreation_and_atomic_failure_in_separate_projects() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("projects");
+    let mut store = ProjectStore::open(&root).unwrap();
+    let a = store.create("inventory alpha").unwrap();
+    let b = store.create("inventory beta").unwrap();
+    store.authorize(&a.project.id,&a.api_key).unwrap().execute(
+        "CREATE TABLE z(id INT PRIMARY KEY); CREATE TABLE a(id INT PRIMARY KEY); CREATE TABLE b(id INT PRIMARY KEY); INSERT INTO a VALUES(7)",&[]).unwrap();
+    store
+        .authorize(&b.project.id, &b.api_key)
+        .unwrap()
+        .execute(
+            "CREATE TABLE a(id INT PRIMARY KEY); INSERT INTO a VALUES(8)",
+            &[],
+        )
+        .unwrap();
+    let previous = store
+        .authorize(&a.project.id, &a.api_key)
+        .unwrap()
+        .status()
+        .unwrap();
+    assert_eq!((previous.tables, previous.rows), (3, 1));
+    assert!(
+        store
+            .authorize(&a.project.id, &a.api_key)
+            .unwrap()
+            .execute("DROP TABLE b; CREATE TABLE a(id INT PRIMARY KEY)", &[])
+            .is_err()
+    );
+    let unchanged = store
+        .authorize(&a.project.id, &a.api_key)
+        .unwrap()
+        .status()
+        .unwrap();
+    assert_eq!(
+        (unchanged.transaction, unchanged.tables, unchanged.rows),
+        (previous.transaction, 3, 1)
+    );
+    store
+        .authorize(&a.project.id, &a.api_key)
+        .unwrap()
+        .execute(
+            "DROP TABLE a; DROP TABLE b; CREATE TABLE a(id INT PRIMARY KEY)",
+            &[],
+        )
+        .unwrap();
+    drop(store);
+    let store = ProjectStore::open(&root).unwrap();
+    let current = store
+        .authorize(&a.project.id, &a.api_key)
+        .unwrap()
+        .status()
+        .unwrap();
+    assert_eq!((current.tables, current.rows), (2, 0));
+    let other = store
+        .authorize(&b.project.id, &b.api_key)
+        .unwrap()
+        .status()
+        .unwrap();
+    assert_eq!((other.tables, other.rows), (1, 1));
+    assert!(store.authorize(&a.project.id, &b.api_key).is_err());
+}
