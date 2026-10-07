@@ -1,4 +1,6 @@
-use emilybase_catalog::{Key, Row, Schema, decode_row, decode_schema, encode_row, encode_schema};
+use emilybase_catalog::{
+    Key, Row, Schema, Value, decode_row, decode_schema, encode_row, encode_schema,
+};
 use emilybase_storage::MAX_RECORD_SIZE;
 
 use crate::{Error, Result};
@@ -25,6 +27,33 @@ pub enum EventKind {
 }
 
 impl Event {
+    /// Called only after logical validation, before retaining owned live state.
+    /// Incoming capacity is not part of ETBL data and must not survive storage.
+    pub(crate) fn compact_payload(mut self) -> Self {
+        match &mut self.kind {
+            EventKind::Create(schema) => {
+                compact_text(&mut schema.name);
+                for column in &mut schema.columns {
+                    compact_text(&mut column.name);
+                }
+                compact_vector(&mut schema.columns);
+            }
+            EventKind::Insert(row) | EventKind::Replace(row) => {
+                for value in row.iter_mut() {
+                    match value {
+                        Value::Text(text) => compact_text(text),
+                        Value::Bytes(bytes) => compact_vector(bytes),
+                        _ => (),
+                    }
+                }
+                compact_vector(row);
+            }
+            EventKind::Delete(Key::Text(text)) => compact_text(text),
+            _ => (),
+        }
+        self
+    }
+
     pub fn encode(&self) -> Result<Vec<u8>> {
         if matches!(self.kind, EventKind::Root) != (self.table_id == 0) {
             return Err(Error::Event("table ID"));
@@ -84,3 +113,21 @@ impl Event {
         Ok(Self { table_id, kind })
     }
 }
+
+fn compact_text(text: &mut String) {
+    if text.capacity() != text.len() {
+        // Box<str> conversion discards spare capacity; into_string exposes only
+        // its exact length. Unlike shrink_to_fit, the returned shape is exact.
+        *text = std::mem::take(text).into_boxed_str().into_string();
+    }
+}
+
+fn compact_vector<T>(vector: &mut Vec<T>) {
+    if vector.capacity() != vector.len() {
+        *vector = std::mem::take(vector).into_boxed_slice().into_vec();
+    }
+}
+
+#[cfg(test)]
+#[path = "event_capacity_tests.rs"]
+mod capacity_tests;

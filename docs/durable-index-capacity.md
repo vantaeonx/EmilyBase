@@ -204,3 +204,14 @@ state. Actual ownership, refusal, historical readers, generated sequences and
 thread caps execute under [ADR 0054](adr/0054-admitted-physical-replay-generations.md).
 This counts lifetimes, not model/cache/staging/transient heap or runtime workers;
 the combined durable writer and production gates remain open.
+
+
+## Follow-up: compact retained relational payload
+
+[Retained record ownership](retained-record-capacity.md) now removes caller
+spare String/Vec capacity after validation, before shared live state retains it.
+Reproduced schema/row/native regressions, exact wire parity, old readers, generated
+histories and WAL1/2 commit/rollback/recovery checks execute under
+[ADR 0055](adr/0055-compact-retained-record-payloads.md).
+Caller input peaks and model/cache/map/staging/replay-transient budgets remain
+outside this retained-shape guarantee; durable-index and production gates stay open.

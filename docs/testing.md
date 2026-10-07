@@ -2164,3 +2164,45 @@ excluding blanks/comment-only lines), 1207 SDK and 718 Python, or 56922 source
 lines. Documents/configuration/locks/build output are excluded. Decoded vector
 charges remain separate; model/cache/staging/transient budgets and the combined
 durable writer remain open.
+
+
+## Compact retained relational payload (2026-10-07)
+
+The original public schema/row regressions and the isolated native retained guard
+were run before the fix and failed. A five-byte schema name retained 131072 bytes;
+a three-value row retained 1024 element slots. Native requested live/peak bytes
+were 2132013/2132237. After private validated compaction, the same operation observes
+2195 retained/2130282 peak bytes and zero current bytes after snapshot release.
+Its input construction is included in the peak; this is a retained-shape guard,
+not an input/model/cache/transient or allocator/RSS quota.
+
+Five private cases preserve all value kinds, ETBL bytes, negative-zero bits,
+maximum Unicode text deletes, empty payloads and actual repeated fast-path buffer
+identity. Seven public cases cover insert/replace, exact history and pointer parity,
+old readers, atomic refusal, direct file reopen, 64 columns and 3072-byte text keys.
+A 48-case independent history model compares accepted/refused rows and canonical
+page fingerprints. Two managed cases execute commit/rollback/abort, exact WAL
+preservation, recovery/checkpoint/compaction and retained readers in WAL 1/2.
+
+The retained_payload ASan target completes 44400 executions in 46 seconds, with
+observed final RSS 119 MiB, a 512-MiB guard and 512-byte input cap. Its independent
+row model inflates owned input capacities, checks retained shapes, exact physical
+fingerprints/current pointers, old views and invalid-input refusal. Observed
+corpus growth limit is 53 bytes. ASan quarantine is 64 MiB with a 256-KiB thread-local
+quarantine. This short campaign is not exhaustive; corpus/logs stay private.
+
+Both optional release diagnostic suites pass 38 checks. Initial captured-output
+runs observed 36 bytes retained by test-output logging inside the measured region;
+moving diagnostic output after profiler shutdown makes both complete suites pass
+without weakening the zero-current assertion. The standalone regression still
+measures the same engine/input allocation boundary and counters.
+
+Complete stable 1.99.0 and minimum Rust 1.89.0 workspace runs each pass 789 main
+tests with 17 ignored helpers and no failures.
+Both formats, strict workspace/fuzz/feature Clippy, minimum fuzz bins and locked
+workspace build pass. No durable-index, hardware power-loss or production gate closes.
+
+The logical block adds 920 net Rust lines, giving 55917 physical Rust lines (53399
+excluding blanks/comment-only lines), 1207 SDK and 718 Python, or 57842 source
+lines. Documents/configuration/locks/build output are excluded. Runtime formats,
+validation/refusal meaning and existing durable ACK rules remain unchanged.

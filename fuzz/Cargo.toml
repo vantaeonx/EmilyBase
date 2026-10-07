@@ -253,3 +253,10 @@ path = "fuzz_targets/admitted_replay.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "retained_payload"
+path = "fuzz_targets/retained_payload.rs"
+test = false
+doc = false
+bench = false

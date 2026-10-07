@@ -1,0 +1,40 @@
+{
+  "observation_version": 1,
+  "toolchain": "rustc 1.99.0",
+  "profile": "release",
+  "allocator_diagnostic": "dhat 0.3.3",
+  "before_source_commit": "22f3a2f21a3dfc5f251dd92cbf1098f9a377916a",
+  "after_source_sha256": {
+    "crates/database/src/event.rs": "0364d9552611c9b0cbe5f6e9ca2f962170170cae398e0dc6de0498e08ee0dfb0",
+    "crates/database/src/state.rs": "fd636d5f717ab50ccad4a73f087946ba5a632954dfdc1d3639a331b2cac2ae3d",
+    "crates/model-profile/tests/retained_capacity.rs": "bb9f8e74f1dd755de1fb8b6f8b635dd289b1658882f57f740c948932010faf64"
+  },
+  "synthetic_fixture": {
+    "live_rows": 1,
+    "text_capacity_bytes": 1048576,
+    "text_length_bytes": 3,
+    "byte_capacity_bytes": 1048576,
+    "byte_length_bytes": 3,
+    "row_capacity_elements": 1024,
+    "row_length_elements": 3
+  },
+  "before": {
+    "requested_live_bytes": 2132013,
+    "requested_peak_bytes": 2132237,
+    "regression_outcome": "failed retained guard"
+  },
+  "after": {
+    "requested_live_bytes": 2195,
+    "requested_peak_bytes": 2130282,
+    "requested_after_snapshot_release_bytes": 0,
+    "regression_outcome": "passed retained guard"
+  },
+  "scope": "isolated insertion and borrowed lookup; input construction included, empty fixture precedes profiler",
+  "excluded": [
+    "empty fixture construction",
+    "allocator rounding and overhead",
+    "profiler bookkeeping",
+    "OS stacks"
+  ],
+  "claim": "retained payload shape observation, not source, model, transient or process heap quota"
+}

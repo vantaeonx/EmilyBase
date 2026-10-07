@@ -104,6 +104,9 @@ impl State {
 
     pub fn apply(&mut self, event: Event) -> Result<()> {
         self.validate(&event)?;
+        // Bound retained vector/string shape independently of caller spare
+        // capacity. Validations and wire bytes keep their existing meaning.
+        let event = event.compact_payload();
         match event.kind {
             EventKind::Create(schema) => {
                 self.tables.insert(
