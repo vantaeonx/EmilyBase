@@ -1,9 +1,13 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod records;
+mod session_clock;
+#[cfg(test)]
+mod session_clock_tests;
 mod session_schema;
 #[cfg(test)]
 mod session_schema_tests;
 
+pub use session_clock::inspect_session_clock_record;
 pub use session_schema::{MAX_SESSION_FAMILIES, SessionRecordInfo, inspect_session_record};
 #[cfg(all(test, target_os = "linux"))]
 mod recovery_tests;
@@ -44,6 +48,10 @@ pub enum Error {
     Denied,
     #[error("credential epoch exhausted")]
     Epoch,
+    #[error("session clock storage is not enabled")]
+    ClockDisabled,
+    #[error("invalid or backward session time")]
+    Clock,
     #[error("operating-system randomness is unavailable")]
     Randomness,
     #[error("password operation failed")]
@@ -94,6 +102,7 @@ pub struct AccountStore {
     pool: PasswordPool,
     dummy: PasswordDigest,
     session_scope: Option<crate::tokens::TokenScope>,
+    session_clock: Option<u64>,
 }
 
 impl AccountStore {
@@ -126,6 +135,7 @@ impl AccountStore {
             pool,
             dummy,
             session_scope: None,
+            session_clock: None,
         })
     }
 
@@ -160,14 +170,14 @@ impl AccountStore {
         else {
             return Err(Error::Corrupt);
         };
-        if !matches!(*version, 1 | 2) || !valid_project_id(stored) {
+        if !matches!(*version, 1..=3) || !valid_project_id(stored) {
             return Err(Error::Corrupt);
         }
         if stored != project {
             return Err(Error::ScopeMismatch);
         }
         let dummy = PasswordDigest::decode(dummy).map_err(|_| Error::Corrupt)?;
-        if snapshot.row_count() > MAX_ACCOUNTS + MAX_SESSION_FAMILIES + 2 {
+        if snapshot.row_count() > MAX_ACCOUNTS + MAX_SESSION_FAMILIES + 3 {
             return Err(Error::Corrupt);
         }
         let mut identities = std::collections::BTreeSet::new();
@@ -181,12 +191,14 @@ impl AccountStore {
             }
         }
         let session_scope = session_schema::validate_inventory(snapshot, project, *version)?;
+        let session_clock = session_clock::validate_clock(snapshot, *version)?;
         Ok(Self {
             database,
             project: project.into(),
             pool,
             dummy,
             session_scope,
+            session_clock,
         })
     }
 

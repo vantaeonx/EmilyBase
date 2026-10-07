@@ -61,6 +61,9 @@ It does not implement durable sessions, expiry, refresh rotation or revocation.
 An [explicit private-schema migration](docs/adr/0070-explicit-private-session-schema.md)
 atomically adds bounded family/metadata storage while keeping v1 stores readable.
 Strict inventory validation is implemented; session lifecycle methods are pending.
+An optional [durable session clock](docs/adr/0071-durable-session-time-watermark.md)
+records nondecreasing trusted time and atomically resets scope/time together.
+Session checks still need to integrate it before network authentication is enabled.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

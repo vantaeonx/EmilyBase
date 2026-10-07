@@ -24,7 +24,12 @@ fn verifier(
     bytes[60..].fill(0x44);
     TokenDigest::decode(&bytes).unwrap()
 }
-fn family_row(family: [u8; 16], user: [u8; 16], epoch: i64, incarnation: [u8; 16]) -> Row {
+pub(super) fn family_row(
+    family: [u8; 16],
+    user: [u8; 16],
+    epoch: i64,
+    incarnation: [u8; 16],
+) -> Row {
     let project = tests::PROJECT;
     vec![
         Value::Text(hex(&family)),
@@ -51,7 +56,7 @@ fn family_row(family: [u8; 16], user: [u8; 16], epoch: i64, incarnation: [u8; 16
         Value::Boolean(false),
     ]
 }
-fn raw_v2(path: &Path, rows: Vec<Row>, meta: Vec<Row>) {
+pub(super) fn raw_v2(path: &Path, rows: Vec<Row>, meta: Vec<Row>) {
     tests::raw_store(
         path,
         vec![tests::fixture_record("synthetic", [7; 16], 2).encode()],
@@ -82,7 +87,7 @@ fn raw_v2(path: &Path, rows: Vec<Row>, meta: Vec<Row>) {
         tx.commit().unwrap();
     }
 }
-fn meta(incarnation: [u8; 16]) -> Row {
+pub(super) fn meta(incarnation: [u8; 16]) -> Row {
     vec![
         Value::Integer(1),
         Value::Integer(1),

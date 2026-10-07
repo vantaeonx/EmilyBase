@@ -166,8 +166,8 @@ pub(super) fn validate_inventory(
             Err(Error::Corrupt)
         };
     }
-    if version != 2
-        || snapshot.table_count() != 4
+    if !matches!(version, 2 | 3)
+        || snapshot.table_count() != if version == 2 { 4 } else { 5 }
         || snapshot.schema(META).map_err(|_| Error::Corrupt)? != &meta_schema()
         || snapshot.schema(FAMILIES).map_err(|_| Error::Corrupt)? != &family_schema()
     {
@@ -197,6 +197,7 @@ pub(super) fn validate_inventory(
         .try_into()
         .map_err(|_| Error::Corrupt)?;
     let scope = TokenScope::new(project, incarnation).map_err(|_| Error::Corrupt)?;
+    let clock = super::session_clock::validate_clock(snapshot, version)?;
     let mut count = 0;
     for row in snapshot
         .primary_rows(FAMILIES, None, None)
@@ -207,6 +208,12 @@ pub(super) fn validate_inventory(
             return Err(Error::Corrupt);
         }
         let family = inspect_session_record(row.map_err(|_| Error::Corrupt)?, project)?;
+        if clock.is_some_and(|floor| {
+            TokenScope::new(project, family.incarnation).is_ok_and(|historical| historical == scope)
+                && family.issued > floor
+        }) {
+            return Err(Error::Corrupt);
+        }
         let account = snapshot
             .get(USERS, &Key::Text(family.login.clone()))
             .map_err(|_| Error::Corrupt)?

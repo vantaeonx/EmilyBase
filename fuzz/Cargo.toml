@@ -366,3 +366,10 @@ path = "fuzz_targets/session_records.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "session_clock"
+path = "fuzz_targets/session_clock.rs"
+test = false
+doc = false
+bench = false

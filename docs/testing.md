@@ -2939,3 +2939,43 @@ capacity runs are not counted as successful verification.
 record storage compatibility and open gates. Runtime sign-in/refresh/revoke/prune,
 trusted clock/expiry enforcement, account-state admission, coordinated restore
 rotation, server integration and production acceptance remain pending.
+
+## Durable session time watermark, 2026-10-07
+
+Ten new account clock cases preserve private versions1/2 and explicitly activate
+version3 with one bounded clock row and five exact schemas. Both WAL versions
+cover activation from either prior schema, old views, equal-time/no-op history,
+forward commits, lower/out-of-range refusal, compaction, reopen and independently
+verified backup/restore. Atomic reset changes incarnation/time together while
+preserving users; restored old token verifiers fail under the new expected scope.
+Deterministic candidates exercise current/retained incarnation collisions and
+four-attempt exhaustion without changing the production OS entropy source.
+
+Ten engine-checksummed bad clock/schema fixtures fail opening. Current-incarnation
+family issue times above the watermark fail; historical scopes remain data.
+Independent64-case advance/refusal/reset sequences preserve exact refusal/no-op
+history and verified restored state. Pure shape/bounds properties deliberately
+include valid id/version values. Twelve forced kills exercise staged/acknowledged
+activation, advance and reset in both WAL versions: recovered scope/time matches,
+staged journal bytes stay exact and recovered backups independently restore.
+The shared filesystem/process-launch mutex and10-second handshake remain in use.
+
+Pure clock-parser ASan completes21,853,637 executions in46 seconds,RSS329 MiB
+under512, bounded input512 bytes, with no findings. Native diagnostics on each
+Rust observe zero requested heap bytes/allocations/live bytes for1000 pure clock
+inspection rounds, including wrong types, huge bytes and malformed row lengths.
+These are requested-payload observations, not whole-process quotas or I/O timing.
+
+Final frozen-source locked tests pass on1.99.0/1.89.0:979 main cases/18 ignored
+helpers and52 optional sequential release diagnostics each. Formatting, strict
+workspace/profile/fuzz Clippy, minimum fuzz compilation, workspace build, SDK11
+unit/7 native HTTP-restart cases, both Python oracles and both warning-denied
+advisory scans pass. A missing temporary oracle environment was recreated with
+pinned tooling and verified; the interrupted tooling run is not counted as a pass.
+
+[ADR0071](adr/0071-durable-session-time-watermark.md) and the
+[source-bound artifact](measurements/2026-10-07-session-clock/verification.json)
+keep this metadata protocol distinct from session admission. Future checks must
+observe trusted time before every credential attempt. Runtime sign-in/refresh/
+logout/expiry, HTTP integration and coordinated restore reset remain pending.
+No broad media fault or production/security gate closes here.

@@ -51,3 +51,19 @@ verifier context and clipped time fields without verifying secrets or granting
 access. No runtime family issuance, refresh, revoke or principal API is enabled.
 Current-state/clock/expiry enforcement and coordinated restore rotation remain
 open under [ADR0070](adr/0070-explicit-private-session-schema.md).
+
+
+## Explicit clock activation
+
+enable_session_clock(now) explicitly activates private schema3 with a persisted
+nonnegative integer-second watermark. Versions1/2 stay readable. Time is supplied
+by a trusted local service/operator, never an HTTP client. Equal observations
+change no history; forward ones commit and lower ones fail even after reopening.
+reset_session_clock(now) changes incarnation/time together so a deliberate time
+correction cannot retain the old credential scope. Generic restore does not run
+it automatically; coordinated restore must do so before accepting traffic.
+
+The current five-schema inventory is validated, including current-incarnation
+family issue-time bounds. These are local metadata APIs, not implemented session
+admission or permissions. [ADR0071](adr/0071-durable-session-time-watermark.md)
+records compatibility, requested-heap evidence and required lifecycle integration.

@@ -65,6 +65,12 @@ backward v1 reading and four-schema private backup/recovery checks. Sign-in,
 refresh/revoke/prune, current-state expiry enforcement, trusted clock handling
 and coordinated restore rotation remain pending; no session route is enabled.
 
+[ADR0071](adr/0071-durable-session-time-watermark.md) adds explicit private v3 clock
+metadata, durable forward observation, backward-time refusal after restart and
+atomic incarnation/time reset. Sign-in/refresh/expiry must integrate these real
+primitives; coordinated restore must run reset before traffic. No user session
+or network authorization gate is completed by metadata alone.
+
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.

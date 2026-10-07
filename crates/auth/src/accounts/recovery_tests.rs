@@ -127,6 +127,100 @@ fn account_kill_worker() {
                 std::thread::park();
             }
         }
+        "clock-enable-commit" | "clock-advance-commit" | "clock-reset-commit" => {
+            match mode.as_str() {
+                "clock-enable-commit" => {
+                    store.enable_session_clock(100).unwrap();
+                }
+                "clock-advance-commit" => {
+                    store.advance_session_clock(200).unwrap();
+                }
+                _ => {
+                    store.reset_session_clock(0).unwrap();
+                }
+            }
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        }
+        "clock-enable-stage" => {
+            use super::session_clock::{CLOCK, clock_schema};
+            use super::session_schema::{META, family_schema, meta_schema};
+            let mut staged = store.database.begin().unwrap();
+            staged.create_table(meta_schema()).unwrap();
+            staged.create_table(family_schema()).unwrap();
+            staged.create_table(clock_schema()).unwrap();
+            staged
+                .insert(
+                    META,
+                    vec![
+                        Value::Integer(1),
+                        Value::Integer(1),
+                        Value::Bytes(vec![9; 16]),
+                    ],
+                )
+                .unwrap();
+            staged
+                .insert(
+                    CLOCK,
+                    vec![Value::Integer(1), Value::Integer(1), Value::Integer(100)],
+                )
+                .unwrap();
+            staged
+                .update(
+                    SCOPE,
+                    &Key::Integer(1),
+                    vec![
+                        Value::Integer(1),
+                        Value::Integer(3),
+                        Value::Text(PROJECT.into()),
+                        Value::Bytes(store.dummy.encode().to_vec()),
+                    ],
+                )
+                .unwrap();
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        }
+        "clock-advance-stage" | "clock-reset-stage" => {
+            use super::session_clock::CLOCK;
+            use super::session_schema::META;
+            let reset = mode == "clock-reset-stage";
+            let mut staged = store.database.begin().unwrap();
+            staged
+                .update(
+                    CLOCK,
+                    &Key::Integer(1),
+                    vec![
+                        Value::Integer(1),
+                        Value::Integer(1),
+                        Value::Integer(if reset { 0 } else { 200 }),
+                    ],
+                )
+                .unwrap();
+            if reset {
+                staged
+                    .update(
+                        META,
+                        &Key::Integer(1),
+                        vec![
+                            Value::Integer(1),
+                            Value::Integer(1),
+                            Value::Bytes(vec![9; 16]),
+                        ],
+                    )
+                    .unwrap();
+            }
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        }
         _ => panic!("unknown synthetic worker boundary"),
     }
 }
