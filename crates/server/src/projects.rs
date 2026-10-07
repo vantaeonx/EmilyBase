@@ -170,6 +170,23 @@ impl ProjectStore {
         })
     }
 
+    /// Publish a complete sensitive bundle as a private file without replacement.
+    /// The explicit roster remains owned by the caller; no restored scope is reset.
+    pub fn backup_account_bundle(
+        &mut self,
+        accounts: &mut [emilybase_auth::accounts::AccountStore],
+        target: impl AsRef<Path>,
+    ) -> Result<crate::AccountBundleReport> {
+        if crate::registry_files::parent(target.as_ref())
+            .canonicalize()?
+            .starts_with(&self.root)
+        {
+            return Err(Error::Path);
+        }
+        let bytes = self.capture_account_bundle(accounts)?;
+        crate::account_bundle::files::publish(&bytes, target.as_ref())
+    }
+
     fn capture_registry_with<T>(
         &mut self,
         capture: impl FnOnce(Vec<u8>) -> Result<T>,

@@ -85,8 +85,16 @@ boundary. Combined capture/publication, server authentication and memory gates r
 capture of registry data plus an explicit private roster while retaining every
 source owner before the first prefix through final validation. The new EMILYBND-1
 inspector checks complete nested schemas/scopes and database identity uniqueness.
-Subset rosters are explicit. Private file publication, combined root restoration,
+Subset rosters are explicit. Combined root restoration,
 authoritative roster, HTTP accounts and numeric memory gates remain open.
+
+
+[ADR0076](adr/0076-owned-account-bundle-file-publication.md) adds private owned bundle
+file publication and real count-only CLI inspection using the tested registry file
+publisher. No-replace/readback/fsync, substitutions, native kills, competing file
+publishers, independent row model and real CLI credentials/immutability checks
+execute. Combined root restore/reset, automatic private roster and HTTP users
+remain separate gates; no production milestone closes.
 
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker

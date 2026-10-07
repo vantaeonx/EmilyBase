@@ -1,3 +1,4 @@
+mod files;
 use super::*;
 use crate::{ProjectStore, durability};
 use emilybase_auth::{accounts::AccountStore, password::PasswordPool};

@@ -3143,3 +3143,43 @@ SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
 oracles and both warning-denied advisory scans pass. The
 [source-bound artifact](measurements/2026-10-08-account-bundle/verification.json)
 records parser observations and distinct unfinished publication/integration gates.
+
+## Private bundle file publication and CLI, 2026-10-08
+
+Twelve new server cases exercise the shared descriptor-owned publisher and bounded
+file reader for the account bundle without changing its wire format. They check
+exact image/file/report bytes,0600 mode, source history/private owner retention,
+no replacement, registry-internal target refusal, malformed input before staging,
+final symlinks, FIFO/directory/nonregular files, hard links, broad permissions and
+sparse over-cap files. Staged bytes/mode changes and parent/staging/selected-inode
+substitutions refuse while preserving foreign/detached objects.
+
+Eight failures injected before/after actual file/parent fsync span WAL1/2. Selected
+post-rename states report uncertainty and remain valid; pre-publication failures
+leave no final file and permit verified retry. A24-case independent row model
+checks output counts, source immutability and refusal to overwrite the first image.
+Twelve native process kills span common owner/private capture, file fsync, rename,
+parent sync and returned success across both WAL versions. Only complete images
+become selected; acknowledged source histories survive and reopen. Two synchronized
+native publishers select exactly one complete file and remove the losing owned stage.
+Private killed-process remnants are intentionally not adopted or automatically swept.
+
+Three real account-bundle-verify CLI cases check private versions1/2/3 and WAL1/2,
+relative Unicode paths, empty/subset inventories and aggregate-only output. Source
+and archive histories stay exact; passwords, existing sessions and API keys remain
+valid after inspection. Unsafe/corrupt files fail without private stdout/stderr or
+new paths.
+
+[ADR0076](adr/0076-owned-account-bundle-file-publication.md) records publication
+uncertainty and separate integration gates. No new parser ASan or physical power-loss
+campaign is claimed for this file-publication/CLI change. Combined root restoration
+with mandatory private scope reset, authoritative roster, HTTP users/roles/RLS,
+whole-process resource reservations and production acceptance remain open.
+
+Final frozen-source locked checks pass on1.99.0/1.89.0:1041 main cases/22 ignored
+helpers and53 optional release diagnostics each. Formatting and warning-denied
+workspace/profile/fuzz Clippy, minimum fuzz compilation and workspace build pass.
+SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
+oracles and both warning-denied advisory scans pass. The
+[source-bound artifact](measurements/2026-10-08-account-bundle-files/verification.json)
+records actual native/file/CLI observations and separate unfinished restore gates.

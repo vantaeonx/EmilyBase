@@ -3,6 +3,8 @@ use crate::{Error, MAX_PROJECTS, RegistryBackupReport, Result, registry_archive}
 use emilybase_auth::accounts::{PrivateArchiveReport, inspect_private_account_backup_bytes};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
+pub(crate) mod files;
+pub use files::inspect_account_bundle;
 
 pub const ACCOUNT_BUNDLE_VERSION: u16 = 1;
 pub const MAX_ACCOUNT_BUNDLE_BYTES: usize = 128 * 1024 * 1024;

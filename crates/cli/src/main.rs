@@ -43,6 +43,8 @@ enum Command {
     },
     /// Offline private backup of every isolated project, including current key digests.
     ProjectsBackup { path: PathBuf, target: PathBuf },
+    /// Verify an explicit registry/private bundle; print counts without private contents.
+    AccountBundleVerify { path: PathBuf },
     /// Replay and verify every project in a private registry archive.
     ProjectsBackupVerify { path: PathBuf },
     /// Restore all projects into a new registry without overwriting existing paths.
@@ -244,6 +246,37 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         Command::ProjectsBackup { path, target } => {
             let report = emilybase_server::ProjectStore::open_existing(path)?.backup(target)?;
             print_registry_backup(&report);
+        }
+        Command::AccountBundleVerify { path } => {
+            let report = emilybase_server::inspect_account_bundle(path)?;
+            println!(
+                "verified bundle projects={} private_stores={} tables={} rows={} accounts={} session_families={} archive_bytes={}",
+                report.registry.projects.len(),
+                report.private_accounts.len(),
+                report
+                    .registry
+                    .projects
+                    .iter()
+                    .map(|p| p.tables)
+                    .sum::<usize>(),
+                report
+                    .registry
+                    .projects
+                    .iter()
+                    .map(|p| p.rows)
+                    .sum::<usize>(),
+                report
+                    .private_accounts
+                    .iter()
+                    .map(|p| p.inventory.accounts)
+                    .sum::<usize>(),
+                report
+                    .private_accounts
+                    .iter()
+                    .map(|p| p.inventory.session_families)
+                    .sum::<usize>(),
+                report.archive_bytes
+            );
         }
         Command::ProjectsBackupVerify { path } => {
             let report = emilybase_server::inspect_registry_backup(path)?;

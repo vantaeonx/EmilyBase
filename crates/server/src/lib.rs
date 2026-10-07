@@ -10,7 +10,7 @@ mod registry_archive;
 mod registry_files;
 pub use account_bundle::{
     ACCOUNT_BUNDLE_VERSION, AccountBundleReport, BundledAccountReport, MAX_ACCOUNT_BUNDLE_BYTES,
-    inspect_account_bundle_bytes,
+    inspect_account_bundle, inspect_account_bundle_bytes,
 };
 pub use http::{router, serve};
 pub use projects::{AuthorizedProject, CreatedProject, ProjectInfo, ProjectStatus, ProjectStore};
@@ -64,7 +64,7 @@ pub enum Error {
     Limit,
     #[error("invalid project display name")]
     Name,
-    #[error("project publication outcome is unknown; reopen before use")]
+    #[error("publication outcome is unknown; verify destination before retrying")]
     PublicationUnknown(#[source] std::io::Error),
     #[error(transparent)]
     Auth(#[from] emilybase_auth::Error),

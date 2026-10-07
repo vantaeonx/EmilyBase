@@ -54,8 +54,25 @@ before output allocation. The next individual archive must still be materialized
 encoded size is not a whole-process memory reservation. Opening/replay, retained
 models, temporary WAL images and output copies have distinct resource costs.
 
-This is an in-memory trusted offline library API. Bundle file publication, combined
-root restore with mandatory private session reset, authoritative private roster,
+This is a trusted offline library API. backup_account_bundle publishes a private
+0600 file outside the registry through descriptor readback, full validation,
+file/parent fsync and no-replace rename. inspect_account_bundle reads only private
+regular single-link bounded files, refusing final symlinks/FIFOs/broad modes.
+Post-rename errors report publication uncertainty and preserve the selection.
+Choose a separate private backup directory; paths/ancestors remain operator-trusted.
+
+The real CLI verifies an existing archive without printing private contents:
+
+```sh
+cargo run --locked -p emilybase-cli -- account-bundle-verify ./synthetic.account-bundle
+```
+
+Its aggregate counts do not establish permission, full private-store discovery or
+common-capture provenance of third-party bytes. Verification changes no live state.
+The command does not create or restore bundles. See
+[ADR0076](adr/0076-owned-account-bundle-file-publication.md).
+
+Combined root restore with mandatory private session reset, authoritative private roster,
 private worker admission, HTTP authentication, roles and row policies remain open.
 Existing EMILYREG/EMILYBAK and database/WAL formats are unchanged; no silent upgrade
 or PostgreSQL compatibility is promised. See

@@ -76,3 +76,6 @@ data/private stores into one owned root; validate/reset every restored private
 scope before root publication/traffic. An authoritative private roster, private
 worker/rate admission, account policy, roles/RLS, numeric resource reservations and
 production/crash/upgrade/security acceptance remain open.
+
+Follow-up: [ADR0076](0076-owned-account-bundle-file-publication.md) implements owned
+private file publication and count-only CLI verification. Combined restore remains open.

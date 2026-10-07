@@ -24,6 +24,7 @@ serde = "1"
 serde_json = "1"
 
 [dev-dependencies]
+emilybase-auth = { path = "../auth" }
 tempfile = "3"
 
 [lints]

@@ -1,0 +1,96 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "6bf8f905697050095d8890845e04b411c0553cef",
+  "source_sha256": {
+    "Cargo.lock": "c008344551454c5fc64cca027883040682608701fe2fe5c45b305852ac9f8e3a",
+    "crates/cli/Cargo.toml": "d137d92fd37071e87f1556407440626bc5414ad96045557cf088f0644a6505a4",
+    "crates/cli/src/main.rs": "282af387fc4de1ba91e77effe25cdc9716a37969f081ff16c3213e9529ad7b54",
+    "crates/cli/tests/account_bundles.rs": "0902752ce22b0be5d7ed341f2fe742f1acebb0e8801d154b4aa2bdc839aa9632",
+    "crates/server/src/account_bundle.rs": "d9521147b5d56677b47752e2bd932e8961ee59ba95708e83d7adcedbd1acc682",
+    "crates/server/src/account_bundle/files.rs": "cbd61e7e57c217929d2348a9a4b0dabf8ef67d8937315fd4eb86da3382124a80",
+    "crates/server/src/account_bundle/tests.rs": "8cb67693b560b447ccbc12d82a37e956091fd7d32a84dd875f463801e8c9e2ca",
+    "crates/server/src/account_bundle/tests/files.rs": "ee48a4611d84eab7dd4aa28ca53230de22d75006f91d0d6f2fa61d895c397c89",
+    "crates/server/src/lib.rs": "0d85c2b71d74425417e23aaead0d0149dcf0108d7150855cbda04c38d3c74812",
+    "crates/server/src/projects.rs": "c2ec82a4b979c9ed64c720990e12f919f296685b8b1fd51e4137a75044ece8ce",
+    "crates/server/src/registry_files.rs": "314d0e118594ca07f4fc6cd867d1af143037869a1c23aea954a901df33ca94d2",
+    "crates/server/src/registry_files/pending.rs": "ebe0beb32f504cd513d253b87feb67f971fb21230ec33a1ce237d7cbf152b05f"
+  },
+  "protocol": {
+    "wire_format_changed": false,
+    "shared_typed_descriptor_owned_publisher": true,
+    "private_mode_octal": "0600",
+    "no_replace": true,
+    "exact_descriptor_readback_and_full_nested_validation": true,
+    "file_and_owned_parent_fsync_before_success": true,
+    "post_rename_errors_are_publication_unknown": true,
+    "foreign_and_detached_entries_preserved": true,
+    "reader_rejects_final_symlink_nonregular_multiple_links_broad_mode_and_oversize": true,
+    "fifo_open_nonblocking": true,
+    "whole_file_byte_cap": 134217728,
+    "cli_command": "account-bundle-verify",
+    "cli_output_aggregate_counts_only": true,
+    "inspection_resets_no_scope_or_credentials": true
+  },
+  "matrix": {
+    "new_main_server_cases": 12,
+    "new_cli_cases": 3,
+    "new_ignored_child_helpers": 1,
+    "private_versions": [
+      1,
+      2,
+      3
+    ],
+    "wal_versions": [
+      1,
+      2
+    ],
+    "actual_before_after_file_parent_fsync_faults": 8,
+    "native_forced_process_kills": 12,
+    "synchronized_native_file_publishers": 2,
+    "selected_race_winners": 1,
+    "independent_publication_retry_cases": 24,
+    "relative_unicode_cli": true,
+    "source_archive_password_session_and_api_key_state_preserved": true,
+    "parent_staging_selected_substitution": true,
+    "nonregular_link_permission_sparse_oversize_boundaries": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 1041,
+    "ignored_helpers_each": 22,
+    "optional_release_diagnostics_each": 53,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74"
+  },
+  "parser_campaign": {
+    "new_campaign": false,
+    "prior_envelope_campaign_commit": "6bf8f905697050095d8890845e04b411c0553cef"
+  },
+  "source_counts": {
+    "rust": 74321,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 76427,
+    "net_rust_this_block": 927
+  },
+  "exclusions": [
+    "combined root restore and mandatory private reset before traffic",
+    "authoritative attached-private-store catalog",
+    "CLI bundle creation or restoration",
+    "HTTP accounts, roles and row policies",
+    "whole-process retained model, staging, transient and worker quotas",
+    "streaming, encryption and automatic orphan cleanup",
+    "physical power loss or new parser ASan campaign",
+    "production/security acceptance gate"
+  ]
+}

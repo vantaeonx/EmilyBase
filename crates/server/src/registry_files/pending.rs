@@ -1,4 +1,4 @@
-//! Identity-bound staging and publication for the independent registry envelope.
+//! Identity-bound staging for archive files and registry root publication.
 use super::{parent, sync};
 use crate::{Error, Result, metadata};
 use std::ffi::OsString;
@@ -66,10 +66,10 @@ pub(super) struct Pending {
     published: bool,
 }
 impl Pending {
-    pub fn file(target: &Path) -> Result<Self> {
+    pub fn file(target: &Path, prefix: &str) -> Result<Self> {
         let parent = Parent::new(target)?;
         let temporary = tempfile::Builder::new()
-            .prefix(".emilybase-registry-backup-")
+            .prefix(prefix)
             .tempfile_in(descriptor_path(&parent.owner))?;
         // Disable pathname-based cleanup before exposing any test/publication boundary.
         let (owner, path) = temporary.keep().map_err(|error| error.error)?;
@@ -127,7 +127,7 @@ impl Pending {
         sync(&self.parent.owner, phase).map_err(Error::PublicationUnknown)?;
         if self.parent.check().is_err() || !self.parent.owns(&self.parent.target, &self.owner) {
             return Err(Error::PublicationUnknown(std::io::Error::other(
-                "selected registry destination changed",
+                "selected publication destination changed",
             )));
         }
         Ok(())

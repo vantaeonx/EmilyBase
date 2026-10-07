@@ -422,6 +422,7 @@ name = "emilybase-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "emilybase-auth",
  "emilybase-backup",
  "emilybase-catalog",
  "emilybase-database",

@@ -12,6 +12,7 @@ dist/
 *.pem
 *.backup
 *.account-bundle
+.emilybase-account-bundle-*
 *.table-index
 .emilybase-table-index-*
 .emilybase-backup-*

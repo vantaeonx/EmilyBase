@@ -13,6 +13,10 @@ pub fn inspect_registry_backup(path: impl AsRef<Path>) -> Result<RegistryBackupR
 }
 
 pub(crate) fn read(path: &Path) -> Result<Vec<u8>> {
+    read_bounded(path, MAX_REGISTRY_BACKUP_BYTES)
+}
+
+pub(crate) fn read_bounded(path: &Path, limit: usize) -> Result<Vec<u8>> {
     let fd = rustix::fs::open(
         path,
         rustix::fs::OFlags::RDONLY
@@ -23,41 +27,103 @@ pub(crate) fn read(path: &Path) -> Result<Vec<u8>> {
     )
     .map_err(std::io::Error::from)?;
     let mut file: File = fd.into();
-    read_file(&mut file)
+    read_file(&mut file, limit)
 }
 
-fn read_file(file: &mut File) -> Result<Vec<u8>> {
+fn read_file(file: &mut File, limit: usize) -> Result<Vec<u8>> {
     let metadata = file.metadata()?;
     if !metadata.is_file() || metadata.nlink() != 1 || metadata.permissions().mode() & 0o077 != 0 {
         return Err(Error::Path);
     }
-    if metadata.len() > MAX_REGISTRY_BACKUP_BYTES as u64 {
+    if metadata.len() > limit as u64 {
         return Err(Error::Limit);
     }
     let mut bytes = Vec::new();
     file.seek(SeekFrom::Start(0))?;
-    file.take(MAX_REGISTRY_BACKUP_BYTES as u64 + 1)
-        .read_to_end(&mut bytes)?;
-    if bytes.len() > MAX_REGISTRY_BACKUP_BYTES {
+    file.take(limit as u64 + 1).read_to_end(&mut bytes)?;
+    if bytes.len() > limit {
         return Err(Error::Limit);
     }
     Ok(bytes)
 }
 
+#[derive(Clone, Copy)]
+pub(crate) enum FileArchive {
+    Registry,
+    AccountBundle,
+}
+impl FileArchive {
+    fn points(self) -> [&'static str; 5] {
+        match self {
+            Self::Registry => [
+                "registry_backup_file_sync",
+                "registry_backup_file_synced",
+                "registry_backup_renamed",
+                "registry_backup_parent_sync",
+                "registry_backup_parent_synced",
+            ],
+            Self::AccountBundle => [
+                "bundle_backup_file_sync",
+                "bundle_backup_file_synced",
+                "bundle_backup_renamed",
+                "bundle_backup_parent_sync",
+                "bundle_backup_parent_synced",
+            ],
+        }
+    }
+    fn limit(self) -> usize {
+        match self {
+            Self::Registry => MAX_REGISTRY_BACKUP_BYTES,
+            Self::AccountBundle => crate::MAX_ACCOUNT_BUNDLE_BYTES,
+        }
+    }
+    fn prefix(self) -> &'static str {
+        match self {
+            Self::Registry => ".emilybase-registry-backup-",
+            Self::AccountBundle => ".emilybase-account-bundle-",
+        }
+    }
+    fn mismatch(self) -> Error {
+        match self {
+            Self::Registry => Error::RegistryFormat("staged archive differs from source"),
+            Self::AccountBundle => Error::BundleFormat("staged archive differs from source"),
+        }
+    }
+}
 pub(crate) fn publish(bytes: &[u8], target: &Path) -> Result<RegistryBackupReport> {
-    let report = crate::inspect_registry_backup_bytes(bytes)?;
-    let mut pending = pending::Pending::file(target)?;
+    publish_checked(
+        bytes,
+        target,
+        crate::inspect_registry_backup_bytes,
+        FileArchive::Registry,
+    )
+}
+
+/// Shared descriptor-owned publication. The selected parser determines the report
+/// and bounded format; no payload or credential is logged by this path.
+pub(crate) fn publish_checked<T: PartialEq>(
+    bytes: &[u8],
+    target: &Path,
+    inspect: fn(&[u8]) -> Result<T>,
+    format: FileArchive,
+) -> Result<T> {
+    if bytes.len() > format.limit() {
+        return Err(Error::Limit);
+    }
+    let report = inspect(bytes)?;
+    let points = format.points();
+    let mut pending = pending::Pending::file(target, format.prefix())?;
     pending.owner.write_all(bytes)?;
-    sync(&pending.owner, "registry_backup_file_sync")?;
-    checkpoint("registry_backup_file_synced");
-    let written = read_file(&mut pending.owner)?;
-    if written != bytes || crate::inspect_registry_backup_bytes(&written)? != report {
-        return Err(Error::RegistryFormat("staged archive differs from source"));
+    sync(&pending.owner, points[0])?;
+    checkpoint(points[1]);
+    let written = read_file(&mut pending.owner, format.limit())?;
+    if written != bytes || inspect(&written)? != report {
+        return Err(format.mismatch());
     }
     pending.publish()?;
-    checkpoint("registry_backup_renamed");
-    pending.finish("registry_backup_parent_sync")?;
-    checkpoint("registry_backup_parent_synced");
+    checkpoint(points[2]);
+    pending.finish(points[3])?;
+    checkpoint(points[4]);
     Ok(report)
 }
 
