@@ -106,3 +106,25 @@ still admit a previously current token under its old incarnation. Run durable
 reset before traffic. The existing public registry archive does not capture this
 separate store. HTTP routes, combined capture/restore, bounded server workers,
 request throttling, cookie/CORS policy, roles and row policies remain unfinished.
+
+## Private reset before publication
+
+Use restore_private_accounts(archive, target, expected_project, shared_pool, now)
+for a separately captured account archive. It validates private schema and project
+binding inside the owned staging directory, then resets existing v3 scope/time
+or explicitly activates v1/v2. Accounts and epochs remain; old sessions cannot
+admit when the final directory appears. No token is reconstructed. Reopen the
+published private store normally. The report describes the installed prepared
+WAL, including reset/migration commits rather than only the input archive boundary.
+
+Inputs are trusted operator paths/time. Existing destinations are never replaced.
+An invalid private archive, callback/commit failure or pre-publication path/sync
+failure publishes nothing. A post-rename uncertainty preserves state and requires
+inspection before retry. The source archive is immutable. WAL headroom is needed
+for reset; there is no automatic compaction or downgrade on failure.
+
+This uses the shared engine restore_prepared protocol under
+[ADR0073](adr/0073-private-restore-reset-before-publication.md). Generic engine
+restore deliberately has a no-op preparation and retains old metadata. Neither
+method makes current registry archives capture separate accounts; combined
+platform capture/restore and server routes remain unfinished.

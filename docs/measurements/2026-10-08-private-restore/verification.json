@@ -1,0 +1,81 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "a310d3de2f9d8d7b6bc44a741288a8003139a9b2",
+  "source_sha256": {
+    "crates/backup/src/archive.rs": "aa3f4c25aa80cd9a5b8b046ad0899a9c86c6de33dddbc908a6d440e124486940",
+    "crates/backup/src/lib.rs": "32310b693704c83374c2fe03a58d92e4ae1a745d359e0ec64ae578db414c64d8",
+    "crates/backup/src/restore.rs": "45c121d1b08048ba13a7d25271b1224953b2283b041d8cc860f0f3724a6ee719",
+    "crates/backup/src/prepared_tests.rs": "e397193ed7089ca061b8f89a00b39c3a92718d7b35ab4ff00f69908170c0efc3",
+    "crates/backup/src/ownership_tests.rs": "a86f2248f7784a70dc4b8ccf258deb84d48cb053d67a7a8d7a5ea2a66ea84c82",
+    "crates/auth/src/accounts/mod.rs": "ec1d49bf7b8b7013557c1bff22a8437f558228e79b8ffa9592bd9d3b26d109e4",
+    "crates/auth/src/accounts/restore.rs": "228f287f9665ad4da73aeb558aa4bcb3f6b42d0531398d1dd7fcf14b86425b28",
+    "crates/auth/src/accounts/restore_tests.rs": "ab68032fb49b19a250658573ead4a78baa80916bb059e8142db401716f3bf0a9",
+    "crates/auth/src/accounts/recovery_tests.rs": "28b92333205599636ece90bf3d8bfb7ca296c43054f6ff1e0c5eadf71989e523"
+  },
+  "protocol": {
+    "wire_format_changed": false,
+    "trusted_callback_in_owned_private_stage": true,
+    "verify_prepared_database_identity_and_full_replay": true,
+    "private_schema_validation_before_publication": true,
+    "private_versions_supported": [
+      1,
+      2,
+      3
+    ],
+    "fresh_session_scope_before_publication": true,
+    "source_archive_immutable": true,
+    "returned_report_describes_installed_state": true,
+    "no_replace_publication": true,
+    "uncertain_post_rename_preserves_state": true
+  },
+  "matrix": {
+    "new_backup_cases": 10,
+    "new_private_account_cases": 6,
+    "row_model_cases": 64,
+    "account_model_cases": 32,
+    "wal_versions": [
+      1,
+      2
+    ],
+    "prepared_acknowledged_private_restore_kills": 4,
+    "before_after_wal_directory_parent_sync_fault_combinations": 12,
+    "synchronized_private_restore_winners": 1,
+    "private_schema_corruption_cases": 3,
+    "wrong_project_archive_refused": true,
+    "foreign_substitutions_preserved": true,
+    "old_tokens_denied_after_publication_and_recapture": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 1006,
+    "ignored_helpers_each": 18,
+    "optional_release_diagnostics_each": 52,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74"
+  },
+  "source_counts": {
+    "rust": 71625,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 73731,
+    "net_rust_this_block": 970
+  },
+  "exclusions": [
+    "combined registry/account capture and restoration",
+    "HTTP account/session routes, roles and row policies",
+    "numeric whole-process/worker heap quotas",
+    "new parser-fuzz campaign; unchanged campaigns documented separately",
+    "physical power loss or orphan sweeping",
+    "production/security acceptance gate"
+  ]
+}

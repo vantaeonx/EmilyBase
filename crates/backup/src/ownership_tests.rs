@@ -586,3 +586,79 @@ fn a_waiting_native_publisher_rejects_external_parent_and_staging_substitution()
         }
     }
 }
+
+#[test]
+fn prepared_restore_sync_failures_preserve_source_and_the_transformed_publication_boundary() {
+    let _guard = crate::publication_tests::PROCESS_TESTS.lock().unwrap();
+    use crate::PreparedRestoreError;
+    use emilybase_catalog::{Column, DataType, Schema};
+    for phase in ["restore_wal_sync", "restore_directory_sync", "parent_sync"] {
+        for after in [false, true] {
+            for compacted in [false, true] {
+                let temp = tempfile::tempdir().unwrap();
+                let source = temp.path().join("source");
+                let mut database = Database::create(&source).unwrap();
+                if compacted {
+                    database.compact().unwrap();
+                }
+                let archive = temp.path().join("source.backup");
+                let original = create(&mut database, &archive).unwrap();
+                let archive_before = fs::read(&archive).unwrap();
+                let source_before = database.committed_wal().unwrap();
+                let target = temp.path().join("selected");
+                let transform = |path: &Path| {
+                    let mut database = Database::open(path).unwrap();
+                    let mut tx = database.begin().unwrap();
+                    tx.create_table(Schema {
+                        name: "synthetic".into(),
+                        columns: vec![Column {
+                            name: "id".into(),
+                            data_type: DataType::Integer,
+                            nullable: false,
+                        }],
+                        primary_key: 0,
+                    })
+                    .unwrap();
+                    tx.commit().unwrap();
+                    Ok::<(), std::convert::Infallible>(())
+                };
+                let failure = FailureGuard::new(phase, after);
+                let result = crate::restore_prepared(&archive, &target, transform);
+                drop(failure);
+                if phase == "parent_sync" {
+                    assert!(matches!(
+                        result,
+                        Err(PreparedRestoreError::Backup(Error::PublicationUnknown(_)))
+                    ));
+                    let restored = Database::open(&target).unwrap();
+                    assert_eq!(restored.database_id(), original.database_id);
+                    assert_eq!(restored.last_transaction(), original.last_transaction + 1);
+                    assert_eq!(restored.view().unwrap().table_count(), 1);
+                    assert!(crate::restore_prepared(&archive, &target, transform).is_err());
+                } else {
+                    assert!(matches!(
+                        result,
+                        Err(PreparedRestoreError::Backup(Error::Io(_)))
+                    ));
+                    assert!(!target.exists());
+                }
+                assert_eq!(fs::read(&archive).unwrap(), archive_before);
+                assert_eq!(database.committed_wal().unwrap(), source_before);
+                assert!(!fs::read_dir(temp.path()).unwrap().any(|entry| {
+                    entry
+                        .unwrap()
+                        .file_name()
+                        .to_string_lossy()
+                        .starts_with(".emilybase-backup-")
+                }));
+                let retry = temp.path().join("verified-retry");
+                let report = crate::restore_prepared(&archive, &retry, transform).unwrap();
+                assert_eq!(report.last_transaction, original.last_transaction + 1);
+                assert_eq!(
+                    Database::open(retry).unwrap().view().unwrap().table_count(),
+                    1
+                );
+            }
+        }
+    }
+}

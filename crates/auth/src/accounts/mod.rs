@@ -1,7 +1,11 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod records;
+mod restore;
+#[cfg(test)]
+mod restore_tests;
 mod session_clock;
 mod sessions;
+pub use restore::restore_private_accounts;
 #[cfg(test)]
 mod sessions_tests;
 pub use sessions::{IssuedSession, SessionPrincipal};

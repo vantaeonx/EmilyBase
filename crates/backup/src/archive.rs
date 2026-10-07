@@ -42,7 +42,7 @@ pub fn inspect_bytes(bytes: &[u8]) -> Result<Report> {
     Ok(report)
 }
 
-fn report(recovered: RecoveredImage) -> Result<Report> {
+pub(crate) fn report(recovered: RecoveredImage) -> Result<Report> {
     if recovered.discarded_bytes != 0 {
         return Err(Error::Format("backup contains an uncommitted tail"));
     }

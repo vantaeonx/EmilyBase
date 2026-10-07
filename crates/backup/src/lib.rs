@@ -6,13 +6,15 @@ mod header;
 #[cfg(all(test, target_os = "linux"))]
 mod ownership_tests;
 #[cfg(test)]
+mod prepared_tests;
+#[cfg(test)]
 mod publication_tests;
 mod publish;
 mod restore;
 
 pub use archive::{encode, inspect_bytes};
 pub use files::{create, inspect};
-pub use restore::restore;
+pub use restore::{PreparedRestoreError, restore, restore_prepared};
 
 pub const BACKUP_VERSION: u16 = 1;
 pub const HEADER_SIZE: usize = 128;

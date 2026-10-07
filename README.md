@@ -63,8 +63,10 @@ purpose-bound random credentials and strict private verifier formats.
 Private versions1/2/3 remain readable; session checks require explicit v3 activation.
 This library remains separate from server projects and current whole-registry
 archives. HTTP signup/login/session routes, account policy, roles, row policies
-and coordinated account/data restore remain pending. Generic private restore
-retains old credentials until an explicit durable scope reset before traffic.
+and coordinated account/data restore remain pending. The separate
+[private restore API](docs/adr/0073-private-restore-reset-before-publication.md)
+validates account schema/project and durably resets scope before atomic directory
+publication. Use it for private archives; generic engine restore retains old scope.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

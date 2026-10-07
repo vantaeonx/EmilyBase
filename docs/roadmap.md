@@ -69,6 +69,12 @@ still requires an explicit reset before traffic. The library is not attached to
 server projects; HTTP workers/rate controls, account policy, complete account/data
 backup/restore, roles and row policies remain gates. No milestone is closed.
 
+[ADR0073](adr/0073-private-restore-reset-before-publication.md) adds owned private
+restore preparation, semantic project/account validation and mandatory scope/time
+reset before directory publication. Current private archives can be restored with
+old-token denial from the first published state. Combined registry/account capture
+and restoration remain the next integration gate; no HTTP route or milestone closes.
+
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.

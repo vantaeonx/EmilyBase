@@ -65,3 +65,16 @@ administrators. Linux and mounted `/proc` are required for publication/restore.
 See [ADR 0032](adr/0032-owned-backup-publication.md). The format is experimental,
 with no silent version conversion. Streaming,
 encryption, incremental backup, remote storage and migration are not implemented.
+
+## Application preparation before publication
+
+The wire format stays EMILYBAK version1. restore_prepared permits a trusted local
+application callback in the descriptor-owned private staging directory before
+final replay/checkpoint/sync/no-replace publication. It must release engine owners.
+Reports describe the prepared installed state; the immutable source may describe
+an earlier commit. Application and backup errors remain distinct, and post-rename
+uncertainty preserves installed state. Ordinary restore uses a no-op preparation.
+The [private account wrapper](private-accounts.md) validates project/schema and
+commits a fresh session scope before publication. This does not extend registry
+archives or complete combined platform restore. See
+[ADR0073](adr/0073-private-restore-reset-before-publication.md).

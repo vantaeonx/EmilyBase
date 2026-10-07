@@ -3024,3 +3024,38 @@ oracles and both warning-denied advisory scans pass. No new parser ASan campaign
 is claimed for this lifecycle-only change; unchanged parser evidence remains in
 the earlier sections. The [source-bound artifact](measurements/2026-10-07-session-lifecycle/verification.json)
 records actual counts and the separate unfinished platform gates.
+
+## Private restore preparation, 2026-10-08
+
+Six new private account cases cover versions1/2/3 on both WAL versions, complete
+schema/project validation, password/epoch/disable preservation, reset-before-name
+publication, immutable source/WAL, old token denial and restart. An independent
+32-case disable/epoch model compares restored state. Four forced kills cover
+prepared reset and acknowledged publication on both WAL versions. Before exposure
+the final directory is absent; after acknowledgement the reset is complete and
+old credentials fail, including through an independently recaptured/restored backup.
+Two synchronized restorers prepare separate scopes and publish exactly one result.
+
+Ten new backup cases cover trusted preparation and reports describing installed
+state, exact ordinary no-op restore, application refusal after commit, malformed
+input before callback, changed database identity/corrupted WAL, held application
+owner, parent/staging substitutions, no replacement, post-rename selection change
+and a64-case independent commit/rollback model. The added sync-failure matrix has
+12 combinations across both WAL versions and before/after WAL/directory/parent
+sync. Only parent-sync failures occur after exposure and report uncertainty while
+preserving transformed state; all source bytes remain exact.
+
+These are actual local library checks. Private remnants after a killed process are
+not final directories and may remain inspectable. There is no new physical
+power-loss campaign, orphan sweeper, combined platform restore, HTTP route or
+production acceptance. [ADR0073](adr/0073-private-restore-reset-before-publication.md)
+records the shared publisher and private wrapper boundaries.
+
+Final frozen-source locked checks pass on1.99.0/1.89.0:1006 main cases/18 ignored
+helpers and52 optional release diagnostics each. Formatting, warning-denied
+workspace/profile/fuzz Clippy, minimum fuzz compilation and workspace build pass.
+SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
+oracles and both warning-denied advisory scans pass. No new parser ASan campaign
+is claimed for this publication-only change. The
+[source-bound artifact](measurements/2026-10-08-private-restore/verification.json)
+records counts and distinct unfinished integration/production gates.

@@ -60,6 +60,37 @@ fn account_process_kills_preserve_acknowledged_state_and_exclude_staged_changes(
 fn account_kill_worker() {
     let path = std::env::var_os("EMILYBASE_ACCOUNT_KILL_PATH").unwrap();
     let mode = std::env::var("EMILYBASE_ACCOUNT_KILL_MODE").unwrap();
+    if mode.starts_with("private-restore-") {
+        let root = Path::new(&path);
+        let barrier = || {
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        };
+        super::restore::restore_private_with(
+            &root.join("private.backup"),
+            &root.join("restored"),
+            PROJECT,
+            PasswordPool::new(1).unwrap(),
+            50,
+            |_| {
+                if mode == "private-restore-prepared" {
+                    barrier();
+                }
+            },
+        )
+        .unwrap();
+        let installed = AccountStore::open(
+            root.join("restored"),
+            PROJECT,
+            PasswordPool::new(1).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(installed.session_clock_floor().unwrap(), Some(50));
+        barrier();
+    }
     let mut store =
         AccountStore::open(Path::new(&path), PROJECT, PasswordPool::new(1).unwrap()).unwrap();
     match mode.as_str() {
