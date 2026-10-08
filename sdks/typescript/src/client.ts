@@ -1,6 +1,13 @@
+import * as rows from "./rows.js";
 import * as decode from "./decode.js";
 import { EmilyBaseError } from "./types.js";
 import type {
+  BatchChanged,
+  RowChanged,
+  RowKey,
+  RowPage,
+  RowValue,
+  RowWrite,
   ClientOptions,
   Outcome,
   Plan,
@@ -17,6 +24,7 @@ const SAFE_REFUSALS = new Map([
   ["invalid_json", 400],
   ["invalid_project_request", 400],
   ["query_rejected", 400],
+  ["table_rejected", 400],
   ["body_timeout", 408],
   ["body_limit", 413],
   ["json_required", 415],
@@ -60,13 +68,12 @@ function payload(sql: string, parameters: readonly Value[]): string {
   if (encoder.encode(body).length > 65536) return input();
   return body;
 }
-async function body(response: Response): Promise<unknown> {
+async function body(
+  response: Response,
+  maximum = MAX_RESPONSE_BYTES,
+): Promise<unknown> {
   const length = response.headers.get("content-length");
-  if (
-    length !== null &&
-    /^\d+$/.test(length) &&
-    Number(length) > MAX_RESPONSE_BYTES
-  ) {
+  if (length !== null && /^\d+$/.test(length) && Number(length) > maximum) {
     await response.body?.cancel().catch(() => undefined);
     throw new EmilyBaseError("response_limit", "unknown", response.status);
   }
@@ -81,7 +88,7 @@ async function body(response: Response): Promise<unknown> {
       const { value, done } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > MAX_RESPONSE_BYTES)
+      if (size > maximum)
         throw new EmilyBaseError("response_limit", "unknown", response.status);
       text += decoder.decode(value, { stream: true });
     }
@@ -172,12 +179,116 @@ export class EmilyBaseClient {
   status(options: RequestOptions = {}): Promise<Status> {
     return this.#request("status", "GET", undefined, decode.status, options);
   }
+  rowGet(
+    table: string,
+    key: RowKey,
+    options: RequestOptions = {},
+  ): Promise<RowValue[] | null> {
+    return this.#row(
+      "get",
+      () => ({ table: rows.table(table), key: rows.key(key) }),
+      rows.found,
+      options,
+    );
+  }
+  rowPage(
+    table: string,
+    limit: number,
+    after: RowKey | null = null,
+    options: RequestOptions = {},
+  ): Promise<RowPage> {
+    return this.#row(
+      "page",
+      () => ({
+        table: rows.table(table),
+        limit: rows.limit(limit),
+        after: after === null ? null : rows.key(after),
+      }),
+      (value) => rows.page(value, limit),
+      options,
+    );
+  }
+  rowInsert(
+    table: string,
+    row: readonly RowValue[],
+    options: RequestOptions = {},
+  ): Promise<RowChanged> {
+    return this.#row(
+      "insert",
+      () => ({ table: rows.table(table), row: rows.row(row) }),
+      rows.changed,
+      options,
+    );
+  }
+  rowUpdate(
+    table: string,
+    key: RowKey,
+    row: readonly RowValue[],
+    options: RequestOptions = {},
+  ): Promise<RowChanged> {
+    return this.#row(
+      "update",
+      () => ({
+        table: rows.table(table),
+        key: rows.key(key),
+        row: rows.row(row),
+      }),
+      rows.changed,
+      options,
+    );
+  }
+  rowDelete(
+    table: string,
+    key: RowKey,
+    options: RequestOptions = {},
+  ): Promise<RowChanged> {
+    return this.#row(
+      "delete",
+      () => ({ table: rows.table(table), key: rows.key(key) }),
+      rows.changed,
+      options,
+    );
+  }
+  rowBatch(
+    table: string,
+    operations: readonly RowWrite[],
+    options: RequestOptions = {},
+  ): Promise<BatchChanged> {
+    return this.#row(
+      "batch",
+      () => ({ table: rows.table(table), operations: rows.writes(operations) }),
+      rows.batch,
+      options,
+    );
+  }
+  #row<T>(
+    operation: string,
+    data: () => unknown,
+    parse: (value: unknown) => T,
+    options: RequestOptions,
+  ): Promise<T> {
+    let body: string;
+    try {
+      body = rows.payload(data());
+    } catch {
+      return input();
+    }
+    return this.#request(
+      "tables/rows/" + operation,
+      "POST",
+      body,
+      parse,
+      options,
+      65536,
+    );
+  }
   async #request<T>(
     route: string,
     method: string,
     data: string | undefined,
     parse: (input: unknown) => T,
     options: RequestOptions,
+    maximum = MAX_RESPONSE_BYTES,
   ): Promise<T> {
     if (!this.#key) throw new EmilyBaseError("client_closed", "not_started");
     if (
@@ -216,7 +327,7 @@ export class EmilyBaseClient {
         `${this.#url}/v1/projects/${this.#project}/${route}`,
         request,
       );
-      const json = await body(response);
+      const json = await body(response, maximum);
       if (!response.ok) {
         const code =
           json !== null &&

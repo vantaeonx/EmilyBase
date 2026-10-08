@@ -102,3 +102,13 @@ operations only and acknowledge one original WAL commit. No per-operation projec
 path or SQL interpolation is accepted. Client cancellation retains the worker/gate
 until started work finishes; lost replies require inspection, not blind retry.
 Public user policy, idempotency and whole-process memory admission remain open.
+
+
+Typed row SDK methods use fixed scoped routes and private service-key fields,
+copy/validate inputs before Fetch and cap row responses at65,536 bytes before
+retaining more streamed bytes. Exact decimal/bit strings avoid numeric rounding;
+strict variants, widths, counts and IDs reject malformed success. Static errors
+never copy raw peer content. Only status-matched fixed refusals prove no commit;
+unknown responses/disconnects retain unknown outcome and never auto-retry. SQL's
+older safe-number contract and64 MiB response cap remain separate. The SDK grants
+no browser/public-user data authority and does not encrypt process memory.

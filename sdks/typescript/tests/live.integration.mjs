@@ -350,6 +350,80 @@ test(
           );
       },
     );
+    await t.test(
+      "exact row SDK batch rollback and acknowledged kill recover every bit",
+      async () => {
+        await client.sql(
+          "CREATE TABLE wire_rows(id INTEGER PRIMARY KEY,score FLOAT,payload BYTES,label TEXT)",
+        );
+        const huge = { type: "integer", value: "9223372036854775807" };
+        const original = [
+          huge,
+          { type: "float_bits", value: "8000000000000000" },
+          { type: "bytes", value: [0, 255] },
+          { type: "text", value: "synthetic-row-SDK'界" },
+        ];
+        const inserted = await client.rowInsert("wire_rows", original);
+        assert.deepEqual(inserted.key, huge);
+        assert.equal(typeof inserted.transaction, "string");
+        assert.deepEqual(await client.rowGet("wire_rows", huge), original);
+        const small = { type: "integer", value: "-9223372036854775808" };
+        const replacement = [
+          huge,
+          { type: "float_bits", value: "7fefffffffffffff" },
+          { type: "bytes", value: [7] },
+          { type: "null" },
+        ];
+        const changed = await client.rowBatch("wire_rows", [
+          { op: "update", key: huge, row: replacement },
+          {
+            op: "insert",
+            row: [
+              small,
+              { type: "float_bits", value: "0000000000000001" },
+              { type: "null" },
+              { type: "null" },
+            ],
+          },
+        ]);
+        assert.equal(changed.changed, 2);
+        assert(BigInt(changed.transaction) > BigInt(inserted.transaction));
+        await assert.rejects(
+          client.rowBatch("wire_rows", [
+            { op: "delete", key: huge },
+            { op: "delete", key: huge },
+          ]),
+          (error) =>
+            error.code === "table_rejected" &&
+            error.outcome === "not_committed",
+        );
+        const firstPage = await client.rowPage("wire_rows", 1);
+        assert.deepEqual(firstPage.next, small);
+        assert.deepEqual(
+          (await client.rowPage("wire_rows", 1, firstPage.next)).rows,
+          [replacement],
+        );
+        if (!external) {
+          const exited = once(child, "exit");
+          child.kill("SIGKILL");
+          await exited;
+          await start();
+          client = new EmilyBaseClient({
+            url,
+            project: first.project.id,
+            apiKey: key,
+          });
+        }
+        assert.deepEqual(await client.rowGet("wire_rows", huge), replacement);
+        await client.rowUpdate("wire_rows", huge, original);
+        assert.deepEqual(await client.rowGet("wire_rows", huge), original);
+        await client.rowDelete("wire_rows", huge);
+        assert.equal(await client.rowGet("wire_rows", huge), null);
+        await client.sql("DROP TABLE wire_rows");
+        for (const secret of ["wire_rows", "synthetic-row-SDK", master, key])
+          assert(!logs.join("\n").includes(secret));
+      },
+    );
     client.close();
     other.close();
   },

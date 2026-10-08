@@ -47,6 +47,8 @@ Metadata and transaction IDs are decimal strings; only project service keys appl
 and single-row CRUD, with lossless integer strings and finite float bit text.
 A bounded row batch applies1..256 ordered writes to one table in one original
 commit; any error rolls back the complete packet.
+The TypeScript SDK also calls these row operations with exact decimal/bit strings;
+its older SQL numeric contract stays separate. Storage and transactions remain Rust.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

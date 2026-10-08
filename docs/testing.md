@@ -3835,3 +3835,28 @@ Row/batch hosted runs are still in progress at this observation.
 records the boundary. This focused regression checkpoint adds124 Rust lines;
 totals:86,190 Rust /82,730 excluding blanks/standalone comments; SDK1,259;
 Python1,735;89,184 source lines. Production gates remain open.
+
+
+## Exact typed row SDK, 2026-10-08
+
+SDK formatting, strict TypeScript compilation and15 unit tests pass. Eight actual
+TCP integration cases pass against each Rust1.99.0/1.89.0 binary. The new case
+executes all six row methods, full signed64-bit extrema, exact signed-zero/max/
+subnormal float bits, late batch rollback, continuation and received-ACK SIGKILL/
+reopen. Full-u64 transaction bounds are validated with synthetic protocol responses.
+Row input/output cap65,536 bytes; SQL's older numeric/64 MiB contract is unchanged.
+
+Four new unit cases exercise copied payloads, strict variants/numeric/batch bounds,
+response widths/counts/IDs and cancelled oversized streams. Before fixes,13 unit
+cases passed and two failed: the old float variant reached row transport and an
+inconsistent-width page was accepted. Both were corrected; final15 pass. Errors
+stay static/status-matched, with no retries or user authority.63 SDK/server/source/
+dependency/protocol hashes are verified unchanged after final checks. No Rust
+runtime changes occurred; Rust full tests/fuzz/advisories and local Docker were
+not repeated. Hosted container verification follows publication separately.
+
+[ADR0094](adr/0094-exact-row-sdk-transport.md) and
+[source-bound data](measurements/2026-10-08-exact-row-sdk/verification.json)
+record the boundary. Net growth:294 TypeScript and283 JavaScript test lines.
+Totals:86,190 Rust /82,730 excluding blanks/standalone comments; SDK1,836;
+Python1,735;89,761 source lines. No stage or production gate is closed.

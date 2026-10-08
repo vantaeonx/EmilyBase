@@ -58,3 +58,29 @@ export class EmilyBaseError extends Error {
     this.status = status;
   }
 }
+
+/** Exact row transport. Distinct from the older SQL numeric Value wire. */
+export type RowKey =
+  { type: "integer"; value: string } | { type: "text"; value: string };
+export type RowValue =
+  | RowKey
+  | { type: "null" }
+  | { type: "boolean"; value: boolean }
+  | { type: "float_bits"; value: string }
+  | { type: "bytes"; value: number[] };
+export type RowWrite =
+  | { op: "insert"; row: readonly RowValue[] }
+  | { op: "update"; key: RowKey; row: readonly RowValue[] }
+  | { op: "delete"; key: RowKey };
+export interface RowPage {
+  rows: RowValue[][];
+  next: RowKey | null;
+}
+export interface RowChanged {
+  key: RowKey;
+  transaction: string;
+}
+export interface BatchChanged {
+  changed: number;
+  transaction: string;
+}

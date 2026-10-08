@@ -785,3 +785,13 @@ independent models, exact history, concurrency and native before-commit/after-AC
 kills cover the adapter. Common lifecycle has thirteen successful ACK kills.
 Idempotency, held network transactions, public user/RLS authority, whole-process
 budgets, stable format and production acceptance remain open.
+
+
+## Follow-up: exact typed row SDK
+
+[ADR0094](adr/0094-exact-row-sdk-transport.md) connects six existing Rust row routes
+to the scoped SDK. New exact decimal/bit types, bounded copied requests and strict
+response validation preserve full numeric ranges without changing SQL's numeric
+wire. Mocked protocol regressions and real stable/minimum TCP ACK-kill cases cover
+this client adapter. No npm release, browser/public user authority, RLS, Kotlin or
+production acceptance is completed.

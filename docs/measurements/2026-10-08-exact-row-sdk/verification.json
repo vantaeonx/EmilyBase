@@ -1,0 +1,62 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "a8b576b63801c855c6a4ba5632da43ec0b84f114",
+  "source_sha256": {
+    "sdks/typescript/src/client.ts": "6645e1a5ce5386c19a4a349792407f00165ecfa75aa7969e7f0b2f5fa6d3e3c7",
+    "sdks/typescript/src/types.ts": "66a99d6a8deccdd9c9195649d1f1c68cdc3acd0defcab98647fc2e4da1400459",
+    "sdks/typescript/src/index.ts": "3833300a21b80abd94f50f953c9fcae083369f0041f773b9bbddcfc5f90b2534",
+    "sdks/typescript/src/rows.ts": "3bd53a4568a1797f9f7053c2b153b8ab2b550cf7e3c613e64b59b61748105271",
+    "sdks/typescript/tests/rows.test.mjs": "cc88e1df9839cdd65a7accd3e9462b7cbd5a16e40915370ec9b653b7bef4f08b",
+    "sdks/typescript/tests/live.integration.mjs": "225e117df23068037138b5d45da5bebf8eeabe6d58631ab422b648e8f77438f2",
+    "sdks/typescript/package-lock.json": "b315625b8bf49bb7f24613bce1e04a20595bc9dc429e33509ae3f3c01b9655e3",
+    "docs/openapi.json": "c8e87a00ff405a20e50184f2fc5c98faadd0537ad12e4e11f89455ba3739e160"
+  },
+  "checks": {
+    "sdk_unit_passed": 15,
+    "real_server_cases_each_rust": 8,
+    "rust_binaries": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "native_received_ack_sigkill_each": 1,
+    "sdk_format_strict_compilation": true,
+    "full_i64_and_u64_decimal_validation": true,
+    "finite_exact_float_bits": true,
+    "late_batch_rollback": true,
+    "all_six_row_methods": true,
+    "row_stream_cap_bytes": 65536,
+    "old_sql_stream_cap_bytes": 67108864,
+    "cancel_rejected_stream": true,
+    "copied_inputs": true,
+    "frozen_sdk_server_dependency_protocol_files": 63,
+    "rust_runtime_changed": false,
+    "rust_full_tests_fuzz_advisory_repeated": false,
+    "local_docker_executed": false
+  },
+  "regressions": {
+    "before_fix_unit_passed": 13,
+    "before_fix_unit_failed": 2,
+    "reproduced": [
+      "older float wire accepted through row fallback",
+      "inconsistent row widths accepted"
+    ],
+    "both_corrected_and_final_all_passed": true
+  },
+  "source_counts": {
+    ".rs": 86190,
+    ".ts": 749,
+    ".mjs": 1087,
+    ".py": 1735,
+    "total": 89761,
+    "effective_rust": 82730
+  },
+  "net_typescript": 294,
+  "net_javascript_tests": 283,
+  "exclusions": [
+    "npm publication",
+    "browser device/CORS proof",
+    "user roles and RLS",
+    "SDK schema/transfer/Kotlin adapters",
+    "production acceptance"
+  ]
+}
