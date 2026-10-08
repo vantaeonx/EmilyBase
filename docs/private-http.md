@@ -1,11 +1,41 @@
 # Experimental private-root HTTP transport
 
 `account_router(existing_account_root, master_key)` builds an Axum router for the
-explicit retained root. Pass it to the existing `serve` transport when embedding
-EmilyBase. This increment tests in-process middleware/handlers over real original
-WAL stores; native binary mode selection and process-level HTTP restart/kill
-checks are the next increment. The current executable still uses legacy registry
-mode. There is no implicit discovery, private bootstrap or dynamic creation.
+explicit retained root. Embed it with the existing `serve` transport, or select
+the executable mode below. In-process middleware and actual TCP process
+restart/kill cases use real original-engine WAL1/2 stores. There is no implicit
+discovery, private bootstrap or dynamic creation.
+
+## Executable mode
+
+After the [offline operator cycle](account-root-restore.md#operator-cycle) creates
+and verifies an independent root, select that existing root explicitly:
+
+```sh
+env -u EMILYBASE_DATA_DIR EMILYBASE_ACCOUNT_ROOT=restored-root \
+  cargo run --locked -p emilybase-server
+```
+
+Supply the required private `EMILYBASE_MASTER_KEY` through operator configuration
+as for legacy mode. `EMILYBASE_LISTEN` defaults to loopback port7000. Explicitly
+setting both data-directory variables refuses before filesystem work; so do an
+invalid master/listen configuration. Account mode opens existing paths only and
+never bootstraps, resets sessions or changes the fixed roster. Omit both variables
+to retain the legacy `emilybase-data` default. Legacy dynamic project creation
+remains separate from account-root mode.
+
+Startup validation/opening runs in a blocking worker for both modes. The owned
+master input is zeroized after router construction; process environment/transport
+copies are outside that erasure guarantee. One corrupt declared private WAL
+refuses the whole root before listening; healthy sibling availability is not a
+root-mode promise. A normal restart retains session authority; verified restore
+creates an independent private scope and denies old tokens in the clone.
+
+The existing Docker image and default Compose configure the legacy data variable.
+Do not add a second root variable to that configuration. A dedicated verified
+container root-mode adapter remains a separate deployment increment.
+
+## Private routes
 
 **Service keys must stay on a trusted backend.** Every private route requires the
 current project service key in `Authorization: Bearer KEY`. It is not safe to
@@ -74,5 +104,6 @@ session_outcome_requires_inspection/storage_unavailable. No precise storage outc
 can be inferred from a disconnected response. TLS/CORS, public account policy,
 roles/RLS, dynamic catalogs and production/security acceptance remain open.
 
-See [OpenAPI](openapi.json), [ADR0081](adr/0081-private-root-http-mode.md), the
+See [OpenAPI](openapi.json), [ADR0081](adr/0081-private-root-http-mode.md),
+[ADR0082](adr/0082-native-private-root-mode.md), the
 [retained root contract](retained-account-root.md) and [testing](testing.md).

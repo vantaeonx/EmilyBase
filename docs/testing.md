@@ -3410,3 +3410,31 @@ OpenAPI parses, every local schema reference resolves and all five private route
 are described. Preceding6ed8d5b hosted run37710393778 completes all five jobs
 successfully. The [source-bound observation](measurements/2026-10-08-private-http/verification.json)
 keeps in-process account evidence distinct from pending native account mode.
+
+
+## Native private-root executable mode, 2026-10-08
+
+Three native executable cases select EMILYBASE_ACCOUNT_ROOT independently of the
+legacy registry path. Four invalid configuration combinations fail before creating
+paths and never echo private values. One corrupted private WAL1 refuses complete
+root startup without overwrite; controlled restoration of the original test bytes
+makes it available again without weakening startup validation.
+
+The full real TCP lifecycle executes on WAL1/2. Two simultaneous refresh requests
+select one replacement; two SIGKILLs per WAL occur after received refresh/public
+write acknowledgements. Restart retains the replacement and rows while denying
+old credentials. Current service-key rotation preserves separate user authority.
+Offline capture leaves source private history exact; source and verified clone run
+simultaneously with distinct session scopes. Clone logout survives graceful restart.
+Native logs are screened for master/project keys, sessions, passwords, logins,
+identities, row contents and selected paths. These are process kills, not hardware
+power-loss evidence. Container root mode and public account policy remain open.
+
+Final locked checks retain all428 frozen source/dependency hashes. Both
+Rust1.99.0/1.89.0 pass1099 main cases/22 ignored helpers and54 optional release
+diagnostics each. Formatting, strict workspace/profile/fuzz Clippy, minimum fuzz
+compilation, workspace build, SDK11 unit/7 legacy real HTTP restart cases, both
+independent synthetic cryptographic oracles and both warning-denied advisory scans
+pass. OpenAPI parses and all local references resolve. No new ASan campaign or
+file/token format change is introduced. See the
+[source-bound observation](measurements/2026-10-08-native-account-http/verification.json).

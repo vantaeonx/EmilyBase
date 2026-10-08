@@ -738,7 +738,7 @@
     "/v1/projects/{id}/auth/users": {
       "post": {
         "summary": "Provision private account with service key",
-        "description": "Available only through the explicit account_router library transport; native binary mode selection is pending. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
+        "description": "Available through account_router or the explicit EMILYBASE_ACCOUNT_ROOT executable mode; legacy registry mode has no private routes. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
         "security": [
           {
             "ProjectKey": []
@@ -992,7 +992,7 @@
     "/v1/projects/{id}/auth/sign-in": {
       "post": {
         "summary": "Issue durable private session with service key",
-        "description": "Available only through the explicit account_router library transport; native binary mode selection is pending. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
+        "description": "Available through account_router or the explicit EMILYBASE_ACCOUNT_ROOT executable mode; legacy registry mode has no private routes. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
         "security": [
           {
             "ProjectKey": []
@@ -1246,7 +1246,7 @@
     "/v1/projects/{id}/auth/refresh": {
       "post": {
         "summary": "Rotate current refresh credential with service key",
-        "description": "Available only through the explicit account_router library transport; native binary mode selection is pending. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
+        "description": "Available through account_router or the explicit EMILYBASE_ACCOUNT_ROOT executable mode; legacy registry mode has no private routes. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
         "security": [
           {
             "ProjectKey": []
@@ -1500,7 +1500,7 @@
     "/v1/projects/{id}/auth/logout": {
       "post": {
         "summary": "Revoke current refresh family with service key",
-        "description": "Available only through the explicit account_router library transport; native binary mode selection is pending. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
+        "description": "Available through account_router or the explicit EMILYBASE_ACCOUNT_ROOT executable mode; legacy registry mode has no private routes. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
         "security": [
           {
             "ProjectKey": []
@@ -1754,7 +1754,7 @@
     "/v1/projects/{id}/auth/me": {
       "post": {
         "summary": "Inspect current private principal with service key",
-        "description": "Available only through the explicit account_router library transport; native binary mode selection is pending. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
+        "description": "Available through account_router or the explicit EMILYBASE_ACCOUNT_ROOT executable mode; legacy registry mode has no private routes. Not anonymous signup. Bearer ProjectKey is a private service key, never a public frontend credential. User tokens grant no SQL authority. Strict4096-byte JSON/five-second body bound; no client time.30 private attempts per project/minute plus120 per peer IP/minute. See docs/private-http.md.",
         "security": [
           {
             "ProjectKey": []

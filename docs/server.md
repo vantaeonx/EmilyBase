@@ -112,3 +112,12 @@ Registry kill/sync-failure tests and actual network writer kills now execute.
 Received SQL responses survive both WAL versions; complete unobserved commits can
 also survive. Missing/corrupt WAL fails closed per project while healthy siblings
 remain available. Cache repair still requires an explicit checkpoint.
+
+
+## Explicit private-root executable mode
+
+Set EMILYBASE_ACCOUNT_ROOT to an existing verified offline-restored root and leave
+EMILYBASE_DATA_DIR unset. The [private transport contract](private-http.md) describes
+service-key-gated accounts/sessions, whole-root startup validation, fixed roster
+and native WAL1/2 recovery evidence. Normal restart preserves sessions; restore
+resets clone authority. This mode creates no project or private store implicitly.

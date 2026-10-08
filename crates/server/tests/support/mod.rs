@@ -13,8 +13,27 @@ pub struct Server {
 }
 impl Server {
     pub fn start(root: &Path, master: &str) -> Self {
+        Self::start_mode(root, master, false)
+    }
+    #[allow(
+        dead_code,
+        reason = "Shared fixture also compiles in the independent legacy network test binary"
+    )]
+    pub fn start_account(root: &Path, master: &str) -> Self {
+        Self::start_mode(root, master, true)
+    }
+    fn start_mode(root: &Path, master: &str, private: bool) -> Self {
         let mut child = Command::new(env!("CARGO_BIN_EXE_emilybase-server"))
-            .env("EMILYBASE_DATA_DIR", root)
+            .env_remove("EMILYBASE_DATA_DIR")
+            .env_remove("EMILYBASE_ACCOUNT_ROOT")
+            .env(
+                if private {
+                    "EMILYBASE_ACCOUNT_ROOT"
+                } else {
+                    "EMILYBASE_DATA_DIR"
+                },
+                root,
+            )
             .env("EMILYBASE_MASTER_KEY", master)
             .env("EMILYBASE_LISTEN", "127.0.0.1:0")
             .stdout(Stdio::piped())

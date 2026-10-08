@@ -1,0 +1,81 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "1af8319a55f4e1bc609c512a2b1c096f2b40d24e",
+  "source_sha256": {
+    "Cargo.lock": "a339a3a39589a0f438b3028f64eb757c109b4ad2164d98e405ff0decbdc5c56d",
+    "crates/server/src/main.rs": "0638f7d22822b640989f93007e44f5e305ad9ff618223efa410efa5baa2c2a6c",
+    "crates/server/tests/binary.rs": "94d6093f861f071caea8be4806437c7005c783dd176513355c1899cb1083cbef",
+    "crates/server/tests/support/mod.rs": "051c773428ae39c336fbb76cdea2fedfd7aaa45fc0a1ea1e404c4b02d61e2de1",
+    "crates/server/tests/account_network.rs": "c995ae8efa9ee306d1a9f5e1726d6f37e62af0391b45ac9be850c25ebfbd67b4",
+    "fuzz/Cargo.lock": "21ab8a0f1e2a2c7cd9c26ef2d8e49a3c7af8cd638810645d43f7369b16293fcb"
+  },
+  "protocol": {
+    "explicit_account_root_environment": "EMILYBASE_ACCOUNT_ROOT",
+    "explicit_legacy_data_environment_mutually_exclusive": true,
+    "configuration_validated_before_filesystem": true,
+    "both_modes_startup_open_off_reactor": true,
+    "existing_root_only_no_bootstrap_or_reset": true,
+    "corrupt_declared_private_store_refuses_whole_root": true,
+    "owned_master_input_zeroized_not_process_environment": true,
+    "legacy_default_preserved": true
+  },
+  "matrix": {
+    "new_native_cases": 3,
+    "full_tcp_lifecycle_wal_versions": [
+      1,
+      2
+    ],
+    "refresh_requests_per_wal": 2,
+    "refresh_winners_per_wal": 1,
+    "native_sigkills_after_received_ack": 4,
+    "ack_phases": [
+      "refresh_replacement",
+      "public_sql_write"
+    ],
+    "current_project_key_rotation_and_session_scope_distinct": true,
+    "source_and_restored_clone_run_simultaneously": true,
+    "source_sessions_denied_only_on_restored_clone": true,
+    "fresh_clone_sessions_denied_on_source": true,
+    "logout_survives_graceful_restart": true,
+    "invalid_configuration_combinations": 4,
+    "corrupt_private_wal_version": 1,
+    "corrupt_bytes_not_overwritten": true,
+    "native_startup_request_logs_screened_for_sensitive_values": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "frozen_source_dependency_files": 428,
+    "main_cases_each": 1099,
+    "ignored_helpers_each": 22,
+    "optional_release_diagnostics_each": 54,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_legacy_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "openapi_local_references_resolve": true,
+    "new_asan_campaign": false
+  },
+  "source_counts": {
+    "rust": 79367,
+    "effective_rust_without_blank_full_comment_lines": 76014,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 81473,
+    "net_rust_this_block": 466
+  },
+  "exclusions": [
+    "private-root container mode",
+    "initial private root bootstrap CLI",
+    "public signup, roles and row policies",
+    "dynamic authoritative roster",
+    "whole-process memory and connection admission",
+    "hardware power loss, TLS/CORS, encryption and production acceptance"
+  ]
+}

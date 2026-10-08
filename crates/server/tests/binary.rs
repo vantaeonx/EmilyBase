@@ -8,6 +8,7 @@ fn command() -> Command {
     for name in [
         "EMILYBASE_MASTER_KEY",
         "EMILYBASE_DATA_DIR",
+        "EMILYBASE_ACCOUNT_ROOT",
         "EMILYBASE_LISTEN",
     ] {
         command.env_remove(name);

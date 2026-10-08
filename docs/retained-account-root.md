@@ -39,8 +39,8 @@ account metadata grants no later permission. `execute` retains existing service-
 SQL authority only. Access/refresh tokens are never accepted as SQL keys, and the
 private database is not reachable through public table names.
 
-The separate [embedded HTTP transport](private-http.md) now supplies body/worker/
-rate admission and explicit secret DTOs. Native binary selection, public signup policy,
+The separate [HTTP transport and explicit executable mode](private-http.md)
+supply body/worker/rate admission and explicit secret DTOs. Public signup policy,
 roles/row policies, automatic authoritative catalogs and whole-process memory
 admission remain pending. Synthetic-only experimental status is unchanged.
 

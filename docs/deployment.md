@@ -7,6 +7,10 @@ This deployment is for disposable synthetic data on Linux local filesystems.
 
 ## Start
 
+Default Compose selects legacy registry mode. The local binary also supports an
+[explicit existing account root](private-http.md#executable-mode); its dedicated
+container configuration has not yet been verified. Never set both data variables.
+
 Install Docker Engine with its Compose/build plugins using the
 [official instructions](https://docs.docker.com/engine/install/ubuntu/).
 Rootless Docker works with cgroup v2/systemd delegation; see
@@ -42,7 +46,9 @@ one CPU and 64 processes. Verify actual cgroup enforcement on the deployment hos
 rootless engines without delegated controllers may ignore those settings.
 
 Health is a public liveness response, not a database readiness check. A damaged
-project can return 503 while health and healthy projects remain available.
+project in legacy registry mode can return503 while health and healthy projects
+remain available. Explicit account-root startup validates its complete declared
+roster and refuses before listening if any private store is corrupt.
 There is no automatic restart loop: inspect failures before restarting.
 SIGTERM drains accepted work; Compose allows 30 seconds before forced termination.
 A commit can succeed without an observed response: inspect transaction state
