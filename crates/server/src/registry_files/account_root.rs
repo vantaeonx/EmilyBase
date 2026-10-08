@@ -219,6 +219,14 @@ struct State {
     private_hashes: Vec<[u8; 32]>,
 }
 fn inspect_owned(path: &Path, owner: &File, pool: PasswordPool) -> Result<State> {
+    inspect_owned_with(path, owner, pool, |_, _| Ok(()))
+}
+fn inspect_owned_with(
+    path: &Path,
+    owner: &File,
+    pool: PasswordPool,
+    mut captured: impl FnMut(&str, &[u8]) -> Result<()>,
+) -> Result<State> {
     metadata::owned_directory(path, owner)?;
     let root = descriptor(owner);
     let expected_root = BTreeSet::from(["private".into(), "registry".into(), "root.json".into()]);
@@ -274,6 +282,7 @@ fn inspect_owned(path: &Path, owner: &File, pool: PasswordPool) -> Result<State>
                     "private reset state or database identity",
                 ));
             }
+            captured(account.project(), &bytes)?;
             hashes.push(hash(&bytes));
             reports.push(BundledAccountReport {
                 project: account.project().into(),
@@ -319,4 +328,41 @@ pub fn inspect_account_bundle_root(
     let owner = metadata::open_directory(path)?;
     lock(&owner)?;
     Ok(inspect_owned(path, &owner, pool)?.report)
+}
+
+/// Sensitive common-boundary image of this root's exact manifest roster. Source
+/// owners span all prefixes and final inventory validation; no scope is reset.
+pub fn capture_account_bundle_root(path: impl AsRef<Path>, pool: PasswordPool) -> Result<Vec<u8>> {
+    let path = path.as_ref();
+    let owner = metadata::open_directory(path)?;
+    lock(&owner)?;
+    let mut private = Vec::new();
+    let state = inspect_owned_with(path, &owner, pool, |project, bytes| {
+        let mut image = Vec::new();
+        image
+            .try_reserve_exact(bytes.len())
+            .map_err(|_| Error::Limit)?;
+        image.extend_from_slice(bytes);
+        private.push((project.into(), image));
+        Ok(())
+    })?;
+    account_bundle::encode(&state.registry, private)
+}
+
+/// Publish a verified private image outside the source root. Capture/backup do
+/// not invalidate credentials. Existing destinations are never replaced.
+pub fn backup_account_bundle_root(
+    path: impl AsRef<Path>,
+    target: impl AsRef<Path>,
+    pool: PasswordPool,
+) -> Result<crate::AccountBundleReport> {
+    let path = path.as_ref();
+    if super::parent(target.as_ref())
+        .canonicalize()?
+        .starts_with(path.canonicalize()?)
+    {
+        return Err(Error::Path);
+    }
+    let bytes = capture_account_bundle_root(path, pool)?;
+    account_bundle::files::publish(&bytes, target.as_ref())
 }

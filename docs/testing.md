@@ -3291,3 +3291,38 @@ toolchains; unrelated engine/SDK/parser suites are not claimed as newly rerun fo
 this isolated diagnostic repair. Hosted results are verified separately after push.
 
 The [source-bound observation](measurements/2026-10-08-schema-allocation-isolation/verification.json) records the failing baseline, strict negative control and native repeats.
+
+
+## Offline root operator cycle, 2026-10-08
+
+Seven new server and six real CLI cases close restore/verify/re-backup/restore for
+an explicit selected root. CLI cases cover all six private-version/WAL shapes,
+relative Unicode paths, empty/subset rosters, trusted time boundaries, changed
+rows/users/projects, old access/refresh denial and fresh sessions. Output remains
+aggregate-only; synthetic names, data, passwords, keys and tokens never appear.
+A negative time regression first exposed Clap echoing its input before custom
+validation; hyphen-prefixed values now reach the same bounded, redacted validator.
+
+Root capture reuses final inventory validation while every source data/private
+owner is held. Exact bytes match explicit common capture; clocks/scopes/histories
+remain unchanged. Final source mutation, busy owners, unlisted entries, internal
+targets and existing files/links refuse without overwrite. Eight actual before/
+after file/parent sync faults, twelve native kills on WAL1/2, two synchronized
+publishers with one selected file and sixteen independent row/disabled/WAL cases
+execute. Publisher contention starts after separately exclusive source captures;
+source Busy is never hidden by retries or weaker locks.
+
+All417 frozen source/dependency hashes remain unchanged through final locked
+checks. Both Rust1.99.0/1.89.0 pass1072 main cases/22 ignored helpers and54 optional
+release diagnostics each. Formatting, strict workspace/profile/fuzz Clippy,
+minimum fuzz compilation and workspace build pass. SDK11 unit/7 real restart
+checks, both independent synthetic cryptographic oracles and warning-denied
+workspace/fuzz advisory scans pass. This block adds no new ASan campaign or
+hardware power-loss claim. Previous869a8cf/6f37e46 hosted runs each complete all
+five jobs successfully; the earlier schema-allocation failure is resolved by its
+strict dedicated-process diagnostic, including its failing negative control.
+
+[ADR0079](adr/0079-offline-root-operator-cycle.md) and the
+[source-bound observation](measurements/2026-10-08-root-operator-cycle/verification.json)
+retain HTTP account attachment, automatic roster discovery, whole-process resource
+admission and production acceptance as separate gates.

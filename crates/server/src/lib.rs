@@ -19,7 +19,8 @@ pub use registry_archive::{
     RegistryProjectReport, inspect_registry_backup_bytes,
 };
 pub use registry_files::account_root::{
-    AccountBundleRootManifest, AccountBundleRootReport, inspect_account_bundle_root,
+    AccountBundleRootManifest, AccountBundleRootReport, backup_account_bundle_root,
+    capture_account_bundle_root, inspect_account_bundle_root,
     inspect_account_bundle_root_manifest_bytes, restore_account_bundle,
     restore_account_bundle_bytes,
 };

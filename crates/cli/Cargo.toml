@@ -20,11 +20,11 @@ emilybase-backup = { path = "../backup" }
 emilybase-query = { path = "../query" }
 emilybase-index = { path = "../index" }
 emilybase-server = { path = "../server" }
+emilybase-auth = { path = "../auth" }
 serde = "1"
 serde_json = "1"
 
 [dev-dependencies]
-emilybase-auth = { path = "../auth" }
 tempfile = "3"
 
 [lints]

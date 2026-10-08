@@ -45,6 +45,18 @@ enum Command {
     ProjectsBackup { path: PathBuf, target: PathBuf },
     /// Verify an explicit registry/private bundle; print counts without private contents.
     AccountBundleVerify { path: PathBuf },
+    /// Capture the exact offline root manifest roster into a private bundle file.
+    AccountRootBackup { path: PathBuf, target: PathBuf },
+    /// Verify an offline restored root; print aggregate counts only.
+    AccountRootVerify { path: PathBuf },
+    /// Restore a bundle into one new root and reset private sessions before selection.
+    AccountBundleRestore {
+        backup: PathBuf,
+        target: PathBuf,
+        /// Required trusted Unix time in seconds; no automatic clock or secret input.
+        #[arg(long, allow_hyphen_values = true)]
+        reset_at: String,
+    },
     /// Replay and verify every project in a private registry archive.
     ProjectsBackupVerify { path: PathBuf },
     /// Restore all projects into a new registry without overwriting existing paths.
@@ -249,34 +261,28 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         }
         Command::AccountBundleVerify { path } => {
             let report = emilybase_server::inspect_account_bundle(path)?;
-            println!(
-                "verified bundle projects={} private_stores={} tables={} rows={} accounts={} session_families={} archive_bytes={}",
-                report.registry.projects.len(),
-                report.private_accounts.len(),
-                report
-                    .registry
-                    .projects
-                    .iter()
-                    .map(|p| p.tables)
-                    .sum::<usize>(),
-                report
-                    .registry
-                    .projects
-                    .iter()
-                    .map(|p| p.rows)
-                    .sum::<usize>(),
-                report
-                    .private_accounts
-                    .iter()
-                    .map(|p| p.inventory.accounts)
-                    .sum::<usize>(),
-                report
-                    .private_accounts
-                    .iter()
-                    .map(|p| p.inventory.session_families)
-                    .sum::<usize>(),
-                report.archive_bytes
-            );
+            print_bundle(&report);
+        }
+        Command::AccountRootBackup { path, target } => {
+            let pool = emilybase_auth::password::PasswordPool::new(1)?;
+            print_bundle(&emilybase_server::backup_account_bundle_root(
+                path, target, pool,
+            )?);
+        }
+        Command::AccountRootVerify { path } => {
+            let pool = emilybase_auth::password::PasswordPool::new(1)?;
+            print_account_root(&emilybase_server::inspect_account_bundle_root(path, pool)?);
+        }
+        Command::AccountBundleRestore {
+            backup,
+            target,
+            reset_at,
+        } => {
+            let now = trusted_reset_time(&reset_at)?;
+            let pool = emilybase_auth::password::PasswordPool::new(1)?;
+            print_account_root(&emilybase_server::restore_account_bundle(
+                backup, target, pool, now,
+            )?);
         }
         Command::ProjectsBackupVerify { path } => {
             let report = emilybase_server::inspect_registry_backup(path)?;
@@ -537,6 +543,51 @@ fn print_registry_backup(report: &emilybase_server::RegistryBackupReport) {
         report.projects.iter().map(|p| p.tables).sum::<usize>(),
         report.projects.iter().map(|p| p.rows).sum::<usize>(),
         report.archive_bytes,
+    );
+}
+
+fn trusted_reset_time(text: &str) -> Result<u64, emilybase_server::Error> {
+    let invalid = || emilybase_server::Error::BundleRoot("trusted reset time");
+    if text.is_empty() || text.len() > 19 || !text.bytes().all(|b| b.is_ascii_digit()) {
+        return Err(invalid());
+    }
+    text.parse::<u64>().map_err(|_| invalid()).and_then(|now| {
+        if now > i64::MAX as u64 {
+            Err(invalid())
+        } else {
+            Ok(now)
+        }
+    })
+}
+fn bundle_counts(
+    registry: &emilybase_server::RegistryBackupReport,
+    private: &[emilybase_server::BundledAccountReport],
+) -> String {
+    format!(
+        "projects={} private_stores={} tables={} rows={} accounts={} session_families={}",
+        registry.projects.len(),
+        private.len(),
+        registry.projects.iter().map(|p| p.tables).sum::<usize>(),
+        registry.projects.iter().map(|p| p.rows).sum::<usize>(),
+        private.iter().map(|p| p.inventory.accounts).sum::<usize>(),
+        private
+            .iter()
+            .map(|p| p.inventory.session_families)
+            .sum::<usize>()
+    )
+}
+fn print_bundle(report: &emilybase_server::AccountBundleReport) {
+    println!(
+        "verified bundle {} archive_bytes={}",
+        bundle_counts(&report.registry, &report.private_accounts),
+        report.archive_bytes
+    );
+}
+fn print_account_root(report: &emilybase_server::AccountBundleRootReport) {
+    println!(
+        "verified root {} reset_at={}",
+        bundle_counts(&report.registry, &report.private_accounts),
+        report.reset_at
     );
 }
 

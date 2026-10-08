@@ -438,7 +438,16 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if action.starts_with("root") {
+    if action.starts_with("root-backup") {
+        match crate::backup_account_bundle_root(&source, &target, PasswordPool::new(1).unwrap()) {
+            Ok(_) => println!("BUNDLE_OK"),
+            Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                println!("BUNDLE_CONFLICT")
+            }
+            Err(_) => panic!("unexpected root backup result"),
+        }
+        durability::checkpoint("bundle_backup_ack");
+    } else if action.starts_with("root") {
         match crate::restore_account_bundle(&source, &target, PasswordPool::new(1).unwrap(), 50) {
             Ok(_) => println!("BUNDLE_OK"),
             Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::AlreadyExists => {

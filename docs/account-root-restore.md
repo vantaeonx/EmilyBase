@@ -1,5 +1,46 @@
 # Offline registry and private account root restoration
 
+## Operator cycle
+
+For an existing synthetic private bundle and stopped source services:
+
+```sh
+cargo run --locked -p emilybase-cli -- account-bundle-verify synthetic.account-bundle
+cargo run --locked -p emilybase-cli -- account-bundle-restore synthetic.account-bundle restored-root --reset-at 50
+cargo run --locked -p emilybase-cli -- account-root-verify restored-root
+cargo run --locked -p emilybase-cli -- account-root-backup restored-root second.account-bundle
+cargo run --locked -p emilybase-cli -- account-bundle-restore second.account-bundle independent-root --reset-at 50
+```
+
+The two example destination directories are ignored by Git; operator storage should
+remain outside the source checkout or in an explicitly ignored runtime directory.
+
+Here 50 is an explicit synthetic Unix clock value. Operators must supply their
+trusted reset time; the CLI does not derive it from the archive or use an implicit
+clock. Only decimal values from 0 through the largest signed 64-bit integer are
+accepted. Invalid time fails before reads/staging without echoing its supplied
+text, including a hyphen-prefixed value. CLI output contains aggregate counts and
+archive size/reset time only, without IDs, names, credentials or row values.
+
+`account-root-backup` captures exactly the root manifest's declared private roster
+and every current registry project. Later committed data/user/session changes are
+included; capture never resets sessions, advances clocks or rotates keys. The
+source is exclusively locked through common data/private prefix capture and final
+inventory checks. Concurrent output publication can happen after separate captures;
+busy source ownership is refused without retries or weakening locks. Targets inside
+the source root, unknown/missing private entries and existing destinations fail.
+
+The library equivalents are `capture_account_bundle_root` (sensitive bytes) and
+`backup_account_bundle_root` (private file). They reuse complete root inspection and
+the owned no-replace file publisher. Final aggregate input size is bounded; copies
+and output retention are still outside a whole-process heap reservation contract.
+
+These commands consume an existing bundle/restored root. They do not bootstrap a
+new HTTP account service or discover separately attached private stores. See
+[ADR0079](adr/0079-offline-root-operator-cycle.md).
+
+## Restoration and inspection protocol
+
 Experimental library APIs restore a verified EMILYBND image into a new directory:
 `restore_account_bundle(path, target, pool, now)` and
 `restore_account_bundle_bytes(bytes, target, pool, now)`. The image and target paths
@@ -39,7 +80,7 @@ written as intermediate credential files.
 
 The manifest is a canonical JSON/CRC envelope with a version1 payload containing
 `private_projects` (at most128 sorted unique32-character lowercase hexadecimal
-identifiers) and `reset_at` (at most the largest signed64-bit integer). Total
+identifiers) and `reset_at` (at most the largest signed 64-bit integer). Total
 encoding is at most8192 bytes. Alternate encoding, unknown/duplicate fields,
 trailing bytes, invalid identifier syntax/order/version/time and checksum damage
 are rejected. The full root inspector additionally checks registry membership.

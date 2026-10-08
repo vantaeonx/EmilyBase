@@ -27,7 +27,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions implemented; HTTP accounts/sessions and coordinated backups pending |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; HTTP accounts/sessions pending |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
@@ -109,7 +109,14 @@ before selection; exact prepared histories and descriptor-owned inventories are
 verified. The experimental root manifest records selected scope/time without granting
 authority. Automatic HTTP account attachment/roster and production gates remain open.
 
-The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
+[ADR0079](adr/0079-offline-root-operator-cycle.md) closes the explicit offline
+CLI restore/verify/re-backup cycle. Root capture retains every data/private owner
+through full inventory validation and preserves source credentials. Required trusted
+reset time is bounded and invalid values are never echoed. No HTTP account worker,
+automatic private discovery, whole-process memory or production gate closes.
+
+The declared Linux Rust floor is verified on 1.89.0 with the current frozen
+[workspace checks](testing.md);
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.
 

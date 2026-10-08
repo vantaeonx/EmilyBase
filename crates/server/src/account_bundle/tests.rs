@@ -1,5 +1,6 @@
 mod files;
 mod root;
+mod root_capture;
 use super::*;
 use crate::{ProjectStore, durability};
 use emilybase_auth::{accounts::AccountStore, password::PasswordPool};

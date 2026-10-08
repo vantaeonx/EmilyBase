@@ -22,4 +22,6 @@ dist/
 proptest-regressions/
 *.proptest-regressions
 /emilybase-data/
+/restored-root/
+/independent-root/
 __pycache__/

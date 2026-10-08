@@ -86,6 +86,10 @@ The [offline root restore](docs/account-root-restore.md) prepares registry data 
 every explicitly bundled private store under one owned root. Private session reset
 and exact prepared-history validation precede no-replace root publication. API keys
 are preserved; automatic HTTP account attachment remains open.
+The [operator cycle](docs/account-root-restore.md#operator-cycle) now exposes
+account-bundle-restore with required trusted reset time, account-root-verify and
+account-root-backup. Root backup captures the exact declared private roster without
+resetting source credentials and prints aggregate counts only.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

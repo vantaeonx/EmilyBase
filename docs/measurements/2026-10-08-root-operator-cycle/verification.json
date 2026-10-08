@@ -1,0 +1,92 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "6f37e46ebf42b44bf9a688aa83f16f7ebe64e108",
+  "source_sha256": {
+    "crates/cli/Cargo.toml": "a9be230c345dbd86725fe1490482a3bcf1e5ab8dd43ad4e08ade4403201039bc",
+    "crates/cli/src/main.rs": "6a74d0d59ae49bcb173d8c2996d24071eef41ee1a6632c734bb316f05d5785bf",
+    "crates/cli/tests/account_roots.rs": "bacb014a9c35511d5aac1db5b390178791f776efecefdf4c65bb2b4cfaabe055",
+    "crates/server/src/account_bundle/tests.rs": "1b615cdeff90c70e9eb19dcb8171491d01fcdca4bff287212127494455416c65",
+    "crates/server/src/account_bundle/tests/files.rs": "08bb18907507abe5f9cc9275dd06d16e8e4a8f4309483220222751674f4a4ce5",
+    "crates/server/src/account_bundle/tests/root_capture.rs": "791c75c20edf785632750d1c913ba529f30361f03e1f05c817cc0136b455dfb7",
+    "crates/server/src/lib.rs": "0eb3db4cee1c2a9fc91509df1b34a5faa08982087649101253baf5e9a5c9aa3a",
+    "crates/server/src/registry_files/account_root.rs": "45ee0c7294f7a21bf92042829070ae148c9ea99758a4adcdaaf7839f17cdf910"
+  },
+  "protocol": {
+    "explicit_private_manifest_roster": true,
+    "all_source_owners_through_final_capture": true,
+    "source_clocks_scopes_credentials_histories_preserved": true,
+    "required_bounded_redacted_trusted_reset_time": true,
+    "owned_no_replace_file_publication": true,
+    "post_rename_errors_are_publication_unknown": true,
+    "aggregate_only_cli_output": true,
+    "no_source_busy_retries": true
+  },
+  "matrix": {
+    "new_server_cases": 7,
+    "new_cli_cases": 6,
+    "private_versions": [
+      1,
+      2,
+      3
+    ],
+    "wal_versions": [
+      1,
+      2
+    ],
+    "cli_private_version_wal_combinations": 6,
+    "actual_before_after_sync_faults": 8,
+    "native_forced_kills": 12,
+    "synchronized_native_publishers": 2,
+    "selected_winners": 1,
+    "independent_row_disabled_wal_cases": 16,
+    "negative_time_echo_regression_first_failed_then_passed": true,
+    "empty_subset_rosters_and_changed_data_users_projects": true,
+    "old_access_refresh_denied_and_new_sessions_work": true,
+    "foreign_paths_busy_owners_and_internal_destinations_refused": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "frozen_source_dependency_files": 417,
+    "main_cases_each": 1072,
+    "ignored_helpers_each": 22,
+    "optional_release_diagnostics_each": 54,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74",
+    "new_asan_campaign": false
+  },
+  "source_counts": {
+    "rust": 76795,
+    "effective_rust_without_blank_full_comment_lines": 73510,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 78901,
+    "net_rust_this_block": 951
+  },
+  "prior_hosted_ci": {
+    "869a8cfd8abc1d833b90b7e87f925dd2298b6168": {
+      "run": 37705868816,
+      "all_five_jobs": "success"
+    },
+    "6f37e46ebf42b44bf9a688aa83f16f7ebe64e108": {
+      "run": 37706419428,
+      "all_five_jobs": "success"
+    }
+  },
+  "exclusions": [
+    "HTTP private-account attachment and authoritative dynamic service roster",
+    "roles and row policies",
+    "whole-process retained model, staging, transient and worker quotas",
+    "physical power loss, encryption and automatic orphan cleanup",
+    "production/security acceptance gate"
+  ]
+}
