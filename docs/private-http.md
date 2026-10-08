@@ -8,8 +8,10 @@ discovery, private bootstrap or dynamic creation.
 
 ## Executable mode
 
-After the [offline operator cycle](account-root-restore.md#operator-cycle) creates
-and verifies an independent root, select that existing root explicitly:
+Create the first empty root with [account-root-init](private-root-initialization.md),
+or restore/verify an independent root through the
+[offline operator cycle](account-root-restore.md#operator-cycle). Select an existing
+verified root explicitly:
 
 ```sh
 env -u EMILYBASE_DATA_DIR EMILYBASE_ACCOUNT_ROOT=restored-root \

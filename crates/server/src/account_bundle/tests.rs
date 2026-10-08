@@ -1,6 +1,7 @@
 mod files;
 mod root;
 mod root_capture;
+mod root_initialize;
 mod root_live;
 use super::*;
 use crate::{ProjectStore, durability};

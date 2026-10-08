@@ -47,6 +47,15 @@ enum Command {
     AccountBundleVerify { path: PathBuf },
     /// Capture the exact offline root manifest roster into a private bundle file.
     AccountRootBackup { path: PathBuf, target: PathBuf },
+    /// Explicitly create one empty project/private store in a new root; no credentials printed.
+    AccountRootInit {
+        target: PathBuf,
+        #[arg(long, allow_hyphen_values = true)]
+        name: String,
+        /// Required trusted initial Unix-time floor; never inferred or reset at startup.
+        #[arg(long, allow_hyphen_values = true)]
+        reset_at: String,
+    },
     /// Verify an offline restored root; print aggregate counts only.
     AccountRootVerify { path: PathBuf },
     /// Restore a bundle into one new root and reset private sessions before selection.
@@ -267,6 +276,17 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
             let pool = emilybase_auth::password::PasswordPool::new(1)?;
             print_bundle(&emilybase_server::backup_account_bundle_root(
                 path, target, pool,
+            )?);
+        }
+        Command::AccountRootInit {
+            target,
+            name,
+            reset_at,
+        } => {
+            let now = trusted_reset_time(&reset_at)?;
+            let pool = emilybase_auth::password::PasswordPool::new(1)?;
+            print_account_root(&emilybase_server::initialize_account_root(
+                target, &name, pool, now,
             )?);
         }
         Command::AccountRootVerify { path } => {

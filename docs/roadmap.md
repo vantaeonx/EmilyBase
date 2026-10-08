@@ -659,3 +659,16 @@ single-winner refresh, key rotation, independent restored-clone authority and
 corrupt-private-WAL startup refusal execute on WAL1/2. This closes the earlier
 native-mode follow-up; public signup/RLS, dynamic roster, container adapter,
 whole-process resource admission and production acceptance remain open.
+
+
+## Follow-up: explicit first private root
+
+[ADR0083](adr/0083-explicit-private-root-initialization.md) adds the offline first-root
+CLI: one new project/private v3 store, trusted initial time, no input archive or
+printed key/password. Operator list/key rotation and service-key provisioning work
+with the actual binary. Complete captured histories and final retained owners gate
+publication. A reproduced late private-container substitution now refuses in both
+initialization and restore. Eight initialization cases cover generated empty models,
+eight sync faults, six native kills, eight final substitutions and two competing
+processes; CLI and real HTTP checks remain separate evidence. Public signup/RLS,
+dynamic roster, resource/container and production gates remain open.

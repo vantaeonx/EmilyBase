@@ -22,9 +22,9 @@ pub use registry_archive::{
 };
 pub use registry_files::account_root::{
     AccountBundleRootManifest, AccountBundleRootReport, AccountRoot, MAX_ACTIVE_PRIVATE_STORES,
-    backup_account_bundle_root, capture_account_bundle_root, inspect_account_bundle_root,
-    inspect_account_bundle_root_manifest_bytes, restore_account_bundle,
-    restore_account_bundle_bytes,
+    backup_account_bundle_root, capture_account_bundle_root, initialize_account_root,
+    inspect_account_bundle_root, inspect_account_bundle_root_manifest_bytes,
+    restore_account_bundle, restore_account_bundle_bytes,
 };
 pub use registry_files::{inspect_registry_backup, restore_registry_backup};
 

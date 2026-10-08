@@ -3438,3 +3438,37 @@ independent synthetic cryptographic oracles and both warning-denied advisory sca
 pass. OpenAPI parses and all local references resolve. No new ASan campaign or
 file/token format change is introduced. See the
 [source-bound observation](measurements/2026-10-08-native-account-http/verification.json).
+
+
+## Explicit first private root, 2026-10-08
+
+Eight new initialization cases cover one empty v3 private project, exact common
+captured histories, trusted time/name bounds, protected existing objects, eight
+before/after sync faults, six actual process-kill boundaries, eight final path
+substitutions, two synchronized native initializers with one winner and eight
+independent generated empty-roster models. Corrupt private WAL and foreign-entry
+failures execute separately. Failed stages remain private and unselected; successful
+publication leaves no stage. Uncertain selected roots remain inspectable.
+
+A new test first failed on late private-container replacement in the initializer
+candidate. A separate existing-restore regression reproduced the same gap after
+full inspection. Both now run shared retained-owner/inventory checks at the final
+selection boundary, alongside the original manifest comparison. The extracted
+helper's initial compile errors were corrected before final checks. Both regressions
+and all initialization cases pass without weakening filesystem ownership.
+
+Two real CLI cases initialize/verify without identity/name/key/password output,
+refuse invalid time/name values before staging and preserve existing paths. One
+actual TCP case opens a freshly initialized root, lists/rotates via the operator,
+provisions the first user, signs in, commits SQL and preserves authority on restart.
+The library lifecycle also restores a copy with independent session authority.
+
+Final locked checks retain all431 frozen source/dependency hashes. Both
+Rust1.99.0/1.89.0 pass1111 main cases/22 ignored helpers and54 optional release
+diagnostics each. Format, strict workspace/profile/fuzz Clippy, minimum fuzz
+compilation, build, SDK11 unit/7 actual legacy HTTP restart cases, both independent
+synthetic cryptographic oracles and both warning-denied advisory scans pass.
+Prior1af8319 hosted run37712364907 completes all five jobs successfully. Docker is
+unavailable locally; this block claims no new container-root or ASan execution.
+The [source-bound observation](measurements/2026-10-08-private-root-initialization/verification.json)
+keeps hardware power-loss, public policy and production gates open.

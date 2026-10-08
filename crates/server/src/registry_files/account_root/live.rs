@@ -1,5 +1,5 @@
 //! Synchronous service ownership. Network admission and policies are separate.
-use super::{Contents, descriptor, inspect_owned_limited, lock, metadata, names};
+use super::{Contents, inspect_owned_limited, lock, metadata};
 use crate::{CreatedProject, Error, ProjectInfo, Result};
 use emilybase_auth::accounts::{AccountInfo, AccountStore, IssuedSession, SessionPrincipal};
 use emilybase_auth::password::PasswordPool;
@@ -78,34 +78,7 @@ impl AccountRoot {
         Ok(result)
     }
     fn ready(&self) -> Result<()> {
-        metadata::owned_directory(&self.selected, &self.owner)?;
-        let root = descriptor(&self.owner);
-        if names(&root)? != ["private".into(), "registry".into(), "root.json".into()].into()
-            || names(&root.join("registry"))? != self.contents.ids
-            || names(&root.join("private"))?
-                != self
-                    .contents
-                    .manifest
-                    .private_projects
-                    .iter()
-                    .cloned()
-                    .collect()
-        {
-            return Err(Error::BundleRoot("service root inventory changed"));
-        }
-        metadata::owned_directory(&root.join("private"), &self.contents.private_owner)?;
-        for (id, owner) in self
-            .contents
-            .manifest
-            .private_projects
-            .iter()
-            .zip(&self.contents.account_owners)
-        {
-            metadata::owned_directory(&root.join("private").join(id), owner)?;
-        }
-        super::check_manifest(&root, &self.contents.manifest_owner, &self.contents.encoded)?;
-        self.contents.registry.list()?;
-        Ok(())
+        super::check_contents(&self.selected, &self.owner, &self.contents)
     }
     fn account(&mut self, project: &str, key: &str) -> Result<&mut AccountStore> {
         self.ready()?;

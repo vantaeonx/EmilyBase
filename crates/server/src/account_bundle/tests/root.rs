@@ -691,3 +691,31 @@ proptest! {
         prop_assert_eq!(histories(&f),before);
     }
 }
+
+#[test]
+fn late_private_container_replacement_after_full_inspection_is_refused_before_root_selection() {
+    let _serial = durability::PROCESS_TESTS.blocking_lock();
+    let dir = tempfile::tempdir().unwrap();
+    let mut source = fixture(dir.path(), 1);
+    let image = source
+        .registry
+        .capture_account_bundle(&mut source.accounts)
+        .unwrap();
+    let target = dir.path().join("target");
+    let parent = dir.path().to_owned();
+    let detached = dir.path().join("detached-private");
+    let moved = detached.clone();
+    let _guard = durability::on_boundary("bundle_restore_stage_synced", move || {
+        let root = stage(&parent);
+        fs::rename(root.join("private"), &moved).unwrap();
+        fs::create_dir(root.join("private")).unwrap();
+        fs::write(root.join("private/foreign"), b"synthetic protected bytes").unwrap();
+    });
+    assert!(restore_account_bundle_bytes(&image, &target, pool(), 50).is_err());
+    assert!(!target.exists());
+    assert!(detached.exists());
+    assert_eq!(
+        fs::read(stage(dir.path()).join("private/foreign")).unwrap(),
+        b"synthetic protected bytes"
+    );
+}

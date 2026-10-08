@@ -19,6 +19,8 @@ use std::path::{Path, PathBuf};
 
 const MANIFEST_LIMIT: usize = 8192;
 const PREFIX: &str = ".emilybase-account-restore-";
+mod initialize;
+pub use initialize::initialize_account_root;
 mod live;
 pub use live::{AccountRoot, MAX_ACTIVE_PRIVATE_STORES};
 
@@ -161,7 +163,9 @@ pub fn restore_account_bundle_bytes(
     }
     sync(&pending.owner, "bundle_restore_stage_sync")?;
     checkpoint("bundle_restore_stage_synced");
-    if let Err(error) = check_manifest(&root, &file, &encoded) {
+    if let Err(error) = check_manifest(&root, &file, &encoded)
+        .and_then(|()| check_contents(&root, &pending.owner, &state.contents))
+    {
         pending.retain();
         return Err(error);
     }
@@ -230,6 +234,31 @@ struct Contents {
     encoded: Vec<u8>,
     manifest: AccountBundleRootManifest,
     ids: BTreeSet<String>,
+}
+// Shared retained-owner checks also run at the final initialization/restore
+// boundary. Never replace these with a manifest-only final comparison.
+fn check_contents(path: &Path, owner: &File, contents: &Contents) -> Result<()> {
+    metadata::owned_directory(path, owner)?;
+    let root = descriptor(owner);
+    if names(&root)? != ["private".into(), "registry".into(), "root.json".into()].into()
+        || names(&root.join("registry"))? != contents.ids
+        || names(&root.join("private"))?
+            != contents.manifest.private_projects.iter().cloned().collect()
+    {
+        return Err(Error::BundleRoot("service root inventory changed"));
+    }
+    metadata::owned_directory(&root.join("private"), &contents.private_owner)?;
+    for (id, owner) in contents
+        .manifest
+        .private_projects
+        .iter()
+        .zip(&contents.account_owners)
+    {
+        metadata::owned_directory(&root.join("private").join(id), owner)?;
+    }
+    check_manifest(&root, &contents.manifest_owner, &contents.encoded)?;
+    contents.registry.list()?;
+    Ok(())
 }
 fn inspect_owned(path: &Path, owner: &File, pool: PasswordPool) -> Result<State> {
     inspect_owned_with(path, owner, pool, |_, _| Ok(()))

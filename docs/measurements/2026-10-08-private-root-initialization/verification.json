@@ -1,0 +1,94 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "add6c57c878f1824b65cbe1c9978f7f7bc8715de",
+  "source_sha256": {
+    "Cargo.lock": "a339a3a39589a0f438b3028f64eb757c109b4ad2164d98e405ff0decbdc5c56d",
+    "crates/cli/src/main.rs": "ddf146a5f7578d1e1219814b71562cbb3d408a9188b540df0e917b37755a0caf",
+    "crates/cli/tests/account_initialize.rs": "3f241ea97a51ae52ff3afb945ddfcf006a4a36e56762db508826d94102be8b13",
+    "crates/server/src/lib.rs": "175c0e92316814e45e95259142bca7caf03c165ce1490b2cf990a849de13760b",
+    "crates/server/src/registry_files/account_root.rs": "f3b29674aa6113bd9885f1884d3b74ac4a780163d500269f530dcadede146796",
+    "crates/server/src/registry_files/account_root/live.rs": "061e566b3f90c74fba461a5cbedd1951acac169bc32d1bfc2aeaf631036a6ff4",
+    "crates/server/src/registry_files/account_root/initialize.rs": "077a7b2d8734a4bd783dbb6905d2eb4abb0a2b7fc983023240a157a831b82e07",
+    "crates/server/src/account_bundle/tests.rs": "7345492f63820d3338619f2b13250d6686f1cb24bb5b26beabb0918662a66bd1",
+    "crates/server/src/account_bundle/tests/files.rs": "11964a60e67373bb45a9568d8f6f247dab18e6c65e4703bb28285dabfe0c746e",
+    "crates/server/src/account_bundle/tests/root.rs": "4dae2d8c89eb86ad5cc9962664cc225a89a2e8bddc48ffaff052f5d193ecfd46",
+    "crates/server/src/account_bundle/tests/root_initialize.rs": "a18e919a0f4bb791cc1cf61be0e551266835b77a02bc7cfcf3530a2318af1e5f",
+    "crates/server/tests/account_network.rs": "59c77858b180fec8fc1a8bd42411526da49fa1d01b61ae73667e2c503b9a4013",
+    "fuzz/Cargo.lock": "21ab8a0f1e2a2c7cd9c26ef2d8e49a3c7af8cd638810645d43f7369b16293fcb"
+  },
+  "protocol": {
+    "explicit_offline_initialization_only": true,
+    "new_projects": 1,
+    "private_stores": 1,
+    "private_version": 3,
+    "initial_public_tables_rows_users_families": 0,
+    "explicit_trusted_time_floor": true,
+    "input_name_time_validated_before_staging": true,
+    "initial_plaintext_key_discarded_and_owned_string_zeroized": true,
+    "operator_obtains_service_key_by_authenticated_rotation": true,
+    "common_captured_registry_private_histories_compared_exactly": true,
+    "final_retained_owner_inventory_check_for_init_and_restore": true,
+    "failed_stages_retained_never_automatically_adopted": true,
+    "no_replace_and_parent_fsync_before_success": true,
+    "parent_sync_failure_reports_publication_unknown": true,
+    "file_token_format_versions_unchanged": true
+  },
+  "matrix": {
+    "new_initialization_unit_cases": 8,
+    "new_existing_restore_regression_cases": 1,
+    "new_actual_cli_cases": 2,
+    "new_actual_tcp_cases": 1,
+    "late_private_container_substitution_reproduced_before_fix": true,
+    "initializer_candidate_substitution_reproduced_before_fix": true,
+    "sync_faults": 8,
+    "native_sigkill_boundaries": 6,
+    "final_substitution_variants": 8,
+    "synchronized_native_initializers": 2,
+    "publication_winners": 1,
+    "independent_generated_empty_roster_cases": 8,
+    "corrupt_private_wal_and_foreign_entry_failures_tested_separately": true,
+    "initialization_then_operator_rotation_provision_signin_restart_via_tcp": true,
+    "source_and_restored_clone_session_authority_distinct": true,
+    "cli_output_contains_no_names_ids_keys_passwords_paths": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "frozen_source_dependency_files": 431,
+    "main_cases_each": 1111,
+    "ignored_helpers_each": 22,
+    "optional_release_diagnostics_each": 54,
+    "strict_workspace_profile_fuzz_clippy_and_format": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_legacy_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "new_asan_campaign": false
+  },
+  "source_counts": {
+    "rust": 80107,
+    "effective": 76733,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 82213,
+    "net_rust": 740
+  },
+  "prior_hosted_ci": {
+    "commit": "1af8319a55f4e1bc609c512a2b1c096f2b40d24e",
+    "run": 37712364907,
+    "all_five_jobs": "success"
+  },
+  "exclusions": [
+    "local private-root container execution; Docker is unavailable on this validation host",
+    "hardware power loss and automated uncertain-stage salvage",
+    "dynamic multi-project private bootstrap",
+    "public signup, roles and row policies",
+    "whole-process heap, staging, worker and connection quotas",
+    "encryption, TLS/CORS and production acceptance"
+  ]
+}

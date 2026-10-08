@@ -25,3 +25,6 @@ proptest-regressions/
 /restored-root/
 /independent-root/
 __pycache__/
+
+.emilybase-account-init-*
+/account-root/

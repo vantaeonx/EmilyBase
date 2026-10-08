@@ -93,6 +93,12 @@ existing verified root, leaving `EMILYBASE_DATA_DIR` unset, to select this mode
 in the actual binary. Real TCP refresh/ACK-kill/restart/clone tests cover WAL1/2;
 one damaged declared private store refuses the whole root at startup. See
 [executable mode](docs/private-http.md#executable-mode).
+The [first-root CLI](docs/private-root-initialization.md) now creates one new empty
+project and private session store without an input archive. It prints counts only;
+obtain the first usable service key through authenticated operator rotation, then
+provision a user through the private HTTP route. Startup still creates no private
+store implicitly. Late root publication now repeats retained-owner checks for
+initialization and restore, including a reproduced private-container substitution.
 The [offline root restore](docs/account-root-restore.md) prepares registry data and
 every explicitly bundled private store under one owned root. Private session reset
 and exact prepared-history validation precede no-replace root publication. API keys

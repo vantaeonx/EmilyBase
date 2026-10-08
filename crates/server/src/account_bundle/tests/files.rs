@@ -438,7 +438,21 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if action == "root-live" {
+    if action.starts_with("root-init") {
+        match crate::initialize_account_root(
+            &target,
+            "synthetic",
+            PasswordPool::new(1).unwrap(),
+            50,
+        ) {
+            Ok(_) => println!("BUNDLE_OK"),
+            Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                println!("BUNDLE_CONFLICT")
+            }
+            Err(_) => panic!("unexpected root initialization result"),
+        }
+        durability::checkpoint("account_init_ack");
+    } else if action == "root-live" {
         let key: String = serde_json::from_slice(&fs::read(&target).unwrap()).unwrap();
         let mut root = crate::AccountRoot::open(&source, PasswordPool::new(1).unwrap()).unwrap();
         let pair = root

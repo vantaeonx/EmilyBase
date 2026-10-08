@@ -427,3 +427,104 @@ fn private_wal_corruption_fails_whole_root_startup_without_overwrite_or_secret_l
     sign(&server, &f.id, &f.key);
     server.stop();
 }
+
+#[test]
+fn fresh_empty_root_can_be_provisioned_using_only_the_operator_and_private_http_protocol() {
+    let _case = CASES.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("new-root");
+    emilybase_server::initialize_account_root(&root, "synthetic-first-project", pool(), 0).unwrap();
+    let server = support::Server::start_account(&root, MASTER);
+    let (status, projects) =
+        support::call(server.address, "GET", "/v1/projects", MASTER, &Json::Null).unwrap();
+    assert_eq!(status, 200);
+    assert_eq!(projects.as_array().unwrap().len(), 1);
+    let id = projects[0]["id"].as_str().unwrap();
+    let (status, created) = support::call(
+        server.address,
+        "POST",
+        &format!("/v1/projects/{id}/keys/rotate"),
+        MASTER,
+        &Json::Null,
+    )
+    .unwrap();
+    assert_eq!(status, 200);
+    let key = created["api_key"].as_str().unwrap();
+    assert_eq!(
+        auth(
+            &server,
+            id,
+            key,
+            "sign-in",
+            json!({"login":"synthetic_user","password":PASSWORD})
+        )
+        .0,
+        401
+    );
+    assert_eq!(
+        auth(
+            &server,
+            id,
+            key,
+            "users",
+            json!({"login":"synthetic_user","password":PASSWORD})
+        )
+        .0,
+        201
+    );
+    let pair = sign(&server, id, key);
+    assert_eq!(
+        auth(
+            &server,
+            id,
+            key,
+            "me",
+            json!({"access_token":pair["access_token"]})
+        )
+        .0,
+        200
+    );
+    assert_eq!(
+        support::call(
+            server.address,
+            "POST",
+            &format!("/v1/projects/{id}/sql"),
+            key,
+            &json!({"sql":"CREATE TABLE t(id INT PRIMARY KEY);INSERT INTO t VALUES(1)"})
+        )
+        .unwrap()
+        .0,
+        200
+    );
+    let log = server.stop();
+    clean_log(
+        &log,
+        &[
+            MASTER,
+            id,
+            key,
+            PASSWORD,
+            "synthetic-first-project",
+            "synthetic_user",
+            pair["access_token"].as_str().unwrap(),
+            pair["refresh_token"].as_str().unwrap(),
+        ],
+    );
+    let report = emilybase_server::inspect_account_bundle_root(&root, pool()).unwrap();
+    assert_eq!(report.registry.projects[0].rows, 1);
+    assert_eq!(report.private_accounts[0].inventory.accounts, 1);
+    assert_eq!(report.private_accounts[0].inventory.session_families, 1);
+    let server = support::Server::start_account(&root, MASTER);
+    assert_eq!(
+        auth(
+            &server,
+            id,
+            key,
+            "me",
+            json!({"access_token":pair["access_token"]})
+        )
+        .0,
+        200
+    );
+    server.stop();
+}

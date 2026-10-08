@@ -112,3 +112,12 @@ Linux descriptor-owned paths and trusted local ancestors remain assumptions. A
 malicious administrator with unrestricted file write access is outside that model.
 Automatic HTTP attachment, authoritative service roster, roles/RLS, whole-process
 resource admission, hardware power loss and production/security acceptance remain open.
+
+
+## Final retained-owner recheck
+
+ADR0083 adds a final retained-owner/inventory check after the stage-sync boundary,
+alongside the original manifest identity/byte comparison. A regression first
+reproduced replacement of the private container after full inspection. Such a
+substitution now refuses before root selection and retains foreign/detached
+objects. This changes no file format or restore session-reset contract.
