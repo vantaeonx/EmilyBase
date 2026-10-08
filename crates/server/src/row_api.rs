@@ -287,3 +287,6 @@ mod tests;
 
 #[cfg(test)]
 mod batch_tests;
+
+#[cfg(test)]
+mod page_tests;

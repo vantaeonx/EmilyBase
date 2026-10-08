@@ -3816,3 +3816,22 @@ are still running at this observation; their container/advisory/profile jobs pas
 record this boundary. Net growth:560 Rust and30 Python lines. Current source totals:
 86,066 Rust /82,607 excluding blanks/standalone comments; SDK1,259; Python1,735;
 89,060 combined. No stage or production milestone is closed.
+
+
+## Changing typed row continuations, 2026-10-08
+
+Three focused regression cases pass on Rust1.99.0 and1.89.0, with strict server
+all-target Clippy and workspace formatting. A130-row table returns128 entries and
+an exact continuation; deleting that key and inserting before/after the bound
+produces only the current exclusive remainder.3072-byte Unicode/NUL keys also
+continue after deletion, with invalid key types/lengths rejected. Independent16
+generated mutation/continuation models compare ordered current state and exact
+read-only WAL history. Runtime behavior is unchanged. Full workspace/network/SDK,
+fuzz and advisory checks were not repeated for these test-only changes.
+
+Schema commitff207db hosted run37739476397 now has all five jobs successful.
+Row/batch hosted runs are still in progress at this observation.
+[Source-bound data](measurements/2026-10-08-changing-row-pages/verification.json)
+records the boundary. This focused regression checkpoint adds124 Rust lines;
+totals:86,190 Rust /82,730 excluding blanks/standalone comments; SDK1,259;
+Python1,735;89,184 source lines. Production gates remain open.

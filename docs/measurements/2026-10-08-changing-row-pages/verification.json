@@ -1,0 +1,49 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "1374c9dc22007770cdb6429b7e40ca27f00d7502",
+  "source_sha256": {
+    "crates/server/src/row_api.rs": "d3dd41086f25c5af5cbf969683e8afc617b9a1a21e031b5d57f4fd4867061816",
+    "crates/server/src/row_api/page_tests.rs": "56e9e3960ffff8355b628c5ddbab67d339df49dbf6212b29761b388f54145bd3",
+    "crates/server/src/row_api/wire.rs": "983894f5d1a45d3f893d60957ed088fd820d6beef511af8fadc2ea0e76c90db2",
+    "crates/server/src/row_api/tests.rs": "feae8d114ec2c75753ff01bd00243fa6e35386e2c084a41767e52ea9a2c06f29",
+    "Cargo.lock": "a54c26375bd64ec25d817376db1e5dc4d590852989b1c4210b520ba0d3f49825"
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "targeted_passed_each": 3,
+    "ignored_each": 0,
+    "independent_generated_current_state_models": 16,
+    "first_page_rows": 128,
+    "initial_rows": 130,
+    "deleted_continuation_and_before_after_insertions": true,
+    "maximum_utf8_and_nul_key_bytes": 3072,
+    "read_wal_exact": true,
+    "strict_server_all_targets_clippy": true,
+    "workspace_format": true,
+    "runtime_changed": false,
+    "full_network_workspace_sdk_fuzz_advisory_checks_repeated": false
+  },
+  "prior_hosted": {
+    "schema_commit": "ff207dbec9ff28163e61df80359e335c589293da",
+    "all_five_success_run": 37739476397,
+    "row_batch_runs": "in progress at observation"
+  },
+  "source_counts": {
+    ".rs": 86190,
+    ".ts": 455,
+    ".mjs": 804,
+    ".py": 1735,
+    "total": 89184,
+    "effective_rust": 82730
+  },
+  "net_rust": 124,
+  "exclusions": [
+    "stable cross-request snapshot",
+    "public user authority and RLS",
+    "whole-process resource admission",
+    "production acceptance"
+  ]
+}
