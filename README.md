@@ -57,6 +57,8 @@ Original INSERT SELECT also copies bounded typed rows for explicit table rebuild
 copy overflow or any late conflict discards the complete script.
 Project-service migration HTTP in both server modes applies the same atomic contract
 and lists exact receipts; concurrent identical requests commit once.
+The SDK transports these definitions and preserves full transaction digits,
+with explicit retries and conservative handling of lost responses.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

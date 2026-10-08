@@ -1,7 +1,11 @@
+import * as migrations from "./migrations.js";
 import * as rows from "./rows.js";
 import * as decode from "./decode.js";
 import { EmilyBaseError } from "./types.js";
 import type {
+  MigrationApplied,
+  MigrationDefinition,
+  MigrationReceipt,
   BatchChanged,
   RowChanged,
   RowKey,
@@ -25,6 +29,7 @@ const SAFE_REFUSALS = new Map([
   ["invalid_project_request", 400],
   ["query_rejected", 400],
   ["table_rejected", 400],
+  ["migration_rejected", 400],
   ["body_timeout", 408],
   ["body_limit", 413],
   ["json_required", 415],
@@ -36,6 +41,7 @@ const ERROR_CODES = new Set([
   "transaction_outcome_requires_inspection",
   "publication_outcome_requires_inspection",
   "storage_unavailable",
+  "migration_history_invalid",
   "limiter_unavailable",
   "registry_unavailable",
   "worker_failed",
@@ -259,6 +265,37 @@ export class EmilyBaseClient {
       () => ({ table: rows.table(table), operations: rows.writes(operations) }),
       rows.batch,
       options,
+    );
+  }
+  migrationList(options: RequestOptions = {}): Promise<MigrationReceipt[]> {
+    return this.#request(
+      "migrations",
+      "GET",
+      undefined,
+      migrations.inventory,
+      options,
+      65536,
+    );
+  }
+  migrationApply(
+    definition: MigrationDefinition,
+    options: RequestOptions = {},
+  ): Promise<MigrationApplied> {
+    let snapshot: MigrationDefinition;
+    let body: string;
+    try {
+      snapshot = migrations.definition(definition);
+      body = migrations.payload(snapshot);
+    } catch {
+      return input();
+    }
+    return this.#request(
+      "migrations/apply",
+      "POST",
+      body,
+      (value) => migrations.applied(value, snapshot),
+      options,
+      65536,
     );
   }
   #row<T>(

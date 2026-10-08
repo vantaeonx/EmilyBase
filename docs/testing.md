@@ -4012,3 +4012,37 @@ this new commit's hosted checks follow publication.
 record this scope. Net growth682 Rust and50 Python lines:89,358 physical Rust/
 85,764 effective,SDK1,880/Python1,785,total93,023 source lines. No stage or production
 gate is closed; broader fault, upgrade, resource, RLS and security work remains.
+
+
+## Exact bounded migration SDK, 2026-10-08
+
+All23 SDK unit cases pass under Node22.22.1 with strict TypeScript compilation
+and Prettier checks. Seven new cases cover strict snapshots, exact UTF8/escaped
+body caps and lone-surrogate refusal before dispatch; full u64 receipt text,
+malformed/order/digest/response limits,129 independent inventory sequences,
+conservative error outcomes, cancellation, close and no automatic retries.
+
+The actual TCP SDK suite passes nine cases each against Rust1.99.0 and1.89.0.
+The new migration subcase compares a separate Node SHA256 definition oracle,
+concurrent identical definitions, copied schema/NULL preservation, two successful
+SDK-ACK kills and exact historical retries. A third received server result is
+deliberately lost before the SDK receives it: one dispatch returns unknown,
+restart and explicit exact retry return the durable original receipt without a
+second write. Sibling/master scope stays separate; key rotation denies stale
+requests. Static logs omit definitions, row values and keys. External container
+mode executes the same assertions but does not claim these native process kills.
+
+The initial new network fixture used a sibling client with an old ephemeral
+listener address after restart and failed with transport_error. Reconstructing
+that sibling at the current URL fixed the test; final complete unit/TCP/format
+checks were rerun on frozen sources. No runtime retry was introduced.
+Rust/full workspace/fuzz/advisory/optional allocation/local Docker checks were
+not repeated for this SDK-only increment. Previouscdc669b hosted run37845593286
+was in progress at this observation; the new hosted run follows publication.
+
+[ADR0099](adr/0099-exact-migration-sdk.md) and
+[source-bound verification](measurements/2026-10-08-exact-migration-sdk/verification.json)
+record this boundary. Net growth165 TypeScript and457 JavaScript test lines;
+Rust89,358/85,764 effective,SDK2,502,Python1,785:93,645 source lines. Structural
+receipt checks are not digest recomputation or audit authentication. No stage or
+production gate is closed.

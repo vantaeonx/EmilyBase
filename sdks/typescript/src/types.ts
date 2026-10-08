@@ -84,3 +84,21 @@ export interface BatchChanged {
   changed: number;
   transaction: string;
 }
+
+/** Exact bounded migration definition; SQL bytes bind the historical digest. */
+export interface MigrationDefinition {
+  readonly version: number;
+  readonly label: string;
+  readonly sql: string;
+}
+export interface MigrationReceipt {
+  version: number;
+  label: string;
+  sha256: string;
+  /** Canonical u64 decimal text; preserve exact digits. */
+  transaction: string;
+}
+export interface MigrationApplied {
+  receipt: MigrationReceipt;
+  already_applied: boolean;
+}

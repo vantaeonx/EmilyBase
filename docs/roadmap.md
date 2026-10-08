@@ -843,3 +843,14 @@ preserve original atomicity. Exact concurrent retries commit once; receipts are
 included in ordinary compact/backup/restore. Native TCP ACK kills and the common
 root lifecycle cover recovery and private-history isolation. Online/schema-diff
 changes, RLS, wider upgrade/security/resource and production gates remain open.
+
+
+## Follow-up: exact migration SDK
+
+[ADR0099](adr/0099-exact-migration-sdk.md) adds strict project-service migration
+methods to the local TypeScript client, without moving engine logic from Rust.
+Bounded immutable definitions and exact receipt strings preserve retry identity;
+transport uncertainty never triggers an automatic second write. Native original
+server checks include a separate digest oracle, schema copy, concurrent retries,
+ACK/lost-response restarts and current-key/sibling denial on both Rust versions.
+Online/schema-diff changes, end-user policy/RLS and production gates remain open.

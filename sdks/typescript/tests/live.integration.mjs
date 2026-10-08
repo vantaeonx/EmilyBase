@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { EmilyBaseClient, EmilyBaseError } from "../dist/index.js";
 
 test(
@@ -421,6 +421,197 @@ test(
         assert.equal(await client.rowGet("wire_rows", huge), null);
         await client.sql("DROP TABLE wire_rows");
         for (const secret of ["wire_rows", "synthetic-row-SDK", master, key])
+          assert(!logs.join("\n").includes(secret));
+      },
+    );
+    await t.test(
+      "migration SDK exact retries, copied schema and ACK kills retain receipt authority",
+      async () => {
+        const migrationProject = first.project.id;
+        const secondProject = second.project.id,
+          secondKey = second.api_key;
+        const definitions = [
+          {
+            version: 1,
+            label: "sdk-initial",
+            sql: "CREATE TABLE migrate_source(id INT PRIMARY KEY,v TEXT); INSERT INTO migrate_source VALUES(1,'synthetic-SDK-migration')",
+          },
+          {
+            version: 2,
+            label: "sdk-rebuild",
+            sql: "CREATE TABLE migrate_copy(id INT PRIMARY KEY,v TEXT,note TEXT); INSERT INTO migrate_copy(id,v) SELECT * FROM migrate_source; DROP TABLE migrate_source; CREATE TABLE migrate_source(id INT PRIMARY KEY,v TEXT,note TEXT); INSERT INTO migrate_source SELECT * FROM migrate_copy; DROP TABLE migrate_copy",
+          },
+        ];
+        const digest = (definition) => {
+          const label = Buffer.from(definition.label),
+            sql = Buffer.from(definition.sql);
+          const number = (n) => {
+            const b = Buffer.alloc(4);
+            b.writeUInt32BE(n);
+            return b;
+          };
+          return createHash("sha256")
+            .update(Buffer.from("emilybase-migration-v1\0"))
+            .update(number(definition.version))
+            .update(number(label.length))
+            .update(label)
+            .update(number(sql.length))
+            .update(sql)
+            .digest("hex");
+        };
+        assert.deepEqual(await client.migrationList(), []);
+        const receipts = [];
+        for (const definition of definitions) {
+          const [first, second] = await Promise.all([
+            client.migrationApply(definition),
+            client.migrationApply(definition),
+          ]);
+          assert.notEqual(first.already_applied, second.already_applied);
+          assert.deepEqual(first.receipt, second.receipt);
+          assert.equal(first.receipt.sha256, digest(definition));
+          receipts.push(first.receipt);
+          if (!external) {
+            const exited = once(child, "exit");
+            child.kill("SIGKILL");
+            await exited;
+            await start();
+            client = new EmilyBaseClient({
+              url,
+              project: migrationProject,
+              apiKey: key,
+            });
+          }
+          assert.deepEqual(await client.migrationApply(definition), {
+            receipt: first.receipt,
+            already_applied: true,
+          });
+          assert.deepEqual(await client.migrationList(), receipts);
+          const sibling = new EmilyBaseClient({
+            url,
+            project: secondProject,
+            apiKey: secondKey,
+          });
+          try {
+            assert.deepEqual(await sibling.migrationList(), []);
+          } finally {
+            sibling.close();
+          }
+        }
+        assert.deepEqual(
+          await client.rowGet("migrate_source", {
+            type: "integer",
+            value: "1",
+          }),
+          [
+            { type: "integer", value: "1" },
+            { type: "text", value: "synthetic-SDK-migration" },
+            { type: "null" },
+          ],
+        );
+        await assert.rejects(
+          client.migrationApply({
+            ...definitions[1],
+            sql: definitions[1].sql + ";",
+          }),
+          (e) =>
+            e.code === "migration_rejected" && e.outcome === "not_committed",
+        );
+        await assert.rejects(
+          client.migrationApply({
+            version: 3,
+            label: "sdk-late-failure",
+            sql: "CREATE TABLE never_committed(id INT PRIMARY KEY); INSERT INTO migrate_source(id) VALUES(1)",
+          }),
+          (e) =>
+            e.code === "migration_rejected" && e.outcome === "not_committed",
+        );
+        assert.deepEqual(await client.migrationList(), receipts);
+        const uncertainDefinition = {
+          version: 3,
+          label: "sdk-lost-response",
+          sql: "UPDATE migrate_source SET note='synthetic-lost-response'",
+        };
+        let dispatched = 0,
+          observed;
+        const uncertain = new EmilyBaseClient({
+          url,
+          project: migrationProject,
+          apiKey: key,
+          fetch: async (url, request) => {
+            dispatched++;
+            const response = await fetch(url, request);
+            assert.equal(response.status, 200);
+            observed = await response.json();
+            throw new Error("synthetic-sensitive-lost-response");
+          },
+        });
+        await assert.rejects(
+          uncertain.migrationApply(uncertainDefinition),
+          (e) =>
+            e.code === "transport_error" &&
+            e.outcome === "unknown" &&
+            !String(e).includes("synthetic-sensitive-lost-response"),
+        );
+        uncertain.close();
+        assert.equal(dispatched, 1);
+        assert.equal(observed.already_applied, false);
+        assert.equal(observed.receipt.sha256, digest(uncertainDefinition));
+        receipts.push(observed.receipt);
+        if (!external) {
+          const exited = once(child, "exit");
+          child.kill("SIGKILL");
+          await exited;
+          await start();
+          client = new EmilyBaseClient({
+            url,
+            project: migrationProject,
+            apiKey: key,
+          });
+        }
+        assert.deepEqual(await client.migrationApply(uncertainDefinition), {
+          receipt: observed.receipt,
+          already_applied: true,
+        });
+        assert.deepEqual(await client.migrationList(), receipts);
+        assert.equal(
+          (
+            await client.rowGet("migrate_source", {
+              type: "integer",
+              value: "1",
+            })
+          )[2].value,
+          "synthetic-lost-response",
+        );
+        const wrong = new EmilyBaseClient({
+          url,
+          project: migrationProject,
+          apiKey: second.api_key,
+        });
+        await denied(wrong.migrationList());
+        await denied(wrong.migrationApply(definitions[0]));
+        wrong.close();
+        const rotated = await admin(
+          `/v1/projects/${first.project.id}/keys/rotate`,
+          "POST",
+        );
+        await denied(client.migrationList());
+        await denied(client.migrationApply(definitions[0]));
+        key = rotated.api_key;
+        client.setKey(key);
+        assert.deepEqual(await client.migrationList(), receipts);
+        assert.deepEqual(await client.migrationApply(definitions[0]), {
+          receipt: receipts[0],
+          already_applied: true,
+        });
+        for (const secret of [
+          master,
+          key,
+          definitions[0].sql,
+          definitions[1].sql,
+          "synthetic-SDK-migration",
+          "synthetic-lost-response",
+          uncertainDefinition.sql,
+        ])
           assert(!logs.join("\n").includes(secret));
       },
     );

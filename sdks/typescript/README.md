@@ -31,7 +31,7 @@ client.close();
 ```
 
 Project creation/rotation are administrator operations through the documented
-[HTTP API](../../docs/server.md). The SDK exposes project SQL, explain, status and typed row operations. Project keys currently grant full access to one project;
+[HTTP API](../../docs/server.md). The SDK exposes project SQL, explain, status, typed row operations and bounded migrations. Project keys currently grant full access to one project;
 user/row policies do not exist. Use synthetic data and keep credentials private.
 No default credentials, persistence, logging, retries or administrator client.
 
@@ -141,3 +141,43 @@ UTF-16 input strings with lone surrogates are rejected locally before TextEncode
 can replace them. Valid supplementary code points, NUL and bounded UTF-8 strings
 retain their exact content. The regression first failed before this check; final
 16 unit tests and8 real-server cases on each Rust binary pass.
+
+
+## Bounded migrations
+
+Use the trusted project service key on a backend. This client does not grant
+end-user migration authority. The original Rust engine owns parsing, schema/data
+writes, WAL commits and recovery; TypeScript only validates and transports requests.
+
+```ts
+const definition = {
+  version: 1,
+  label: "initial",
+  sql: "CREATE TABLE notes(id INT PRIMARY KEY,title TEXT)",
+};
+const applied = await client.migrationApply(definition);
+const receipts = await client.migrationList();
+// An explicit exact historical retry returns the original receipt without a write.
+const repeated = await client.migrationApply(definition);
+```
+
+Definitions have exact fields, version1..128, ASCII label1..63 and SQL1..16,384 UTF-8
+bytes. Unpaired UTF-16 surrogates refuse before encoding so exact definition bytes
+cannot silently change. JSON bodies and streamed responses cap at65,536 bytes.
+The client snapshots input before dispatch; the Rust parser remains authoritative
+for SQL syntax, statement/work/event bounds and reserved-ledger access.
+
+Receipt transaction IDs remain canonical decimal strings through the full u64
+range; do not convert them to JavaScript numbers. Digests use64 lowercase hex
+characters. Inventory checks consecutive versions, at most128 entries and strictly
+increasing commit IDs. Apply checks receipt version/label against its request.
+This is structural response validation; the SDK does not recompute the SQL digest
+or authenticate the owner-writable ledger as an audit log.
+
+A400 `migration_rejected` is an ordinary no-commit refusal. Invalid existing ledger
+(`migration_history_invalid`), malformed/truncated response, lost connection and
+ambiguous commit remain conservative unknown outcomes. Never infer rollback from
+a timeout or lost reply. Reopen/inspect and explicitly retry the exact definition;
+the client never retries automatically or changes versions/SQL to hide an error.
+There is no migration file loader, secret persistence, dashboard, ALTER/schema diff,
+down/large/online orchestration or npm release in this increment.
