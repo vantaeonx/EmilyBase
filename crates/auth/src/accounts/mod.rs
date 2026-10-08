@@ -6,6 +6,8 @@ pub use page::{AccountPage, MAX_ACCOUNT_PAGE};
 mod archive_tests;
 #[cfg(test)]
 mod page_tests;
+#[cfg(test)]
+mod policy_tests;
 mod records;
 mod restore;
 #[cfg(test)]

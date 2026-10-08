@@ -854,3 +854,14 @@ transport uncertainty never triggers an automatic second write. Native original
 server checks include a separate digest oracle, schema copy, concurrent retries,
 ACK/lost-response restarts and current-key/sibling denial on both Rust versions.
 Online/schema-diff changes, end-user policy/RLS and production gates remain open.
+
+
+## Follow-up: bounded row policy decisions
+
+[ADR0100](adr/0100-bounded-row-policy-decisions.md) supplies a synchronous pure
+Rust decision model with explicit per-operation rules, shared node/depth/literal
+bounds, actual borrowed private principals, complete table identity and old/new
+UPDATE checks. Exact-history, independent decision models and original transaction
+rollback/recreation tests cover this library. Durable policy installation/revisions,
+roles, query filtering and atomic authenticated user CRUD/HTTP remain open. Existing
+service authority is unchanged; stage5 and RLS acceptance are not complete.

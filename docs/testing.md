@@ -4046,3 +4046,43 @@ record this boundary. Net growth165 TypeScript and457 JavaScript test lines;
 Rust89,358/85,764 effective,SDK2,502,Python1,785:93,645 source lines. Structural
 receipt checks are not digest recomputation or audit authentication. No stage or
 production gate is closed.
+
+
+## Bounded row policy decision foundation, 2026-10-08
+
+Rust1.99.0 and1.89.0 each pass113 complete auth and10 actual private-network
+cases; two native child helpers remain ignored by normal discovery. Nine new
+regular policy cases include strict documents, resource/type/context limits,
+redaction, real borrowed private proof, independent128-case decision models and
+64 arbitrary-document property cases. Owned/visible/NULL predicates are independent
+of request-provided identity. Both old/new UPDATE ownership is required; invalid
+rows and unsupported key changes refuse even under authenticated-all. Project,
+complete schema and stable table identity must match before row evaluation.
+
+Actual original transactions on both WALs demonstrate successful checked insert,
+a typed prefix followed by denied owner transfer with exact complete rollback,
+reopen and fresh table identity after DROP/CREATE. The old bound policy refuses
+the recreated table. Decisions do not observe session time or change private
+history; revoked sessions cannot create a current proof. These are library/caller
+composition checks, not an enabled server policy subsystem.
+
+The strict-document test first fails because an internally tagged unit rule
+accepted an unexpected field. Strict empty-struct variants fix that decoder
+boundary. All final checks use frozen sources. Workspace/fuzz format, strict
+workspace all-target Clippy, stable server/CLI build, minimum workspace build,
+strict all-bin fuzz Clippy and minimum fuzz compilation pass. Dedicated row_policy
+ASan completes4,192,464 runs in46 seconds, observed RSS337MiB under512MiB cap,
+maximum16,385 bytes, no findings.
+
+Full workspace/server-unit/SDK/advisory/optional allocation/local Docker checks
+were not repeated. Previouscdc669b hosted run37845593286 has container/advisory/
+minimum/allocation jobs successful and check still running; e66a132 run37846249089
+has container/advisory/allocation successful with check/minimum still running at
+this observation. New hosted checks follow publication.
+
+[ADR0100](adr/0100-bounded-row-policy-decisions.md) and
+[source-bound verification](measurements/2026-10-08-bounded-row-policy-decisions/verification.json)
+record the boundary. Net growth1,026 Rust lines:90,384 physical/86,773 effective,
+SDK2,502/Python1,785,total94,671 source lines. Durable policy installation/revisions,
+roles, filtering and atomic user CRUD/HTTP remain open; no RLS/stage/production gate
+is marked complete.

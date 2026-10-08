@@ -60,6 +60,10 @@ and lists exact receipts; concurrent identical requests commit once.
 The SDK transports these definitions and preserves full transaction digits,
 with explicit retries and conservative handling of lost responses.
 
+A synchronous [row policy decision library](docs/row-policies.md) now binds typed
+owner/field rules to current borrowed private principals and complete table identity.
+User data routes, installed policies and roles remain pending.
+
 **Early development. Not production-ready. Use synthetic data only.**
 
 Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is

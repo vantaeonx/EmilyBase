@@ -1,7 +1,8 @@
 //! API keys, password verifiers and a separate private original-engine account store.
-//! HTTP account authentication and sessions are not implemented.
+//! Native private sessions are integrated by the separately admitted server mode.
 pub mod accounts;
 pub mod password;
+pub mod row_policy;
 pub mod tokens;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

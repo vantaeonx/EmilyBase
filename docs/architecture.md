@@ -430,3 +430,13 @@ and [ADR0096](adr/0096-atomic-bounded-migrations.md).
 
 [ADR0098](adr/0098-project-migration-http.md) records bounded migration transport,
 metadata wire types and conservative ambiguous-write error classification.
+
+
+## Pure row decision boundary
+
+The synchronous auth row_policy module compiles bounded explicit rules against
+project/stable-table/full-schema identity and evaluates exact old/new rows for an
+actual borrowed private principal. It grants no handle or end-user route. Trusted
+callers must retain authoritative transaction/context ownership through decisions
+and writes; durable installation/revisions, role membership, query filtering and
+user CRUD remain open under [ADR0100](adr/0100-bounded-row-policy-decisions.md).
