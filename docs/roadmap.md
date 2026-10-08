@@ -27,13 +27,13 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions implemented; public data enforcement remains open |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; end-user HTTP and filtering remain open |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
 
 Durable table indexes, background journal rotation and history vacuuming,
-Extended SQL, public signup, user data policy enforcement,
+Extended SQL, public signup, user HTTP policy admission,
 file uploads, realtime, online/schema-diff migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and production deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
@@ -891,3 +891,17 @@ administration to current project service keys and the actual held public table
 context. Root-only enable/list/install HTTP preserves exact u64 receipts, CAS
 retries and private/public/sibling histories. No user SQL/rows/roles or implicit
 migration is enabled. See [policy administration](policy-administration.md).
+
+
+## Follow-up: owned user-row enforcement
+
+[ADR0104](adr/0104-owned-user-row-policy-enforcement.md) applies current installed
+policies to exact-key reads or 1..256 typed writes while both public/private owners
+remain held. Staged old/new checks and one original commit preserve packet atomicity;
+SELECT-denied and absent reads both return no row. Current credentials, policy,
+table identity/schema, clock and restored incarnation are rechecked per call.
+Generated row models, serialized competing writers and controlled staged/received
+result kills cover both original WALs. This synchronous trusted gateway requires
+a service key and user access token; it exposes no public user HTTP or SQL.
+Filtered pagination, roles, public admission and broader production gates remain
+open. See [the precise contract](user-row-enforcement.md).

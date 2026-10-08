@@ -67,7 +67,10 @@ content correctly refuses a stale retry rather than overwriting it.
 
 Synchronous trusted code can also call AccountRoot.enable_row_policy_catalog,
 row_policy_receipts and install_row_policy. These keep the current service-key and
-held real-table boundary. They grant no detached private database handle or end-user
-transaction authority. See [ADR0103](adr/0103-service-key-policy-administration.md)
-and [OpenAPI](openapi.json). All broader user enforcement, retirement, security,
-upgrade, resource and production gates remain open.
+held real-table boundary. A separate synchronous
+[user-row gateway](user-row-enforcement.md) requires both the current service key
+and a current user access token to apply installed rules under the original owners.
+It grants no detached private handle or end-user SQL/HTTP authority. See
+[ADR0103](adr/0103-service-key-policy-administration.md) and [OpenAPI](openapi.json).
+Filtered pagination, public admission, retirement, security, upgrade, resource and
+production gates remain open.

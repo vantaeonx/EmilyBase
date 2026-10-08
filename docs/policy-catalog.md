@@ -38,7 +38,7 @@ tombstone/ABA design before any capacity-reclaim command is enabled.
 `row_policy_receipts()` performs read-only complete validation and returns sorted
 numeric table identities, revision, predecessor and digest. No policy document,
 password verifier or token is returned. These Rust u64 values are not a JavaScript
-wire contract; a future HTTP DTO must encode all digits safely.
+wire contract; the service administration HTTP DTO encodes all digits safely.
 
 `verify_row_policy_access(token, trusted_now, table)` validates the complete catalog,
 loads the installed model and verifies the current access session under the same
@@ -57,11 +57,12 @@ preserve policy groups and revisions; private restoration still installs a fresh
 session incarnation and trusted clock before publication, revoking old tokens.
 The root's service key and original public data identity remain preserved.
 
-This is policy persistence and a current borrowed decision API. User SQL/data routes,
-role membership, bounded filtering/ordering/continuation, public transaction
-context and atomic user CRUD enforcement remain open. Project-service routes keep
-their existing trusted authority. No end-user HTTP route or platform milestone is
-enabled by this change. See [ADR0102](adr/0102-explicit-private-policy-catalog.md).
+This is policy persistence and a current borrowed decision API. The subsequent
+[owned root gateway](user-row-enforcement.md) derives the actual public table and
+applies current proofs to exact-key reads and atomic typed writes. End-user HTTP,
+role membership and bounded filtering/ordering/continuation remain open.
+Project-service routes keep their existing trusted authority. No platform stage
+is complete. See [ADR0102](adr/0102-explicit-private-policy-catalog.md).
 
 
 The retained root now derives the actual held table context for trusted installation.

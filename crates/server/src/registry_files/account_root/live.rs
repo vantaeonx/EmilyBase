@@ -180,6 +180,43 @@ impl AccountRoot {
             Ok(account.install_row_policy(context, expected, document)?)
         })
     }
+    /// Enforce installed policy and current session within the actual data owner.
+    /// Trusted service key/time only; no SQL, unfiltered scan or detached handle.
+    pub fn user_table(
+        &mut self,
+        project: &str,
+        key: &str,
+        table: &str,
+        access: &str,
+        now: u64,
+        operation: crate::UserTableOperation,
+    ) -> Result<crate::UserTableResult> {
+        self.ready()?;
+        let authorized = self.contents.registry.authorize(project, key)?;
+        let account = self
+            .contents
+            .accounts
+            .iter_mut()
+            .find(|store| store.project() == project)
+            .ok_or(Error::Denied)?;
+        crate::user_rows::validate(table, &operation)?;
+        authorized.data_operation(|database| {
+            let snapshot = database.view()?;
+            let table_id = snapshot.table_id(table).map_err(crate::TableError::from)?;
+            let schema = snapshot
+                .schema(table)
+                .map_err(crate::TableError::from)?
+                .clone();
+            let context = emilybase_auth::row_policy::TableContext {
+                project,
+                id: table_id,
+                schema: &schema,
+            };
+            let proof = account.verify_row_policy_access(access, now, table_id)?;
+            super::checkpoint("root_user_table_verified");
+            Ok(crate::user_rows::run(database, &proof, context, operation)?)
+        })
+    }
     /// Trusted operator metadata, never proof of user authorization.
     pub fn projects(&self) -> Result<Vec<ProjectInfo>> {
         self.ready()?;

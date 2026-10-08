@@ -65,16 +65,16 @@ write. The proof cannot be constructed from user metadata or serialized as a
 capability; existing private verification/revocation/restore semantics apply.
 
 The caller must keep authoritative transaction/context/row ownership through the
-decision and write. Returning a decision does not stop unrelated SQL or enforce a
-query filter. Tests demonstrate an owned original transaction that stages a prefix,
-checks a disallowed owner transfer and discards all changes on error; this is not
-an installed server policy subsystem. Role membership and revocation, bounded filtering/
-ordering/continuation and atomic user CRUD/HTTP remain required before enabling
-user data routes. No production or security-audit gate is closed.
+decision and write. Returning a decision does not enforce unrelated SQL. The
+[owned root gateway](user-row-enforcement.md) now performs current installed-policy
+verification and atomic typed CRUD under both original owners. Role membership,
+bounded filtered ordering/continuation and end-user HTTP admission remain required
+before enabling user data routes. No production or security-audit gate is closed.
 
 
 The separate [bounded original record codec](policy-records.md) now packages
 exact schema/document bytes into one header plus at most seven normal typed
 fragments. It verifies complete integrity and recompiles nested policy constraints.
 The explicit [v4 catalog](policy-catalog.md) supplies atomic installation/revisions
-and current borrowed policy proofs. User data authority remains pending.
+and current borrowed policy proofs. The root gateway applies these proofs to
+exact-key reads and atomic typed writes; it exposes no end-user HTTP route.

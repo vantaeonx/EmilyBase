@@ -68,7 +68,10 @@ now stores/replaces these groups atomically with actual commit revisions and
 current borrowed policy proofs. Verified restore preserves policies and revokes
 old sessions. Root-mode [policy administration](docs/policy-administration.md) now
 uses current service keys and derives the real table context under a held data owner.
-User data routes and roles remain pending.
+A synchronous [owned user-row gateway](docs/user-row-enforcement.md) now verifies
+current sessions and installed policies while holding both original owners through
+exact-key reads or an atomic packet of typed writes. User HTTP routes, filtered
+pagination and roles remain pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 
@@ -104,7 +107,7 @@ Private versions1/2/3/4 remain readable; session checks require explicit v3 cloc
 activation, and the policy catalog requires a separate explicit v4 migration.
 This library remains separate from server projects and current whole-registry
 archives. Explicit private-root transport is described below; public
-signup/account policy, roles, user data policy enforcement and automatic
+signup/account policy, roles, user HTTP data admission and automatic
 attachment remain pending. The separate
 [private restore API](docs/adr/0073-private-restore-reset-before-publication.md)
 validates account schema/project and durably resets scope before atomic directory

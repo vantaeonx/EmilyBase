@@ -452,6 +452,29 @@ fn publication_worker() {
             Err(_) => panic!("unexpected root initialization result"),
         }
         durability::checkpoint("account_init_ack");
+    } else if action == "root-user-table" {
+        let (key, access, row): (String, String, emilybase_catalog::Row) =
+            serde_json::from_slice(&fs::read(&target).unwrap()).unwrap();
+        let mut updated = row.clone();
+        updated[0] = Value::Integer(1);
+        updated[2] = Value::Integer(30);
+        let mut root = crate::AccountRoot::open(&source, PasswordPool::new(1).unwrap()).unwrap();
+        root.user_table(
+            &project,
+            &key,
+            "owned",
+            &access,
+            50,
+            crate::UserTableOperation::Write(vec![
+                crate::UserWrite::Insert(row),
+                crate::UserWrite::Update {
+                    key: emilybase_catalog::Key::Integer(1),
+                    row: updated,
+                },
+            ]),
+        )
+        .unwrap();
+        durability::checkpoint("user_table_ack");
     } else if action == "root-live" {
         let key: String = serde_json::from_slice(&fs::read(&target).unwrap()).unwrap();
         let mut root = crate::AccountRoot::open(&source, PasswordPool::new(1).unwrap()).unwrap();

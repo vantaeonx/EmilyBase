@@ -43,11 +43,22 @@ impl std::fmt::Debug for PolicyPrincipal<'_> {
     }
 }
 impl PolicyPrincipal<'_> {
+    /// Validate the record-bound context even when no row exists to evaluate.
+    pub fn check_context(&self, context: TableContext<'_>) -> std::result::Result<(), PolicyError> {
+        if context.project != self.principal.project()
+            || context.id != self.policy.table
+            || context.schema != &self.policy.schema
+        {
+            return Err(PolicyError::Scope);
+        }
+        Ok(())
+    }
     pub fn authorize(
         &self,
         context: TableContext<'_>,
         change: Change<'_>,
     ) -> std::result::Result<(), PolicyError> {
+        self.check_context(context)?;
         self.policy
             .policy
             .authorize(context, &self.principal, change)

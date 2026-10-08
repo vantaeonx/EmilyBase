@@ -12,7 +12,9 @@ mod projects;
 mod rate;
 mod row_api;
 mod table_api;
+mod user_rows;
 pub use table_api::TableError;
+pub use user_rows::{UserRowsError, UserTableOperation, UserTableResult, UserWrite};
 mod registry_archive;
 mod registry_files;
 pub use account_bundle::{
@@ -97,6 +99,8 @@ pub enum Error {
     Migrations(#[from] MigrationError),
     #[error(transparent)]
     Policies(#[from] PolicyTransportError),
+    #[error(transparent)]
+    UserRows(#[from] UserRowsError),
     #[error("project filesystem error")]
     Io(#[from] std::io::Error),
     #[error("HTTP transport failed")]
