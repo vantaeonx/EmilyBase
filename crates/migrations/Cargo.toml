@@ -1,0 +1,24 @@
+[package]
+name = "emilybase-migrations"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+emilybase-catalog = { path = "../catalog" }
+emilybase-database = { path = "../database" }
+emilybase-query = { path = "../query" }
+emilybase-transactions = { path = "../transactions" }
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+thiserror = "2"
+
+[dev-dependencies]
+emilybase-backup = { path = "../backup" }
+proptest = "1"
+tempfile = "3"
+
+[lints]
+workspace = true

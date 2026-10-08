@@ -34,7 +34,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 
 Durable table indexes, background journal rotation and history vacuuming,
 Extended SQL, public signup, row policies,
-file uploads, realtime, migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and production deployment.
+file uploads, realtime, online/schema-diff migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and production deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
 ## Next increments
@@ -807,3 +807,16 @@ contracts remain intact. Generated committed models, exact history, shared event
 query budgets, backup/restore and before/after-ACK process kills verify this boundary.
 Migration receipt/version policy, HTTP exposure, global resource gates and
 production acceptance remain open.
+
+
+## Follow-up: bounded offline project migrations
+
+[ADR0096](adr/0096-atomic-bounded-migrations.md) adds a synchronous migration crate
+and explicit CLI. Consecutive versions1..128 bind exact SQL/label bytes; the first
+ledger, script and receipt share one original commit. Identical historical retries
+are no-ops; changed/skipped/failed/corrupt metadata refuses without repair. Metadata
+consumes normal event/table/row limits and survives verified restore. Controlled
+first/next staged/ACK kills, a separate generated version model, digest oracle and
+actual CLI refusals cover this boundary. Owner-writable receipts are not independent
+audit authority. Online orchestration/schema diff/ALTER/down, global resource gates
+and production acceptance remain open.

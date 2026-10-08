@@ -51,6 +51,8 @@ The TypeScript SDK also calls these row operations with exact decimal/bit string
 its older SQL numeric contract stays separate. Storage and transactions remain Rust.
 The Rust [owned staged SQL API](docs/staged-sql.md) also combines typed writes and
 SQL before one explicit commit; every error discards the complete transaction.
+[Offline migrations](docs/migrations.md) apply ordered bounded SQL scripts and
+receipts in that one commit, with exact historical retries and verified restore.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

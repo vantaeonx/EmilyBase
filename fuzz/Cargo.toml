@@ -28,6 +28,7 @@ emilybase-index = { path = "../crates/index" }
 emilybase-query = { path = "../crates/query" }
 emilybase-server = { path = "../crates/server" }
 emilybase-transfer = { path = "../crates/transfer" }
+emilybase-migrations = { path = "../crates/migrations" }
 
 [[bin]]
 name = "file_format"

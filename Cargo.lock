@@ -427,6 +427,7 @@ dependencies = [
  "emilybase-catalog",
  "emilybase-database",
  "emilybase-index",
+ "emilybase-migrations",
  "emilybase-query",
  "emilybase-server",
  "emilybase-storage",
@@ -488,6 +489,22 @@ dependencies = [
  "emilybase-storage",
  "proptest",
  "rustix",
+ "sha2",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "emilybase-migrations"
+version = "0.1.0"
+dependencies = [
+ "emilybase-backup",
+ "emilybase-catalog",
+ "emilybase-database",
+ "emilybase-query",
+ "emilybase-transactions",
+ "proptest",
+ "serde",
  "sha2",
  "tempfile",
  "thiserror",

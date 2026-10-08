@@ -3902,3 +3902,37 @@ Unicode55b403a general/minimum jobs were still running at the latest observation
 [source-bound verification](measurements/2026-10-08-owned-staged-sql/verification.json)
 record this boundary. Net growth698 Rust lines; totals86,888 Rust/83,387 effective,
 SDK1,880 and Python1,735:90,503 combined source lines. No production gate is closed.
+
+
+## Atomic bounded offline migrations, 2026-10-08
+
+On Rust1.99.0/1.89.0,68 unique migration/CLI cases pass per toolchain;one child
+helper is ignored by its normal harness and explicitly invoked by its parent.
+Fourteen new regular cases include16 independently generated version/data models,
+a frozen separate hashlib digest vector and8 controlled first/next staged/ACK
+child kills per toolchain on WAL1/2. Exact retry/read/error histories, changed/
+skipped/late-failed scripts,128-receipt and event metadata limits, malformed ledger,
+existing data, intervening ordinary writes, old snapshots, compaction/reopen and
+checkpoint/verified restore pass. Actual CLI validates bounded stdin before an
+invalid destination, preserves exclusive ownership and omits SQL/data from output.
+
+A targeted test first reproduced acceptance of forged root-transaction1 metadata;
+non-root validation repairs it. One additional existing-data/compaction case followed
+the first complete checks; full migration suites on both Rust and strict migration
+all-target lint were rerun. Final unique counts replace the earlier migration
+results; existing CLI source/tests were unchanged. Workspace/fuzz formatting, strict
+workspace Clippy, minimum workspace build, strict/minimum fuzz compilation and both
+warning-denied dependency advisory scans pass. Final446 source/dependency hashes
+are verified unchanged after the final runs.
+
+The SQL parser ASan target, now including bounded migration admission, completes
+996,485 inputs in46 seconds;observed RSS443MiB under512MiB/input16,385-byte caps,
+no findings. This short campaign is not exhaustive security/durability verification.
+Full workspace/SDK/optional allocation suites and local Docker were not repeated.
+Unicode55b403a hosted run37837881780 has all five jobs successful;staged-SQLddb3bed
+run37839653338 remains in progress at this observation.
+
+[ADR0096](adr/0096-atomic-bounded-migrations.md) and
+[source-bound verification](measurements/2026-10-08-atomic-bounded-migrations/verification.json)
+record the boundary. Net growth1,064 Rust lines;totals87,952 Rust/84,397 effective,
+SDK1,880/Python1,735:91,567 combined. Production gates remain open.

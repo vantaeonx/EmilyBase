@@ -20,6 +20,14 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Apply the next bounded SQL migration from stdin, or verify an exact no-op.
+    Migrate {
+        path: PathBuf,
+        version: u32,
+        label: String,
+    },
+    /// Inspect ordered migration receipts without changing the database.
+    Migrations { path: PathBuf },
     /// Export one complete bounded managed table as typed JSON on stdout.
     TableExport { path: PathBuf, table: String },
     /// Read a bounded typed table from stdin and create it in one durable commit.
@@ -218,6 +226,33 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::Migrate {
+            path,
+            version,
+            label,
+        } => {
+            use std::io::Read;
+            let mut bytes = Vec::new();
+            std::io::stdin()
+                .lock()
+                .take((emilybase_query::MAX_SQL_BYTES + 1) as u64)
+                .read_to_end(&mut bytes)?;
+            if bytes.len() > emilybase_query::MAX_SQL_BYTES {
+                return Err(emilybase_query::Error::Limit("SQL bytes").into());
+            }
+            let sql = std::str::from_utf8(&bytes)?;
+            let migration = emilybase_migrations::prepare(version, &label, sql)?;
+            let mut database = emilybase_transactions::Database::open(path)?;
+            let result = emilybase_migrations::apply(&mut database, &migration)?;
+            println!("{}", serde_json::to_string(&result)?);
+        }
+        Command::Migrations { path } => {
+            let database = emilybase_transactions::Database::open(path)?;
+            println!(
+                "{}",
+                serde_json::to_string(&emilybase_migrations::inspect(&database)?)?
+            );
+        }
         Command::TableExport { path, table } => {
             use std::io::Write;
             let database = emilybase_transactions::Database::open(path)?;

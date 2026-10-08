@@ -413,3 +413,15 @@ WHERE summed requests fall64,469,242/64,468,894→9530/9182. [ADR0066](adr/0066-
 records evidence and limits. The planner retains bounded_nested_loop; this adds
 no fallback TopK or public point/range extraction. Numeric model/cache/staging/
 transient budgets, combined durable writer and production gates remain open.
+
+
+## Offline migration composition
+
+The synchronous migrations crate validates bounded definitions and a conventional
+v1 original-table ledger. Owned staged SQL combines schema/data changes and receipt
+creation in one original WAL commit. Consecutive versions, exact domain-separated
+digests and strict commit metadata support read-only historical retries without
+changing engine formats. CLI stdin is bounded before destination recovery. These
+owner-writable receipts are neither user permissions nor an authenticated audit log;
+remote execution/online coordination remain open. See [format/limits](migrations.md)
+and [ADR0096](adr/0096-atomic-bounded-migrations.md).
