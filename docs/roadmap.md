@@ -832,3 +832,14 @@ receipt in the same commit;125/126-row boundaries explicitly count that receipt.
 Independent copy models, exact history, native staged/ACK recovery, actual CLI/TCP
 and sanitizer parser/mutation campaigns cover the boundary. ALTER/schema diff/down,
 large/online changes, full upgrade/resource/security and production gates stay open.
+
+
+## Follow-up: project-service migration HTTP
+
+[ADR0098](adr/0098-project-migration-http.md) exposes the same bounded migration
+contract through both authorized project routers. Strict metadata, retained data
+gates, current-key checks in private-root mode and conservative outcome errors
+preserve original atomicity. Exact concurrent retries commit once; receipts are
+included in ordinary compact/backup/restore. Native TCP ACK kills and the common
+root lifecycle cover recovery and private-history isolation. Online/schema-diff
+changes, RLS, wider upgrade/security/resource and production gates remain open.

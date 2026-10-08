@@ -405,10 +405,16 @@ impl AuthorizedProject {
         self,
         work: impl FnOnce(&mut Database) -> crate::table_api::Result<T>,
     ) -> Result<T> {
+        self.data_operation(|database| work(database).map_err(Error::Tables))
+    }
+    pub(crate) fn data_operation<T>(
+        self,
+        work: impl FnOnce(&mut Database) -> Result<T>,
+    ) -> Result<T> {
         let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;
         self.check_directory()?;
         let mut database = Database::open(self.directory.join("data"))?;
-        Ok(work(&mut database)?)
+        work(&mut database)
     }
     pub(crate) fn export_table(self, table: &str, limit: usize) -> Result<Vec<u8>> {
         let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;

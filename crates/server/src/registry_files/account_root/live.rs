@@ -32,11 +32,21 @@ impl AccountRoot {
         key: &str,
         work: impl FnOnce(&mut emilybase_transactions::Database) -> crate::table_api::Result<T>,
     ) -> Result<T> {
+        self.data_operation(project, key, |database| {
+            work(database).map_err(Error::Tables)
+        })
+    }
+    pub(crate) fn data_operation<T>(
+        &self,
+        project: &str,
+        key: &str,
+        work: impl FnOnce(&mut emilybase_transactions::Database) -> Result<T>,
+    ) -> Result<T> {
         self.ready()?;
         self.contents
             .registry
             .authorize(project, key)?
-            .table_operation(work)
+            .data_operation(work)
     }
     pub(crate) fn export_table(
         &self,

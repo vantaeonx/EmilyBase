@@ -99,6 +99,8 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects", get(list))
         .route("/v1/projects/{id}/keys/rotate", post(rotate))
         .route("/v1/projects/{id}/status", get(status))
+        .route("/v1/projects/{id}/migrations", get(migrations_list))
+        .route("/v1/projects/{id}/migrations/apply", post(migrations_apply))
         .route("/v1/projects/{id}/sql", post(sql))
         .route("/v1/projects/{id}/explain", post(explain))
         .route("/v1/projects/{id}/tables/export", post(export_table))
@@ -555,6 +557,24 @@ async fn import_table(Extension(scope): Extension<Scope>, request: Request) -> A
         root.admits_project(id, key, false)?;
         let table = emilybase_transfer::decode_table(&bytes)?;
         response(&root.import_table(id, key, table)?)
+    })
+    .await
+}
+async fn migrations_list(Extension(scope): Extension<Scope>) -> ApiResult<Response> {
+    blocking(scope, |root, s| {
+        let (id, key) = s.credentials()?;
+        root.data_operation(id, key, |db| Ok(crate::migration_api::list(db)?))
+    })
+    .await
+}
+async fn migrations_apply(
+    Extension(scope): Extension<Scope>,
+    request: Request,
+) -> ApiResult<Response> {
+    let bytes = crate::http::body(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        root.data_operation(id, key, |db| Ok(crate::migration_api::run(db, &bytes)?))
     })
     .await
 }

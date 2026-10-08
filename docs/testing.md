@@ -3970,3 +3970,45 @@ migrationab0f5ab run37841098099 remains in progress at this observation.
 [source-bound verification](measurements/2026-10-08-bounded-insert-select/verification.json)
 record this boundary. Net growth724 Rust lines;totals88,676 Rust/85,101 effective,
 SDK1,880/Python1,735:92,291 source lines. No production gate is closed.
+
+
+## Project-service migration HTTP, 2026-10-08
+
+Rust1.99.0 and1.89.0 each pass212 complete server cases; six child/corpus/opt-in
+helpers remain ignored by normal discovery. Eight new regular cases cover exact
+wire metadata, full u64 transaction strings,128-receipt inventory, strict pure
+admission, conservative typed ambiguous-write errors, sibling/session/master
+refusals, private current-key recheck after a delayed malformed body and serialized
+concurrent identical requests. Inventory/retry/refusal histories remain byte-exact;
+private session clock/history are untouched by migration routes.
+
+The new real TCP case performs eight received-ACK kills per Rust, across both
+routers and WAL1/2: first copy migration and concurrent next definitions, followed
+by restart, original receipt comparison, exact retry, late-failure rollback and
+static-log inspection. The common private-root lifecycle now includes a nullable
+schema rebuild and a following data migration, each killed after received success.
+All four native executions (both Rust, environment/file master transport) pass
+with15 successful-ACK kills each. Compaction, root backup/verify/restore preserve
+both complete receipts; original and clone remain independent. Private corrupt
+history still refuses startup. These native runs do not claim Docker/cgroup tests.
+
+Workspace/fuzz format, strict all-target workspace Clippy, minimum workspace build,
+strict all-bin fuzz Clippy, minimum fuzz compilation and modified Python Ruff
+format/lint pass. The row_requests ASan target now also checks strict migration
+JSON/admission:5,544,142 runs in46 seconds, observed RSS406MiB under512MiB cap,
+maximum65,538 input bytes, no findings. Source/protocol hashes stay unchanged
+through final checks. Full workspace tests, SDK, optional allocation diagnostics,
+advisory scans and local Docker were not repeated for this server-only increment.
+
+A path-template assertion first failed for eight missing required OpenAPI project
+parameter declarations: six existing row routes and two new migration routes.
+The descriptions now declare those parameters; all local references, operation-ID
+uniqueness and template parameters validate. No server behavior changed in this
+metadata repair. Previous7d8edc4 hosted run37842862527 has all five jobs successful;
+this new commit's hosted checks follow publication.
+
+[ADR0098](adr/0098-project-migration-http.md) and
+[source-bound verification](measurements/2026-10-08-project-migration-http/verification.json)
+record this scope. Net growth682 Rust and50 Python lines:89,358 physical Rust/
+85,764 effective,SDK1,880/Python1,785,total93,023 source lines. No stage or production
+gate is closed; broader fault, upgrade, resource, RLS and security work remains.

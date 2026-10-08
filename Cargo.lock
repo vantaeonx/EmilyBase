@@ -556,6 +556,7 @@ dependencies = [
  "emilybase-backup",
  "emilybase-catalog",
  "emilybase-database",
+ "emilybase-migrations",
  "emilybase-query",
  "emilybase-transactions",
  "emilybase-transfer",

@@ -450,3 +450,87 @@ async fn actual_tcp_transport_and_graceful_shutdown_preserve_ownership_and_commi
     assert_eq!(recovered.transaction, 2);
     assert!(tokio::net::TcpStream::connect(address).await.is_err());
 }
+
+#[tokio::test]
+async fn migration_http_isolates_same_versions_and_table_names_between_projects() {
+    let f = fixture();
+    let route = |id: &str| format!("/v1/projects/{id}/migrations");
+    let input = json!({"version":1,"label":"initial","sql":"CREATE TABLE t(id INT PRIMARY KEY); INSERT INTO t VALUES(1)"});
+    for wrong in [MASTER, &f.second.api_key] {
+        assert_eq!(
+            call(
+                &f.app,
+                "POST",
+                &(route(&f.first.project.id) + "/apply"),
+                wrong,
+                input.clone()
+            )
+            .await
+            .0,
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(
+            call(
+                &f.app,
+                "GET",
+                &route(&f.first.project.id),
+                wrong,
+                Value::Null
+            )
+            .await
+            .0,
+            StatusCode::UNAUTHORIZED
+        );
+    }
+    for project in [&f.first, &f.second] {
+        let apply = route(&project.project.id) + "/apply";
+        let (a, b) = tokio::join!(
+            call(&f.app, "POST", &apply, &project.api_key, input.clone()),
+            call(&f.app, "POST", &apply, &project.api_key, input.clone())
+        );
+        assert_eq!(a.0, StatusCode::OK);
+        assert_eq!(b.0, StatusCode::OK);
+        assert_ne!(a.1["already_applied"], b.1["already_applied"]);
+        assert_eq!(a.1["receipt"], b.1["receipt"]);
+        assert_eq!(a.1["receipt"]["transaction"], "2");
+        let (status, listed) = call(
+            &f.app,
+            "GET",
+            &route(&project.project.id),
+            &project.api_key,
+            Value::Null,
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(listed, json!({"migrations":[a.1["receipt"].clone()]}));
+    }
+    let read = |project: &CreatedProject| {
+        std::fs::read(
+            f.directory
+                .path()
+                .join("projects")
+                .join(&project.project.id)
+                .join("data/redo.wal"),
+        )
+        .unwrap()
+    };
+    let before = read(&f.first);
+    let sibling = read(&f.second);
+    let changed = json!({"version":1,"label":"changed","sql":"DROP TABLE t"});
+    assert_eq!(
+        call(
+            &f.app,
+            "POST",
+            &(route(&f.first.project.id) + "/apply"),
+            &f.first.api_key,
+            changed
+        )
+        .await,
+        (
+            StatusCode::BAD_REQUEST,
+            json!({"code":"migration_rejected"})
+        )
+    );
+    assert_eq!(read(&f.first), before);
+    assert_eq!(read(&f.second), sibling);
+}

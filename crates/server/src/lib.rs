@@ -6,6 +6,8 @@ pub use account_http::account_router;
 mod durability;
 mod http;
 mod metadata;
+mod migration_api;
+pub use migration_api::{MigrationError, validate_migration_request};
 mod projects;
 mod rate;
 mod row_api;
@@ -91,6 +93,8 @@ pub enum Error {
     Transfer(#[from] emilybase_transfer::Error),
     #[error(transparent)]
     Tables(#[from] TableError),
+    #[error(transparent)]
+    Migrations(#[from] MigrationError),
     #[error("project filesystem error")]
     Io(#[from] std::io::Error),
     #[error("HTTP transport failed")]

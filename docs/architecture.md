@@ -423,5 +423,10 @@ creation in one original WAL commit. Consecutive versions, exact domain-separate
 digests and strict commit metadata support read-only historical retries without
 changing engine formats. CLI stdin is bounded before destination recovery. These
 owner-writable receipts are neither user permissions nor an authenticated audit log;
-remote execution/online coordination remain open. See [format/limits](migrations.md)
+project-service HTTP uses the same retained data gate in both server modes, with
+current-key checks in private-root mode and no private clock/history work. Online
+coordination remains open. See [format/limits](migrations.md)
 and [ADR0096](adr/0096-atomic-bounded-migrations.md).
+
+[ADR0098](adr/0098-project-migration-http.md) records bounded migration transport,
+metadata wire types and conservative ambiguous-write error classification.

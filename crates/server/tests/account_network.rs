@@ -1082,3 +1082,112 @@ fn actual_tcp_insert_select_ack_kill_keeps_project_copy_and_private_history_on_b
         }
     }
 }
+
+#[test]
+fn migration_tcp_ack_kills_exact_retries_and_concurrent_versions_preserve_both_modes_and_private_history()
+ {
+    let _case = CASES.lock().unwrap();
+    for compact in [false, true] {
+        for private in [false, true] {
+            let f = fixture(compact);
+            let private_path = f.root.join("private").join(&f.id).join("redo.wal");
+            let before = fs::read(&private_path).unwrap();
+            let public = f.root.join("registry").join(&f.id).join("data");
+            let base = Database::open(&public).unwrap().last_transaction();
+            let start = || {
+                if private {
+                    support::Server::start_account(&f.root, MASTER)
+                } else {
+                    support::Server::start(&f.root.join("registry"), MASTER)
+                }
+            };
+            let route = format!("/v1/projects/{}/migrations", f.id);
+            let apply = route.clone() + "/apply";
+            let server = start();
+            assert_eq!(
+                support::call(server.address, "GET", &route, &f.key, &json!(null)).unwrap(),
+                (200, json!({"migrations":[]}))
+            );
+            let initial = json!({"version":1,"label":"initial","sql":"CREATE TABLE copied(id INT PRIMARY KEY,v TEXT,note TEXT); INSERT INTO copied(id,v) SELECT * FROM t"});
+            assert_eq!(
+                support::call(server.address, "POST", &apply, MASTER, &initial)
+                    .unwrap()
+                    .0,
+                401
+            );
+            let (status, first) =
+                support::call(server.address, "POST", &apply, &f.key, &initial).unwrap();
+            assert_eq!(status, 200);
+            assert_eq!(first["already_applied"], false);
+            assert_eq!(first["receipt"]["transaction"], (base + 1).to_string());
+            let mut logs = vec![server.kill()];
+            let server = start();
+            let unchanged = fs::read(public.join("redo.wal")).unwrap();
+            let (status, repeated) =
+                support::call(server.address, "POST", &apply, &f.key, &initial).unwrap();
+            assert_eq!(status, 200);
+            assert_eq!(repeated["already_applied"], true);
+            assert_eq!(repeated["receipt"], first["receipt"]);
+            assert_eq!(fs::read(public.join("redo.wal")).unwrap(), unchanged);
+            let next =
+                json!({"version":2,"label":"next","sql":"UPDATE copied SET v='next' WHERE id=1"});
+            let results = std::thread::scope(|scope| {
+                let a = scope.spawn(|| {
+                    support::call(server.address, "POST", &apply, &f.key, &next).unwrap()
+                });
+                let b = scope.spawn(|| {
+                    support::call(server.address, "POST", &apply, &f.key, &next).unwrap()
+                });
+                [a.join().unwrap(), b.join().unwrap()]
+            });
+            assert!(results.iter().all(|r| r.0 == 200));
+            assert_ne!(
+                results[0].1["already_applied"],
+                results[1].1["already_applied"]
+            );
+            assert_eq!(results[0].1["receipt"], results[1].1["receipt"]);
+            assert_eq!(
+                results[0].1["receipt"]["transaction"],
+                (base + 2).to_string()
+            );
+            logs.push(server.kill());
+            let server = start();
+            let (status, listed) =
+                support::call(server.address, "GET", &route, &f.key, &json!(null)).unwrap();
+            assert_eq!(status, 200);
+            assert_eq!(
+                listed,
+                json!({"migrations":[first["receipt"].clone(),results[0].1["receipt"].clone()]})
+            );
+            let unchanged = fs::read(public.join("redo.wal")).unwrap();
+            for input in [
+                json!({"version":2,"label":"changed","sql":"DROP TABLE copied"}),
+                json!({"version":4,"label":"skipped","sql":"DROP TABLE copied"}),
+                json!({"version":3,"label":"failed","sql":"UPDATE copied SET v='partial'; INSERT INTO copied(id,v) SELECT * FROM t"}),
+            ] {
+                assert_eq!(
+                    support::call(server.address, "POST", &apply, &f.key, &input).unwrap(),
+                    (400, json!({"code":"migration_rejected"}))
+                );
+            }
+            logs.push(server.stop());
+            assert_eq!(fs::read(public.join("redo.wal")).unwrap(), unchanged);
+            assert_eq!(fs::read(&private_path).unwrap(), before);
+            let database = Database::open(&public).unwrap();
+            assert_eq!(emilybase_migrations::inspect(&database).unwrap().len(), 2);
+            assert_eq!(database.last_transaction(), base + 2);
+            assert_eq!(
+                database
+                    .view()
+                    .unwrap()
+                    .get("copied", &emilybase_catalog::Key::Integer(1))
+                    .unwrap()
+                    .unwrap()[1],
+                Value::Text("next".into())
+            );
+            for log in logs {
+                clean_log(&log, &[MASTER, &f.id, &f.key, "synthetic-row", PASSWORD]);
+            }
+        }
+    }
+}

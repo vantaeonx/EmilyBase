@@ -45,6 +45,7 @@ impl From<Error> for Failure {
         use emilybase_query::ExecutionError as Q;
         match error {
             Error::Tables(error) => table_failure(error),
+            Error::Migrations(error) => migration_failure(error),
             Error::Transfer(error) => transfer_failure(error),
             Error::Denied => Self(StatusCode::UNAUTHORIZED, "access_denied"),
             Error::Name | Error::Limit => Self(StatusCode::BAD_REQUEST, "invalid_project_request"),
@@ -93,6 +94,40 @@ impl From<Error> for Failure {
         }
     }
 }
+fn migration_failure(error: crate::MigrationError) -> Failure {
+    use emilybase_migrations::Error as M;
+    let failure = match error {
+        crate::MigrationError::Document
+        | crate::MigrationError::Engine(
+            M::Identity | M::Script | M::Order | M::Conflict | M::Syntax(_),
+        ) => return Failure(StatusCode::BAD_REQUEST, "migration_rejected"),
+        crate::MigrationError::Engine(M::History) => {
+            return Failure(StatusCode::SERVICE_UNAVAILABLE, "migration_history_invalid");
+        }
+        crate::MigrationError::Engine(M::Execution(error)) => Failure::from(Error::Query(error)),
+        crate::MigrationError::Engine(M::Transaction(error)) => {
+            table_failure(crate::TableError::Transaction(error))
+        }
+        crate::MigrationError::Engine(M::Database(error)) => {
+            table_failure(crate::TableError::Database(error))
+        }
+        crate::MigrationError::Engine(M::Exhausted) => {
+            return Failure(StatusCode::SERVICE_UNAVAILABLE, "storage_unavailable");
+        }
+        crate::MigrationError::Response => {
+            return Failure(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "transaction_outcome_requires_inspection",
+            );
+        }
+    };
+    if failure.0 == StatusCode::BAD_REQUEST {
+        Failure(StatusCode::BAD_REQUEST, "migration_rejected")
+    } else {
+        failure
+    }
+}
+
 fn transfer_failure(error: emilybase_transfer::Error) -> Failure {
     use emilybase_transfer::Error as T;
     match error {
@@ -180,6 +215,8 @@ fn routes(app: App) -> Router {
         .route("/v1/projects/{id}/sql", post(sql))
         .route("/v1/projects/{id}/explain", post(explain))
         .route("/v1/projects/{id}/status", get(status))
+        .route("/v1/projects/{id}/migrations", get(migrations_list))
+        .route("/v1/projects/{id}/migrations/apply", post(migrations_apply))
         .route("/v1/projects/{id}/tables/export", post(export_table))
         .route("/v1/projects/{id}/tables/import", post(import_table))
         .route("/v1/projects/{id}/tables", get(table_list))
@@ -378,6 +415,24 @@ async fn import_table(
     })
     .await?;
     Ok(Json(report))
+}
+async fn migrations_list(Extension(scope): Extension<Scope>) -> ApiResult<Response> {
+    let project = take_project(&scope)?;
+    blocking(scope, move || {
+        project.data_operation(|db| Ok(crate::migration_api::list(db)?))
+    })
+    .await
+}
+async fn migrations_apply(
+    Extension(scope): Extension<Scope>,
+    request: Request,
+) -> ApiResult<Response> {
+    let bytes = body(request).await?;
+    let project = take_project(&scope)?;
+    blocking(scope, move || {
+        project.data_operation(|db| Ok(crate::migration_api::run(db, &bytes)?))
+    })
+    .await
 }
 async fn row_get(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
     row_operation(scope, request, crate::row_api::Operation::Get).await

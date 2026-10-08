@@ -1375,3 +1375,5 @@ mod tables;
 mod transfer;
 
 mod rows;
+
+mod migrations;

@@ -3521,7 +3521,18 @@
             }
           }
         }
-      }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
     },
     "/v1/projects/{id}/tables/rows/page": {
       "post": {
@@ -3591,7 +3602,18 @@
             }
           }
         }
-      }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
     },
     "/v1/projects/{id}/tables/rows/insert": {
       "post": {
@@ -3661,7 +3683,18 @@
             }
           }
         }
-      }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
     },
     "/v1/projects/{id}/tables/rows/update": {
       "post": {
@@ -3731,7 +3764,18 @@
             }
           }
         }
-      }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
     },
     "/v1/projects/{id}/tables/rows/delete": {
       "post": {
@@ -3801,7 +3845,18 @@
             }
           }
         }
-      }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
     },
     "/v1/projects/{id}/tables/rows/batch": {
       "post": {
@@ -3871,7 +3926,170 @@
             }
           }
         }
-      }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
+    },
+    "/v1/projects/{id}/migrations": {
+      "get": {
+        "operationId": "migration_list",
+        "summary": "Inspect bounded consecutive migration receipts",
+        "description": "Trusted project service authority in both data modes; master/access/refresh tokens grant no migration authority. Private-root mode rechecks the current service key after body waits, before decode and data work. Retained data owners and one synchronous data gate; no private clock observation or private-history writes. Four workers, existing peer/project rates, no-cache/static errors; no SQL returned or logged. Maximum65536 request/response bytes, five-second body deadline. Receipt and SQL changes use one original WAL commit; exact retries do not write. Not online coordination, ALTER/schema diff/down or authenticated audit history.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MigrationInventory"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MigrationError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/MigrationError503"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
+    },
+    "/v1/projects/{id}/migrations/apply": {
+      "post": {
+        "operationId": "migration_apply",
+        "summary": "Apply one ordered atomic SQL migration or exact historical retry",
+        "description": "Trusted project service authority in both data modes; master/access/refresh tokens grant no migration authority. Private-root mode rechecks the current service key after body waits, before decode and data work. Retained data owners and one synchronous data gate; no private clock observation or private-history writes. Four workers, existing peer/project rates, no-cache/static errors; no SQL returned or logged. Maximum65536 request/response bytes, five-second body deadline. Receipt and SQL changes use one original WAL commit; exact retries do not write. Not online coordination, ALTER/schema diff/down or authenticated audit history.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MigrationApplied"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MigrationError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/MigrationError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MigrationRequest"
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -5213,6 +5431,100 @@
           "changed",
           "transaction"
         ]
+      },
+      "MigrationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "label",
+          "sql"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 128
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+          },
+          "sql": {
+            "type": "string",
+            "minLength": 1,
+            "description": "At most16384 UTF-8 bytes of supported write SQL; original parser/statement/work/event bounds apply. No parameters or transaction controls."
+          }
+        }
+      },
+      "MigrationReceipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "label",
+          "sha256",
+          "transaction"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 128
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "Domain-separated exact definition digest; owner-writable metadata, not an audit signature."
+          },
+          "transaction": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$",
+            "description": "Exact canonical original commit u64 in decimal; minimum2, maximum18446744073709551615."
+          }
+        }
+      },
+      "MigrationInventory": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "migrations"
+        ],
+        "properties": {
+          "migrations": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "$ref": "#/components/schemas/MigrationReceipt"
+            },
+            "description": "Consecutive versions starting at1; empty only when the ledger is absent."
+          }
+        }
+      },
+      "MigrationApplied": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "receipt",
+          "already_applied"
+        ],
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/MigrationReceipt"
+          },
+          "already_applied": {
+            "type": "boolean",
+            "description": "True only for an identical historical definition; returns its original receipt without a write."
+          }
+        }
       }
     },
     "responses": {
@@ -5394,6 +5706,50 @@
       },
       "TableError400": {
         "description": "Invalid schema/name request, duplicate or missing table, or catalog limit; code table_rejected.",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "MigrationError400": {
+        "description": "Strict request, unsupported SQL, nonconsecutive/changed definition or ordinary execution refusal; static code migration_rejected. Complete transaction discarded.",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "MigrationError503": {
+        "description": "Unavailable storage/admission, invalid existing ledger (migration_history_invalid), or ambiguous write/response (transaction_outcome_requires_inspection). Reopen and inspect the exact definition; never assume the operation did not commit.",
         "headers": {
           "Cache-Control": {
             "schema": {

@@ -1,10 +1,11 @@
-# Bounded offline SQL migrations
+# Bounded atomic SQL migrations
 
 `crates/migrations` applies explicit sequential SQL scripts to a managed project
 **data** database through the original synchronous engine. No external database,
 new engine event, WAL version or file codec is introduced. Do not point this tool
 at the separate private account/session database. Server SQL/service keys remain
-their own authority; there is no migration HTTP endpoint or dashboard yet.
+their own authority. Project-service HTTP is available in both server modes;
+there is no dashboard or online orchestration yet.
 
 ```sh
 emilybase db-init ./synthetic-data --durable
@@ -116,3 +117,39 @@ migration receipt (and ledger creation if first). On an existing ledger,125 rows
 fit;126 rows fill SQL's256 events but leave no receipt slot, so the complete rebuild
 is discarded. Other work/output/table/record/WAL bounds can refuse earlier. This is
 an explicit bounded operation, not an automatic online schema-change mechanism.
+
+
+## Project-service HTTP
+
+| Method and project path | Request | HTTP200 result |
+| --- | --- | --- |
+| GET `/v1/projects/{id}/migrations` | none | `{ "migrations": [receipt] }` |
+| POST `/v1/projects/{id}/migrations/apply` | `{ "version": 1, "label": "initial", "sql": "CREATE TABLE notes(id INT PRIMARY KEY)" }` | `{ "receipt": receipt, "already_applied": false }` |
+
+Send `Authorization: Bearer <project-service-key>`. Master credentials and user
+access/refresh sessions are not this authority. Receipts contain version/label,
+64 lowercase hexadecimal SHA256 characters and a canonical decimal-string u64
+transaction ID. No script or row data is returned. GET returns all consecutive
+receipts, at most128; an absent ledger returns an empty list without creating it.
+Both success and refusal disable caches. OpenAPI describes the exact wire.
+
+Unknown/duplicate request fields refuse. The HTTP body and response each cap at
+65,536 bytes; SQL itself remains16,384 UTF-8 bytes. Parsing, recovery, original
+migration application and serialization run in an admitted blocking worker under
+the retained project data gate. Two identical concurrent requests produce one
+commit and the same receipt; one response reports an exact retry. Private-root
+mode rechecks current service credentials after body waits, before SQL decoding;
+this route does not observe session time or write private history. The existing
+legacy admitted-capability rotation policy stays unchanged.
+
+Ordinary invalid definitions/execution refuse with400 `migration_rejected` and
+no partial changes. Malformed existing ledger returns503 `migration_history_invalid`.
+An ambiguous original commit or response returns503
+`transaction_outcome_requires_inspection`; interruption/connection loss also does
+not prove rollback. Inspect/retry the exact definition after reopening; do not
+change version/SQL to work around uncertainty. Rate, timeout, body/media and
+storage errors retain existing static codes. No automatic repair/reset occurs.
+
+This exposes the bounded synchronous migration contract remotely. Long/online
+schema changes, cross-project orchestration, distributed locks, ALTER, schema
+diff/down, user authorization/RLS and an authenticated audit trail remain open.

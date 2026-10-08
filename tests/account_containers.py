@@ -728,6 +728,48 @@ class Lifecycle:
         )
         self.me(active)
 
+    def migrations(self):
+        phase("Apply schema migrations, exact retries and two received-ACK kills")
+        identifier, key = self.project
+        route = f"/v1/projects/{identifier}/migrations"
+        private_path = f"{self.p.data_directory}/private/{identifier}/redo.wal"
+        before = self.p.digest(private_path)
+        script = (
+            "CREATE TABLE replacement(id INT PRIMARY KEY,v TEXT,note TEXT);"
+            "INSERT INTO replacement(id,v) SELECT * FROM t;DROP TABLE t;"
+            "CREATE TABLE t(id INT PRIMARY KEY,v TEXT,note TEXT);"
+            "INSERT INTO t SELECT * FROM replacement;DROP TABLE replacement"
+        )
+        initial = {"version": 1, "label": "initial-schema", "sql": script}
+        self.p.private.append(script)
+        self.p.request(route + "/apply", self.p.master, initial, 401)
+        first = self.p.request(route + "/apply", key, initial)
+        require(not first["already_applied"], "first schema migration applied")
+        self.p.stop(hard=True)
+        self.p.up()
+        repeated = self.p.request(route + "/apply", key, initial)
+        require(
+            repeated["already_applied"] and repeated["receipt"] == first["receipt"],
+            "exact retry preserves original durable receipt",
+        )
+        second = self.p.request(
+            route + "/apply",
+            key,
+            {"version": 2, "label": "set-note", "sql": "UPDATE t SET note='migrated'"},
+        )
+        require(not second["already_applied"], "next schema migration applied")
+        self.p.stop(hard=True)
+        self.p.up()
+        self.migration_inventory = {"migrations": [first["receipt"], second["receipt"]]}
+        require(
+            self.p.request(route, key) == self.migration_inventory,
+            "both migration receipts survive acknowledged kills",
+        )
+        require(
+            self.p.digest(private_path) == before,
+            "migration transport keeps private history unchanged",
+        )
+
     def restore(self, source_pair):
         phase("Offline compact, common-root backup, verify and independent restore")
         self.p.stop()
@@ -769,18 +811,25 @@ class Lifecycle:
         self.p.up(self.p.clone)
         self.denied_pair(source_pair)
         require(
-            self.p.status(self.project)["rows"] == 1,
+            self.p.request(
+                f"/v1/projects/{self.project[0]}/migrations", self.project[1]
+            )
+            == self.migration_inventory,
+            "schema migration receipts survive common-root compact/backup/restore",
+        )
+        require(
+            self.p.status(self.project)["rows"] == 3,
             "clone public rows and scoped service key preserved",
         )
         clone_pair = self.sign(self.replacement)
         self.me(clone_pair)
-        self.p.sql(self.project, "INSERT INTO t VALUES(2,'synthetic-copy-only')")
+        self.p.sql(self.project, "INSERT INTO t(id,v) VALUES(2,'synthetic-copy-only')")
         self.auth("logout", {"refresh_token": clone_pair["refresh_token"]})
         self.p.stop(hard=True)
         self.p.up(self.p.clone)
         self.denied_pair(clone_pair)
         require(
-            self.p.status(self.project)["rows"] == 2,
+            self.p.status(self.project)["rows"] == 4,
             "clone logout and SQL survive kill",
         )
         self.p.stop()
@@ -788,7 +837,7 @@ class Lifecycle:
         self.me(source_pair)
         self.denied_pair(clone_pair)
         require(
-            self.p.status(self.project)["rows"] == 1,
+            self.p.status(self.project)["rows"] == 3,
             "source remains independent with its original session",
         )
         self.p.stop()
@@ -838,6 +887,7 @@ def main():
         pair = lifecycle.session_kill(pair)
         pair = lifecycle.credentials(pair)
         lifecycle.prune(pair)
+        lifecycle.migrations()
         lifecycle.restore(pair)
         lifecycle.corruption()
         probe.check_logs()
