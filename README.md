@@ -49,6 +49,8 @@ A bounded row batch applies1..256 ordered writes to one table in one original
 commit; any error rolls back the complete packet.
 The TypeScript SDK also calls these row operations with exact decimal/bit strings;
 its older SQL numeric contract stays separate. Storage and transactions remain Rust.
+The Rust [owned staged SQL API](docs/staged-sql.md) also combines typed writes and
+SQL before one explicit commit; every error discards the complete transaction.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

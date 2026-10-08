@@ -15,7 +15,8 @@ mod single_sort;
 mod stream;
 mod topk;
 pub use execute::{
-    ExecutionError, MAX_OUTPUT_BYTES, MAX_QUERY_WORK, Report, ResultSet, RunResult, execute, query,
+    ExecutionError, MAX_OUTPUT_BYTES, MAX_QUERY_WORK, Report, ResultSet, RunResult, StagedScript,
+    execute, query, stage,
 };
 pub use parser::parse;
 pub use plan::{PlanDescription, explain};

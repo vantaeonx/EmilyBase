@@ -795,3 +795,15 @@ response validation preserve full numeric ranges without changing SQL's numeric
 wire. Mocked protocol regressions and real stable/minimum TCP ACK-kill cases cover
 this client adapter. No npm release, browser/public user authority, RLS, Kotlin or
 production acceptance is completed.
+
+
+## Follow-up: owned staged SQL for composed transactions
+
+[ADR0095](adr/0095-owned-staged-sql.md) introduces an owning synchronous query API
+that combines typed prefix/SQL/suffix writes before one original WAL commit. Every
+validation/parse/plan/run error consumes and discards the transaction; successful
+results require explicit commit or discard. Existing execute/control and format
+contracts remain intact. Generated committed models, exact history, shared event/
+query budgets, backup/restore and before/after-ACK process kills verify this boundary.
+Migration receipt/version policy, HTTP exposure, global resource gates and
+production acceptance remain open.

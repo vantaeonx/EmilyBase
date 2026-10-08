@@ -1,7 +1,7 @@
 #![no_main]
 #![forbid(unsafe_code)]
-use emilybase_catalog::{Key, Value};
-use emilybase_query::{ExecutionError, execute};
+use emilybase_catalog::{Column, DataType, Key, Schema, Value};
+use emilybase_query::{ExecutionError, execute, stage};
 use emilybase_transactions::Database;
 use libfuzzer_sys::fuzz_target;
 use std::collections::BTreeMap;
@@ -149,6 +149,38 @@ fuzz_target!(|input: &[u8]| {
         .map(|(key, n)| vec![key.to_value(), n.map_or(Value::Null, Value::Integer)])
         .collect::<Vec<_>>();
     assert_eq!(database.view().unwrap().scan("t", 1000).unwrap(), expected);
+    // Caller-owned typed writes and SQL never reach WAL without explicit commit.
+    // Drop successes too, so this invariant does not depend on SQL being invalid.
+    let arbitrary = std::str::from_utf8(&input[7..]).unwrap_or("");
+    for sql in ["SELECT id,n FROM t ORDER BY id", arbitrary] {
+        let before = database.committed_wal().unwrap();
+        let digest = database.view().unwrap().page_fingerprint();
+        let id = database.last_transaction();
+        let mut transaction = database.begin().unwrap();
+        transaction
+            .create_table(Schema {
+                name: "staged_receipt".into(),
+                primary_key: 0,
+                columns: vec![Column {
+                    name: "id".into(),
+                    data_type: DataType::Integer,
+                    nullable: false,
+                }],
+            })
+            .unwrap();
+        transaction
+            .insert("staged_receipt", vec![Value::Integer(1)])
+            .unwrap();
+        if let Ok(staged) = stage(transaction, sql, &parameters) {
+            if sql == "SELECT id,n FROM t ORDER BY id" {
+                assert_eq!(staged.results()[0].rows, expected);
+            }
+            drop(staged);
+        }
+        assert_eq!(database.committed_wal().unwrap(), before);
+        assert_eq!(database.view().unwrap().page_fingerprint(), digest);
+        assert_eq!(database.last_transaction(), id);
+    }
     // Arbitrary bounded SQL additionally checks whole-script error atomicity.
     if let Ok(sql) = std::str::from_utf8(input) {
         let before = database.committed_wal().unwrap();

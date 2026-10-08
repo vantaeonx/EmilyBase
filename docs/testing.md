@@ -3875,3 +3875,30 @@ full Rust tests/fuzz/advisories and Docker were not changed/repeated.
 Net growth:6 TypeScript and38 JavaScript test lines. Totals:86,190 Rust; SDK1,880;
 Python1,735;89,805 source lines. This is a focused input-validation repair and does
 not close a security or production gate.
+
+
+## Owned staged SQL, 2026-10-08
+
+On Rust1.99.0 and1.89.0,253 query/transaction cases and15 server HTTP/project cases
+pass per toolchain;11 helper/opt-in entries remain ignored by their normal harness.
+Eleven new regular cases include16 independent generated composition models and
+ten controlled child kills per toolchain: typed prefix, successful SQL, typed suffix,
+late planning failure and durable ACK on each WAL version. Uncommitted phases keep
+exact WAL bytes; ACK recovers schema/data/receipts together. Original execute/wrapper
+semantics, per-script work/output refusal, shared event capacity, old snapshots,
+checkpoint and verified restore pass. Two initial fixture assertions incorrectly
+assumed empty SQL was allowed; corrected fixtures preserve the existing refusal.
+
+Workspace/fuzz formatting, strict all-target workspace Clippy, minimum workspace
+build, strict fuzz lint and minimum fuzz compilation pass. The extended real-file
+SQL mutation ASan target completes966 inputs in46 seconds, observed RSS308MiB under
+512MiB/input4096-byte caps, no findings. This short campaign does not imply exhaustive
+parser, durability or security coverage. Final441 source/dependency hashes are
+verified unchanged. Full workspace/SDK/optional allocation tests and local Docker
+were not repeated. Prior237c6cb hosted run37742734804 has all five jobs successful;
+Unicode55b403a general/minimum jobs were still running at the latest observation.
+
+[ADR0095](adr/0095-owned-staged-sql.md) and
+[source-bound verification](measurements/2026-10-08-owned-staged-sql/verification.json)
+record this boundary. Net growth698 Rust lines; totals86,888 Rust/83,387 effective,
+SDK1,880 and Python1,735:90,503 combined source lines. No production gate is closed.

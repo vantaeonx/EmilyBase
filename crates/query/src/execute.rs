@@ -49,6 +49,27 @@ pub struct Report {
     pub committed: bool,
     pub results: Vec<ResultSet>,
 }
+
+/// Successful execution with an exclusively owned, still uncommitted transaction.
+/// Dropping this value discards all staged writes, including those preceding SQL.
+#[must_use = "staged SQL must be explicitly committed or discarded"]
+pub struct StagedScript<'a> {
+    transaction: Transaction<'a>,
+    results: Vec<ResultSet>,
+}
+
+impl<'a> StagedScript<'a> {
+    /// Inspect bounded query results without releasing the transaction owner.
+    pub fn results(&self) -> &[ResultSet] {
+        &self.results
+    }
+
+    /// Recover the successful transaction to add typed writes before one commit.
+    /// Subsequent write failures retain Transaction's abort-on-error behavior.
+    pub fn into_parts(self) -> (Transaction<'a>, Vec<ResultSet>) {
+        (self.transaction, self.results)
+    }
+}
 pub(crate) struct Budget {
     work: usize,
     output: usize,
@@ -104,6 +125,51 @@ pub(crate) fn validate_parameters(parameters: &[Value]) -> RunResult<()> {
     Ok(())
 }
 
+/// Stage a bounded SQL script without committing it or accepting SQL controls.
+///
+/// Ownership is intentional: syntax, binding, planning and execution failures all
+/// drop the entire transaction. A caller cannot catch an error and then commit
+/// earlier staged writes. On success, use `into_parts` to append typed metadata
+/// and explicitly commit once. Each call has its own work/output budgets; the
+/// original transaction's event/page/WAL limits span all composed writes.
+pub fn stage<'a>(
+    transaction: Transaction<'a>,
+    sql: &str,
+    parameters: &[Value],
+) -> RunResult<StagedScript<'a>> {
+    validate_parameters(parameters)?;
+    let statements = parse(sql)?;
+    if statements.iter().any(is_control) {
+        return Err(ExecutionError::Control);
+    }
+    stage_statements(transaction, statements, parameters)
+}
+
+fn is_control(statement: &Statement) -> bool {
+    matches!(
+        statement,
+        Statement::Begin | Statement::Commit | Statement::Rollback
+    )
+}
+
+fn stage_statements<'a>(
+    mut transaction: Transaction<'a>,
+    statements: Vec<Statement>,
+    parameters: &[Value],
+) -> RunResult<StagedScript<'a>> {
+    // Even an empty script must not return an already aborted transaction.
+    transaction.view()?;
+    let mut results = Vec::new();
+    let mut budget = Budget { work: 0, output: 0 };
+    for statement in statements {
+        results.push(run(&mut transaction, statement, parameters, &mut budget)?);
+    }
+    Ok(StagedScript {
+        transaction,
+        results,
+    })
+}
+
 /// Execute one whole script atomically. Any error drops all staged writes; ACK follows WAL sync.
 pub fn execute(database: &mut Database, sql: &str, parameters: &[Value]) -> RunResult<Report> {
     validate_parameters(parameters)?;
@@ -117,21 +183,11 @@ pub fn execute(database: &mut Database, sql: &str, parameters: &[Value]) -> RunR
             _ => return Err(ExecutionError::Control),
         };
     }
-    if statements.iter().any(|s| {
-        matches!(
-            s,
-            Statement::Begin | Statement::Commit | Statement::Rollback
-        )
-    }) {
+    if statements.iter().any(is_control) {
         return Err(ExecutionError::Control);
     }
     let previous = database.last_transaction();
-    let mut tx = database.begin()?;
-    let mut results = Vec::new();
-    let mut budget = Budget { work: 0, output: 0 };
-    for statement in statements {
-        results.push(run(&mut tx, statement, parameters, &mut budget)?);
-    }
+    let (tx, results) = stage_statements(database.begin()?, statements, parameters)?.into_parts();
     let transaction = if rollback {
         tx.rollback();
         previous
