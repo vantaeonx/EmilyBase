@@ -689,3 +689,130 @@ fn credential_mutation_acks_survive_three_kills_without_reviving_old_sessions_on
         );
     }
 }
+
+#[test]
+fn actual_tcp_prune_race_ack_kill_keeps_removal_and_live_authority_on_both_wals() {
+    let _case = CASES.lock().unwrap();
+    for compact in [false, true] {
+        let f = fixture(compact);
+        let server = support::Server::start_account(&f.root, MASTER);
+        let revoked = sign(&server, &f.id, &f.key);
+        let stale = sign(&server, &f.id, &f.key);
+        assert_eq!(
+            auth(
+                &server,
+                &f.id,
+                &f.key,
+                "logout",
+                json!({"refresh_token":revoked["refresh_token"]})
+            )
+            .0,
+            200
+        );
+        assert_eq!(auth(&server,&f.id,&f.key,"password",json!({"login":"synthetic_user","current_password":PASSWORD,"replacement_password":PASSWORD})).0,200);
+        let active = sign(&server, &f.id, &f.key);
+        let public_wal =
+            fs::read(f.root.join("registry").join(&f.id).join("data/redo.wal")).unwrap();
+        let address = server.address;
+        let path = format!("/v1/projects/{}/auth/sessions/prune", f.id);
+        let body = json!({"limit":128});
+        let mut counts = std::thread::scope(|scope| {
+            let a = scope.spawn(|| support::call(address, "POST", &path, &f.key, &body).unwrap());
+            let b = scope.spawn(|| support::call(address, "POST", &path, &f.key, &body).unwrap());
+            [a.join().unwrap(), b.join().unwrap()]
+                .into_iter()
+                .map(|(status, response)| {
+                    assert_eq!(status, 200);
+                    response["removed"].as_u64().unwrap()
+                })
+                .collect::<Vec<_>>()
+        });
+        counts.sort();
+        assert_eq!(counts, vec![0, 2]);
+        let log = server.kill();
+        let report = emilybase_server::inspect_account_bundle_root(&f.root, pool()).unwrap();
+        assert_eq!(report.private_accounts[0].inventory.session_families, 1);
+        assert_eq!(
+            report.private_accounts[0].inventory.database.wal_version,
+            if compact { 2 } else { 1 }
+        );
+        clean_log(
+            &log,
+            &[
+                MASTER,
+                &f.id,
+                &f.key,
+                PASSWORD,
+                revoked["access_token"].as_str().unwrap(),
+                revoked["refresh_token"].as_str().unwrap(),
+                stale["access_token"].as_str().unwrap(),
+                stale["refresh_token"].as_str().unwrap(),
+                active["access_token"].as_str().unwrap(),
+                active["refresh_token"].as_str().unwrap(),
+            ],
+        );
+        let server = support::Server::start_account(&f.root, MASTER);
+        assert_eq!(
+            auth(
+                &server,
+                &f.id,
+                &f.key,
+                "sessions/prune",
+                json!({"limit":128})
+            ),
+            (200, json!({"removed":0}))
+        );
+        for pair in [&revoked, &stale] {
+            for (operation, field) in [("me", "access_token"), ("refresh", "refresh_token")] {
+                assert_eq!(
+                    auth(
+                        &server,
+                        &f.id,
+                        &f.key,
+                        operation,
+                        json!({field:pair[field]})
+                    )
+                    .0,
+                    401
+                );
+            }
+        }
+        assert_eq!(
+            auth(
+                &server,
+                &f.id,
+                &f.key,
+                "me",
+                json!({"access_token":active["access_token"]})
+            )
+            .0,
+            200
+        );
+        let (status, next) = auth(
+            &server,
+            &f.id,
+            &f.key,
+            "refresh",
+            json!({"refresh_token":active["refresh_token"]}),
+        );
+        assert_eq!(status, 200);
+        assert_eq!(
+            fs::read(f.root.join("registry").join(&f.id).join("data/redo.wal")).unwrap(),
+            public_wal
+        );
+        let log = server.stop();
+        clean_log(
+            &log,
+            &[
+                MASTER,
+                &f.id,
+                &f.key,
+                PASSWORD,
+                next["access_token"].as_str().unwrap(),
+                next["refresh_token"].as_str().unwrap(),
+            ],
+        );
+        let report = emilybase_server::inspect_account_bundle_root(&f.root, pool()).unwrap();
+        assert_eq!(report.private_accounts[0].inventory.session_families, 1);
+    }
+}

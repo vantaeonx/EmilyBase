@@ -34,8 +34,9 @@ root-mode promise. A normal restart retains session authority; verified restore
 creates an independent private scope and denies old tokens in the clone.
 
 The existing Docker image and default Compose configure the legacy data variable.
-Do not add a second root variable to that configuration. A dedicated verified
-container root-mode adapter remains a separate deployment increment.
+Do not add a second root variable to that configuration. The separate [private-root Compose adapter](deployment.md#private-root-container)
+uses an independent accounts image target and explicit offline initialization;
+its original lifecycle passed in the hosted container job.
 
 ## Private routes
 
@@ -55,6 +56,7 @@ never authorize project SQL. Roles and row policies remain unimplemented.
 | `/me` | `access_token` | 200, current account metadata |
 | `/password` | `login`, `current_password`, `replacement_password` | 200, updated account metadata |
 | `/disabled` | `login`, `disabled` boolean | 200, updated account metadata |
+| `/sessions/prune` | `limit` integer1..128 | 200, `removed` count |
 
 Account metadata contains a32-hex-character user ID, canonical login, decimal
 string `credential_epoch` and `disabled`. Session responses explicitly contain
@@ -126,6 +128,25 @@ The trusted disabled-state route requires the current service key. A changed sta
 increments the epoch; re-enabling cannot revive older families. Repeating the same
 state preserves epoch/WAL. These operations expose existing synchronous account
 semantics with shared worker/rate/body/no-cache/error rules, not user roles or public
-password reset. Unknown/duplicate/client-time fields refuse. No family cleanup,
+password reset. Unknown/duplicate/client-time fields refuse. No automatic cleanup,
 automatic replay, public signup or SQL user authority is added. See
 [ADR0084](adr/0084-private-http-credential-management.md).
+
+
+## Explicit inactive-session cleanup
+
+POST /v1/projects/{id}/auth/sessions/prune requires the current private project
+service key and a strict JSON object containing limit, an integer from1 to128.
+No client time or extra fields are accepted. The response is only {"removed":N},
+where0<=N<=limit, after the bounded deletion commits. Revoked, refresh-expired and
+stale account/incarnation families are eligible. Access expiration alone preserves
+a refreshable family. Other projects and public SQL histories remain unchanged.
+
+The server observes its trusted clock separately before scanning. A backward clock
+refuses; zero removals can still persist a forward watermark. At the same time,
+an empty repeated cleanup preserves exact WAL bytes. Row deletion releases family
+capacity but appends WAL history: offline compaction remains a separate operation.
+No automatic scheduling, session identifiers, remaining-count receipt or byte-space
+reclamation is supplied. Invalid limits refuse before private time advancement.
+The existing worker/body/rate/no-cache/static error and uncertain-outcome rules
+apply. See [ADR0086](adr/0086-bounded-private-session-cleanup.md).

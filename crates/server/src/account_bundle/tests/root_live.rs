@@ -584,6 +584,7 @@ fn explicit_subset_keeps_unattached_project_data_available_but_never_creates_pri
     denied(live.sign_in(id, key, LOGIN, PASSWORD, 500));
     denied(live.refresh_session(id, key, "synthetic-refresh", 500));
     denied(live.logout_session(id, key, "synthetic-refresh", 500));
+    denied(live.prune_session_families(id, key, 500, 128));
     denied(live.with_access(id, key, "synthetic-access", 500, |_| ()));
     assert!(!private.exists());
     assert_eq!(fs::read(&data).unwrap(), before);
@@ -655,5 +656,54 @@ fn denied_authorized_credentials_observe_trusted_time_but_overflow_and_backward_
             .is_err()
         );
         assert!(!called);
+    }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(8))]
+    #[test]
+    fn bounded_cleanup_matches_inactive_count_model_across_reopen(
+        revoked in prop::collection::vec(any::<bool>(), 0..7),
+        limit in 1..=4_usize,
+        compact in any::<bool>(),
+    ) {
+        let _serial = durability::PROCESS_TESTS.blocking_lock();
+        let dir = tempfile::tempdir().unwrap();
+        let f = restored(dir.path(), 1, compact);
+        let (id,key) = &f.credentials[0];
+        let mut live = AccountRoot::open(&f.root,pool()).unwrap();
+        let mut pairs = Vec::new();
+        for inactive in &revoked {
+            let pair = live.sign_in(id,key,LOGIN,PASSWORD,50).unwrap();
+            if *inactive {
+                live.logout_session(id,key,pair.refresh.expose(),50).unwrap();
+            }
+            pairs.push(pair);
+        }
+        let original = histories(&f);
+        let mut inactive = revoked.iter().filter(|flag| **flag).count();
+        let active = revoked.len() - inactive;
+        loop {
+            let expected = inactive.min(limit);
+            let removed = live.prune_session_families(id,key,50,limit).unwrap();
+            prop_assert_eq!(removed,expected);
+            inactive -= expected;
+            for (pair,revoked) in pairs.iter().zip(&revoked) {
+                prop_assert_eq!(live.with_access(id,key,pair.access.expose(),50, |_|()).is_ok(), !revoked);
+            }
+            drop(live);
+            let report = inspect_account_bundle_root(&f.root,pool()).unwrap();
+            prop_assert_eq!(report.private_accounts[0].inventory.session_families,active+inactive);
+            prop_assert_eq!(report.private_accounts[0].inventory.clock_floor,Some(50));
+            prop_assert_eq!(report.private_accounts[0].inventory.database.wal_version,if compact {2}else{1});
+            let after = histories(&f);
+            // Manifest, project metadata and public data history remain byte-exact.
+            prop_assert_eq!(&after[..3], &original[..3]);
+            live=AccountRoot::open(&f.root,pool()).unwrap();
+            if removed < limit { break; }
+        }
+        let before = histories(&f);
+        prop_assert_eq!(live.prune_session_families(id,key,50,128).unwrap(),0);
+        prop_assert_eq!(histories(&f),before);
     }
 }

@@ -142,6 +142,20 @@ impl AccountRoot {
     ) -> Result<()> {
         Ok(self.account(project, key)?.logout_session(token, now)?)
     }
+    /// Explicit trusted cleanup of at most 128 inactive families in one commit.
+    /// Access expiry alone does not make a refreshable family inactive. Clock
+    /// advancement is separately durable even if no family needs removal.
+    pub fn prune_session_families(
+        &mut self,
+        project: &str,
+        key: &str,
+        now: u64,
+        limit: usize,
+    ) -> Result<usize> {
+        Ok(self
+            .account(project, key)?
+            .prune_session_families(now, limit)?)
+    }
     /// Consume proof immediately while the private owner is borrowed. The result
     /// can contain metadata, but cannot detach a borrowed authorization proof.
     ///

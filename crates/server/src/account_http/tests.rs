@@ -950,3 +950,226 @@ async fn management_body_limits_unknown_fields_types_and_unauthorized_scopes_nev
     );
     assert_eq!(wal(&f), before);
 }
+
+#[tokio::test]
+async fn bounded_session_pruning_preserves_refreshable_families_and_other_project_history() {
+    let _serial = durability::PROCESS_TESTS.lock().await;
+    let f = fixture();
+    let router = routes_app(f.app.clone());
+    let (id, key) = &f.credentials[0];
+    let (other_id, other_key) = &f.credentials[1];
+    let revoked = sign(&router, id, key).await;
+    let old_epoch = sign(&router, id, key).await;
+    let other = sign(&router, other_id, other_key).await;
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "logout",
+            json!({"refresh_token":revoked["refresh_token"]})
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
+    assert_eq!(call(&router, id, key, "password", json!({"login":"synthetic_user","current_password":PASSWORD,"replacement_password":PASSWORD})).await.0, StatusCode::OK);
+    let live = sign(&router, id, key).await;
+    let other_before = wal(&f)[1].clone();
+    let public_before: Vec<_> = f
+        .credentials
+        .iter()
+        .map(|(project, _)| {
+            fs::read(f.path.join("registry").join(project).join("data/redo.wal")).unwrap()
+        })
+        .collect();
+    // Access is expired, but refresh remains valid. Cleanup must preserve it.
+    f.clock.store(950, Ordering::SeqCst);
+    for _ in 0..2 {
+        assert_eq!(
+            call(&router, id, key, "sessions/prune", json!({"limit":1})).await,
+            (StatusCode::OK, json!({"removed":1}))
+        );
+    }
+    let before_noop = wal(&f);
+    assert_eq!(
+        call(&router, id, key, "sessions/prune", json!({"limit":128})).await,
+        (StatusCode::OK, json!({"removed":0}))
+    );
+    assert_eq!(wal(&f), before_noop);
+    for pair in [&revoked, &old_epoch] {
+        for (operation, field) in [("me", "access_token"), ("refresh", "refresh_token")] {
+            assert_eq!(
+                call(&router, id, key, operation, json!({field:pair[field]}))
+                    .await
+                    .0,
+                StatusCode::UNAUTHORIZED
+            );
+        }
+    }
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "me",
+            json!({"access_token":live["access_token"]})
+        )
+        .await
+        .0,
+        StatusCode::UNAUTHORIZED
+    );
+    let (status, replacement) = call(
+        &router,
+        id,
+        key,
+        "refresh",
+        json!({"refresh_token":live["refresh_token"]}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "me",
+            json!({"access_token":replacement["access_token"]})
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
+    assert_eq!(wal(&f)[1], other_before);
+    // Each project has its own floor: a sibling's earlier valid time stays valid.
+    f.clock.store(50, Ordering::SeqCst);
+    assert_eq!(
+        call(
+            &router,
+            other_id,
+            other_key,
+            "me",
+            json!({"access_token":other["access_token"]})
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
+    assert_eq!(wal(&f)[1], other_before);
+    f.clock.store(605750, Ordering::SeqCst);
+    assert_eq!(
+        call(&router, id, key, "sessions/prune", json!({"limit":128})).await,
+        (StatusCode::OK, json!({"removed":1}))
+    );
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "refresh",
+            json!({"refresh_token":replacement["refresh_token"]})
+        )
+        .await
+        .0,
+        StatusCode::UNAUTHORIZED
+    );
+    for (index, (project, _)) in f.credentials.iter().enumerate() {
+        assert_eq!(
+            fs::read(f.path.join("registry").join(project).join("data/redo.wal")).unwrap(),
+            public_before[index]
+        );
+    }
+    drop(router);
+    drop(f.app);
+    let report =
+        crate::inspect_account_bundle_root(&f.path, PasswordPool::new(1).unwrap()).unwrap();
+    let own = report
+        .private_accounts
+        .iter()
+        .find(|r| &r.project == id)
+        .unwrap();
+    let sibling = report
+        .private_accounts
+        .iter()
+        .find(|r| &r.project == other_id)
+        .unwrap();
+    assert_eq!(own.inventory.session_families, 0);
+    assert_eq!(own.inventory.clock_floor, Some(605750));
+    assert_eq!(sibling.inventory.session_families, 1);
+    assert_eq!(sibling.inventory.clock_floor, Some(50));
+}
+
+#[tokio::test]
+async fn pruning_rejects_invalid_limits_and_client_time_without_advancing_private_history() {
+    let _serial = durability::PROCESS_TESTS.lock().await;
+    let f = fixture();
+    let router = routes_app(f.app.clone());
+    let (id, key) = &f.credentials[0];
+    let before = wal(&f);
+    f.clock.store(1000, Ordering::SeqCst);
+    for body in [
+        json!({"limit":0}),
+        json!({"limit":129}),
+        json!({"limit":65535}),
+        json!({"limit":-1}),
+        json!({"limit":65536}),
+        json!({"limit":1.5}),
+        json!({"limit":"1"}),
+        json!({"limit":true}),
+        json!({"limit":null}),
+        json!({}),
+        json!({"limit":1,"now":1000}),
+    ] {
+        assert_eq!(
+            call(&router, id, key, "sessions/prune", body).await.0,
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(wal(&f), before);
+    }
+    let path = format!("/v1/projects/{id}/auth/sessions/prune");
+    assert_eq!(
+        send(
+            &router,
+            request(&path, key, Body::from("{\"limit\":1,\"limit\":2}"))
+        )
+        .await
+        .0,
+        StatusCode::BAD_REQUEST
+    );
+    for wrong in [
+        MASTER,
+        f.credentials[1].1.as_str(),
+        "synthetic-invalid-service-key",
+    ] {
+        assert_eq!(
+            send(&router, request(&path, wrong, Body::from(vec![b'x'; 4097])))
+                .await
+                .0,
+            StatusCode::UNAUTHORIZED
+        );
+    }
+    assert_eq!(
+        send(&router, request(&path, key, Body::from(vec![b'x'; 4097])))
+            .await
+            .0,
+        StatusCode::PAYLOAD_TOO_LARGE
+    );
+    assert_eq!(wal(&f), before);
+    f.clock.store(49, Ordering::SeqCst);
+    assert_eq!(
+        call(&router, id, key, "sessions/prune", json!({"limit":1})).await,
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            json!({"code":"trusted_clock_unavailable"})
+        )
+    );
+    assert_eq!(wal(&f), before);
+    f.clock.store(1000, Ordering::SeqCst);
+    assert_eq!(
+        call(&router, id, key, "sessions/prune", json!({"limit":1})).await,
+        (StatusCode::OK, json!({"removed":0}))
+    );
+    // Zero removals can still persist the separate forward clock observation.
+    assert_ne!(wal(&f)[0], before[0]);
+    assert_eq!(wal(&f)[1], before[1]);
+}

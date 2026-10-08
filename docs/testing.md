@@ -3519,3 +3519,28 @@ Docker is unavailable locally. The updated hosted container job must execute bot
 legacy and private targets, including non-root/read-only/cgroup/mode inspection;
 its first new private run is pending publication. Native results are explicitly
 not container evidence. Stored formats, ACK and all production gates remain.
+
+
+## Bounded private session cleanup, 2026-10-08
+
+[ADR0086](adr/0086-bounded-private-session-cleanup.md) and
+[verification data](measurements/2026-10-08-private-session-prune/verification.json)
+record the current-service-key root/HTTP boundary. Stable1.99.0 and minimum1.89.0
+each passed310 scoped auth/server/CLI cases, with seven ignored process helpers.
+Two new in-process cases check invalid/client-time input, no-op/forward clock,
+revoked/stale/expired removal, refreshable retention and exact sibling/public WAL.
+An eight-sequence independent model checks bounded counts and authority across
+reopen/WAL1/2. One real TCP case races two cleanups: removed counts0/2; a received
+ACK kill on each WAL preserves removal and its surviving refreshable family.
+
+The common native lifecycle passed on both toolchains with six received-ACK kills,
+now including cleanup. Full workspace build, strict workspace/profile/fuzz Clippy,
+workspace/fuzz format, minimum fuzz compilation, Python probe format/lint and both
+warning-denied advisory scans passed on434 frozen source/dependency/protocol files.
+OpenAPI now documents eight private routes with resolved local references. No new
+full-workspace test, optional diagnostic or ASan campaign is claimed; unchanged
+components retain their preceding evidence. The preceding c9a1e2e hosted run
+37730664949 completed all five jobs successfully. The original private-container
+lifecycle passed for7801d74; expanded cleanup container execution needs the next
+hosted run. Docker remains unavailable locally. Formats/ACK and production gates
+are unchanged; deletion releases row capacity rather than appended WAL bytes.

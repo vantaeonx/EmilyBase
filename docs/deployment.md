@@ -252,7 +252,7 @@ python3 tests/account_containers.py
 
 It builds the accounts target and uses its own random synthetic volume. It checks
 one-mode image configuration, non-root restrictions and the common root lifecycle:
-first initialization, operator rotation, sessions, two-request refresh race, five
+first initialization, operator rotation, sessions, two-request refresh race, six
 received-ACK SIGKILLs, password/disable/re-enable epochs, WAL2 compaction, common
 backup, no-clobber restore, clone/source separation, logout durability and corrupt
 private WAL startup refusal without automatic repair. All collected logs are
@@ -262,5 +262,7 @@ runs both probes. --no-build reuses emilybase:accounts-local.
 
 An explicitly separate --native preflight uses compiled local Rust binaries and
 the same HTTP/CLI lifecycle, but does not execute or claim Docker/cgroup checks.
-Those native checks passed on stable/minimum Rust on the development host; actual
-new container execution is pending its first hosted run. No production gate closes.
+The initial five-kill lifecycle also passed in the real hosted container job for
+7801d74, run37731427090. The additional cleanup acknowledgement/kill in this increment
+requires its own hosted run; local native and container evidence stay separate.
+No production gate closes.

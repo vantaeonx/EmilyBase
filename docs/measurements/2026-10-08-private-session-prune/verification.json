@@ -1,0 +1,104 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "7801d74c3a57420bf970c70ca29f1ebc3a5851fb",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "58d9ea92dc6669a6db4260cf9351bd16cc69d4d9d5dc8d102d1167a24c06d7d0",
+    "crates/auth/src/accounts/sessions.rs": "5531a4e0656d3f15d4f21d650cea8f23e8c9cabb12f23df90685d966c4b819db",
+    "crates/server/src/registry_files/account_root/live.rs": "ea0cb963b4d49c895c000f596007f1553384b50d6dd24de648be3f24295d1a79",
+    "crates/server/src/account_http.rs": "389e3339ddbf32ca6675d4aba5ede694d6ae8a0bf5a1d1034e8ec9e5f38ebb6f",
+    "crates/server/src/account_http/tests.rs": "0974e1513d40044bc6c399ca80f080efaefeb9b565a3505480ef2d9ed1389784",
+    "crates/server/src/account_bundle/tests/root_live.rs": "80c83377a5cfb8e4a42b6ff782f69016461ccd2e4342826ecea24ba35a8a5f0a",
+    "crates/server/tests/account_network.rs": "443628202b1fd14b8a8fbfd5e9e92a9f5ad90b839e20d4f4ce2c9f85205f0a51",
+    "tests/account_containers.py": "7be27c7b22c846c5a9d8fd7dec897a9ba14e633b15804672e3cb981f78680df7",
+    "docs/openapi.json": "98b7705264de6101a049c707b349ae41a29becca0fafcdca82d03eba77dec94f",
+    "Cargo.lock": "a339a3a39589a0f438b3028f64eb757c109b4ad2164d98e405ff0decbdc5c56d",
+    "fuzz/Cargo.lock": "21ab8a0f1e2a2c7cd9c26ef2d8e49a3c7af8cd638810645d43f7369b16293fcb"
+  },
+  "protocol": {
+    "current_project_service_key_before_body_and_at_execution": true,
+    "explicit_limit_min": 1,
+    "shared_max_session_prune": 128,
+    "strict_body_rejects_client_time_unknown_and_duplicate_fields": true,
+    "invalid_limit_before_private_clock_advance": true,
+    "bounded_atomic_deletion_preserves_refreshable_families": true,
+    "zero_removals_can_persist_separate_forward_clock": true,
+    "equal_time_empty_cleanup_preserves_wal": true,
+    "response_only_removed_count_after_durable_success": true,
+    "no_compaction_or_automatic_scheduler": true,
+    "file_token_format_versions_unchanged": true
+  },
+  "matrix": {
+    "new_in_process_cases": 2,
+    "new_generated_model_cases": 1,
+    "independent_generated_sequences": 8,
+    "new_native_tcp_cases": 1,
+    "native_wal_versions": [
+      1,
+      2
+    ],
+    "concurrent_tcp_cleaners": 2,
+    "ack_kills_per_toolchain_new_tcp_case": 2,
+    "actual_removed_counts_two_cleaners": [
+      0,
+      2
+    ],
+    "other_project_and_public_wal_byte_exact": true,
+    "access_expired_refreshable_preserved_then_expired_refresh_removed": true,
+    "logs_screened_for_plaintext_and_json_escaped_secrets": true,
+    "native_lifecycle_ack_kills_each": 6,
+    "native_lifecycle_rust": [
+      "1.99.0",
+      "1.89.0"
+    ]
+  },
+  "checks": {
+    "scope": [
+      "emilybase-auth",
+      "emilybase-server",
+      "emilybase-cli"
+    ],
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "frozen_source_dependency_protocol_files": 434,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "python_probe_format_lint": true,
+    "eight_private_openapi_routes_and_references_resolve": true,
+    "both_warning_denied_advisory_scans": true,
+    "full_workspace_tests_or_optional_diagnostics_repeated": false,
+    "new_asan_campaign": false,
+    "scoped_cases_each": 310,
+    "scoped_ignored_helpers_each": 7
+  },
+  "prior_hosted_container": {
+    "commit": "7801d74c3a57420bf970c70ca29f1ebc3a5851fb",
+    "run": 37731427090,
+    "job": 113161181050,
+    "legacy_and_initial_private_lifecycle": "success",
+    "expanded_cleanup_lifecycle": "pending next publication"
+  },
+  "source_counts": {
+    ".rs": 80997,
+    ".ts": 455,
+    ".mjs": 802,
+    ".py": 1499,
+    "total": 83753,
+    "effective_rust": 77608
+  },
+  "net_rust": 445,
+  "net_python": 15,
+  "exclusions": [
+    "public signup, user SQL roles and row policies",
+    "background deletion and byte-space reclamation",
+    "local Docker execution; CLI unavailable",
+    "whole-process resource admission, encrypted secrets and production acceptance"
+  ],
+  "prior_hosted_full_success": {
+    "commit": "c9a1e2e2708c86e94b543b358acc0a4636f07af8",
+    "run": 37730664949,
+    "all_five_jobs": "success"
+  }
+}

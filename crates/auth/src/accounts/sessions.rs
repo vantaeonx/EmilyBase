@@ -2,7 +2,10 @@
 use super::session_schema::{
     ABSOLUTE_SECONDS, ACCESS_SECONDS, FAMILIES, REFRESH_SECONDS, inspect_session_record,
 };
-use super::{AccountInfo, AccountStore, Error, MAX_SESSION_FAMILIES, Result, SessionRecordInfo};
+use super::{
+    AccountInfo, AccountStore, Error, MAX_SESSION_FAMILIES, MAX_SESSION_PRUNE, Result,
+    SessionRecordInfo,
+};
 use crate::tokens::{IssuedToken, TokenDigest, TokenKind, TokenScope, issue, metadata};
 use emilybase_catalog::{Key, Row, Value};
 
@@ -309,7 +312,7 @@ impl AccountStore {
     /// Delete at most 128 inactive families in one commit; all history still counts
     /// toward capacity until explicitly pruned. Clock observation is separate.
     pub fn prune_session_families(&mut self, now: u64, limit: usize) -> Result<usize> {
-        if !(1..=128).contains(&limit) {
+        if !(1..=MAX_SESSION_PRUNE).contains(&limit) {
             return Err(Error::Cleanup);
         }
         self.advance_session_clock(now)?;

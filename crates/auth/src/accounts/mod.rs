@@ -39,6 +39,8 @@ use zeroize::Zeroizing;
 
 pub const MAX_ACCOUNTS: usize = 1024;
 pub const MAX_LOGIN_BYTES: usize = 64;
+/// Maximum inactive families removed by one explicit cleanup commit.
+pub const MAX_SESSION_PRUNE: usize = 128;
 const SCOPE: &str = "auth_scope";
 const USERS: &str = "auth_users";
 

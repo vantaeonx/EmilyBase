@@ -489,6 +489,20 @@ class Lifecycle:
         self.denied_pair(pair)
         return self.sign(self.replacement)
 
+    def prune(self, active):
+        phase("Bounded inactive-session cleanup, then kill after its response")
+        require(
+            self.auth("sessions/prune", {"limit": 128}) == {"removed": 2},
+            "remove only two inactive families",
+        )
+        self.p.stop(hard=True)
+        self.p.up()
+        require(
+            self.auth("sessions/prune", {"limit": 1}) == {"removed": 0},
+            "cleanup remains durable after kill",
+        )
+        self.me(active)
+
     def restore(self, source_pair):
         phase("Offline compact, common-root backup, verify and independent restore")
         self.p.stop()
@@ -588,6 +602,7 @@ def main():
         pair = lifecycle.provision()
         pair = lifecycle.session_kill(pair)
         pair = lifecycle.credentials(pair)
+        lifecycle.prune(pair)
         lifecycle.restore(pair)
         lifecycle.corruption()
         probe.check_logs()

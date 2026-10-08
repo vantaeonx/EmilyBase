@@ -108,6 +108,10 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects/{id}/auth/me", post(me))
         .route("/v1/projects/{id}/auth/password", post(change_password))
         .route("/v1/projects/{id}/auth/disabled", post(set_disabled))
+        .route(
+            "/v1/projects/{id}/auth/sessions/prune",
+            post(prune_sessions),
+        )
         .route_layer(middleware::from_fn_with_state(app.clone(), guard));
     Router::new()
         .route(
@@ -222,7 +226,7 @@ fn account_failure(error: Error) -> Failure {
         Error::Accounts(A::Denied | A::Token(T::Format)) => {
             Failure(StatusCode::UNAUTHORIZED, "access_denied")
         }
-        Error::Accounts(A::Login | A::Password(P::Input)) => {
+        Error::Accounts(A::Login | A::Cleanup | A::Password(P::Input)) => {
             Failure(StatusCode::BAD_REQUEST, "invalid_account_request")
         }
         Error::Accounts(A::Password(P::Busy)) => {
@@ -291,6 +295,11 @@ struct PasswordChange {
 struct Disabled {
     login: String,
     disabled: bool,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Prune {
+    limit: u16,
 }
 async fn private_json<T: serde::de::DeserializeOwned>(request: Request) -> ApiResult<T> {
     if !request
@@ -387,6 +396,23 @@ async fn set_disabled(Extension(scope): Extension<Scope>, request: Request) -> A
             &body.login,
             body.disabled,
         )?))
+    })
+    .await
+}
+async fn prune_sessions(
+    State(app): State<App>,
+    Extension(scope): Extension<Scope>,
+    request: Request,
+) -> ApiResult<Response> {
+    let body: Prune = private_json(request).await?;
+    if !(1..=emilybase_auth::accounts::MAX_SESSION_PRUNE).contains(&usize::from(body.limit)) {
+        return Err(Failure(StatusCode::BAD_REQUEST, "invalid_account_request"));
+    }
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        let removed =
+            root.prune_session_families(id, key, (app.clock)()?, usize::from(body.limit))?;
+        response(&serde_json::json!({"removed":removed}))
     })
     .await
 }

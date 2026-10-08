@@ -694,3 +694,16 @@ Docker mode; five received-ACK kills, single-winner refresh, credential epochs,
 WAL2 clone/source authority, logout and corrupt private WAL refusal execute.
 Native stable/minimum checks passed; first new hosted container execution is
 pending. No stage, resource, security or production gate is declared complete.
+
+
+## Follow-up: explicit bounded inactive-session cleanup
+
+[ADR0086](adr/0086-bounded-private-session-cleanup.md) exposes the existing deletion
+transaction through a retained current-service-key gate and strict private HTTP.
+One request removes at most128 inactive families, preserving refreshable authority;
+clock observation is separately durable and WAL byte reclamation remains offline.
+Invalid limits/client time refuse before private clock work. Scoped history/input
+checks, eight generated count models, a real TCP cleanup race and ACK-kill/reopen
+on WAL1/2 cover this boundary. The initial private-root container lifecycle passed
+on7801d74; the expanded cleanup scenario requires its next hosted run. Automatic
+scheduling, public account policy, roles/RLS and production acceptance remain open.
