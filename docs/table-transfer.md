@@ -68,3 +68,31 @@ Version1 is an experimental separate logical format; stored database/WAL/catalog
 formats are unchanged. New incompatible logical documents must use a new version.
 Large paginated transfers, foreign schema mapping, public authorization and stable
 format/production acceptance remain open. See [ADR0089](adr/0089-bounded-logical-table-transfer.md).
+
+
+## Project HTTP transport
+
+Both server data modes expose POST /v1/projects/{id}/tables/export with strict
+JSON {"table":"t"}, and POST /v1/projects/{id}/tables/import with the complete
+logical document itself. Supply the project's service key through the existing
+authorization header. Master, user access and refresh tokens cannot authorize
+these routes. Route scope selects the database; body fields cannot select paths
+or other projects. Public signup, user SQL authority and row policies remain open.
+
+HTTP caps both request bodies and export output at65,536 bytes, retains the
+five-second body deadline/four-worker admission and returns an error instead of
+truncating a large table. The CLI retains its separate8 MiB limit. Both success
+and error responses set no-store/no-cache. Export returns the typed document;
+import returns {"transfer":{"version":1,"rows":1,"columns":2,"bytes":300},
+"transaction":2}, with actual counts and transaction ID. The example byte count
+is illustrative, not an encoded fixture. Preserve integer precision in clients.
+
+Invalid documents, existing tables or excessive output return400 transfer_rejected;
+body overflow413, deadline408 and wrong content type415 retain existing codes.
+Storage/uncertain commit failures return503 and must be inspected before retry.
+Private-root mode rechecks the current service key after body waiting; legacy mode
+retains its already admitted capability semantics, as for SQL. Transfers do not
+change private session clocks or account WAL. All decode/recovery/row/commit work
+runs in bounded blocking tasks. Total heap/output-connection admission remains
+separate work. See [OpenAPI](openapi.json) and
+[ADR0090](adr/0090-project-scoped-http-table-transfer.md).

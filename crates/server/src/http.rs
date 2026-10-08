@@ -15,7 +15,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
-const MAX_BODY: usize = 65_536;
+pub(crate) const MAX_BODY: usize = 65_536;
 const BODY_TIMEOUT: Duration = Duration::from_secs(5);
 #[derive(Clone)]
 struct App {
@@ -44,6 +44,7 @@ impl From<Error> for Failure {
     fn from(error: Error) -> Self {
         use emilybase_query::ExecutionError as Q;
         match error {
+            Error::Transfer(error) => transfer_failure(error),
             Error::Denied => Self(StatusCode::UNAUTHORIZED, "access_denied"),
             Error::Name | Error::Limit => Self(StatusCode::BAD_REQUEST, "invalid_project_request"),
             Error::Query(
@@ -91,6 +92,41 @@ impl From<Error> for Failure {
         }
     }
 }
+fn transfer_failure(error: emilybase_transfer::Error) -> Failure {
+    use emilybase_transfer::Error as T;
+    match error {
+        T::Limit | T::Document | T::Version | T::Order | T::Existing | T::Catalog(_) => {
+            Failure(StatusCode::BAD_REQUEST, "transfer_rejected")
+        }
+        T::Database(error) | T::Transactions(emilybase_transactions::Error::Database(error)) => {
+            use emilybase_database::Error as D;
+            if matches!(
+                error,
+                D::Catalog(_)
+                    | D::TableExists
+                    | D::NoTable
+                    | D::DuplicateKey
+                    | D::NoRow
+                    | D::PrimaryKeyChange
+                    | D::Limit(_)
+            ) {
+                Failure(StatusCode::BAD_REQUEST, "transfer_rejected")
+            } else {
+                Failure(StatusCode::SERVICE_UNAVAILABLE, "storage_unavailable")
+            }
+        }
+        T::Transactions(
+            emilybase_transactions::Error::Catalog(_)
+            | emilybase_transactions::Error::Limit
+            | emilybase_transactions::Error::Aborted,
+        ) => Failure(StatusCode::BAD_REQUEST, "transfer_rejected"),
+        T::Transactions(_) => Failure(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "transaction_outcome_requires_inspection",
+        ),
+        T::Io(_) => Failure(StatusCode::SERVICE_UNAVAILABLE, "storage_unavailable"),
+    }
+}
 
 /// All filesystem/recovery/query work runs in bounded blocking tasks, outside reactor threads.
 pub fn router(store: ProjectStore, master_token: &str) -> crate::Result<Router> {
@@ -109,6 +145,8 @@ fn routes(app: App) -> Router {
         .route("/v1/projects/{id}/sql", post(sql))
         .route("/v1/projects/{id}/explain", post(explain))
         .route("/v1/projects/{id}/status", get(status))
+        .route("/v1/projects/{id}/tables/export", post(export_table))
+        .route("/v1/projects/{id}/tables/import", post(import_table))
         .route_layer(middleware::from_fn_with_state(app.clone(), guard));
     Router::new()
         .route(
@@ -141,10 +179,16 @@ async fn guard(State(app): State<App>, request: Request, next: Next) -> Response
         .get::<MatchedPath>()
         .map(|p| p.as_str().to_owned())
         .unwrap_or_default();
-    let response = match authorize(&app, request).await {
+    let mut response = match authorize(&app, request).await {
         Ok(request) => next.run(request).await,
         Err(error) => error.into_response(),
     };
+    if matches!(
+        route.as_str(),
+        "/v1/projects/{id}/tables/export" | "/v1/projects/{id}/tables/import"
+    ) {
+        prevent_cache(&mut response);
+    }
     // Static labels exclude extension-method text, IDs and query strings.
     // Never record headers, tokens, SQL or bodies.
     tracing::info!(method=%method,route=%route,status=response.status().as_u16(),elapsed_ms=started.elapsed().as_millis() as u64,"request");
@@ -231,6 +275,10 @@ async fn authorize(app: &App, request: Request) -> ApiResult<Request> {
     Ok(request)
 }
 pub(crate) async fn json<T: serde::de::DeserializeOwned>(request: Request) -> ApiResult<T> {
+    let bytes = body(request).await?;
+    serde_json::from_slice(&bytes).map_err(|_| Failure(StatusCode::BAD_REQUEST, "invalid_json"))
+}
+pub(crate) async fn body(request: Request) -> ApiResult<axum::body::Bytes> {
     if !request
         .headers()
         .get(header::CONTENT_TYPE)
@@ -239,14 +287,55 @@ pub(crate) async fn json<T: serde::de::DeserializeOwned>(request: Request) -> Ap
     {
         return Err(Failure(StatusCode::UNSUPPORTED_MEDIA_TYPE, "json_required"));
     }
-    let bytes = tokio::time::timeout(
+    tokio::time::timeout(
         BODY_TIMEOUT,
         axum::body::to_bytes(request.into_body(), MAX_BODY),
     )
     .await
     .map_err(|_| Failure(StatusCode::REQUEST_TIMEOUT, "body_timeout"))?
-    .map_err(|_| Failure(StatusCode::PAYLOAD_TOO_LARGE, "body_limit"))?;
-    serde_json::from_slice(&bytes).map_err(|_| Failure(StatusCode::BAD_REQUEST, "invalid_json"))
+    .map_err(|_| Failure(StatusCode::PAYLOAD_TOO_LARGE, "body_limit"))
+}
+pub(crate) fn prevent_cache(response: &mut Response) {
+    response.headers_mut().insert(
+        header::CACHE_CONTROL,
+        axum::http::HeaderValue::from_static("no-store"),
+    );
+    response.headers_mut().insert(
+        header::PRAGMA,
+        axum::http::HeaderValue::from_static("no-cache"),
+    );
+}
+pub(crate) fn transfer_response(bytes: Vec<u8>) -> Response {
+    ([(header::CONTENT_TYPE, "application/json")], bytes).into_response()
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct ExportTable {
+    pub table: String,
+}
+#[derive(Serialize)]
+pub(crate) struct ImportedTable {
+    pub transfer: emilybase_transfer::Report,
+    pub transaction: u64,
+}
+async fn export_table(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let input: ExportTable = json(request).await?;
+    let project = take_project(&scope)?;
+    let bytes = blocking(scope, move || project.export_table(&input.table, MAX_BODY)).await?;
+    Ok(transfer_response(bytes))
+}
+async fn import_table(
+    Extension(scope): Extension<Scope>,
+    request: Request,
+) -> ApiResult<Json<ImportedTable>> {
+    let bytes = body(request).await?;
+    let project = take_project(&scope)?;
+    let report = blocking(scope, move || {
+        let table = emilybase_transfer::decode_table(&bytes)?;
+        project.import_table(table)
+    })
+    .await?;
+    Ok(Json(report))
 }
 async fn blocking<T: Send + 'static>(
     scope: Scope,

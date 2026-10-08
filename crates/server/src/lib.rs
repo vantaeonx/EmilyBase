@@ -84,6 +84,8 @@ pub enum Error {
     Backup(#[from] emilybase_backup::Error),
     #[error(transparent)]
     Query(#[from] emilybase_query::ExecutionError),
+    #[error(transparent)]
+    Transfer(#[from] emilybase_transfer::Error),
     #[error("project filesystem error")]
     Io(#[from] std::io::Error),
     #[error("HTTP transport failed")]

@@ -936,3 +936,80 @@ fn actual_tcp_user_pages_keep_exact_private_history_and_current_service_scope_ac
         );
     }
 }
+
+#[test]
+fn private_root_tcp_transfer_ack_survives_kill_without_private_history_changes() {
+    let _case = CASES.lock().unwrap();
+    for compact in [false, true] {
+        let f = fixture(compact);
+        let private_path = f.root.join("private").join(&f.id).join("redo.wal");
+        let before = fs::read(&private_path).unwrap();
+        let server = support::Server::start_account(&f.root, MASTER);
+        let base = format!("/v1/projects/{}/tables", f.id);
+        let (status, mut document) = support::call(
+            server.address,
+            "POST",
+            &(base.clone() + "/export"),
+            &f.key,
+            &json!({"table":"t"}),
+        )
+        .unwrap();
+        assert_eq!(status, 200);
+        document["schema"]["name"] = json!("copied");
+        assert_eq!(
+            support::call(
+                server.address,
+                "POST",
+                &(base.clone() + "/import"),
+                MASTER,
+                &document
+            )
+            .unwrap()
+            .0,
+            401
+        );
+        let (status, report) = support::call(
+            server.address,
+            "POST",
+            &(base.clone() + "/import"),
+            &f.key,
+            &document,
+        )
+        .unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(report["transfer"]["rows"], 1);
+        let first = server.kill();
+        let server = support::Server::start_account(&f.root, MASTER);
+        assert_eq!(
+            support::call(
+                server.address,
+                "POST",
+                &(base.clone() + "/export"),
+                &f.key,
+                &json!({"table":"copied"})
+            )
+            .unwrap(),
+            (200, document.clone())
+        );
+        let public_path = f.root.join("registry").join(&f.id).join("data/redo.wal");
+        let public_before = fs::read(&public_path).unwrap();
+        assert_eq!(
+            support::call(
+                server.address,
+                "POST",
+                &(base + "/import"),
+                &f.key,
+                &document
+            )
+            .unwrap()
+            .0,
+            400
+        );
+        let second = server.stop();
+        assert_eq!(fs::read(&private_path).unwrap(), before);
+        assert_eq!(fs::read(&public_path).unwrap(), public_before);
+        for log in [&first, &second] {
+            clean_log(log, &[MASTER, &f.id, &f.key, "synthetic-row"]);
+        }
+    }
+}

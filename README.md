@@ -38,6 +38,8 @@ file remains plaintext and is excluded from root bundles.
 [Logical table exchange](docs/table-transfer.md) now exports/imports one complete
 small table through CLI streams, with strict typed validation and a single durable
 new-table commit. The explicit255-row limit follows the existing transaction cap.
+Project-service HTTP exchange is available in both data modes with a stricter
+65,536-byte request/export cap and the same original-engine commit behavior.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

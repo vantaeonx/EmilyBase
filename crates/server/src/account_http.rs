@@ -101,6 +101,8 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects/{id}/status", get(status))
         .route("/v1/projects/{id}/sql", post(sql))
         .route("/v1/projects/{id}/explain", post(explain))
+        .route("/v1/projects/{id}/tables/export", post(export_table))
+        .route("/v1/projects/{id}/tables/import", post(import_table))
         .route("/v1/projects/{id}/auth/users", post(create_user))
         .route("/v1/projects/{id}/auth/users/list", post(list_users))
         .route("/v1/projects/{id}/auth/sign-in", post(sign_in))
@@ -125,14 +127,7 @@ fn routes_app(app: App) -> Router {
 }
 async fn no_cache(request: Request, next: Next) -> Response {
     let mut response = next.run(request).await;
-    response.headers_mut().insert(
-        header::CACHE_CONTROL,
-        axum::http::HeaderValue::from_static("no-store"),
-    );
-    response.headers_mut().insert(
-        header::PRAGMA,
-        axum::http::HeaderValue::from_static("no-cache"),
-    );
+    crate::http::prevent_cache(&mut response);
     response
 }
 async fn guard(State(app): State<App>, request: Request, next: Next) -> Response {
@@ -527,6 +522,29 @@ async fn explain(Extension(scope): Extension<Scope>, request: Request) -> ApiRes
     blocking(scope, move |root, s| {
         let (id, key) = s.credentials()?;
         response(&root.explain(id, key, &body.sql, &body.parameters)?)
+    })
+    .await
+}
+async fn export_table(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let input: crate::http::ExportTable = json(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        Ok(crate::http::transfer_response(root.export_table(
+            id,
+            key,
+            &input.table,
+            crate::http::MAX_BODY,
+        )?))
+    })
+    .await
+}
+async fn import_table(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let bytes = crate::http::body(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        root.admits_project(id, key, false)?;
+        let table = emilybase_transfer::decode_table(&bytes)?;
+        response(&root.import_table(id, key, table)?)
     })
     .await
 }

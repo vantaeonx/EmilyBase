@@ -32,6 +32,8 @@ The JSON contract is [OpenAPI 3.1](openapi.json). Send the exact
 | POST `/v1/projects` | master | `{ "name": "demo" }`, 201 with project and new key |
 | POST `/v1/projects/{id}/keys/rotate` | master | new key, increasing epoch; no body required |
 | GET `/v1/projects/{id}/status` | project | last committed transaction, table/row counts |
+| POST `/v1/projects/{id}/tables/export` | project | complete bounded typed table document |
+| POST `/v1/projects/{id}/tables/import` | project | create one new table from a typed document |
 | POST `/v1/projects/{id}/sql` | project | atomic SQL script and typed parameters |
 | POST `/v1/projects/{id}/explain` | project | resolve one SELECT plan without writes |
 
@@ -124,3 +126,9 @@ EMILYBASE_DATA_DIR unset. The [private transport contract](private-http.md) desc
 service-key-gated accounts/sessions, whole-root startup validation, fixed roster
 and native WAL1/2 recovery evidence. Normal restart preserves sessions; restore
 resets clone authority. This mode creates no project or private store implicitly.
+
+
+[Logical table HTTP exchange](table-transfer.md#project-http-transport) uses the
+existing65,536-byte/five-second body admission and a65,536-byte export cap in both
+data modes. It disables caches, checks service scope and returns import metadata
+only after durable commit. It grants no user-token SQL or row-policy authority.

@@ -1370,3 +1370,5 @@ async fn metadata_page_bounds_cursor_shape_and_unauthorized_bodies_never_write_h
     assert_eq!(gap, json!({"users":[],"next_after":null}));
     assert_eq!(wal(&f), before);
 }
+
+mod transfer;

@@ -741,3 +741,14 @@ primary order and exact finite float bits. Complete export refuses above255 rows
 new-table import is one durable transaction with no merge or overwrite. Private
 backup/session restore, large continuation protocols, foreign converters, public
 authorization and production acceptance remain separate open work.
+
+
+## Follow-up: project HTTP logical exchange
+
+[ADR0090](adr/0090-project-scoped-http-table-transfer.md) connects the verified
+logical format to both service routers. Existing authorization/admission applies;
+HTTP input/export cap65,536 bytes, no truncation, no-cache responses and one durable
+new-table commit. Private-root mode rechecks current keys after body waits without
+private-clock/WAL writes. Native/real-TCP and seven-kill common lifecycle checks
+cover this boundary. Large transfer, user policy/roles/RLS, global resource gates
+and production acceptance remain open.

@@ -376,3 +376,23 @@ fn native_kills_before_commit_and_after_ack_recover_exact_all_or_nothing() {
         }
     }
 }
+
+#[test]
+fn smaller_export_byte_caps_refuse_before_partial_output_and_keep_wal_exact() {
+    let _guard = CASES.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let mut db = source(&dir.path().join("source"), vec![row(1, 1)]);
+    let original = export_table(db.view().unwrap(), "synthetic_table").unwrap();
+    let before = db.committed_wal().unwrap();
+    for cap in [0, 1, original.len() - 1, MAX_TRANSFER_BYTES + 1] {
+        assert!(matches!(
+            export_table_bounded(db.view().unwrap(), "synthetic_table", cap),
+            Err(Error::Limit)
+        ));
+    }
+    assert_eq!(
+        export_table_bounded(db.view().unwrap(), "synthetic_table", original.len()).unwrap(),
+        original
+    );
+    assert_eq!(db.committed_wal().unwrap(), before);
+}

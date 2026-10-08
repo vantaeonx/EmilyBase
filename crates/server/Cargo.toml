@@ -13,6 +13,7 @@ emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }
 emilybase-query = { path = "../query" }
 emilybase-transactions = { path = "../transactions" }
+emilybase-transfer = { path = "../transfer" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 crc32fast = "1.5"

@@ -1,0 +1,130 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "7f012e83d6fc18005611e35774bb65a26c985c87",
+  "source_sha256": {
+    "crates/transfer/src/lib.rs": "6f4f8e680a8552a89a3c4e99b0f00a58dba0bbb015aa48695d49374207f59b42",
+    "crates/transfer/src/tests.rs": "fa5fe3166975d9ca57c9852c161da9a2ade351d72bc67c574d795f9b8a81bb61",
+    "crates/server/Cargo.toml": "8b6808e1464d055dd7c68171ce81eeb065e191ce0dbf73301ea7acc8783aff6f",
+    "crates/server/src/lib.rs": "0e5c7095f490ab561af1579acfee510345ee7921c82455654529d041ed2d5d3d",
+    "crates/server/src/http.rs": "98dd16137e943645090404b8fc452e0f7acccfe23ff167401f17e9670f3112a8",
+    "crates/server/src/account_http.rs": "0a2e9ad44c5f8d6e71affee8180805fc46fa7a5426caec3ea3bed148e562d429",
+    "crates/server/src/account_http/tests.rs": "ca01e8a7fd0dbe222d3795e7578a438dbb29beb2c5c9565d2b5529645498dfe4",
+    "crates/server/src/account_http/tests/transfer.rs": "ce19f06cb298d14443e6fad7c7537641987e5bbc7a7be8411c9bf2f269c42aa7",
+    "crates/server/src/projects.rs": "cd92f1077bf37b8190888d85d4724ef42d3251d621c4a5d3d2a135dc03cfc5d5",
+    "crates/server/src/registry_files/account_root/live.rs": "eae3fbbfabcbcbe773406fa4d5981b869bbae0b06b8dd74f8ab0ff3002220a14",
+    "crates/server/tests/table_transfer.rs": "de4107053c2f0ff31d022fe88027d2ec3377cf6de35457f8359f1664988b407d",
+    "crates/server/tests/account_network.rs": "2240cad5113e7f793aaae0dfcb5e5f66b34b9e5f129bddf746464900f02959d8",
+    "tests/account_containers.py": "c3ade7560366d669e0e57ea56c93020a06b88a43ac9b36db3e6f5aa2bd3da972",
+    "tests/containers.py": "10bd586190f1527fcff1f2dbca8e6045427e60fb4816d86489c182fe3e1f5c85",
+    "docs/openapi.json": "0a078b7ba7fea8eb02970cf6b5d1af830aa63508560cafe744b3d8426ec21ecf",
+    "Cargo.lock": "a54c26375bd64ec25d817376db1e5dc4d590852989b1c4210b520ba0d3f49825",
+    "fuzz/Cargo.lock": "9d834449ee864d2f272898a2b2fdabf661fd04fce187d3081d4144f8b6f8fc69"
+  },
+  "protocol": {
+    "routers": [
+      "legacy registry",
+      "explicit private root"
+    ],
+    "routes": [
+      "POST /v1/projects/{id}/tables/export",
+      "POST /v1/projects/{id}/tables/import"
+    ],
+    "project_service_authority_only": true,
+    "root_current_key_recheck_after_body_and_before_decode": true,
+    "legacy_admitted_capability_policy_unchanged": true,
+    "request_export_max_bytes": 65536,
+    "body_timeout_seconds": 5,
+    "admitted_workers": 4,
+    "max_rows": 255,
+    "new_table_single_durable_commit": true,
+    "no_private_clock_wal_changes": true,
+    "no_cache_success_refusal": true,
+    "blocking_decode_recovery_serialization_commit": true,
+    "static_errors_and_route_logs": true,
+    "standalone_cli_cap_unchanged": 8388608
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "final_unique_cases_each": 122,
+    "ignored_native_helper_each": 1,
+    "suites": {
+      "stable": {
+        "private": {
+          "passed": 18,
+          "ignored": 0
+        },
+        "network": {
+          "passed": 42,
+          "ignored": 0
+        },
+        "cli": {
+          "passed": 62,
+          "ignored": 1
+        }
+      },
+      "msrv": {
+        "private": {
+          "passed": 18,
+          "ignored": 0
+        },
+        "network": {
+          "passed": 42,
+          "ignored": 0
+        },
+        "cli": {
+          "passed": 62,
+          "ignored": 1
+        }
+      }
+    },
+    "new_cases": {
+      "core_output_cap": 1,
+      "private_http": 2,
+      "legacy_http_and_tcp": 2,
+      "private_native_tcp": 1
+    },
+    "native_ack_kills_new_tests_each": 4,
+    "common_lifecycle_runs": 4,
+    "ack_kills_per_common_lifecycle": 7,
+    "frozen_source_dependency_protocol_files": 450,
+    "workspace_build_and_minimum_server_cli_build": true,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "python_probe_format_lint": true,
+    "both_warning_denied_advisory_scans": true,
+    "openapi_refs_resolve_and_operation_ids_unique": true,
+    "full_workspace_sdk_optional_diagnostics_new_asan_repeated": false
+  },
+  "fixture_repair": {
+    "observed": "minimum-Rust parallel HTTP/native fixture encountered Transaction(Wal(Busy)) in fork/exec inheritance window",
+    "change": "serialize the two new test cases with one async/blocking fixture mutex",
+    "affected_two_cases_rerun_on_both_rust": true,
+    "production_locks_retries_changed": false
+  },
+  "prior_hosted": {
+    "last_all_five_success_commit": "f3ddf4aef985f6b0cd573d7a2a2ff3a1f55da42d",
+    "last_all_five_success_run": 37734927616,
+    "logical_transfer_run": 37736164028,
+    "new_http_transfer_container_run": "pending publication"
+  },
+  "source_counts": {
+    ".rs": 83722,
+    ".ts": 455,
+    ".mjs": 804,
+    ".py": 1624,
+    "total": 86605,
+    "effective_rust": 80282
+  },
+  "net_rust": 632,
+  "net_python": 31,
+  "exclusions": [
+    "public user authority and row policies",
+    "large logical transfer and foreign converter",
+    "whole-process heap and queued output admission",
+    "new local Docker execution; CLI unavailable",
+    "stable format and production acceptance"
+  ]
+}

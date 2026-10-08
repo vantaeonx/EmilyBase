@@ -401,6 +401,30 @@ fn directory_sync(file: &File, _boundary: &str) -> std::io::Result<()> {
     file.sync_all()
 }
 impl AuthorizedProject {
+    pub(crate) fn export_table(self, table: &str, limit: usize) -> Result<Vec<u8>> {
+        let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;
+        self.check_directory()?;
+        let database = Database::open(self.directory.join("data"))?;
+        Ok(emilybase_transfer::export_table_bounded(
+            database.view()?,
+            table,
+            limit,
+        )?)
+    }
+    pub(crate) fn import_table(
+        self,
+        table: emilybase_transfer::VerifiedTable,
+    ) -> Result<crate::http::ImportedTable> {
+        let _gate = self.gate.lock().map_err(|_| Error::Poisoned)?;
+        self.check_directory()?;
+        let mut database = Database::open(self.directory.join("data"))?;
+        let transfer = table.report().clone();
+        let transaction = emilybase_transfer::import_table(&mut database, table)?;
+        Ok(crate::http::ImportedTable {
+            transfer,
+            transaction,
+        })
+    }
     fn check_directory(&self) -> Result<()> {
         metadata::owned_directory(&self.root, &self._owner)?;
         metadata::owned_directory(&self.directory, &self.directory_owner)?;

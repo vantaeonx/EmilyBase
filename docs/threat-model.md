@@ -60,3 +60,13 @@ SQL interpolation, and existing tables refuse. Editable input has no checksum or
 authenticity claim; protect its provenance separately. CLI stream output does not
 provide atomic file publication or encryption. Private account/session restore and
 public access policy remain outside this logical public-table exchange adapter.
+
+
+HTTP table exchange uses URL project scope and its service credential, never a
+body-selected project/path or user token. Private-root mode rechecks the current
+key after body waits. The existing65,536-byte body limit, five-second deadline,
+four admitted workers and process-local rates apply; export serialization has
+the same byte cap. Invalid import never partially commits; existing tables refuse.
+Success/refusal disable caches and use static errors/log patterns. Transfer data
+is explicit plaintext and does not grant user SQL/RLS authority. Whole-process
+heap, queued-output/connection admission and an independent audit remain open.

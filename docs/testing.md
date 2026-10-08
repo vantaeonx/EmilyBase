@@ -3650,3 +3650,42 @@ afa0bc1 completed all five hosted jobs. New hosted transfer checks follow public
 [source-bound data](measurements/2026-10-08-logical-table-transfer/verification.json)
 record the scope. Current sources:83,090 Rust /79,655 excluding blank and standalone
 comment lines; SDK1,259; Python1,593; total85,942.
+
+
+## Project-scoped HTTP table exchange, 2026-10-08
+
+The final scoped matrix passed122 unique cases on each of Rust1.99.0 and1.89.0:
+18 private HTTP,42 legacy/private network/project/binary checks, and62 transfer/CLI
+cases. One ignored native import helper is invoked by its deadline-controlled
+parent. New cases cover the output cap, both routers, current-key recheck during
+body waiting, master/sibling/session denial, malformed/oversized inputs, source/
+existing-target/private WAL preservation and import ACK recovery.
+
+Real TCP cases kill after acknowledged import in both data modes on WAL1/2:
+four new ACK kills per toolchain. The common private-root lifecycle now also
+exports/imports a table, kills after ACK, reopens, verifies the complete copy and
+unchanged private WAL, then drops the temporary public table before normal backup.
+It passed in environment/file master modes on both Rust versions: four executions
+with seven ACK kills each. Local native execution does not prove Docker/cgroups;
+hosted probes run the same extended protocol against real images.
+
+The first minimum-Rust run caught Transaction(Wal(Busy)) while the two new
+HTTP/native fixture cases overlapped a child fork/exec inheritance window. They
+now share an async/blocking test mutex; both affected cases were rerun successfully
+on both toolchains. Production locks or retry behavior were not changed. All other
+scoped tests passed without fixture changes.
+
+Workspace/minimum server/CLI builds, formatting, workspace/profile/fuzz strict
+Clippy, minimum fuzz compilation, Python probe checks and both advisory scans
+passed. OpenAPI references resolve, operation IDs are unique and both new paths
+describe the exact typed float_bits/byte limits. The450 final source/dependency/
+protocol files were checked. Complete workspace, SDK, optional diagnostics and a
+new sanitizer campaign were not repeated for this transport adapter. The separate
+logical parser's previous ASan observation remains historical, not a new run.
+
+f3ddf4a completed all five hosted jobs, including the real file-key container.
+New seven-kill HTTP/container checks follow publication.
+[ADR0090](adr/0090-project-scoped-http-table-transfer.md) and
+[source-bound data](measurements/2026-10-08-project-http-transfer/verification.json)
+record the scope. Current source size:83,722 Rust /80,282 excluding blank and
+standalone comment lines; SDK1,259; Python1,624; total86,605.

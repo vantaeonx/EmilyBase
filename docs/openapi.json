@@ -2976,6 +2976,168 @@
           }
         }
       }
+    },
+    "/v1/projects/{id}/tables/export": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "table_export",
+        "summary": "Export complete bounded table",
+        "description": "Complete bounded table export; never truncate or write source WAL. Supported in both data modes. Private-root mode rechecks current service authority after body admission. User session and master tokens cannot authorize this route.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableExportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success after complete validation; import acknowledgement follows WAL sync",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableTransfer"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TransferError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/tables/import": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "table_import",
+        "summary": "Import new bounded table atomically",
+        "description": "Create one new table in a single durable transaction. Existing tables refuse; inspect uncertain outcomes before retrying. Supported in both data modes. Private-root mode rechecks current service authority after body admission. User session and master tokens cannot authorize this route.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableTransfer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success after complete validation; import acknowledgement follows WAL sync",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableImportReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TransferError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3539,6 +3701,445 @@
           "users",
           "next_after"
         ]
+      },
+      "TransferSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "columns": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 63,
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "data_type": {
+                  "type": "string",
+                  "enum": [
+                    "boolean",
+                    "integer",
+                    "float",
+                    "text",
+                    "bytes"
+                  ]
+                },
+                "nullable": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "data_type",
+                "nullable"
+              ]
+            }
+          },
+          "primary_key": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 63
+          }
+        },
+        "required": [
+          "name",
+          "columns",
+          "primary_key"
+        ]
+      },
+      "TransferValue": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "null"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "boolean"
+              },
+              "value": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "integer"
+              },
+              "value": {
+                "type": "integer",
+                "minimum": -9223372036854775808,
+                "maximum": 9223372036854775807
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "float_bits"
+              },
+              "value": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{16}$",
+                "description": "Finite IEEE754 binary64 bits; infinity and NaN refuse. Preserves negative zero and subnormals."
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "text"
+              },
+              "value": {
+                "type": "string",
+                "maxLength": 3072,
+                "description": "At most3072 UTF-8 bytes; original encoded-record bound also applies."
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "bytes"
+              },
+              "value": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "maxItems": 3072
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          }
+        ]
+      },
+      "TableTransfer": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "const": "emilybase-table"
+          },
+          "version": {
+            "const": 1
+          },
+          "schema": {
+            "$ref": "#/components/schemas/TransferSchema"
+          },
+          "rows": {
+            "type": "array",
+            "maxItems": 255,
+            "items": {
+              "type": "array",
+              "maxItems": 64,
+              "items": {
+                "$ref": "#/components/schemas/TransferValue"
+              }
+            }
+          }
+        },
+        "required": [
+          "format",
+          "version",
+          "schema",
+          "rows"
+        ],
+        "description": "Complete editable logical table in strictly ascending primary order. HTTP request/response cap65536 bytes; CLI cap8 MiB. Original schema/encoded-record bounds apply. No backup integrity or public user-authority claim."
+      },
+      "TableExportRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "table": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        },
+        "required": [
+          "table"
+        ]
+      },
+      "TransferReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "const": 1
+          },
+          "rows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "columns": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65536
+          }
+        },
+        "required": [
+          "version",
+          "rows",
+          "columns",
+          "bytes"
+        ]
+      },
+      "TableImportReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "transfer": {
+            "$ref": "#/components/schemas/TransferReport"
+          },
+          "transaction": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Durably committed transaction ID; preserve integer precision."
+          }
+        },
+        "required": [
+          "transfer",
+          "transaction"
+        ]
+      }
+    },
+    "responses": {
+      "TransferError400": {
+        "description": "Invalid typed transfer, existing target or output over65536 bytes",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TransferError401": {
+        "description": "Current project service authority required",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TransferError408": {
+        "description": "Body deadline exceeded",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TransferError413": {
+        "description": "Body exceeds65536 bytes",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TransferError415": {
+        "description": "application/json required",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TransferError429": {
+        "description": "Process-local request rate limit",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TransferError500": {
+        "description": "Worker or peer unavailable",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TransferError503": {
+        "description": "Storage unavailable, admission full or write outcome requires inspection",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
       }
     }
   }

@@ -469,6 +469,7 @@ dependencies = [
  "emilybase-database",
  "emilybase-query",
  "emilybase-transactions",
+ "emilybase-transfer",
  "rustix",
  "serde",
  "serde_json",

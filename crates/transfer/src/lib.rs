@@ -35,7 +35,7 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Counts only. Transfer documents deliberately contain caller-selected plaintext.
-#[derive(Debug, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct Report {
     pub version: u16,
     pub rows: usize,
@@ -113,13 +113,16 @@ pub fn decode_table(bytes: &[u8]) -> Result<VerifiedTable> {
     })
 }
 
-struct BoundedOutput(Vec<u8>);
+struct BoundedOutput {
+    bytes: Vec<u8>,
+    limit: usize,
+}
 impl Write for BoundedOutput {
     fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
-        if bytes.len() > MAX_TRANSFER_BYTES.saturating_sub(self.0.len()) {
+        if bytes.len() > self.limit.saturating_sub(self.bytes.len()) {
             return Err(std::io::Error::other("table transfer output limit"));
         }
-        self.0.extend_from_slice(bytes);
+        self.bytes.extend_from_slice(bytes);
         Ok(bytes.len())
     }
     fn flush(&mut self) -> std::io::Result<()> {
@@ -128,6 +131,13 @@ impl Write for BoundedOutput {
 }
 /// Complete selected table in checked primary order. Never silently truncate.
 pub fn export_table(snapshot: &Snapshot, table: &str) -> Result<Vec<u8>> {
+    export_table_bounded(snapshot, table, MAX_TRANSFER_BYTES)
+}
+/// A stricter transport cap applies during serialization, before retaining excess output.
+pub fn export_table_bounded(snapshot: &Snapshot, table: &str, limit: usize) -> Result<Vec<u8>> {
+    if limit == 0 || limit > MAX_TRANSFER_BYTES {
+        return Err(Error::Limit);
+    }
     let schema = snapshot.schema(table)?;
     encode_schema(schema)?;
     let mut rows = Vec::new();
@@ -140,7 +150,10 @@ pub fn export_table(snapshot: &Snapshot, table: &str) -> Result<Vec<u8>> {
         encode_row(row)?;
         rows.push(row);
     }
-    let mut output = BoundedOutput(Vec::new());
+    let mut output = BoundedOutput {
+        bytes: Vec::new(),
+        limit,
+    };
     serde_json::to_writer(
         &mut output,
         &wire::Output {
@@ -151,7 +164,7 @@ pub fn export_table(snapshot: &Snapshot, table: &str) -> Result<Vec<u8>> {
         },
     )
     .map_err(|_| Error::Limit)?;
-    Ok(output.0)
+    Ok(output.bytes)
 }
 /// Create and populate a new table in one commit. Existing tables are never merged.
 pub fn import_table(database: &mut Database, table: VerifiedTable) -> Result<u64> {

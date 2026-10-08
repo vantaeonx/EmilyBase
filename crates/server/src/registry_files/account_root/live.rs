@@ -26,6 +26,31 @@ impl std::fmt::Debug for AccountRoot {
     }
 }
 impl AccountRoot {
+    pub(crate) fn export_table(
+        &self,
+        project: &str,
+        key: &str,
+        table: &str,
+        limit: usize,
+    ) -> Result<Vec<u8>> {
+        self.ready()?;
+        self.contents
+            .registry
+            .authorize(project, key)?
+            .export_table(table, limit)
+    }
+    pub(crate) fn import_table(
+        &self,
+        project: &str,
+        key: &str,
+        table: emilybase_transfer::VerifiedTable,
+    ) -> Result<crate::http::ImportedTable> {
+        self.ready()?;
+        self.contents
+            .registry
+            .authorize(project, key)?
+            .import_table(table)
+    }
     // Memory-only preadmission. Selected filesystem identities and the current
     // private service key are checked again inside the blocking operation.
     pub(crate) fn admits_project(&self, project: &str, key: &str, private: bool) -> Result<()> {

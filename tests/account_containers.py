@@ -491,6 +491,36 @@ class Lifecycle:
         )
         return pair
 
+    def transfer(self):
+        phase("Verify bounded table transfer and kill after import acknowledgement")
+        identifier, key = self.project
+        route = f"/v1/projects/{identifier}/tables/"
+        private_path = self.p.data_directory + f"/private/{identifier}/redo.wal"
+        private_before = self.p.digest(private_path)
+        document = self.p.request(route + "export", key, {"table": "t"})
+        require(
+            document["version"] == 1 and len(document["rows"]) == 1,
+            "complete typed table export",
+        )
+        document["schema"]["name"] = "transferred"
+        self.p.request(route + "import", self.p.master, document, 401)
+        imported = self.p.request(route + "import", key, document)
+        require(
+            imported["transfer"]["rows"] == 1, "durable table import acknowledgement"
+        )
+        self.p.stop(hard=True)
+        self.p.up()
+        require(
+            self.p.request(route + "export", key, {"table": "transferred"}) == document,
+            "acknowledged table survives kill",
+        )
+        self.p.request(route + "import", key, document, 400)
+        require(
+            self.p.digest(private_path) == private_before,
+            "public table transfer preserves private WAL",
+        )
+        self.p.sql(self.project, "DROP TABLE transferred")
+
     def session_kill(self, pair):
         phase("Race two real refresh requests, then kill after the winning response")
         results, failures = [], []
@@ -693,6 +723,7 @@ def main():
         probe.setup(not args.no_build)
         lifecycle = Lifecycle(probe)
         pair = lifecycle.provision()
+        lifecycle.transfer()
         pair = lifecycle.session_kill(pair)
         pair = lifecycle.credentials(pair)
         lifecycle.prune(pair)

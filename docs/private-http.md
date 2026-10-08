@@ -171,3 +171,11 @@ corruption refuses instead of returning a partial page. Bounds precede page
 allocation. Listing never hashes a password, observes session time or commits WAL.
 The worker/rate/body/no-cache/static error rules apply, including current key
 revalidation after a waiting body. See [ADR0087](adr/0087-bounded-private-user-pages.md).
+
+
+The fixed-root router also exposes project-service
+[table export/import](table-transfer.md#project-http-transport). It operates only
+on the authorized public database, rechecks the current service key after body
+admission, and does not observe or advance private session time/WAL. Master or
+user session tokens cannot grant this authority. Its body/export cap is65,536
+bytes; the separate4096-byte private credential-body cap stays unchanged.
