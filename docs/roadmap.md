@@ -115,6 +115,12 @@ through full inventory validation and preserves source credentials. Required tru
 reset time is bounded and invalid values are never echoed. No HTTP account worker,
 automatic private discovery, whole-process memory or production gate closes.
 
+[ADR0080](adr/0080-retained-private-root-service.md) retains the exact inspected
+registry/private owners for synchronous project-key-gated lifecycle operations.
+Normal restart preserves scope/time/families; four active private stores are
+admitted before database opening. Network workers/rate/body/DTO admission, public
+account policy, dynamic roster and resource/production gates remain open.
+
 The declared Linux Rust floor is verified on 1.89.0 with the current frozen
 [workspace checks](testing.md);
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker

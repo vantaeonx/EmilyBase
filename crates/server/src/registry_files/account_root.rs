@@ -19,6 +19,8 @@ use std::path::{Path, PathBuf};
 
 const MANIFEST_LIMIT: usize = 8192;
 const PREFIX: &str = ".emilybase-account-restore-";
+mod live;
+pub use live::{AccountRoot, MAX_ACTIVE_PRIVATE_STORES};
 
 /// Experimental root layout metadata, never proof of capture or authorization.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -217,6 +219,17 @@ struct State {
     report: AccountBundleRootReport,
     registry: Vec<u8>,
     private_hashes: Vec<[u8; 32]>,
+    contents: Contents,
+}
+struct Contents {
+    registry: ProjectStore,
+    accounts: Vec<AccountStore>,
+    account_owners: Vec<File>,
+    private_owner: File,
+    manifest_owner: File,
+    encoded: Vec<u8>,
+    manifest: AccountBundleRootManifest,
+    ids: BTreeSet<String>,
 }
 fn inspect_owned(path: &Path, owner: &File, pool: PasswordPool) -> Result<State> {
     inspect_owned_with(path, owner, pool, |_, _| Ok(()))
@@ -225,6 +238,15 @@ fn inspect_owned_with(
     path: &Path,
     owner: &File,
     pool: PasswordPool,
+    captured: impl FnMut(&str, &[u8]) -> Result<()>,
+) -> Result<State> {
+    inspect_owned_limited(path, owner, pool, MAX_PROJECTS, captured)
+}
+fn inspect_owned_limited(
+    path: &Path,
+    owner: &File,
+    pool: PasswordPool,
+    private_limit: usize,
     mut captured: impl FnMut(&str, &[u8]) -> Result<()>,
 ) -> Result<State> {
     metadata::owned_directory(path, owner)?;
@@ -233,8 +255,22 @@ fn inspect_owned_with(
     if names(&root)? != expected_root {
         return Err(Error::BundleRoot("root entries"));
     }
-    let encoded = read_bounded(&root.join("root.json"), MANIFEST_LIMIT)?;
+    let fd = rustix::fs::open(
+        root.join("root.json"),
+        rustix::fs::OFlags::RDONLY
+            | rustix::fs::OFlags::CLOEXEC
+            | rustix::fs::OFlags::NOFOLLOW
+            | rustix::fs::OFlags::NONBLOCK,
+        rustix::fs::Mode::empty(),
+    )
+    .map_err(std::io::Error::from)?;
+    let mut manifest_owner: File = fd.into();
+    let encoded = super::read_file(&mut manifest_owner, MANIFEST_LIMIT)?;
     let manifest = inspect_account_bundle_root_manifest_bytes(&encoded)?;
+    // Service admission occurs before opening any database or registry owner.
+    if manifest.private_projects.len() > private_limit {
+        return Err(Error::Limit);
+    }
     let private = root.join("private");
     let private_owner = metadata::open_directory(&private)?;
     let roster: BTreeSet<_> = manifest.private_projects.iter().cloned().collect();
@@ -295,6 +331,7 @@ fn inspect_owned_with(
         }
         metadata::owned_directory(path, owner)?;
         metadata::owned_directory(&private, &private_owner)?;
+        check_manifest(&root, &manifest_owner, &encoded)?;
         if names(&root)? != expected_root
             || names(&private)? != roster
             || names(&root.join("registry"))? != ids
@@ -305,7 +342,6 @@ fn inspect_owned_with(
         Ok((image, reports, hashes))
     })?;
     // Keep private ownership until the registry finishes its final identity checks.
-    drop(accounts);
     Ok(State {
         report: AccountBundleRootReport {
             registry: crate::inspect_registry_backup_bytes(&image)?,
@@ -314,6 +350,16 @@ fn inspect_owned_with(
         },
         registry: image,
         private_hashes: hashes,
+        contents: Contents {
+            registry,
+            accounts,
+            account_owners,
+            private_owner,
+            manifest_owner,
+            encoded,
+            manifest,
+            ids,
+        },
     })
 }
 

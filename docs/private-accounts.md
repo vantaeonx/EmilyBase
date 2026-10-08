@@ -3,7 +3,8 @@
 AccountStore is a real Rust library over EmilyBase's original WAL database.
 It lives in a separate private local directory and binds its schema to an expected
 project ID. Existing public SQL/HTTP project data is not used to store credentials.
-The server does not yet attach this library or provide account routes.
+The synchronous [retained root service](retained-account-root.md) now holds an
+explicit restored private roster; HTTP account routes remain pending.
 
 The library provisions users locally, verifies passwords, changes a password after
 checking the current one and disables/enables users through a trusted local
@@ -25,8 +26,9 @@ typed engine operations and never builds SQL or filesystem names from a login.
 
 Local backup/restore and explicit WAL compaction use the existing engine protocols.
 The current whole-registry backup does not include independently created account
-stores; combined platform capture/restore must be designed and tested before
-connecting them to live server projects. Failed/uncertain initialization remains
+stores. Use the separate [account bundle](account-bundle-format.md) for a common
+explicit registry/private capture and [root restore](account-root-restore.md) for
+mandatory private reset before selection. Network service attachment remains open. Failed/uncertain initialization remains
 inspectable rather than being silently overwritten or discarded.
 
 Do not put this store inside a project's public data directory or expose it through
@@ -50,7 +52,8 @@ SessionRecordInfo/inspect_session_record validate untrusted bounded metadata,
 verifier context and clipped time fields without verifying secrets or granting
 access. The migration alone grants no access. Local runtime admission was added later
 under [ADR0072](adr/0072-durable-local-session-lifecycle.md); coordinated account/data
-restore and network integration remain open.
+restore now uses the separate [root protocol](account-root-restore.md); network
+integration remains open.
 
 
 ## Explicit clock activation
@@ -104,7 +107,8 @@ families on every subsequent admission. Explicit scope/time reset invalidates
 all older incarnations. Private backup contains these rows; generic restore can
 still admit a previously current token under its old incarnation. Run durable
 reset before traffic. The existing public registry archive does not capture this
-separate store. HTTP routes, combined capture/restore, bounded server workers,
+separate store. Separate common-bundle/root capture and restoration are tested;
+HTTP routes, bounded server workers,
 request throttling, cookie/CORS policy, roles and row policies remain unfinished.
 
 ## Private reset before publication
@@ -126,8 +130,9 @@ for reset; there is no automatic compaction or downgrade on failure.
 This uses the shared engine restore_prepared protocol under
 [ADR0073](adr/0073-private-restore-reset-before-publication.md). Generic engine
 restore deliberately has a no-op preparation and retains old metadata. Neither
-method makes current registry archives capture separate accounts; combined
-platform capture/restore and server routes remain unfinished.
+method makes generic registry archives capture separate accounts. The explicit
+[common bundle/root protocol](account-root-restore.md) adds that coordination;
+HTTP routes remain unfinished.
 
 ## Pure archive inventory and explicit export
 
@@ -141,10 +146,12 @@ occurs. Opening, file backup and explicit backup_image use the same validator.
 backup_image returns sensitive committed archive bytes for trusted offline capture.
 Never put them in a public SQL/HTTP response. No encryption or total retained-heap
 quota is implied. [ADR0074](adr/0074-owned-verified-private-archive-inventory.md)
-records owned image lifetime, semantic validation, bounds and the future coordinated
-capture requirement. Registry capture currently releases temporary data owners
-before returning; simply appending a later private image cannot prove a common
-capture boundary. Combined account/data capture and publication remain pending.
+records owned image lifetime, semantic validation and bounds. An independent
+registry backup_image releases temporary data owners before returning; appending
+a later private image cannot establish a common boundary. Use
+ProjectStore::capture_account_bundle or the explicit root capture, which retain
+all owners through private images and final inventory validation. Owned file
+publication and coordinated root restoration now execute separately.
 
 
 The direct restore_private_account_bytes API accepts a bounded sensitive archive
@@ -154,8 +161,9 @@ durable reset/activation and owned no-replace publication. Input bytes and sourc
 credentials stay unchanged; old restored access/refresh tokens are denied before
 selection. Generic engine restore_bytes preserves historical private scope and
 must not replace the private wrapper. See
-[ADR0077](adr/0077-restore-private-byte-images.md). No combined root/HTTP restoration
-or whole-process memory reservation is implied.
+[ADR0077](adr/0077-restore-private-byte-images.md). The separate
+[root coordinator](account-root-restore.md) consumes this wrapper. HTTP restoration
+and whole-process memory admission remain open.
 
 Private byte restoration needs WAL headroom for its mandatory reset/activation commit,
 just like private file restore. Capacity refusal leaves the target unpublished; no

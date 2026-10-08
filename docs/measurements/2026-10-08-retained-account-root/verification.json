@@ -1,0 +1,88 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "f62f68e7e8fbf42170845afcc942fb330457d1d3",
+  "source_sha256": {
+    "crates/server/src/account_bundle/tests.rs": "750a704759c12807bcbfa523060356553c78a74cfd77fe0f4f20f0c3924aa0b4",
+    "crates/server/src/account_bundle/tests/files.rs": "439110ad249b70c8f2a51f43a6b8eefff5acfcbf1a9f70e19caf60cc65aa8368",
+    "crates/server/src/account_bundle/tests/root_live.rs": "385503099fe5d3b6b7ae65ecb755abf7410fc2ef812e31166faed02381e31820",
+    "crates/server/src/lib.rs": "1cc6217e739e6bdcac83ddc2b71ff1114e44528a248a646fa752553b4c880ebc",
+    "crates/server/src/registry_files/account_root.rs": "0157e9d1655824a57044c3df68de1f4f775c4c21805fa5c422c9d94ffa4538cf",
+    "crates/server/src/registry_files/account_root/live.rs": "cdd44e117ae1674a4bcf03af9159d189b3a5175d83ba443bad1a02a9563e7653"
+  },
+  "protocol": {
+    "exact_inspected_registry_private_owners_retained": true,
+    "normal_open_preserves_scopes_clocks_histories": true,
+    "active_private_owner_cap": 4,
+    "count_admission_before_registry_or_private_open": true,
+    "fixed_selected_project_and_private_rosters": true,
+    "root_owner_drops_after_child_owners": true,
+    "current_project_key_before_private_credential_and_time_work": true,
+    "borrowed_principal_cannot_detach": true,
+    "session_tokens_do_not_authorize_sql": true
+  },
+  "matrix": {
+    "new_server_cases": 13,
+    "new_compile_fail_lifetime_cases": 1,
+    "wal_versions": [
+      1,
+      2
+    ],
+    "native_forced_kills": 4,
+    "real_refresh_threads": 2,
+    "refresh_winners": 1,
+    "independent_epoch_disabled_restart_sequences": 12,
+    "substituted_root_private_container_private_store_registry_data_manifest": 6,
+    "active_private_bound_cases": [
+      0,
+      4,
+      5
+    ],
+    "busy_foreign_unsafe_missing_and_subset_paths": true,
+    "normal_restart_retains_valid_sessions_and_time_floor": true,
+    "service_mutations_recapture_and_independent_reset_clone": true,
+    "password_epoch_disable_and_key_rotation_are_distinct": true,
+    "authorized_failed_credentials_observe_trusted_clock": true,
+    "backward_overflow_equal_refusal_history_checks": true,
+    "initial_two_test_logout_calls_corrected_to_existing_refresh_contract": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "frozen_source_dependency_files": 420,
+    "main_cases_each": 1086,
+    "ignored_helpers_each": 22,
+    "optional_release_diagnostics_each": 54,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74",
+    "new_asan_campaign": false
+  },
+  "source_counts": {
+    "rust": 77714,
+    "effective_rust_without_blank_full_comment_lines": 74385,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 79820,
+    "net_rust_this_block": 919
+  },
+  "prior_hosted_ci": {
+    "commit": "f62f68e7e8fbf42170845afcc942fb330457d1d3",
+    "run": 37708517914,
+    "all_five_jobs": "success"
+  },
+  "exclusions": [
+    "HTTP account admission, workers, rate limits and secret DTOs",
+    "public signup, roles and row policies",
+    "authoritative dynamic service roster",
+    "whole-process retained model, staging, transient and worker quotas",
+    "physical power loss and production/security acceptance gate"
+  ]
+}

@@ -82,6 +82,10 @@ The [byte restore APIs](docs/adr/0077-restore-private-byte-images.md) restore ne
 images through the same owned publisher without intermediate input archive files.
 Use the private account wrapper to reset sessions before publication; ordinary
 engine restore preserves historical private scope.
+The [retained account root](docs/retained-account-root.md) supplies a synchronous,
+current-project-key-gated service over the exact inspected owners. Normal reopening
+preserves sessions; fixed-roster admission is capped at four active private stores.
+Borrowed user proofs grant no SQL permission. HTTP account routes remain pending.
 The [offline root restore](docs/account-root-restore.md) prepares registry data and
 every explicitly bundled private store under one owned root. Private session reset
 and exact prepared-history validation precede no-replace root publication. API keys

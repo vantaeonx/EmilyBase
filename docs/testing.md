@@ -3326,3 +3326,46 @@ strict dedicated-process diagnostic, including its failing negative control.
 [source-bound observation](measurements/2026-10-08-root-operator-cycle/verification.json)
 retain HTTP account attachment, automatic roster discovery, whole-process resource
 admission and production acceptance as separate gates.
+
+
+## Retained synchronous account root, 2026-10-08
+
+Thirteen new server cases and a compile-fail lifetime example exercise the exact
+inspected owners retained for service use. Opening changes no history/scope/time;
+normal restart preserves valid sessions and the persisted time floor. Current
+project keys precede private credential/time work. Tokens cannot authorize SQL;
+private table names remain unavailable from the public database. Password epochs,
+disable state, atomic refresh/logout and key rotation retain their distinct effects.
+
+The four-active-private bound is checked before registry/private opening; empty,
+four-store and refused five-store cases execute while offline inspection retains
+its wider bound. Missing paths never bootstrap, busy/unsafe owners refuse and all
+owners release on failure/drop. Six selected root/private/registry/data/manifest
+substitutions refuse operations and preserve foreign/detached objects.
+
+Two actual refresh threads select one replacement pair; it survives reopen.
+Four native forced kills cover opened/acknowledged states on WAL1/2. Source history
+is exact before service writes, acknowledged families survive and owners release.
+Twelve independent generated epoch/disabled/restart/logout sequences check each
+historical family's expected authority. Actual service mutations recapture and
+restore into an independent root: public rows/users/rotated service keys survive,
+old private tokens fail only in the restored clone, and later rows remain isolated.
+Unknown/wrong authorized credentials can advance trusted time; equal-time refusal,
+backward/overflow no-change and callback suppression are verified separately.
+
+Initial preflight exposed two test calls using access credentials for logout;
+logout intentionally requires refresh. Those tests now use the documented
+credential and a separate assertion confirms access logout is refused. No lifecycle
+semantics were weakened. Final frozen whole-workspace checks are recorded below
+only after their actual completion. No new format or ASan campaign is introduced.
+
+
+Final locked checks keep all420 frozen source/dependency hashes unchanged. Both
+Rust1.99.0/1.89.0 pass1086 main cases/22 ignored helpers and54 optional release
+diagnostics each. Formatting, strict workspace/profile/fuzz Clippy, minimum fuzz
+compilation, workspace build, SDK11 unit/7 actual HTTP restart cases, both synthetic
+cryptographic oracles and both warning-denied advisory scans pass. The preceding
+f62f68e hosted run37708517914 completes all five jobs successfully. Current hosted
+results are verified separately after publication. The
+[source-bound artifact](measurements/2026-10-08-retained-account-root/verification.json)
+records the actual retained-owner/lifecycle checks and separate unfinished gates.

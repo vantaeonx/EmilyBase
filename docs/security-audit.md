@@ -72,7 +72,11 @@ recovery, backup and security acceptance gates.
   security review remain required.
   Local private account storage is implemented separately under
   [ADR0068](adr/0068-private-project-account-store.md); authorized server paths,
-  coordinated account/data backups and session/restore revocation remain open.
+  explicit coordinated account/data backups and reset-before-root-publication are
+  tested under [ADR0078](adr/0078-atomic-account-bundle-root-restore.md). Synchronous
+  retained owners and current-key lifecycle admission are tested under
+  [ADR0080](adr/0080-retained-private-root-service.md); HTTP admission and the
+  authoritative dynamic service roster remain open.
 - [ ] Private object storage, signed URL validation and realtime authorization
   before enabling those future interfaces.
 

@@ -438,7 +438,22 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if action.starts_with("root-backup") {
+    if action == "root-live" {
+        let key: String = serde_json::from_slice(&fs::read(&target).unwrap()).unwrap();
+        let mut root = crate::AccountRoot::open(&source, PasswordPool::new(1).unwrap()).unwrap();
+        let pair = root
+            .sign_in(&project, &key, "synthetic_user", b"synthetic-password", 50)
+            .unwrap();
+        private_write(
+            &target.with_extension("session"),
+            &serde_json::to_vec(&(pair.access.expose(), pair.refresh.expose())).unwrap(),
+        );
+        File::open(target.with_extension("session"))
+            .unwrap()
+            .sync_all()
+            .unwrap();
+        durability::checkpoint("account_root_service_ack");
+    } else if action.starts_with("root-backup") {
         match crate::backup_account_bundle_root(&source, &target, PasswordPool::new(1).unwrap()) {
             Ok(_) => println!("BUNDLE_OK"),
             Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::AlreadyExists => {
