@@ -48,7 +48,7 @@ strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
 process-kill, checkpoint-crash and competing-writer checks execute. The WAL is
 capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
-The full stage-2 acceptance gate remains open. Persistent table indexes, integrated user authentication, dashboard and Kotlin SDK are future work.
+The full stage-2 acceptance gate remains open. Persistent table indexes, public user data authorization, dashboard and Kotlin SDK are future work.
 The Rust [password helper](docs/password-verifiers.md) supplies tested Argon2id
 verifiers and bounded workspaces. The separate [private account library](docs/private-accounts.md)
 stores scoped users, password replacements and disable/epoch state on our original WAL engine.
@@ -62,8 +62,9 @@ The [token primitive library](docs/session-token-primitives.md) supplies the
 purpose-bound random credentials and strict private verifier formats.
 Private versions1/2/3 remain readable; session checks require explicit v3 activation.
 This library remains separate from server projects and current whole-registry
-archives. HTTP signup/login/session routes, account policy, roles, row policies
-and automatic HTTP account attachment remain pending. The separate
+archives. Explicit embedded account transport is described below; native binary
+selection, public signup/account policy, roles, row policies and automatic
+attachment remain pending. The separate
 [private restore API](docs/adr/0073-private-restore-reset-before-publication.md)
 validates account schema/project and durably resets scope before atomic directory
 publication. Use it for private archives; generic engine restore retains old scope.
@@ -85,7 +86,10 @@ engine restore preserves historical private scope.
 The [retained account root](docs/retained-account-root.md) supplies a synchronous,
 current-project-key-gated service over the exact inspected owners. Normal reopening
 preserves sessions; fixed-roster admission is capped at four active private stores.
-Borrowed user proofs grant no SQL permission. HTTP account routes remain pending.
+Borrowed user proofs grant no SQL permission. The explicit embedded
+[private HTTP transport](docs/private-http.md) now supplies service-key-gated user/
+session routes with body/worker/rate bounds. Native binary mode selection and
+process-level account HTTP evidence remain the next increment.
 The [offline root restore](docs/account-root-restore.md) prepares registry data and
 every explicitly bundled private store under one owned root. Private session reset
 and exact prepared-history validation precede no-replace root publication. API keys

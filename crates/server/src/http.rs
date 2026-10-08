@@ -33,8 +33,8 @@ struct Scope {
 struct Problem {
     code: &'static str,
 }
-struct Failure(StatusCode, &'static str);
-type ApiResult<T> = std::result::Result<T, Failure>;
+pub(crate) struct Failure(pub(crate) StatusCode, pub(crate) &'static str);
+pub(crate) type ApiResult<T> = std::result::Result<T, Failure>;
 impl IntoResponse for Failure {
     fn into_response(self) -> Response {
         (self.0, Json(Problem { code: self.1 })).into_response()
@@ -150,7 +150,7 @@ async fn guard(State(app): State<App>, request: Request, next: Next) -> Response
     tracing::info!(method=%method,route=%route,status=response.status().as_u16(),elapsed_ms=started.elapsed().as_millis() as u64,"request");
     response
 }
-fn method_label(method: &Method) -> &'static str {
+pub(crate) fn method_label(method: &Method) -> &'static str {
     match method.as_str() {
         "GET" => "GET",
         "POST" => "POST",
@@ -230,7 +230,7 @@ async fn authorize(app: &App, request: Request) -> ApiResult<Request> {
     });
     Ok(request)
 }
-async fn json<T: serde::de::DeserializeOwned>(request: Request) -> ApiResult<T> {
+pub(crate) async fn json<T: serde::de::DeserializeOwned>(request: Request) -> ApiResult<T> {
     if !request
         .headers()
         .get(header::CONTENT_TYPE)
@@ -275,10 +275,10 @@ struct Create {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Sql {
-    sql: String,
+pub(crate) struct Sql {
+    pub(crate) sql: String,
     #[serde(default)]
-    parameters: Vec<Value>,
+    pub(crate) parameters: Vec<Value>,
 }
 
 async fn list(

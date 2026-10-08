@@ -1,5 +1,7 @@
 //! Bounded HTTP transport over a synchronous isolated-project/key registry.
 mod account_bundle;
+mod account_http;
+pub use account_http::account_router;
 #[cfg(test)]
 mod durability;
 mod http;

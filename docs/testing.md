@@ -3369,3 +3369,44 @@ f62f68e hosted run37708517914 completes all five jobs successfully. Current host
 results are verified separately after publication. The
 [source-bound artifact](measurements/2026-10-08-retained-account-root/verification.json)
 records the actual retained-owner/lifecycle checks and separate unfinished gates.
+
+
+## Explicit embedded private-root HTTP transport, 2026-10-08
+
+Ten new in-process router/middleware cases use real original-WAL roots. They
+provision exact Unicode/NUL passwords, sign in, inspect current principals,
+rotate refresh once, deny old pairs, logout with refresh and rotate project keys.
+SQL remains service-key scoped; master/cross-project/user-token substitutes refuse,
+private schemas stay unavailable and rejected scopes never poll the body.
+
+Unknown/duplicate/client-time JSON, malformed inputs, byte/password limits and
+content types refuse without echo or KDF/WAL changes at the same trusted time.
+Thirty private attempts exhaust only that project's bucket before KDF; another
+project remains available. Pure exact-window/capacity checks enforce128 tracked
+project buckets. Four slow bodies consume all permits, the fifth refuses and
+unstarted cancellation releases admission. A pending body times out without work.
+
+A started cancelled blocking worker retains its permit/root until an acknowledged
+user write completes. Root-lock waiting leaves health/reactor responsive. A trusted
+clock rollback fails closed; body time cannot choose a timestamp. Every response,
+including refusals and405, carries no-store/no-cache. Static method labels reuse
+the existing tested redacted logger; native account log/restart/kill checks remain
+part of the next executable-mode increment, not results of these in-process cases.
+
+The first compile rejected a cancellation assertion requiring Debug for a private
+error; the assertion now matches cancellation directly. Runtime preflight passes
+all ten cases. Dependency graph changes only add the existing zeroize edge to the
+server in both lockfiles; locked fuzz checks pass after the explicit offline update.
+No engine/manifest/token format or new ASan campaign changes. Final frozen checks
+are recorded only after their actual completion.
+
+
+Final locked checks keep all422 frozen source/dependency hashes unchanged. Both
+Rust1.99.0/1.89.0 pass1096 main cases/22 ignored helpers and54 optional release
+diagnostics each. Formatting, strict workspace/profile/fuzz Clippy, minimum fuzz
+compilation, workspace build, SDK11 unit/7 actual legacy HTTP restart cases, both
+synthetic cryptographic oracles and both warning-denied advisory scans pass.
+OpenAPI parses, every local schema reference resolves and all five private routes
+are described. Preceding6ed8d5b hosted run37710393778 completes all five jobs
+successfully. The [source-bound observation](measurements/2026-10-08-private-http/verification.json)
+keeps in-process account evidence distinct from pending native account mode.

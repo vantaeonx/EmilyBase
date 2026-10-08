@@ -27,13 +27,13 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; HTTP accounts/sessions pending |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; embedded account/session transport tested; native binary mode pending |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
 
 Durable table indexes, background journal rotation and history vacuuming,
-Extended SQL, HTTP user/session authentication, row policies,
+Extended SQL, native binary account HTTP mode, public signup, row policies,
 file uploads, realtime, migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and production deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
@@ -120,6 +120,12 @@ registry/private owners for synchronous project-key-gated lifecycle operations.
 Normal restart preserves scope/time/families; four active private stores are
 admitted before database opening. Network workers/rate/body/DTO admission, public
 account policy, dynamic roster and resource/production gates remain open.
+
+[ADR0081](adr/0081-private-root-http-mode.md) supplies an embedded fixed-root HTTP
+transport with current service-key admission, bounded bodies/workers/rates,
+trusted system time and explicit no-cache secret responses. In-process actual
+WAL/middleware checks execute; native executable mode and process-level HTTP
+restart/kill evidence are the next increment. Public user data access stays closed.
 
 The declared Linux Rust floor is verified on 1.89.0 with the current frozen
 [workspace checks](testing.md);

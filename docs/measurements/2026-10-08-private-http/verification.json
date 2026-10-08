@@ -1,0 +1,90 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "6ed8d5b25ea788dc6735a61e168ce58a2f2ee2b5",
+  "source_sha256": {
+    "Cargo.lock": "a339a3a39589a0f438b3028f64eb757c109b4ad2164d98e405ff0decbdc5c56d",
+    "crates/server/Cargo.toml": "da3064d6ec500cf970083ed7bb4dc3025558518fc5bcff4ab0b8dafe666ef815",
+    "crates/server/src/account_http.rs": "5f40939f6b713018f4bd715ad2eac4e9e50f599a5f1afe6fac1290393fa3b653",
+    "crates/server/src/account_http/tests.rs": "acecabe1eef2100f09919a82cb6a693cc11575b30c4881dc82c7643742092dcf",
+    "crates/server/src/http.rs": "be6654b13f85f00b8735003392f6fde6acb9ce2c35a92854ae7e135de36ff3ef",
+    "crates/server/src/lib.rs": "0c275c0325047ab5f17ccf29f9aff2a6994225bf5420d05e768e67903ac1ab0d",
+    "crates/server/src/registry_files/account_root/live.rs": "76f79f1a3e1aaf5ccee55057fa10966f93a5b342101eefbd7f29f0880e88123c",
+    "fuzz/Cargo.lock": "21ab8a0f1e2a2c7cd9c26ef2d8e49a3c7af8cd638810645d43f7369b16293fcb"
+  },
+  "protocol": {
+    "explicit_embedded_account_router_only": true,
+    "native_binary_mode_enabled": false,
+    "current_project_service_key_required": true,
+    "user_tokens_do_not_authorize_sql": true,
+    "root_lease_and_permit_span_started_blocking_work": true,
+    "worker_permits": 4,
+    "private_body_bytes": 4096,
+    "body_seconds": 5,
+    "private_attempts_per_project_window": 30,
+    "window_seconds": 60,
+    "known_project_bucket_cap": 128,
+    "peer_attempts_per_window": 120,
+    "peer_bucket_cap": 4096,
+    "service_time_from_system_clock_only": true,
+    "explicit_secret_response_after_durable_success": true,
+    "all_root_responses_no_store_no_cache": true,
+    "secret_input_owners_zeroized_not_whole_transport_heap": true
+  },
+  "matrix": {
+    "new_in_process_server_cases": 10,
+    "private_routes": 5,
+    "real_original_wal_stores": true,
+    "provision_sign_in_refresh_logout_and_current_principal": true,
+    "cross_project_master_and_session_as_sql_key_refused": true,
+    "unauthorized_body_not_polled": true,
+    "unknown_duplicate_client_time_byte_and_password_limits": true,
+    "per_project_rate_and_independent_other_bucket": true,
+    "four_slow_bodies_fifth_refused_and_cancel_release": true,
+    "body_timeout_no_kdf_or_wal_work": true,
+    "cancelled_started_worker_keeps_root_and_permit_until_durable_write": true,
+    "root_wait_does_not_block_health_or_reactor": true,
+    "trusted_clock_rollback_refused_and_body_time_rejected": true,
+    "native_account_http_restart_kill_cases_this_block": 0
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "frozen_source_dependency_files": 422,
+    "main_cases_each": 1096,
+    "ignored_helpers_each": 22,
+    "optional_release_diagnostics_each": 54,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_legacy_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74",
+    "openapi_local_references_resolve": true,
+    "new_asan_campaign": false
+  },
+  "source_counts": {
+    "rust": 78901,
+    "effective_rust_without_blank_full_comment_lines": 75553,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 81007,
+    "net_rust_this_block": 1187
+  },
+  "prior_hosted_ci": {
+    "commit": "6ed8d5b25ea788dc6735a61e168ce58a2f2ee2b5",
+    "run": 37710393778,
+    "all_five_jobs": "success"
+  },
+  "exclusions": [
+    "native executable private-root mode and account HTTP process restart/kill evidence",
+    "public signup, roles and row policies",
+    "authoritative dynamic service roster",
+    "whole-process retained model, staging, transient, worker and connection quotas",
+    "whole-transport secret erasure, TLS/CORS, encryption and production acceptance"
+  ]
+}

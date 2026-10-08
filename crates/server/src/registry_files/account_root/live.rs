@@ -24,6 +24,38 @@ impl std::fmt::Debug for AccountRoot {
     }
 }
 impl AccountRoot {
+    // Memory-only preadmission. Selected filesystem identities and the current
+    // private service key are checked again inside the blocking operation.
+    pub(crate) fn admits_project(&self, project: &str, key: &str, private: bool) -> Result<()> {
+        drop(self.contents.registry.authorize(project, key)?);
+        if private
+            && !self
+                .contents
+                .accounts
+                .iter()
+                .any(|store| store.project() == project)
+        {
+            return Err(Error::Denied);
+        }
+        Ok(())
+    }
+    pub(crate) fn status(&self, project: &str, key: &str) -> Result<crate::ProjectStatus> {
+        self.ready()?;
+        self.contents.registry.authorize(project, key)?.status()
+    }
+    pub(crate) fn explain(
+        &self,
+        project: &str,
+        key: &str,
+        sql: &str,
+        parameters: &[Value],
+    ) -> Result<emilybase_query::PlanDescription> {
+        self.ready()?;
+        self.contents
+            .registry
+            .authorize(project, key)?
+            .explain(sql, parameters)
+    }
     pub fn open(path: impl AsRef<Path>, pool: PasswordPool) -> Result<Self> {
         let owner = metadata::open_directory(path.as_ref())?;
         lock(&owner)?;

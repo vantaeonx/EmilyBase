@@ -4,7 +4,8 @@ AccountStore is a real Rust library over EmilyBase's original WAL database.
 It lives in a separate private local directory and binds its schema to an expected
 project ID. Existing public SQL/HTTP project data is not used to store credentials.
 The synchronous [retained root service](retained-account-root.md) now holds an
-explicit restored private roster; HTTP account routes remain pending.
+explicit restored private roster. The [embedded HTTP transport](private-http.md)
+now provides service-key-gated routes; native binary selection remains pending.
 
 The library provisions users locally, verifies passwords, changes a password after
 checking the current one and disables/enables users through a trusted local
