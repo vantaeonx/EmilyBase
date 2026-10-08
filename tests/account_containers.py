@@ -557,6 +557,36 @@ class Lifecycle:
                 page == {"rows": [] if expected is None else [expected], "next": None},
                 "bounded typed row page after restart",
             )
+        batch_row = [row_key, {"type": "text", "value": "synthetic-batch-final"}]
+        self.p.private.append("synthetic-batch-final")
+        changes = [
+            {"op": "insert", "row": original},
+            {"op": "update", "key": row_key, "row": batch_row},
+        ]
+        changed = self.p.request(
+            route + "/rows/batch", key, {"table": "schema_probe", "operations": changes}
+        )
+        require(
+            changed["changed"] == 2 and changed["transaction"].isdecimal(),
+            "atomic batch acknowledgement",
+        )
+        self.p.stop(hard=True)
+        self.p.up()
+        require(
+            self.p.request(route + "/rows/get", key, point) == {"row": batch_row},
+            "whole batch survives acknowledged kill",
+        )
+        failed = [{"op": "delete", "key": row_key}, {"op": "delete", "key": row_key}]
+        self.p.request(
+            route + "/rows/batch",
+            key,
+            {"table": "schema_probe", "operations": failed},
+            400,
+        )
+        require(
+            self.p.request(route + "/rows/get", key, point) == {"row": batch_row},
+            "late failure rolls back prior batch delete",
+        )
         dropped = self.p.request(route + "/drop", key, {"table": "schema_probe"})
         require(dropped["transaction"].isdecimal(), "durable drop acknowledgement")
         self.p.stop(hard=True)

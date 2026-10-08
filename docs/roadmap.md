@@ -774,3 +774,14 @@ single durable mutation preserve the engine boundary. Private/sibling histories,
 user/current-key authority, generated models, ASan parsing and real TCP CRUD ACK
 kills cover the adapter. Common lifecycle now has twelve kills. Batch/idempotency,
 public account policy, RLS, global admission and production acceptance remain open.
+
+
+## Follow-up: atomic service row batches
+
+[ADR0093](adr/0093-atomic-service-row-batches.md) adds bounded ordered row writes on
+one table in one original transaction. Complete wire preparation precedes staging;
+late schema/existence failures abort all earlier changes.256/257 bounds, generated
+independent models, exact history, concurrency and native before-commit/after-ACK
+kills cover the adapter. Common lifecycle has thirteen successful ACK kills.
+Idempotency, held network transactions, public user/RLS authority, whole-process
+budgets, stable format and production acceptance remain open.

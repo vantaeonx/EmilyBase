@@ -3768,3 +3768,51 @@ still in progress at this observation. Local Docker remains unavailable.
 record this scope. Net growth:1,024 Rust and28 Python lines. Current totals:85,506
 Rust /82,053 excluding blanks/standalone comments; SDK1,259; Python1,705;88,470
 source lines. Documents/configuration/lockfiles/build output are excluded.
+
+
+## Bounded atomic service row batches, 2026-10-08
+
+Both Rust1.99.0 and1.89.0 pass74 unique scoped cases each:10 row/batch-core,
+23 private HTTP and41 network/project/recovery checks. One native child helper is
+excluded from ordinary discovery and explicitly executed by its parent test.
+Seven cases are new (4 core,1 private HTTP,2 native TCP). Independent16 batch
+models compare all-or-nothing ordered state;256 operations succeed,257/empty and
+strict invalid documents refuse. Mixed dependent operations commit once; late
+duplicate/missing/type/primary-change failures preserve exact old WAL and rows.
+
+The child pauses inside the real batch staging path before commit and after
+successful function return. Two precommit kills per Rust (WAL1/2) leave prepared
+changes absent; two post-return kills restore both changes. Actual TCP checks
+perform four batch ACK kills and four kills after late rejection per Rust across
+both routers/formats. Another four ACK kills follow32 simultaneous clients per
+scenario. After reopen, checked rows equal exactly all successful packets and
+contain no refused/discarded operations. These checks make no throughput/latency
+or hardware power-loss claim. Private history remains byte-exact. All six row
+routes also check current keys after waiting bodies. Four shared native lifecycle
+runs each pass13 successful ACK kills before backup/restore/corruption checks.
+
+The initial pressure preflight incorrectly expected429 for exhausted workers;
+the established contract is503 workers_busy. The fixture now admits only that
+explicit capacity error or429 rate_limit, joins every client before asserting,
+and still fails any storage/unknown response. Production admission is unchanged.
+All four native cases and strict server Clippy were rerun on final fixture source
+for stable/minimum. Final unique network count replaces the earlier three-case
+native run with four, without counting reruns as additional cases.
+
+The extended exact runtime decoder completes3,678,315 ASan inputs in53 seconds,
+observed RSS422MiB under512MiB and65,538-byte input cap, no findings. This short
+parser campaign is not an audit. Workspace/minimum builds, format, strict workspace/
+profile/fuzz Clippy, minimum fuzz compilation, Python format/lint and both warning-
+denied advisory scans pass. Final460 source/dependency/protocol hashes are verified;
+OpenAPI references resolve and operation IDs are unique. Full workspace/SDK tests
+and optional allocation measurements were not repeated. Docker is unavailable
+locally; native and hosted container evidence are separate.
+
+Priorbc683b7 remains the latest observed fully successful hosted run37737773033.
+Schema run37739476397 general tests and row run37740727542 general/minimum tests
+are still running at this observation; their container/advisory/profile jobs pass.
+[ADR0093](adr/0093-atomic-service-row-batches.md) and
+[source-bound data](measurements/2026-10-08-atomic-row-batches/verification.json)
+record this boundary. Net growth:560 Rust and30 Python lines. Current source totals:
+86,066 Rust /82,607 excluding blanks/standalone comments; SDK1,259; Python1,735;
+89,060 combined. No stage or production milestone is closed.

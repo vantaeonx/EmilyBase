@@ -45,6 +45,8 @@ and creates/drops them through original durable transactions in both modes.
 Metadata and transaction IDs are decimal strings; only project service keys apply.
 [Typed row HTTP](docs/row-api.md) adds exact-key reads, bounded primary-order pages
 and single-row CRUD, with lossless integer strings and finite float bit text.
+A bounded row batch applies1..256 ordered writes to one table in one original
+commit; any error rolls back the complete packet.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

@@ -1,0 +1,121 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "337a575a54c1035781d8112250decb632073fa7b",
+  "source_sha256": {
+    "crates/server/src/row_api.rs": "71db7976c6117b9f2eac57b6bbddbcd6d06bc21f93a83c88ad6f00d38868899b",
+    "crates/server/src/row_api/tests.rs": "feae8d114ec2c75753ff01bd00243fa6e35386e2c084a41767e52ea9a2c06f29",
+    "crates/server/src/row_api/batch_tests.rs": "a6344bee6d0d4e78ff17725dbe6022d0c74116e1c7a5ffcd9425e7116a75d40a",
+    "crates/server/src/http.rs": "97b0de5e9d2a633ddf055e276933a0bb03dd0418f21ca207daf606331662f672",
+    "crates/server/src/account_http.rs": "4c7b8aa37f6a89aa352d2f60d428d0732e5c3de341e71492b96ed5ef513ac447",
+    "crates/server/src/account_http/tests/rows.rs": "9b0a14862afa6e8686d82bb20a509dd44ffa44b18e9aaa260784aa9567daa864",
+    "crates/server/tests/table_schema.rs": "b11664a64b1146aad7815cd85c74cf43ef2dbeb1396d419cb42f0f8112a29c4f",
+    "fuzz/fuzz_targets/row_requests.rs": "9806b743bd4a352c6db3b984fcaeba3ec913f7de4a0de3deccc53c102d717c43",
+    "tests/account_containers.py": "6abb085311e00a9b8592d89542679dc589cb17c9979c9d737a4889172d8c564e",
+    "docs/openapi.json": "c8e87a00ff405a20e50184f2fc5c98faadd0537ad12e4e11f89455ba3739e160",
+    "Cargo.lock": "a54c26375bd64ec25d817376db1e5dc4d590852989b1c4210b520ba0d3f49825",
+    "fuzz/Cargo.lock": "9d834449ee864d2f272898a2b2fdabf661fd04fce187d3081d4144f8b6f8fc69"
+  },
+  "protocol": {
+    "route": "POST /v1/projects/{id}/tables/rows/batch",
+    "both_routers": true,
+    "one_table_per_packet": true,
+    "operations": [
+      "insert",
+      "update",
+      "delete"
+    ],
+    "operation_count": [
+      1,
+      256
+    ],
+    "max_body_bytes": 65536,
+    "complete_wire_preparation": true,
+    "one_original_durable_commit": true,
+    "late_error_rolls_back_whole_packet": true,
+    "changed_counts_operations_not_live_rows": true,
+    "service_authority_only": true,
+    "private_current_key_recheck_after_body": true,
+    "no_private_clock_wal_change": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "final_unique_scoped_passed_each": 74,
+    "ignored_native_child_helper_each": 1,
+    "suites_each": {
+      "row_and_batch_core": 10,
+      "private_http": 23,
+      "network": 41
+    },
+    "new_cases": {
+      "core": 4,
+      "private_http": 1,
+      "native_tcp": 2
+    },
+    "generated_batch_models": 16,
+    "core_before_commit_kills_each": 2,
+    "core_after_successful_function_return_kills_each": 2,
+    "new_batch_tcp_ack_kills_each": 4,
+    "new_tcp_after_rejection_kills_each": 4,
+    "new_pressure_tcp_ack_kills_each": 4,
+    "pressure_clients_per_scenario": 32,
+    "pressure_mode_format_scenarios_each": 4,
+    "pressure_recovered_state_equals_exact_acknowledged_packets": true,
+    "common_native_lifecycle_runs": 4,
+    "ack_kills_per_common_lifecycle": 13,
+    "frozen_source_dependency_protocol_files": 460,
+    "workspace_minimum_builds": true,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "python_format_lint": true,
+    "both_warning_denied_advisory_scans": true,
+    "openapi_refs_unique_operation_ids": true,
+    "full_workspace_sdk_optional_diagnostics_repeated": false
+  },
+  "fixture_repair": {
+    "observed": "pressure preflight incorrectly expected429 for exhausted worker permits; actual existing contract is503 workers_busy",
+    "change": "accept only explicit503 workers_busy and429 rate_limit capacity refusals; join every client before checking failures",
+    "all_four_native_cases_rerun_both_rust": true,
+    "strict_server_lint_rerun": true,
+    "production_admission_changed": false
+  },
+  "asan": {
+    "target": "row_requests including batch decoder",
+    "runs": 3678315,
+    "seconds": 53,
+    "observed_rss_mib": 422,
+    "rss_limit_mib": 512,
+    "input_limit_bytes": 65538,
+    "findings": 0,
+    "scope": "short bounded parser campaign, not an audit"
+  },
+  "prior_hosted": {
+    "last_all_five_success_commit": "bc683b73315860360831168a2d79ec76e9db042b",
+    "last_all_five_success_run": 37737773033,
+    "schema_run": 37739476397,
+    "schema_general_check": "in progress",
+    "row_run": 37740727542,
+    "row_container_advisories_profiles": "success",
+    "row_general_minimum_tests": "in progress",
+    "new_batch_container_run": "pending publication"
+  },
+  "source_counts": {
+    ".rs": 86066,
+    ".ts": 455,
+    ".mjs": 804,
+    ".py": 1735,
+    "total": 89060,
+    "effective_rust": 82607
+  },
+  "net_rust": 560,
+  "net_python": 30,
+  "exclusions": [
+    "idempotency and held network transactions",
+    "public user roles and RLS",
+    "whole-process heap/output/connection admission",
+    "new local Docker execution; CLI unavailable",
+    "stable format and production acceptance"
+  ]
+}

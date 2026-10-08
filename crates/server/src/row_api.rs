@@ -14,6 +14,7 @@ pub enum Operation {
     Insert,
     Update,
     Delete,
+    Batch,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -57,6 +58,70 @@ fn row(input: Vec<Input>) -> Result<Row> {
         .collect::<Result<Row>>()?;
     encode_row(&row)?;
     Ok(row)
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Batch {
+    table: String,
+    operations: Vec<InputWrite>,
+}
+#[derive(Deserialize)]
+#[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
+enum InputWrite {
+    Insert { row: Vec<Input> },
+    Update { key: InputKey, row: Vec<Input> },
+    Delete { key: InputKey },
+}
+enum WriteOperation {
+    Insert(Row),
+    Update(Key, Row),
+    Delete(Key),
+}
+fn writes(input: Vec<InputWrite>) -> Result<Vec<WriteOperation>> {
+    if input.is_empty() || input.len() > emilybase_transactions::MAX_TRANSACTION_EVENTS {
+        return Err(TableError::Limit);
+    }
+    input
+        .into_iter()
+        .map(|op| {
+            Ok(match op {
+                InputWrite::Insert { row: values } => WriteOperation::Insert(row(values)?),
+                InputWrite::Update { key, row: values } => {
+                    WriteOperation::Update(key.key()?, row(values)?)
+                }
+                InputWrite::Delete { key } => WriteOperation::Delete(key.key()?),
+            })
+        })
+        .collect()
+}
+#[derive(Serialize)]
+struct BatchChanged {
+    changed: usize,
+    transaction: String,
+}
+fn batch_after_stage(
+    db: &mut Database,
+    table: &str,
+    operations: Vec<WriteOperation>,
+    staged: impl FnOnce(),
+) -> Result<axum::response::Response> {
+    let changed = operations.len();
+    let mut tx = db.begin()?;
+    for op in operations {
+        match op {
+            WriteOperation::Insert(row) => {
+                tx.insert(table, row)?;
+            }
+            WriteOperation::Update(key, row) => tx.update(table, &key, row)?,
+            WriteOperation::Delete(key) => tx.delete(table, &key)?,
+        }
+    }
+    staged();
+    let transaction = tx.commit()?.to_string();
+    response(&BatchChanged {
+        changed,
+        transaction,
+    })
 }
 struct Output {
     bytes: Vec<u8>,
@@ -104,9 +169,14 @@ enum Prepared {
     Insert(String, Row),
     Update(String, Key, Row),
     Delete(String, Key),
+    Batch(String, Vec<WriteOperation>),
 }
 fn decode(op: Operation, bytes: &[u8]) -> Result<Prepared> {
     Ok(match op {
+        Operation::Batch => {
+            let input: Batch = parse(bytes)?;
+            Prepared::Batch(input.table, writes(input.operations)?)
+        }
         Operation::Get | Operation::Delete => {
             let input: Point = parse(bytes)?;
             let key = input.key.key()?;
@@ -147,6 +217,7 @@ pub(crate) fn run(
     bytes: &[u8],
 ) -> Result<axum::response::Response> {
     match decode(op, bytes)? {
+        Prepared::Batch(table, operations) => batch_after_stage(db, &table, operations, || {}),
         Prepared::Get(table, key) => {
             let snapshot = db.view()?;
             let schema = snapshot.schema(&table)?;
@@ -213,3 +284,6 @@ pub(crate) fn run(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod batch_tests;

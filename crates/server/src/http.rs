@@ -191,6 +191,7 @@ fn routes(app: App) -> Router {
         .route("/v1/projects/{id}/tables/rows/insert", post(row_insert))
         .route("/v1/projects/{id}/tables/rows/update", post(row_update))
         .route("/v1/projects/{id}/tables/rows/delete", post(row_delete))
+        .route("/v1/projects/{id}/tables/rows/batch", post(row_batch))
         .route_layer(middleware::from_fn_with_state(app.clone(), guard));
     Router::new()
         .route(
@@ -392,6 +393,9 @@ async fn row_update(Extension(scope): Extension<Scope>, request: Request) -> Api
 }
 async fn row_delete(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
     row_operation(scope, request, crate::row_api::Operation::Delete).await
+}
+async fn row_batch(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Batch).await
 }
 async fn row_operation(
     scope: Scope,

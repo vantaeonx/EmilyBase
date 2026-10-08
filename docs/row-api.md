@@ -15,6 +15,7 @@ All routes are POST under `/v1/projects/{id}/tables/rows/`:
 | `insert` | `table`, `row` | `{ "key": key, "transaction": "3" }` |
 | `update` | `table`, `key`, `row` | same mutation acknowledgment |
 | `delete` | `table`, `key` | same mutation acknowledgment |
+| `batch` | `table`, `operations` | `{ "changed": 2, "transaction": "4" }` |
 
 `row` is an array in schema column order, with exactly its column count. Unknown
 and duplicate fields refuse. Each value has a `type` tag:
@@ -70,3 +71,48 @@ request authority follows SQL policy. Public row work neither observes private
 session time nor writes private account history. Row-level policies, public user
 authority, global resource budgets and production acceptance remain open.
 [ADR0092](adr/0092-bounded-project-row-api.md) records the decision.
+
+
+## Atomic row batch
+
+`batch` accepts1..256 ordered operations on one table. The same65,536-byte body cap
+also applies, so large rows can reduce the usable operation count. Each operation
+is a strict tagged object:
+
+```json
+{
+  "table": "items",
+  "operations": [
+    {
+      "op": "insert",
+      "row": [
+        { "type": "integer", "value": "1" },
+        { "type": "text", "value": "synthetic before" }
+      ]
+    },
+    {
+      "op": "update",
+      "key": { "type": "integer", "value": "1" },
+      "row": [
+        { "type": "integer", "value": "1" },
+        { "type": "text", "value": "synthetic after" }
+      ]
+    }
+  ]
+}
+```
+
+Insert requires `row`; update requires `key` and complete `row`; delete requires
+`key`. Per-operation table/project fields, reads, SQL and unknown operations refuse.
+Later writes see earlier staged writes. Any error aborts the entire packet;
+earlier changes never become individual committed transactions. Success follows
+one original commit and returns the operation count, not final live-row count.
+Insert followed by delete still counts as two changes. Empty packets refuse.
+
+A missing response can still mean a committed transaction; inspect state before
+retrying. No idempotency key or held-open network transaction is implemented.
+Service authority, no-cache responses, private current-key recheck and no private
+history/time writes match single-row operations. The pure validator/fuzz decoder
+checks bounded grammar and values; actual database schema/existence and authority
+are checked only by execution. [ADR0093](adr/0093-atomic-service-row-batches.md)
+records the decision. Use synthetic data only.

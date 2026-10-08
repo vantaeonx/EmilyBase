@@ -19,17 +19,17 @@ fn schema() -> Schema {
         ],
     }
 }
-fn database(dir: &std::path::Path) -> Database {
+pub(super) fn database(dir: &std::path::Path) -> Database {
     let mut db = Database::create(dir.join("data")).unwrap();
     let mut tx = db.begin().unwrap();
     tx.create_table(schema()).unwrap();
     tx.commit().unwrap();
     db
 }
-fn integer(value: i64) -> Json {
+pub(super) fn integer(value: i64) -> Json {
     json!({"type":"integer","value":value.to_string()})
 }
-fn invoke(db: &mut Database, op: Operation, input: Json) -> Result<Json> {
+pub(super) fn invoke(db: &mut Database, op: Operation, input: Json) -> Result<Json> {
     let response = run(db, op, &serde_json::to_vec(&input).unwrap())?;
     let bytes = tokio::runtime::Builder::new_current_thread()
         .build()
@@ -41,7 +41,7 @@ fn invoke(db: &mut Database, op: Operation, input: Json) -> Result<Json> {
         .unwrap();
     Ok(serde_json::from_slice(&bytes).unwrap())
 }
-fn point(key: i64) -> Json {
+pub(super) fn point(key: i64) -> Json {
     json!({"table":"t","key":integer(key)})
 }
 fn insertion(key: i64, value: &str) -> Json {

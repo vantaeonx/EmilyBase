@@ -92,3 +92,13 @@ bounded before JSON parsing; row limits follow decoding. A capped serializer
 refuses excess output before retaining more serialized bytes. Whole-process heap,
 slow-client/output admission, idempotency and public-user RLS remain open. Mutations
 acknowledge only original commits and do not touch private clock/history.
+
+
+Atomic row batches require the same current project service authority. Strict
+single-table packets cap at256 operations and65,536 input bytes before parsing;
+complete wire/value/record checks follow decoding. All writes share one staged
+transaction; late errors drop prior changes without commit. Responses count
+operations only and acknowledge one original WAL commit. No per-operation project/
+path or SQL interpolation is accepted. Client cancellation retains the worker/gate
+until started work finishes; lost replies require inspection, not blind retry.
+Public user policy, idempotency and whole-process memory admission remain open.

@@ -148,7 +148,7 @@ async fn typed_row_crud_is_scoped_and_preserves_private_history_without_clock_ob
 #[tokio::test]
 async fn every_row_route_rechecks_current_key_after_body_wait_and_bounds_bad_documents() {
     let _serial = durability::PROCESS_TESTS.lock().await;
-    for op in ["get", "page", "insert", "update", "delete"] {
+    for op in ["get", "page", "insert", "update", "delete", "batch"] {
         let f = fixture();
         let router = routes_app(f.app.clone());
         let (id, key) = &f.credentials[0];
@@ -156,6 +156,7 @@ async fn every_row_route_rechecks_current_key_after_body_wait_and_bounds_bad_doc
         let public_before = public(&f, 0);
         let payload = match op {
             "page" => json!({"table":"t","limit":1}),
+            "batch" => json!({"table":"t","operations":[{"op":"insert","row":[integer(2)]}]}),
             "insert" => json!({"table":"t","row":[integer(2)]}),
             "update" => json!({"table":"t","key":integer(1),"row":[integer(1)]}),
             _ => json!({"table":"t","key":integer(1)}),
@@ -204,4 +205,82 @@ async fn every_row_route_rechecks_current_key_after_body_wait_and_bounds_bad_doc
         assert_eq!(public(&f, 0), public_before);
         assert_eq!(wal(&f), before);
     }
+}
+
+#[tokio::test]
+async fn row_batches_commit_once_rollback_late_errors_and_serialize_duplicate_writers() {
+    let _serial = durability::PROCESS_TESTS.lock().await;
+    let f = fixture();
+    let router = routes_app(f.app.clone());
+    let (id, key) = &f.credentials[0];
+    let (_, other_key) = &f.credentials[1];
+    let before = wal(&f);
+    let sibling = public(&f, 1);
+    f.clock.store(0, Ordering::SeqCst);
+    let insert = |id| json!({"op":"insert","row":[integer(id)]});
+    let delete = |id| json!({"op":"delete","key":integer(id)});
+    let batch = |operations: Vec<Value>| json!({"table":"t","operations":operations});
+    let initial = public(&f, 0);
+    let fail = batch(vec![insert(2), insert(1)]);
+    for wrong in [MASTER, other_key] {
+        assert_eq!(
+            operation(&router, id, wrong, "batch", fail.clone()).await.0,
+            StatusCode::UNAUTHORIZED
+        );
+    }
+    assert_eq!(
+        operation(&router, id, key, "batch", fail).await.0,
+        StatusCode::BAD_REQUEST
+    );
+    assert_eq!(public(&f, 0), initial);
+    let (status, committed) = operation(
+        &router,
+        id,
+        key,
+        "batch",
+        batch(vec![insert(2), insert(3), delete(2)]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(committed["changed"], 3);
+    assert!(
+        committed["transaction"]
+            .as_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap()
+            > 1
+    );
+    let duplicate = batch(vec![insert(4), insert(5)]);
+    let (a, b) = tokio::join!(
+        operation(&router, id, key, "batch", duplicate.clone()),
+        operation(&router, id, key, "batch", duplicate)
+    );
+    let mut statuses = [a.0.as_u16(), b.0.as_u16()];
+    statuses.sort_unstable();
+    assert_eq!(statuses, [200, 400]);
+    let retained = public(&f, 0);
+    assert_eq!(
+        operation(
+            &router,
+            id,
+            key,
+            "batch",
+            batch(vec![delete(1), delete(99)])
+        )
+        .await
+        .0,
+        StatusCode::BAD_REQUEST
+    );
+    assert_eq!(public(&f, 0), retained);
+    let (status, page) =
+        operation(&router, id, key, "page", json!({"table":"t","limit":128})).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        page["rows"],
+        json!([[integer(1)], [integer(3)], [integer(4)], [integer(5)]])
+    );
+    assert!(page["next"].is_null());
+    assert_eq!(public(&f, 1), sibling);
+    assert_eq!(wal(&f), before);
 }

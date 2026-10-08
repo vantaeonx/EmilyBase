@@ -307,3 +307,170 @@ fn real_tcp_row_insert_replace_delete_ack_kills_recover_exact_typed_values() {
         }
     }
 }
+
+#[test]
+fn real_tcp_batches_ack_atomically_and_late_rejections_survive_restart_on_both_modes_and_formats() {
+    let _serial = CASES.blocking_lock();
+    for private in [false, true] {
+        for compact in [false, true] {
+            let f = fixture(private, compact);
+            let before = f.private.as_ref().map(|p| fs::read(p).unwrap());
+            let server = start(&f.root, private);
+            assert_eq!(call(&server, &f, "POST", "/create", &schema()).0, 200);
+            let key = |text| json!({"type":"text","value":text});
+            let row = |flag, text| json!([{"type":"boolean","value":flag},key(text)]);
+            let payload = json!({"table":"temporary","operations":[{"op":"insert","row":row(false,"synthetic-batch-key")},{"op":"update","key":key("synthetic-batch-key"),"row":row(true,"synthetic-batch-key")},{"op":"insert","row":row(false,"synthetic-batch-gone")},{"op":"delete","key":key("synthetic-batch-gone")}]});
+            let (status, changed) = call(&server, &f, "POST", "/rows/batch", &payload);
+            assert_eq!(status, 200);
+            assert_eq!(changed["changed"], 4);
+            assert!(
+                changed["transaction"]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+                    > 1
+            );
+            let first = server.kill();
+            let server = start(&f.root, private);
+            let point = json!({"table":"temporary","key":key("synthetic-batch-key")});
+            assert_eq!(
+                call(&server, &f, "POST", "/rows/get", &point),
+                (200, json!({"row":row(true,"synthetic-batch-key")}))
+            );
+            assert_eq!(
+                call(
+                    &server,
+                    &f,
+                    "POST",
+                    "/rows/get",
+                    &json!({"table":"temporary","key":key("synthetic-batch-gone")})
+                ),
+                (200, json!({"row":null}))
+            );
+            let rejected = json!({"table":"temporary","operations":[{"op":"delete","key":key("synthetic-batch-key")},{"op":"delete","key":key("synthetic-batch-missing")}]});
+            assert_eq!(call(&server, &f, "POST", "/rows/batch", &rejected).0, 400);
+            let second = server.kill();
+            let server = start(&f.root, private);
+            assert_eq!(
+                call(
+                    &server,
+                    &f,
+                    "POST",
+                    "/rows/page",
+                    &json!({"table":"temporary","limit":1})
+                ),
+                (
+                    200,
+                    json!({"rows":[row(true,"synthetic-batch-key")],"next":null})
+                )
+            );
+            let third = server.stop();
+            if let Some(path) = &f.private {
+                assert_eq!(fs::read(path).unwrap(), before.unwrap());
+            }
+            for log in [&first, &second, &third] {
+                for secret in [
+                    MASTER,
+                    &f.id,
+                    &f.key,
+                    "temporary",
+                    "synthetic-batch-key",
+                    "synthetic-batch-gone",
+                ] {
+                    assert!(!log.contains(secret));
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn simultaneous_tcp_batches_admit_or_refuse_without_losing_acknowledged_packets() {
+    let _serial = CASES.blocking_lock();
+    for private in [false, true] {
+        for compact in [false, true] {
+            let f = fixture(private, compact);
+            let before = f.private.as_ref().map(|p| fs::read(p).unwrap());
+            let server = start(&f.root, private);
+            assert_eq!(call(&server, &f, "POST", "/create", &schema()).0, 200);
+            let barrier = std::sync::Arc::new(std::sync::Barrier::new(32));
+            let clients = (0..32)
+                .map(|actor| {
+                    let barrier = barrier.clone();
+                    let address = server.address;
+                    let route = format!("/v1/projects/{}/tables/rows/batch", f.id);
+                    let credential = f.key.clone();
+                    std::thread::spawn(move || {
+                        let key = |suffix| json!({"type":"text","value":format!("synthetic-load-{actor:02}-{suffix}")});
+                        let row = |flag, suffix| json!([{"type":"boolean","value":flag},key(suffix)]);
+                        let input = json!({"table":"temporary","operations":[
+                            {"op":"insert","row":row(false,"a")},
+                            {"op":"update","key":key("a"),"row":row(true,"a")},
+                            {"op":"insert","row":row(false,"b")},
+                            {"op":"insert","row":row(false,"discarded")},
+                            {"op":"delete","key":key("discarded")}
+                        ]});
+                        barrier.wait();
+                        let (status, reply) = support::call(address,"POST",&route,&credential,&input).unwrap();
+                        match status {
+                            200 => {
+                                assert_eq!(reply["changed"],5);
+                                assert!(reply["transaction"].as_str().unwrap().parse::<u64>().unwrap()>1);
+                                Some(actor)
+                            }
+                            429 => {assert_eq!(reply["code"],"rate_limit");None}
+                            503 => {assert_eq!(reply["code"],"workers_busy");None}
+                            _ => panic!("unexpected synthetic pressure status {status}: {reply}"),
+                        }
+                    })
+                })
+                .collect::<Vec<_>>();
+            // Join every client before checking failures, so the server outlives all calls.
+            let joined = clients.into_iter().map(|t| t.join()).collect::<Vec<_>>();
+            let acknowledged = joined
+                .into_iter()
+                .filter_map(|r| r.unwrap())
+                .collect::<Vec<_>>();
+            assert!(!acknowledged.is_empty());
+            let logs = server.kill();
+            let data = if private {
+                f.root.join("registry").join(&f.id).join("data")
+            } else {
+                f.root.join(&f.id).join("data")
+            };
+            let db = emilybase_transactions::Database::open(data).unwrap();
+            let view = db.view().unwrap();
+            let actual = view
+                .primary_rows("temporary", None, None)
+                .unwrap()
+                .map(|r| {
+                    let r = r.unwrap();
+                    let emilybase_catalog::Value::Text(key) = &r[1] else {
+                        panic!("expected text key")
+                    };
+                    let emilybase_catalog::Value::Boolean(flag) = r[0] else {
+                        panic!("expected boolean")
+                    };
+                    (key.clone(), flag)
+                })
+                .collect::<std::collections::BTreeMap<_, _>>();
+            let expected = acknowledged
+                .into_iter()
+                .flat_map(|actor| {
+                    [
+                        (format!("synthetic-load-{actor:02}-a"), true),
+                        (format!("synthetic-load-{actor:02}-b"), false),
+                    ]
+                })
+                .collect::<std::collections::BTreeMap<_, _>>();
+            assert_eq!(actual, expected);
+            if let Some(path) = &f.private {
+                assert_eq!(fs::read(path).unwrap(), before.unwrap());
+            }
+            for secret in [MASTER, &f.id, &f.key, "temporary", "synthetic-load-"] {
+                assert!(!logs.contains(secret));
+            }
+        }
+    }
+}

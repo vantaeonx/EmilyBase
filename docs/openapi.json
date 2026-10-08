@@ -3802,6 +3802,76 @@
           }
         }
       }
+    },
+    "/v1/projects/{id}/tables/rows/batch": {
+      "post": {
+        "operationId": "row_batch",
+        "summary": "Apply one bounded atomic batch to one table",
+        "description": "One to256 ordered insert/update/delete operations on one selected public table. Later operations see prior staged changes. Complete validation and one original WAL commit; any failure aborts the entire packet. No partial commit, merge, idempotency key or cross-project table selection. Same exact typed row wire, body/output limits, service authority and private-root current-key recheck as single-row operations.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowBatchChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowBatchRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5043,6 +5113,104 @@
         },
         "required": [
           "key",
+          "transaction"
+        ]
+      },
+      "RowBatchWrite": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "insert"
+              },
+              "row": {
+                "$ref": "#/components/schemas/TypedRow"
+              }
+            },
+            "required": [
+              "op",
+              "row"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "update"
+              },
+              "key": {
+                "$ref": "#/components/schemas/RowKey"
+              },
+              "row": {
+                "$ref": "#/components/schemas/TypedRow"
+              }
+            },
+            "required": [
+              "op",
+              "key",
+              "row"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "delete"
+              },
+              "key": {
+                "$ref": "#/components/schemas/RowKey"
+              }
+            },
+            "required": [
+              "op",
+              "key"
+            ]
+          }
+        ]
+      },
+      "RowBatchRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "table": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "operations": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 256,
+            "items": {
+              "$ref": "#/components/schemas/RowBatchWrite"
+            }
+          }
+        },
+        "required": [
+          "table",
+          "operations"
+        ]
+      },
+      "RowBatchChanged": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "changed": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 256
+          },
+          "transaction": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$"
+          }
+        },
+        "required": [
+          "changed",
           "transaction"
         ]
       }
