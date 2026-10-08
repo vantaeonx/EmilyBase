@@ -95,6 +95,8 @@ test("row wire rejects unsafe alternate floats and invalid bounds before fetch",
     { type: "float_bits", value: "fff8000000000001" },
     { type: "float_bits", value: "3FF0000000000000" },
     { type: "text", value: "界".repeat(1025) },
+    { type: "text", value: "\ud800" },
+    { type: "text", value: "\udfff" },
     { type: "bytes", value: [256] },
     { type: "null", extra: "synthetic-private" },
   ];
@@ -206,4 +208,40 @@ test("row response byte caps cancel streams and fixed refusals preserve outcome"
     "transaction_outcome_requires_inspection",
     "unknown",
   );
+});
+
+test("valid supplementary Unicode and NUL survive exact row transport", async () => {
+  const original = [
+    { type: "integer", value: "1" },
+    { type: "text", value: "\u{1f600}\u{10ffff}\0界" },
+  ];
+  let input;
+  const sdk = new EmilyBaseClient({
+    ...config,
+    fetch: async (_url, request) => {
+      input = JSON.parse(request.body);
+      return response({ row: original });
+    },
+  });
+  assert.deepEqual(
+    await sdk.rowGet("t", { type: "text", value: "\u{1f600}\0" }),
+    original,
+  );
+  assert.equal(input.key.value, "\u{1f600}\0");
+  let calls = 0;
+  const denied = new EmilyBaseClient({
+    ...config,
+    fetch: async () => {
+      calls++;
+      return response({ row: null });
+    },
+  });
+  for (const value of ["\ud800", "\udc00", "ok\ud800tail", "\udc00\ud800"]) {
+    assert.throws(
+      () => denied.rowGet("t", { type: "text", value }),
+      (error) =>
+        error instanceof EmilyBaseError && error.outcome === "not_started",
+    );
+  }
+  assert.equal(calls, 0);
 });

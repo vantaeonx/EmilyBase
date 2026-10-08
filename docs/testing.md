@@ -3860,3 +3860,18 @@ not repeated. Hosted container verification follows publication separately.
 record the boundary. Net growth:294 TypeScript and283 JavaScript test lines.
 Totals:86,190 Rust /82,730 excluding blanks/standalone comments; SDK1,836;
 Python1,735;89,761 source lines. No stage or production gate is closed.
+
+
+## SDK Unicode input refusal, 2026-10-08
+
+A focused regression reproduced acceptance of lone UTF-16 surrogates before Fetch
+(14 unit cases passed,1 failed). Row text/key validation now rejects malformed
+surrogate sequences before TextEncoder can substitute replacement characters and
+checks the necessary3072-code-unit upper bound before encoding. Valid supplementary
+code points/NUL remain exact in the protocol unit case. Formatting, strict SDK
+compilation and16 unit tests pass; all8 actual TCP integration cases pass against
+each Rust binary, including their existing ACK-kill row scenario. Rust runtime,
+full Rust tests/fuzz/advisories and Docker were not changed/repeated.
+Net growth:6 TypeScript and38 JavaScript test lines. Totals:86,190 Rust; SDK1,880;
+Python1,735;89,805 source lines. This is a focused input-validation repair and does
+not close a security or production gate.

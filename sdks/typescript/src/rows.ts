@@ -42,8 +42,14 @@ function decimal(input: unknown, minimum: bigint, maximum: bigint): string {
   return input;
 }
 function text(input: unknown): string {
-  if (typeof input !== "string" || encoder.encode(input).length > 3072)
-    return invalid();
+  if (typeof input !== "string" || input.length > 3072) return invalid();
+  // TextEncoder replaces lone UTF-16 surrogates; reject them before encoding.
+  for (const point of input) {
+    const unit = point.charCodeAt(0);
+    if (point.length === 1 && unit >= 0xd800 && unit <= 0xdfff)
+      return invalid();
+  }
+  if (encoder.encode(input).length > 3072) return invalid();
   return input;
 }
 export function key(input: unknown): RowKey {

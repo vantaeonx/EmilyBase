@@ -75,7 +75,7 @@ Browser runtime/device checks, realtime/uploads/sessions and Kotlin remain pendi
 
 ## Executed verification
 
-Fifteen unit tests cover request/response validation, all values, safe integers,
+Sixteen unit tests cover request/response validation, all values, safe integers,
 binding literals, declared/streamed response caps, aborts, refusal status matching,
 key replacement and absence of raw peer errors. Regressions first reproduced error
 text reflection, uncancelled oversized streams and rejection of valid 127-byte
@@ -135,3 +135,9 @@ widths before both were fixed. The new real-server case exercises every method,
 late rollback, pagination, signed64-bit extrema, float-bit preservation and a
 received-ACK SIGKILL/reopen on both local Rust binaries. External-container mode
 uses the same methods while leaving restart control to its deployment probe.
+
+
+UTF-16 input strings with lone surrogates are rejected locally before TextEncoder
+can replace them. Valid supplementary code points, NUL and bounded UTF-8 strings
+retain their exact content. The regression first failed before this check; final
+16 unit tests and8 real-server cases on each Rust binary pass.
