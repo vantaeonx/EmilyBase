@@ -6,8 +6,12 @@ pub use page::{AccountPage, MAX_ACCOUNT_PAGE};
 mod archive_tests;
 #[cfg(test)]
 mod page_tests;
+mod policy_catalog;
+#[cfg(test)]
+mod policy_catalog_tests;
 #[cfg(test)]
 mod policy_tests;
+pub use policy_catalog::{MAX_ROW_POLICIES, PolicyPrincipal, PolicyReceipt};
 mod records;
 mod restore;
 #[cfg(test)]
@@ -62,6 +66,16 @@ pub enum Error {
     Login,
     #[error("account login already exists")]
     Exists,
+    #[error("row policy catalog is not enabled")]
+    PolicySchema,
+    #[error("row policy revision does not match")]
+    PolicyConflict,
+    #[error("row policy catalog capacity exhausted")]
+    PolicyCapacity,
+    #[error("row policy is not installed")]
+    PolicyDenied,
+    #[error("invalid row policy input")]
+    Policy(#[source] crate::row_policy::PolicyError),
     #[error("account capacity exhausted")]
     Capacity,
     #[error("credential check failed")]
@@ -174,7 +188,8 @@ impl AccountStore {
             return Err(Error::Scope);
         }
         let database = Database::open(path)?;
-        let state = archive::validate_snapshot(database.view()?, project)?;
+        let state =
+            archive::validate_snapshot(database.view()?, project, database.last_transaction())?;
         Ok(Self {
             database,
             project: project.into(),
@@ -329,7 +344,11 @@ impl AccountStore {
     }
 
     pub fn backup(&mut self, destination: impl AsRef<Path>) -> Result<emilybase_backup::Report> {
-        archive::validate_snapshot(self.database.view()?, &self.project)?;
+        archive::validate_snapshot(
+            self.database.view()?,
+            &self.project,
+            self.database.last_transaction(),
+        )?;
         Ok(emilybase_backup::create(&mut self.database, destination)?)
     }
 

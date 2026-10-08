@@ -107,6 +107,39 @@ fn account_kill_worker() {
     }
     let mut store =
         AccountStore::open(Path::new(&path), PROJECT, PasswordPool::new(1).unwrap()).unwrap();
+    if mode.starts_with("policy-catalog-") {
+        use super::policy_catalog_tests::{DENY, OWN, context, schema};
+        let barrier = || {
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        };
+        let staged = mode.ends_with("stage");
+        let before = || {
+            if staged {
+                barrier();
+            }
+        };
+        if mode.contains("-migrate-") {
+            store.enable_row_policy_catalog_with(before).unwrap();
+        } else {
+            let schema = schema();
+            let replace = mode.contains("-replace-");
+            let expected = if replace {
+                store.row_policy_receipts().unwrap()[0].revision
+            } else {
+                0
+            };
+            let mut document = if replace { DENY } else { OWN }.to_vec();
+            document.resize(crate::row_policy::MAX_DOCUMENT_BYTES, b' ');
+            store
+                .install_row_policy_with(context(&schema), expected, &document, before)
+                .unwrap();
+        }
+        barrier();
+    }
     match mode.as_str() {
         "commit" => {
             let committed = store.set_disabled("synthetic", true).unwrap();

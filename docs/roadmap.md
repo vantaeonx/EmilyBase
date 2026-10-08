@@ -27,13 +27,13 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; public account policy remains open |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions implemented; public data enforcement remains open |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
 
 Durable table indexes, background journal rotation and history vacuuming,
-Extended SQL, public signup, row policies,
+Extended SQL, public signup, user data policy enforcement,
 file uploads, realtime, online/schema-diff migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and production deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
@@ -875,3 +875,12 @@ existing engine limits. Complete identity/checksum/order/length validation prece
 nested schema/policy compilation. Atomic replacement rollback and original verified
 backup/restore compose in tests on both WALs. Actual private catalog versioning,
 install/CAS/inventory/revisions, roles and user-data enforcement remain open.
+
+
+[ADR0102](adr/0102-explicit-private-policy-catalog.md) adds an explicit private v4
+catalog using original typed records and actual private commit revisions. Atomic
+migration/install/replacement, exact expected-revision retries, complete inventory
+validation and current borrowed policy proofs do not enable a user data route.
+Private/common-root restore preserves policies while resetting session incarnation.
+Roles, trusted public transaction context and bounded filtered CRUD remain open;
+no platform stage closes. See the [catalog contract](policy-catalog.md).

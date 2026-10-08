@@ -31,7 +31,8 @@ Local backup/restore and explicit WAL compaction use the existing engine protoco
 The current whole-registry backup does not include independently created account
 stores. Use the separate [account bundle](account-bundle-format.md) for a common
 explicit registry/private capture and [root restore](account-root-restore.md) for
-mandatory private reset before selection. Network service attachment remains open. Failed/uncertain initialization remains
+mandatory private reset before selection. Selected roots expose the service-key-gated
+account transport described above. Failed/uncertain initialization remains
 inspectable rather than being silently overwritten or discarded.
 
 Do not put this store inside a project's public data directory or expose it through
@@ -56,7 +57,7 @@ verifier context and clipped time fields without verifying secrets or granting
 access. The migration alone grants no access. Local runtime admission was added later
 under [ADR0072](adr/0072-durable-local-session-lifecycle.md); coordinated account/data
 restore now uses the separate [root protocol](account-root-restore.md); network
-integration remains open.
+public signup and user data enforcement remain open.
 
 
 ## Explicit clock activation
@@ -171,3 +172,10 @@ and whole-process memory admission remain open.
 Private byte restoration needs WAL headroom for its mandatory reset/activation commit,
 just like private file restore. Capacity refusal leaves the target unpublished; no
 automatic compaction is performed.
+
+
+An explicit [private v4 policy catalog](policy-catalog.md) now adds two exact typed
+tables to a previously clocked v3 store. It preserves existing users/sessions and
+performs no implicit upgrade. Complete open/export/restore validation includes
+bounded policy groups and actual committed revision bounds. Current borrowed
+policy decisions grant no end-user data route or role permission.

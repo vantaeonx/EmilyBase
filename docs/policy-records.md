@@ -1,14 +1,14 @@
 # Original policy record group v1
 
-Pure experimental `row_policy::records` codec for a future private policy catalog.
-Current private account/session stores remain v1..v3; their accepted schemas and
-root initialization are unchanged. Do not insert these tables into an existing
-private store manually: current complete-schema validation will refuse it.
-There is no policy-install command or HTTP route yet.
+Pure experimental `row_policy::records` codec, now used by the explicitly enabled
+[private v4 policy catalog](policy-catalog.md). Existing private v1..v3 stores and
+default v3 root initialization remain supported. Do not insert these tables
+manually: use the atomic library migration. There is no policy-install CLI or HTTP
+route yet.
 
 `encode(TableContext, revision, previous, document)` validates the strict bounded
 policy against its exact target schema and returns normal typed rows. It does
-not write them. `header_schema()`/`chunk_schema()` describe exact proposed private
+not write them. `header_schema()`/`chunk_schema()` describe exact private
 table shapes. `inspect(expected_project, header, chunks)` verifies a complete
 ordered group, then returns exact document metadata and a bound decision model.
 It grants no original database handle or user authority.
@@ -46,10 +46,9 @@ checks. Even a repaired checksum does not make malformed nested data valid. The
 checksum is not a signature: a trusted storage owner can replace a valid policy.
 Documents are plaintext record contents; Debug/errors redact them.
 
-A future catalog writer must allocate revisions under its exclusive original owner,
-check expected revision/context, commit header and all fragment changes atomically,
-validate complete inventories/orphans, preserve revocation semantics and include
-policies in root capture/restore. The codec itself cannot enforce those caller
-steps. Current tests compose ordinary typed transactions and verified backup/restore;
-they do not claim an installed policy subsystem or new runtime RLS authority.
+The [private catalog writer](policy-catalog.md) allocates revisions under its exclusive original owner,
+checks expected revision/context, commits header and all fragment changes atomically,
+validates complete inventories/orphans and includes policies in root capture/restore.
+The codec itself cannot enforce those caller steps. Policy persistence grants no
+end-user data/SQL route or runtime RLS enforcement by itself.
 This is an experimental logical record version, not a stable production file format.

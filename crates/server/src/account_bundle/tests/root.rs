@@ -50,7 +50,7 @@ fn manifest(value: &AccountBundleRootManifest) -> Vec<u8> {
 #[test]
 fn file_and_byte_root_restore_reset_every_private_version_before_selection() {
     let _serial = durability::PROCESS_TESTS.blocking_lock();
-    for version in 1..=3 {
+    for version in 1..=4 {
         for compact in [false, true] {
             let dir = tempfile::tempdir().unwrap();
             let mut f = fixture(dir.path(), 1);
@@ -58,7 +58,7 @@ fn file_and_byte_root_restore_reset_every_private_version_before_selection() {
             if version >= 2 {
                 f.accounts[0].enable_session_storage().unwrap();
             }
-            let old = if version == 3 {
+            let old = if version >= 3 {
                 f.accounts[0].enable_session_clock(100).unwrap();
                 Some(
                     f.accounts[0]
@@ -67,6 +67,22 @@ fn file_and_byte_root_restore_reset_every_private_version_before_selection() {
                 )
             } else {
                 None
+            };
+            let data = Database::open(&f.data_paths[0]).unwrap();
+            let data_schema = data.view().unwrap().schema("t").unwrap().clone();
+            let table = data.view().unwrap().table_id("t").unwrap();
+            drop(data);
+            let context = emilybase_auth::row_policy::TableContext {
+                project: &id,
+                id: table,
+                schema: &data_schema,
+            };
+            let policies = if version == 4 {
+                f.accounts[0].enable_row_policy_catalog().unwrap();
+                let deny = br#"{"version":1,"select":{"kind":"deny"},"insert":{"kind":"deny"},"update_using":{"kind":"deny"},"update_check":{"kind":"deny"},"delete":{"kind":"deny"}}"#;
+                vec![f.accounts[0].install_row_policy(context, 0, deny).unwrap()]
+            } else {
+                Vec::new()
             };
             let prior_scope = f.accounts[0].session_storage_scope().unwrap();
             if compact {
@@ -113,7 +129,10 @@ fn file_and_byte_root_restore_reset_every_private_version_before_selection() {
                     inspect_account_bundle_root(&target, pool()).unwrap()
                 );
                 assert_eq!(result.reset_at, 50);
-                assert_eq!(result.private_accounts[0].inventory.private_version, 3);
+                assert_eq!(
+                    result.private_accounts[0].inventory.private_version,
+                    if version == 4 { 4 } else { 3 }
+                );
                 let original = crate::inspect_account_bundle_bytes(&image).unwrap();
                 assert_eq!(result.registry, original.registry);
                 assert_eq!(
@@ -140,6 +159,45 @@ fn file_and_byte_root_restore_reset_every_private_version_before_selection() {
                     .sign_in("synthetic_user", b"synthetic-password", 50)
                     .unwrap();
                 assert!(store.verify_access(new.access.expose(), 50).is_ok());
+                if version == 4 {
+                    assert_eq!(store.row_policy_receipts().unwrap(), policies);
+                    let proof = store
+                        .verify_row_policy_access(new.access.expose(), 50, table)
+                        .unwrap();
+                    assert!(matches!(
+                        proof.authorize(
+                            context,
+                            emilybase_auth::row_policy::Change::Select(&[
+                                Value::Integer(1),
+                                Value::Integer(0)
+                            ])
+                        ),
+                        Err(emilybase_auth::row_policy::PolicyError::Denied)
+                    ));
+                }
+                drop(store);
+                drop(registry);
+                let mut root = crate::AccountRoot::open(&target, pool()).unwrap();
+                let fresh = root
+                    .sign_in(
+                        &id,
+                        &f.credentials[0].1,
+                        "synthetic_user",
+                        b"synthetic-password",
+                        50,
+                    )
+                    .unwrap();
+                assert!(
+                    root.with_access(
+                        &id,
+                        &f.credentials[0].1,
+                        fresh.access.expose(),
+                        50,
+                        |principal| principal.account().login.clone()
+                    )
+                    .is_ok()
+                );
+                drop(root);
                 assert_eq!(
                     fs::metadata(&target).unwrap().permissions().mode() & 0o777,
                     0o700

@@ -19,7 +19,11 @@ pub(super) struct ValidatedState {
     pub accounts: usize,
     pub families: usize,
 }
-pub(super) fn validate_snapshot(snapshot: &Snapshot, project: &str) -> Result<ValidatedState> {
+pub(super) fn validate_snapshot(
+    snapshot: &Snapshot,
+    project: &str,
+    last_transaction: u64,
+) -> Result<ValidatedState> {
     if !valid_project_id(project) {
         return Err(Error::Scope);
     }
@@ -48,14 +52,23 @@ pub(super) fn validate_snapshot(snapshot: &Snapshot, project: &str) -> Result<Va
     else {
         return Err(Error::Corrupt);
     };
-    if !matches!(*version, 1..=3) || !valid_project_id(stored) {
+    if !matches!(*version, 1..=4) || !valid_project_id(stored) {
         return Err(Error::Corrupt);
     }
     if stored != project {
         return Err(Error::ScopeMismatch);
     }
     let dummy = PasswordDigest::decode(dummy).map_err(|_| Error::Corrupt)?;
-    if snapshot.row_count() > MAX_ACCOUNTS + MAX_SESSION_FAMILIES + 3 {
+    if snapshot.row_count()
+        > MAX_ACCOUNTS
+            + MAX_SESSION_FAMILIES
+            + 3
+            + if *version == 4 {
+                MAX_ROW_POLICIES * (crate::row_policy::records::MAX_POLICY_CHUNKS + 1)
+            } else {
+                0
+            }
+    {
         return Err(Error::Corrupt);
     }
     let mut identities = std::collections::BTreeSet::new();
@@ -70,6 +83,9 @@ pub(super) fn validate_snapshot(snapshot: &Snapshot, project: &str) -> Result<Va
     }
     let session_scope = session_schema::validate_inventory(snapshot, project, *version)?;
     let session_clock = session_clock::validate_clock(snapshot, *version)?;
+    if *version == 4 {
+        policy_catalog::validate(snapshot, project, last_transaction)?;
+    }
     let accounts = identities.len();
     let families = if session_scope.is_some() {
         snapshot
@@ -105,7 +121,11 @@ pub fn inspect_private_account_backup_bytes(
         return Err(Error::Scope);
     }
     let verified = emilybase_backup::decode_verified(bytes)?;
-    let state = validate_snapshot(&verified.image().snapshot, project)?;
+    let state = validate_snapshot(
+        &verified.image().snapshot,
+        project,
+        verified.report().last_transaction,
+    )?;
     Ok(PrivateArchiveReport {
         database: verified.report().clone(),
         private_version: state.version,
@@ -120,7 +140,11 @@ impl AccountStore {
     /// Do not send through generic SQL/HTTP responses or automatically log them.
     /// Caller retention is outside the library's count bounds, not a heap quota.
     pub fn backup_image(&mut self) -> Result<Vec<u8>> {
-        validate_snapshot(self.database.view()?, &self.project)?;
+        validate_snapshot(
+            self.database.view()?,
+            &self.project,
+            self.database.last_transaction(),
+        )?;
         let wal = self.database.committed_wal()?;
         Ok(emilybase_backup::encode(&wal)?)
     }

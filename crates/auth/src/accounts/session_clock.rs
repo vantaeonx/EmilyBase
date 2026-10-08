@@ -17,7 +17,7 @@ pub(super) fn clock_schema() -> Schema {
     )
 }
 pub(super) fn validate_clock(snapshot: &Snapshot, version: i64) -> Result<Option<u64>> {
-    if version != 3 {
+    if version < 3 {
         return Ok(None);
     }
     if snapshot.schema(CLOCK).map_err(|_| Error::Corrupt)? != &clock_schema() {

@@ -13,17 +13,20 @@ fn original(path: &Path) -> AccountStore {
 fn each_private_version_and_wal_restores_accounts_with_new_scope_before_publication() {
     let _io = TEST_IO.lock().unwrap();
     for from_bytes in [false, true] {
-        for version in [1, 2, 3] {
+        for version in [1, 2, 3, 4] {
             for compacted in [false, true] {
                 let dir = tempfile::tempdir().unwrap();
                 let source = dir.path().join("source");
                 let mut store = original(&source);
                 let old_scope = match version {
                     2 => Some(store.enable_session_storage().unwrap()),
-                    3 => Some(store.enable_session_clock(100).unwrap()),
+                    3 | 4 => Some(store.enable_session_clock(100).unwrap()),
                     _ => None,
                 };
-                let old_token = if version == 3 {
+                if version == 4 {
+                    store.enable_row_policy_catalog().unwrap();
+                }
+                let old_token = if version >= 3 {
                     Some(
                         store
                             .sign_in("synthetic", b"synthetic-password", 100)
@@ -71,7 +74,7 @@ fn each_private_version_and_wal_restores_accounts_with_new_scope_before_publicat
                 assert_eq!(report.database_id, source_report.database_id);
                 assert_eq!(report.wal_version, source_report.wal_version);
                 assert!(report.last_transaction > source_report.last_transaction);
-                assert_eq!(report.tables, 5);
+                assert_eq!(report.tables, if version == 4 { 7 } else { 5 });
                 let mut installed =
                     AccountStore::open(&target, tests::PROJECT, PasswordPool::new(1).unwrap())
                         .unwrap();
@@ -295,14 +298,15 @@ proptest! {
     #![proptest_config(ProptestConfig::with_cases(32))]
     #[test]
     fn restored_account_state_matches_an_independent_disable_epoch_model(
-        events in prop::collection::vec(any::<bool>(),0..12), prior in 1..=3_u8, now in 0..300_u64
+        events in prop::collection::vec(any::<bool>(),0..12), prior in 1..=4_u8, now in 0..300_u64
     ) {
         let _io=TEST_IO.lock().unwrap();let dir=tempfile::tempdir().unwrap();let mut source=original(&dir.path().join("source"));
-        if prior==2 {source.enable_session_storage().unwrap();}else if prior==3 {source.enable_session_clock(100).unwrap();}
+        if prior==2 {source.enable_session_storage().unwrap();}else if prior>=3 {source.enable_session_clock(100).unwrap();}
+        if prior==4 {source.enable_row_policy_catalog().unwrap();}
         let mut disabled=false;let mut epoch=2;
         for next in events {if next!=disabled {epoch+=1;disabled=next;}source.set_disabled("synthetic",next).unwrap();}
         source.compact().unwrap();let archive=dir.path().join("private.backup");source.backup(&archive).unwrap();let target=dir.path().join("installed");
-        let bytes=std::fs::read(&archive).unwrap();let report=restore_private_account_bytes(&bytes,&target,tests::PROJECT,PasswordPool::new(1).unwrap(),now).unwrap();prop_assert_eq!(report.tables,5);
+        let bytes=std::fs::read(&archive).unwrap();let report=restore_private_account_bytes(&bytes,&target,tests::PROJECT,PasswordPool::new(1).unwrap(),now).unwrap();prop_assert_eq!(report.tables,if prior==4 {7} else {5});
         let mut restored=AccountStore::open(&target,tests::PROJECT,PasswordPool::new(1).unwrap()).unwrap();let record=restored.record("synthetic").unwrap().unwrap();
         prop_assert_eq!(record.info.disabled,disabled);prop_assert_eq!(record.info.credential_epoch,epoch);prop_assert_eq!(record.info.id,[7;16]);prop_assert_eq!(restored.session_clock_floor().unwrap(),Some(now));
         prop_assert_eq!(restored.sign_in("synthetic",b"synthetic-password",now).is_ok(),!disabled);

@@ -18,8 +18,11 @@ fn opened(path: &Path, records: Vec<Row>, version: u16, compact: bool) -> Accoun
     if version == 2 {
         store.enable_session_storage().unwrap();
     }
-    if version == 3 {
+    if version >= 3 {
         store.enable_session_clock(50).unwrap();
+    }
+    if version == 4 {
+        store.enable_row_policy_catalog().unwrap();
     }
     if compact {
         store.compact().unwrap();
@@ -30,7 +33,7 @@ fn opened(path: &Path, records: Vec<Row>, version: u16, compact: bool) -> Accoun
 #[test]
 fn bounded_metadata_pages_cover_every_private_version_and_wal_without_writes_or_hash_work() {
     let _io = TEST_IO.lock().unwrap();
-    for version in [1, 2, 3] {
+    for version in [1, 2, 3, 4] {
         for compact in [false, true] {
             let dir = tempfile::tempdir().unwrap();
             let path = dir.path().join("synthetic");

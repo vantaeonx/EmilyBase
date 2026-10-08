@@ -63,8 +63,10 @@ with explicit retries and conservative handling of lost responses.
 A synchronous [row policy decision library](docs/row-policies.md) now binds typed
 owner/field rules to current borrowed private principals and complete table identity.
 A [bounded record codec](docs/policy-records.md) also preserves complete policy
-groups within original page limits. User data routes, installed policies and roles
-remain pending.
+groups within original page limits. An explicitly enabled [private v4 catalog](docs/policy-catalog.md)
+now stores/replaces these groups atomically with actual commit revisions and
+current borrowed policy proofs. Verified restore preserves policies and revokes
+old sessions. User data routes and roles remain pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 
@@ -96,10 +98,11 @@ and a [durable trusted-time watermark](docs/adr/0071-durable-session-time-waterm
 commit-before-token-return behavior, concurrency and process-kill evidence.
 The [token primitive library](docs/session-token-primitives.md) supplies the
 purpose-bound random credentials and strict private verifier formats.
-Private versions1/2/3 remain readable; session checks require explicit v3 activation.
+Private versions1/2/3/4 remain readable; session checks require explicit v3 clock
+activation, and the policy catalog requires a separate explicit v4 migration.
 This library remains separate from server projects and current whole-registry
 archives. Explicit private-root transport is described below; public
-signup/account policy, roles, row policies and automatic
+signup/account policy, roles, user data policy enforcement and automatic
 attachment remain pending. The separate
 [private restore API](docs/adr/0073-private-restore-reset-before-publication.md)
 validates account schema/project and durably resets scope before atomic directory

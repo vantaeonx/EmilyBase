@@ -2,7 +2,8 @@
 
 `emilybase_auth::row_policy` is a synchronous pure Rust library. It accepts a
 current borrowed private `SessionPrincipal` and exact typed rows. It supplies no
-HTTP route, policy persistence, role grant or storage handle. End-user tokens
+HTTP route, role grant or storage handle. Persistence is supplied separately by
+the explicitly enabled [private v4 catalog](policy-catalog.md). End-user tokens
 still cannot call project SQL/rows/migrations. Existing trusted service authority
 is unchanged; row-level security is not enabled by this increment.
 
@@ -67,8 +68,7 @@ The caller must keep authoritative transaction/context/row ownership through the
 decision and write. Returning a decision does not stop unrelated SQL or enforce a
 query filter. Tests demonstrate an owned original transaction that stages a prefix,
 checks a disallowed owner transfer and discards all changes on error; this is not
-an installed server policy subsystem. Durable private policy catalog/revisions,
-role membership and revocation, policy installation/backup, bounded filtering/
+an installed server policy subsystem. Role membership and revocation, bounded filtering/
 ordering/continuation and atomic user CRUD/HTTP remain required before enabling
 user data routes. No production or security-audit gate is closed.
 
@@ -76,4 +76,5 @@ user data routes. No production or security-audit gate is closed.
 The separate [bounded original record codec](policy-records.md) now packages
 exact schema/document bytes into one header plus at most seven normal typed
 fragments. It verifies complete integrity and recompiles nested policy constraints.
-Private catalog versioning/install/revisions and user authority remain pending.
+The explicit [v4 catalog](policy-catalog.md) supplies atomic installation/revisions
+and current borrowed policy proofs. User data authority remains pending.

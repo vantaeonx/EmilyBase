@@ -12,17 +12,20 @@ fn original(path: &Path) -> AccountStore {
 #[test]
 fn pure_private_inspection_matches_export_file_and_each_supported_inventory() {
     let _io = TEST_IO.lock().unwrap();
-    for version in [1, 2, 3] {
+    for version in [1, 2, 3, 4] {
         for compacted in [false, true] {
             let dir = tempfile::tempdir().unwrap();
             let source = dir.path().join("source");
             let mut store = original(&source);
             if version == 2 {
                 store.enable_session_storage().unwrap();
-            } else if version == 3 {
+            } else if version >= 3 {
                 store.enable_session_clock(100).unwrap();
             }
-            let token = if version == 3 {
+            if version == 4 {
+                store.enable_row_policy_catalog().unwrap();
+            }
+            let token = if version >= 3 {
                 Some(
                     store
                         .sign_in("synthetic", b"synthetic-password", 100)
@@ -39,10 +42,10 @@ fn pure_private_inspection_matches_export_file_and_each_supported_inventory() {
             let report = inspect_private_account_backup_bytes(&image, tests::PROJECT).unwrap();
             assert_eq!(report.private_version, version);
             assert_eq!(report.accounts, 1);
-            assert_eq!(report.session_families, usize::from(version == 3));
+            assert_eq!(report.session_families, usize::from(version >= 3));
             assert_eq!(
                 report.clock_floor,
-                if version == 3 { Some(100) } else { None }
+                if version >= 3 { Some(100) } else { None }
             );
             assert_eq!(report.database.wal_version, if compacted { 2 } else { 1 });
             assert_eq!(
@@ -50,7 +53,8 @@ fn pure_private_inspection_matches_export_file_and_each_supported_inventory() {
                 match version {
                     1 => 2,
                     2 => 4,
-                    _ => 5,
+                    3 => 5,
+                    _ => 7,
                 }
             );
             let file = dir.path().join("private.backup");
@@ -304,7 +308,7 @@ proptest! {
     #![proptest_config(ProptestConfig::with_cases(64))]
     #[test]
     fn pure_inventory_matches_independent_version_account_and_clock_model(
-        accounts in 0..16_usize, prior in 1..=3_u16,
+        accounts in 0..16_usize, prior in 1..=4_u16,
         clock in 0..100000_u64, compacted in any::<bool>()
     ) {
         let _io = TEST_IO.lock().unwrap();
@@ -318,7 +322,8 @@ proptest! {
         tests::raw_store(&source, rows);
         let mut store = AccountStore::open(&source, tests::PROJECT, PasswordPool::new(1).unwrap()).unwrap();
         if prior == 2 { store.enable_session_storage().unwrap(); }
-        else if prior == 3 { store.enable_session_clock(clock).unwrap(); }
+        else if prior >= 3 { store.enable_session_clock(clock).unwrap(); }
+        if prior == 4 {store.enable_row_policy_catalog().unwrap();}
         if compacted { store.compact().unwrap(); }
         let before = store.database.committed_wal().unwrap();
         let image = store.backup_image().unwrap();
@@ -326,7 +331,7 @@ proptest! {
         prop_assert_eq!(report.accounts, accounts);
         prop_assert_eq!(report.private_version, prior);
         prop_assert_eq!(report.session_families, 0);
-        prop_assert_eq!(report.clock_floor, if prior == 3 {Some(clock)} else {None});
+        prop_assert_eq!(report.clock_floor, if prior >= 3 {Some(clock)} else {None});
         prop_assert_eq!(report.database.wal_version, if compacted {2} else {1});
         prop_assert_eq!(store.database.committed_wal().unwrap(), before);
     }
@@ -339,14 +344,23 @@ fn private_archive_corpus() {
     let output = std::env::var_os("EMILYBASE_PRIVATE_CORPUS").unwrap();
     let output = Path::new(&output);
     std::fs::create_dir_all(output).unwrap();
-    for version in [1, 2, 3] {
+    for version in [1, 2, 3, 4] {
         for compacted in [false, true] {
             let dir = tempfile::tempdir().unwrap();
             let mut store = original(&dir.path().join("source"));
             if version == 2 {
                 store.enable_session_storage().unwrap();
-            } else if version == 3 {
+            } else if version >= 3 {
                 store.enable_session_clock(100).unwrap();
+            }
+            if version == 4 {
+                store.enable_row_policy_catalog().unwrap();
+                let schema = super::policy_catalog_tests::schema();
+                let mut document = super::policy_catalog_tests::OWN.to_vec();
+                document.resize(16_384, b' ');
+                store
+                    .install_row_policy(super::policy_catalog_tests::context(&schema), 0, &document)
+                    .unwrap();
             }
             if compacted {
                 store.compact().unwrap();

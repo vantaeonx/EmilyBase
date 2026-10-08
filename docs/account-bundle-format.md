@@ -33,7 +33,7 @@ The following private entries are sorted strictly by project ID:
 | 32 | 8 | complete private EMILYBAK image byte length |
 | 40 | image length | exact private archive including its header |
 
-Private lengths use the existing single-database bound. Private versions1/2/3
+Private lengths use the existing single-database bound. Private versions1/2/3/4
 and WAL1/2 are validated completely against each independently expected project.
 No public data database or two private databases may share a database identity.
 Missing private entries are permitted: the report counts only the supplied roster,
@@ -77,3 +77,8 @@ private worker admission, HTTP authentication, roles and row policies remain ope
 Existing EMILYREG/EMILYBAK and database/WAL formats are unchanged; no silent upgrade
 or PostgreSQL compatibility is promised. See
 [ADR0075](adr/0075-common-registry-private-capture.md).
+
+Explicit private v4 catalogs are opaque nested original archives in this unchanged
+bundle version. Capture/inspection checks their complete header/chunk inventory.
+Root restore preserves policy groups/revisions and resets only private session
+incarnation/time; old user credentials remain revoked. See [catalog compatibility](policy-catalog.md).

@@ -4123,3 +4123,48 @@ record this scope. Net growth783 Rust lines:91,167 physical/87,541 effective,
 SDK2,502/Python1,785,total95,454 source lines. Private v1..v3 stores, server authority
 and existing WAL/file formats are unchanged. Actual catalog installation/revisions,
 roles and atomic user-data enforcement remain open; no production gate is closed.
+
+
+## Explicit private policy catalog verification, 2026-10-09
+
+The explicit v3-to-v4 migration and original typed policy install/replace paths
+now execute as one complete WAL commit each. Existing sessions/clock/scope survive
+migration; exact migration/current/predecessor retries write nothing. Actual private
+commit revisions, gaps from unrelated writes, stale expectations,128-policy cap,
+long-to-short fragment replacement and current borrowed proof revocation are checked.
+Nine new regular auth cases include32 independent expected-revision sequences per
+toolchain and12 controlled migration/first/replace staged-or-received-ACK kills per
+toolchain over WAL1/2. A compile-fail proof test prevents mutation of the private
+owner while its policy/session proof remains in use.
+
+Five corruption forms check orphan/missing fragments, future revision, invalid
+length and unknown extra table with byte-exact refusal and no repair. The first
+inventory run reproduced one real list-validation defect: an eighth table was
+accepted by the list while open/export refused. Five later failures in that same
+process were poisoned TEST_IO-lock cascades. Requiring the exact seven-table
+inventory fixes the actual defect; the final full suites run in fresh processes.
+
+Private archive/restore and metadata-page version matrices include v4. Common-root
+file/byte restore covers16 version/WAL/transport combinations per toolchain,
+including nonempty v4 policy preservation, fresh session scope before publication,
+old-token denial, fresh policy proof and ordinary retained-root service operation.
+Default root initialization remains v3 and no user data route is enabled.
+
+Complete auth/server suites pass345 cases on each of Rust1.99 and1.89:133 auth and
+212 server, with eight explicit child/corpus helpers ignored. Strict workspace/fuzz
+format and all-target Clippy, minimum workspace build and minimum all-target fuzz
+compilation pass on482 frozen source/dependency/protocol files. ASan
+private_account_archive executes45,260 runs in46 seconds, observed RSS300MiB under
+512MiB cap, maximum input262,144 bytes and no findings. Eight real valid private
+archive seeds cover versions1..4/WAL1..2; ten structured v4 seeds cover short/long
+valid groups and orphan/future/damage/missing variants before original snapshot/
+archive encoding. Full workspace/SDK/advisory/optional allocation/local Docker
+checks were not repeated for this increment.
+
+Previous a661bf8 hosted run37849093073 has all five jobs successful; a57f071
+run37847818143 is also successful. New hosted checks follow publication.
+[ADR0102](adr/0102-explicit-private-policy-catalog.md), [catalog contract](policy-catalog.md)
+and [source-bound verification](measurements/2026-10-09-private-policy-catalog/verification.json)
+record the scope. Net growth1,206 Rust lines:92,373 physical/88,727 effective,
+SDK2,502/Python1,785,total96,660 source lines. Wider recovery/upgrade/security/load,
+policy retirement/roles/user transactions/filtering and production gates remain open.
