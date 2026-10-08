@@ -28,3 +28,6 @@ __pycache__/
 
 .emilybase-account-init-*
 /account-root/
+/synthetic-source/
+/synthetic-copy/
+*.table.json

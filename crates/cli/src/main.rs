@@ -20,6 +20,10 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Export one complete bounded managed table as typed JSON on stdout.
+    TableExport { path: PathBuf, table: String },
+    /// Read a bounded typed table from stdin and create it in one durable commit.
+    TableImport { path: PathBuf },
     /// Inspect count-only optional-cache startup results after authoritative WAL recovery.
     PrimaryIndexCacheStatus { path: PathBuf },
     /// Save a private optional primary-tree image in the managed directory.
@@ -214,6 +218,27 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::TableExport { path, table } => {
+            use std::io::Write;
+            let database = emilybase_transactions::Database::open(path)?;
+            let bytes = emilybase_transfer::export_table(database.view()?, &table)?;
+            let mut output = std::io::stdout().lock();
+            output.write_all(&bytes)?;
+            output.write_all(b"\n")?;
+        }
+        Command::TableImport { path } => {
+            use std::io::Write;
+            let table = emilybase_transfer::read_table(std::io::stdin().lock())?;
+            let report = serde_json::to_value(table.report())?;
+            let mut database = emilybase_transactions::Database::open(path)?;
+            let transaction = emilybase_transfer::import_table(&mut database, table)?;
+            let mut output = std::io::stdout().lock();
+            serde_json::to_writer(
+                &mut output,
+                &serde_json::json!({"transfer":report,"transaction":transaction}),
+            )?;
+            output.write_all(b"\n")?;
+        }
         Command::PrimaryIndexCacheStatus { path } => {
             let database = emilybase_transactions::Database::open(path)?;
             println!(

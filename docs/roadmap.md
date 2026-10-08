@@ -731,3 +731,13 @@ environment deployments remain available. Files are plaintext and excluded from
 root bundles; encryption, runtime reload, parent sandboxing and production
 acceptance are not completed by this adapter. Native refusal/restart and the common
 environment/file lifecycle provide the corresponding local verification boundary.
+
+
+## Follow-up: bounded logical table exchange
+
+[ADR0089](adr/0089-bounded-logical-table-transfer.md) adds original-engine table
+export/import through CLI streams. Strict versioned JSON preserves typed schema,
+primary order and exact finite float bits. Complete export refuses above255 rows;
+new-table import is one durable transaction with no merge or overwrite. Private
+backup/session restore, large continuation protocols, foreign converters, public
+authorization and production acceptance remain separate open work.

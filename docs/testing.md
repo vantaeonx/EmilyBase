@@ -3610,3 +3610,43 @@ observation was recorded. [ADR0088](adr/0088-private-master-key-file.md) and
 [source-bound data](measurements/2026-10-08-private-master-key-file/verification.json)
 record the new boundary. Native source counts are82,133 Rust /78,718 excluding
 blank and standalone comment lines; SDK1,259; Python1,593; total84,985.
+
+
+## Bounded logical table transfer, 2026-10-08
+
+The new synchronous crate and all CLI tests passed61 cases on each of Rust1.99.0
+and1.89.0; one ignored helper is invoked only by its deadline-controlled crash
+parent. Seven library cases and three actual CLI cases are new. Sixteen generated
+models compare original finite binary64 bits independently with imported values.
+That property was strengthened after the first run and all seven transfer cases
+were rerun on both toolchains; unchanged CLI sources had already passed.
+
+Tests cover WAL1/2, full255-row/256-event boundaries, excess-row refusal without
+truncation, empty tables, maximum-length UTF-8 keys, all value types, negative zero,
+subnormal/extreme finite bits, bad versions/unknown/duplicate fields/order/types,
+encoded-record limits and byte/array/text caps. A synthetic infinite reader proves
+the physical input cap is8 MiB+1. CLI uses stdin/stdout; malformed input returns the
+transfer error before attempting an invalid or locked destination. Existing tables,
+source WAL and legacy files remain exact on rejection. Import output is counts
+and transaction only; explicit export intentionally returns selected plaintext.
+
+Native helpers run the actual staged import, pause before commit or after its
+acknowledged return, then are killed and reopened: two precommit and two post-ACK
+kills across WAL1/2. Uncommitted table/rows remain absent; acknowledged tables
+recover complete and exact. These are process-kill checks, not hardware power-loss
+or full stage-2 acceptance.
+
+The new table_transfer target completed4,283,834 ASan fuzz executions in46 seconds
+with no finding. Configured maximum input8,388,609, final mutation limit14,635;
+reported RSS425 MiB under512 MiB. Large byte-bound cases ran in unit tests. A short
+campaign does not prove parser correctness or replace a security audit.
+
+Workspace/minimum server/CLI builds, workspace/profile/fuzz warning-denied Clippy,
+formatting, minimum fuzz compilation and both advisory scans passed. The448 final
+source/dependency/protocol files were verified. SDK, HTTP, complete workspace tests
+and optional diagnostics were not repeated for this independent logical adapter.
+afa0bc1 completed all five hosted jobs. New hosted transfer checks follow publication.
+[ADR0089](adr/0089-bounded-logical-table-transfer.md) and
+[source-bound data](measurements/2026-10-08-logical-table-transfer/verification.json)
+record the scope. Current sources:83,090 Rust /79,655 excluding blank and standalone
+comment lines; SDK1,259; Python1,593; total85,942.

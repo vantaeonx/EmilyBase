@@ -51,3 +51,12 @@ is made. Source files remain plaintext; owned temporary buffers alone are zeroiz
 A controlled restart is required to replace the live master digest. The standalone
 file Compose mode does not pass the master value in the server environment or
 archive it inside account roots. Encryption and an independent audit remain open.
+
+
+Logical table transfer is explicit trusted offline plaintext. Versioned strict JSON
+uses bounded arrays/text, an8 MiB input cap and original encoded-record/type/key
+validation before target opening. Import invokes typed transactions directly, not
+SQL interpolation, and existing tables refuse. Editable input has no checksum or
+authenticity claim; protect its provenance separately. CLI stream output does not
+provide atomic file publication or encryption. Private account/session restore and
+public access policy remain outside this logical public-table exchange adapter.

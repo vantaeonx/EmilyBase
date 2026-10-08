@@ -431,6 +431,7 @@ dependencies = [
  "emilybase-server",
  "emilybase-storage",
  "emilybase-transactions",
+ "emilybase-transfer",
  "serde",
  "serde_json",
  "tempfile",
@@ -583,6 +584,20 @@ dependencies = [
  "rustix",
  "serde",
  "sha2",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "emilybase-transfer"
+version = "0.1.0"
+dependencies = [
+ "emilybase-catalog",
+ "emilybase-database",
+ "emilybase-transactions",
+ "proptest",
+ "serde",
+ "serde_json",
  "tempfile",
  "thiserror",
 ]

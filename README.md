@@ -35,6 +35,10 @@ configuration in either data mode, with controlled-restart replacement. A separa
 Compose variant keeps the master value out of the server environment; the private
 file remains plaintext and is excluded from root bundles.
 
+[Logical table exchange](docs/table-transfer.md) now exports/imports one complete
+small table through CLI streams, with strict typed validation and a single durable
+new-table commit. The explicit255-row limit follows the existing transaction cap.
+
 **Early development. Not production-ready. Use synthetic data only.**
 
 Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is

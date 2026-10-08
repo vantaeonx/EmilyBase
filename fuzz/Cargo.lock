@@ -408,6 +408,7 @@ dependencies = [
  "emilybase-server",
  "emilybase-storage",
  "emilybase-transactions",
+ "emilybase-transfer",
  "emilybase-wal",
  "libfuzzer-sys",
  "serde_json",
@@ -504,6 +505,18 @@ dependencies = [
  "rustix",
  "serde",
  "sha2",
+ "thiserror",
+]
+
+[[package]]
+name = "emilybase-transfer"
+version = "0.1.0"
+dependencies = [
+ "emilybase-catalog",
+ "emilybase-database",
+ "emilybase-transactions",
+ "serde",
+ "serde_json",
  "thiserror",
 ]
 

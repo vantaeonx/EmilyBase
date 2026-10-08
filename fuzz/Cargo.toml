@@ -27,6 +27,7 @@ emilybase-transactions = { path = "../crates/transactions" }
 emilybase-index = { path = "../crates/index" }
 emilybase-query = { path = "../crates/query" }
 emilybase-server = { path = "../crates/server" }
+emilybase-transfer = { path = "../crates/transfer" }
 
 [[bin]]
 name = "file_format"
@@ -391,6 +392,13 @@ bench = false
 [[bin]]
 name = "account_root_manifest"
 path = "fuzz_targets/account_root_manifest.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "table_transfer"
+path = "fuzz_targets/table_transfer.rs"
 test = false
 doc = false
 bench = false

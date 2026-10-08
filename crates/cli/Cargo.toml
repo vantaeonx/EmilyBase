@@ -21,6 +21,7 @@ emilybase-query = { path = "../query" }
 emilybase-index = { path = "../index" }
 emilybase-server = { path = "../server" }
 emilybase-auth = { path = "../auth" }
+emilybase-transfer = { path = "../transfer" }
 serde = "1"
 serde_json = "1"
 

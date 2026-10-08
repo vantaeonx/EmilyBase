@@ -1,0 +1,107 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "f3ddf4aef985f6b0cd573d7a2a2ff3a1f55da42d",
+  "source_sha256": {
+    "Cargo.toml": "974bbf87a7b76d52859b3d6d254c8b65b90a31440448de8cb827f7578ec9d784",
+    "Cargo.lock": "2add97ca9c0cffb72212b6550cb1bd1c3692ee0ce081b950540e1865088acfb6",
+    "crates/transfer/Cargo.toml": "94f7eaeb93bdcb6c94ab02fd853249586f29ad42ae619d6fa117290dc68cb18b",
+    "crates/transfer/src/lib.rs": "28414c6058ce1f04d4cf4eff9c46939e052e5d94b1122175e8a11789477e03d6",
+    "crates/transfer/src/bounded.rs": "c003c55c0d79759963b62265af2d5c5968a4f71e05a0969f4b5d45905f8fa94d",
+    "crates/transfer/src/wire.rs": "d5678fdb3de52b3bb9f35e20e37ee730d984f605c178716366ee0bdcea82f480",
+    "crates/transfer/src/tests.rs": "2118b8fa363cbb5dd9544ff9ab902fcb1e976b033ee8ec927f59bf181d90b905",
+    "crates/cli/Cargo.toml": "ed53eae3a2379f43eb30b673c8900ae4de9d5894e150df0b541bc0d1be8284e8",
+    "crates/cli/src/main.rs": "4b8b641bd7f980c9121aee97d9a88688b350ead1bfd8887dcd742ffbb669cba0",
+    "crates/cli/tests/table_transfer.rs": "a87dd95cb308194d3fee1e6aa721f91ae3261e9a9731ee554ebcc6f1d37c5dc7",
+    "fuzz/Cargo.toml": "fc0ee0a843931a28b2d4a93f813f8c3f73f96c39075bbc4f5b0a66923dd159cf",
+    "fuzz/Cargo.lock": "c999dc860493749404592ed94e5e33ab8466c8ef58d4f2f63932a53cb4e566ea",
+    "fuzz/fuzz_targets/table_transfer.rs": "cf984eb74e32db4b7114bb5e4a683d40a245fcf2b98152304d34b684fb9f33c2"
+  },
+  "protocol": {
+    "format": "emilybase-table",
+    "version": 1,
+    "max_bytes": 8388608,
+    "max_rows": 255,
+    "max_columns": 64,
+    "max_name_bytes": 63,
+    "max_value_bytes": 3072,
+    "original_encoded_record_limit": 4000,
+    "bounded_array_and_text_visitors": true,
+    "strict_schema_types_primary_order": true,
+    "finite_f64_exact_lower_hex_bits": true,
+    "checked_borrowed_primary_export": true,
+    "full_input_before_target_open": true,
+    "new_table_only_one_durable_commit": true,
+    "existing_table_no_merge_or_overwrite": true,
+    "editable_input_no_checksum_authentication_claim": true,
+    "no_file_publisher_or_stored_format_change": true
+  },
+  "matrix": {
+    "new_library_cases": 7,
+    "new_cli_cases": 3,
+    "ignored_native_helper": 1,
+    "generated_independent_finite_bit_models": 16,
+    "wal_versions": [
+      1,
+      2
+    ],
+    "actual_primary_count_boundary": 255,
+    "overflow_complete_export_refusal": true,
+    "empty_table_and_maximum_text_key": true,
+    "source_existing_legacy_wal_preservation": true,
+    "strict_malformed_oversized_input_and_error_redaction": true,
+    "native_kills_before_commit": 2,
+    "native_kills_after_ack": 2,
+    "expected_recovery": "no new table before commit; complete exact imported table after ACK"
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "transfer_and_all_cli_passed_each": 61,
+    "ignored_helper_each": 1,
+    "final_strengthened_transfer_cases_each": 7,
+    "frozen_source_dependency_protocol_files": 448,
+    "workspace_build_and_minimum_server_cli_build": true,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "both_warning_denied_advisory_scans": true,
+    "sdk_http_full_workspace_optional_diagnostics_repeated": false,
+    "asan_fuzz": {
+      "target": "table_transfer",
+      "runs": 4283834,
+      "seconds": 46,
+      "rss_mib_reported": 425,
+      "rss_limit_mib": 512,
+      "configured_max_len": 8388609,
+      "final_mutation_limit": 14635,
+      "findings": 0
+    }
+  },
+  "prior_hosted": {
+    "last_all_five_success_commit": "afa0bc1349fa70842fd7d8a703ff962734573cec",
+    "last_all_five_success_run": 37733844010,
+    "master_file_run": 37734927616,
+    "new_transfer_run": "pending publication"
+  },
+  "source_counts": {
+    ".rs": 83090,
+    ".ts": 455,
+    ".mjs": 804,
+    ".py": 1593,
+    "total": 85942,
+    "effective_rust": 79655
+  },
+  "net_rust": 957,
+  "fixture_repairs": [
+    "collect generated filtered values before reversing",
+    "compare original random finite bit patterns independently, then rerun all transfer tests on both Rust versions"
+  ],
+  "exclusions": [
+    "large paginated logical transfer",
+    "foreign converter and PostgreSQL compatibility",
+    "private credential/session restore through logical input",
+    "atomic filesystem export publication and encryption",
+    "whole-process resource gates and production acceptance"
+  ]
+}
