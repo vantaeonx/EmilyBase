@@ -99,7 +99,10 @@ The [first-root CLI](docs/private-root-initialization.md) now creates one new em
 project and private session store without an input archive. It prints counts only;
 obtain the first usable service key through authenticated operator rotation, then
 provision a user through the private HTTP route. Startup still creates no private
-store implicitly. Late root publication now repeats retained-owner checks for
+store implicitly. A separate [private-root Docker configuration](docs/deployment.md#private-root-container)
+uses its own image target and explicit offline initialization; the default registry
+container keeps its existing data mode. Native lifecycle preflight and actual
+container execution are recorded separately. Late root publication now repeats retained-owner checks for
 initialization and restore, including a reproduced private-container substitution.
 The [offline root restore](docs/account-root-restore.md) prepares registry data and
 every explicitly bundled private store under one owned root. Private session reset

@@ -1,0 +1,73 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "c9a1e2e2708c86e94b543b358acc0a4636f07af8",
+  "source_sha256": {
+    "Dockerfile": "c1c684c1d373718694363a9a086b551507186fbfc3b5d2e3fdca2fa5b6a08b65",
+    "compose.yaml": "c7315f07fb15db5ae37e8552cc86674a32ce0eb42d1afbb51bf639c8bc1befb6",
+    "compose.accounts.yaml": "e1c8505d9ce0f3e8667c68dcb3b28c616770795709d0a4b22c434dfd242660b3",
+    ".github/workflows/rust.yml": "889a925f39c12816482f2950bdc4d259494c3445f2c295e5d4df880308cb5119",
+    "tests/containers.py": "1414e46a51d231a4c1931d6461592090aebfe794d069f469b46607fe5ef11271",
+    "tests/account_containers.py": "bb6f3e7fdb632b9c32c247fbb8f265dc762ea04c1e5bb71ad8ddfddc60848a83",
+    "Cargo.lock": "a339a3a39589a0f438b3028f64eb757c109b4ad2164d98e405ff0decbdc5c56d",
+    "fuzz/Cargo.lock": "21ab8a0f1e2a2c7cd9c26ef2d8e49a3c7af8cd638810645d43f7369b16293fcb"
+  },
+  "configuration": {
+    "shared_pinned_original_rust_build": true,
+    "legacy_default_registry_target_preserved": true,
+    "private_accounts_target_has_no_legacy_data_variable": true,
+    "independent_compose_default_project_name": "emilybase-private",
+    "unchanged_unprivileged_resource_restrictions_source_checked": true,
+    "no_bootstrap_or_reset_at_startup": true
+  },
+  "executed_local": {
+    "native_lifecycle_toolchains": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "single_winner_real_tcp_refresh_race_each": true,
+    "received_ack_sigkills_each": 5,
+    "credential_epochs": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "initial_wal_version": 1,
+    "compacted_clone_wal_version": 2,
+    "common_backup_verify_restore_no_clobber_and_distinct_user_authority": true,
+    "logout_ack_kill_and_source_session_preserved": true,
+    "damaged_private_wal_refuses_startup_without_overwrite": true,
+    "logs_screen_plaintext_and_json_escaped_secrets": true,
+    "python_format_lint": true,
+    "probe_help_commands": true,
+    "workspace_format": true,
+    "unchanged_rust_and_dependency_hashes_verified_against_parent_freeze": true
+  },
+  "not_executed_locally": {
+    "docker_compose_and_image_build": "Docker CLI unavailable",
+    "container_mode_selection_cgroups_uid_readonly_root": "hosted container job required",
+    "rust_workspace_tests": "production Rust unchanged; parent scoped 207 each and ecc556f full 1111 each are previous evidence",
+    "new_asan_campaign": false
+  },
+  "hosted": {
+    "new_private_container_execution": "pending first run after publication",
+    "last_verified_full_success_commit": "ecc556f512922e8898864b31639bf3ea4a02d53d",
+    "last_verified_full_success_run": 37715283991
+  },
+  "source_counts": {
+    ".rs": 80552,
+    ".ts": 455,
+    ".mjs": 802,
+    ".py": 1484,
+    "total": 83293,
+    "effective_rust": 77175
+  },
+  "net_source_lines": 635,
+  "limits": [
+    "synthetic data only",
+    "operator environment secrets remain inspectable",
+    "backup in source volume alone cannot survive volume loss",
+    "no TLS, public signup, user SQL roles or row policies",
+    "no stable upgrade, whole-process admission or production acceptance"
+  ]
+}

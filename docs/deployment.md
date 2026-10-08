@@ -7,9 +7,9 @@ This deployment is for disposable synthetic data on Linux local filesystems.
 
 ## Start
 
-Default Compose selects legacy registry mode. The local binary also supports an
-[explicit existing account root](private-http.md#executable-mode); its dedicated
-container configuration has not yet been verified. Never set both data variables.
+Default Compose selects legacy registry mode. The separate
+[private-root configuration](#private-root-container) selects an explicitly
+initialized account root. Never set both data variables or merge the two files.
 
 Install Docker Engine with its Compose/build plugins using the
 [official instructions](https://docs.docker.com/engine/install/ubuntu/).
@@ -53,6 +53,65 @@ There is no automatic restart loop: inspect failures before restarting.
 SIGTERM drains accepted work; Compose allows 30 seconds before forced termination.
 A commit can succeed without an observed response: inspect transaction state
 rather than retrying automatically. See the [HTTP contract](server.md).
+
+## Private-root container
+
+Use compose.accounts.yaml on its own. Its accounts image target sets only
+EMILYBASE_ACCOUNT_ROOT; the default registry image keeps EMILYBASE_DATA_DIR.
+The separate default Compose name is emilybase-private, so this example selects a
+new volume. Retain your chosen project name for later restarts. The master key
+must already be supplied privately as above; no key or password is a CLI argument.
+
+```sh
+docker compose -f compose.accounts.yaml -p emilybase-private build
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --no-deps \
+  --entrypoint emilybase server account-root-init /var/lib/emilybase/account-root \
+  --name synthetic-private-project --reset-at 0
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --no-deps \
+  --entrypoint emilybase server account-root-verify /var/lib/emilybase/account-root
+docker compose -f compose.accounts.yaml -p emilybase-private up --detach --wait
+```
+
+Zero is the explicitly selected initial floor for a new empty synthetic root.
+The CLI refuses any existing target; server startup never initializes, restores or
+resets it. Obtain the generated project ID through authenticated operator listing
+and rotate its first usable service key. Provision users/sign-in only from a
+trusted backend holding that service key; see [private HTTP](private-http.md).
+The same unprivileged/read-only/loopback/resource restrictions apply. Both examples
+use host port7000: stop the other deployment or choose a different EMILYBASE_PORT.
+
+For a common public/private backup, stop the server and use the root commands.
+The backup destination is outside the strict root inventory. Choose new names:
+
+```sh
+docker compose -f compose.accounts.yaml -p emilybase-private stop
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --no-deps \
+  --entrypoint emilybase server account-root-backup /var/lib/emilybase/account-root \
+  /var/lib/emilybase/account.backup
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --no-deps \
+  --entrypoint emilybase server account-bundle-verify /var/lib/emilybase/account.backup
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --no-deps \
+  --entrypoint emilybase server account-bundle-restore /var/lib/emilybase/account.backup \
+  /var/lib/emilybase/account-copy --reset-at "$(date +%s)"
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --no-deps \
+  --entrypoint emilybase server account-root-verify /var/lib/emilybase/account-copy
+```
+
+Select the trusted restore time deliberately. Start the independent copy while
+source remains stopped, check known synthetic rows and sign in again:
+
+```sh
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --service-ports \
+  --env EMILYBASE_ACCOUNT_ROOT=/var/lib/emilybase/account-copy server
+```
+
+Restore preserves project service keys but changes private session scope before
+selection, so source access/refresh tokens cannot authorize the copy. Exit the
+copy server and resume the source with the same Compose up command. A backup in
+this volume alone does not protect against volume loss; privately copy and verify
+it on independent storage. Never manually swap selected files or run both servers
+against one root. Failed/uncertain publications require inspection, not auto-retry.
+[ADR0085](adr/0085-explicit-private-root-container.md) records this adapter.
 
 ## Project backup and restore
 
@@ -183,3 +242,25 @@ For the already installed/compiled project SDK, add `--sdk`; `--no-build` reuses
 container mode; the Python probe owns and verifies container restart itself.
 No browser UI, TLS, load test, future platform-object backup, physical power-loss experiment
 or full security audit is implied by these checks.
+
+
+The separate private-root probe is:
+
+```sh
+python3 tests/account_containers.py
+```
+
+It builds the accounts target and uses its own random synthetic volume. It checks
+one-mode image configuration, non-root restrictions and the common root lifecycle:
+first initialization, operator rotation, sessions, two-request refresh race, five
+received-ACK SIGKILLs, password/disable/re-enable epochs, WAL2 compaction, common
+backup, no-clobber restore, clone/source separation, logout durability and corrupt
+private WAL startup refusal without automatic repair. All collected logs are
+screened for plaintext and JSON-escaped credentials/identifiers. Cleanup removes
+only the probe's own disposable instances and volume. The hosted container job
+runs both probes. --no-build reuses emilybase:accounts-local.
+
+An explicitly separate --native preflight uses compiled local Rust binaries and
+the same HTTP/CLI lifecycle, but does not execute or claim Docker/cgroup checks.
+Those native checks passed on stable/minimum Rust on the development host; actual
+new container execution is pending its first hosted run. No production gate closes.

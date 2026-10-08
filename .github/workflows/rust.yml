@@ -116,7 +116,9 @@ jobs:
       - name: Check container probe
         run: |
           python3 -m pip install ruff==0.16.10
-          ruff format --check tests/containers.py
-          ruff check tests/containers.py
+          ruff format --check tests/containers.py tests/account_containers.py
+          ruff check tests/containers.py tests/account_containers.py
       - name: Original server container, restart, kill, corruption and restore
         run: python3 tests/containers.py --sdk
+      - name: Private-root container, credentials, ACK kills and verified restore
+        run: python3 tests/account_containers.py

@@ -39,6 +39,8 @@ def free_port():
 
 
 class Probe:
+    data_directory = "/var/lib/emilybase/projects"
+
     def __init__(self):
         self.project = "emilybase-probe-" + secrets.token_hex(8)
         self.master = secrets.token_hex(32)
@@ -94,7 +96,7 @@ class Probe:
             ok=ok,
         )
 
-    def request(self, route, key=None, payload=None, expected=200):
+    def request(self, route, key=None, payload=None, expected=200, return_status=False):
         headers = {"content-type": "application/json"}
         if key is not None:
             headers["authorization"] = "Bearer " + key
@@ -112,12 +114,21 @@ class Probe:
         with response:
             status = response.status
             raw = response.read(MAX_RESPONSE + 1)
+            if "/auth/" in route:
+                require(
+                    response.headers.get("Cache-Control") == "no-store"
+                    and response.headers.get("Pragma") == "no-cache",
+                    "private response disables caches",
+                )
         require(len(raw) <= MAX_RESPONSE, "test response exceeded bound")
-        require(status == expected, "unexpected HTTP status")
+        allowed = expected if isinstance(expected, tuple) else (expected,)
+        require(status in allowed, "unexpected HTTP status")
         try:
-            return json.loads(raw)
+            # Axum's method rejection deliberately has an empty body.
+            parsed = None if status == 405 and not raw else json.loads(raw)
         except (ValueError, UnicodeError) as error:
             raise CheckFailed("invalid HTTP response format") from error
+        return (status, parsed) if return_status else parsed
 
     def create(self, name):
         created = self.request(
@@ -264,7 +275,7 @@ class Probe:
                 "stat",
                 "-c",
                 "%a:%u",
-                "/var/lib/emilybase/projects",
+                self.data_directory,
             ).stdout.strip()
             == b"700:10001",
             "private database directory",

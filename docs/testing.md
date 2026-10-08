@@ -3500,3 +3500,22 @@ resolving local references and no duplicate operation IDs. Prior add6c57 hosted
 run37713905976 completes all five jobs successfully. Current hosted full-workspace
 results are checked separately after publication. No new ASan campaign executes.
 See the [source-bound observation](measurements/2026-10-08-http-credential-management/verification.json).
+
+
+## Private-root container adapter and local native preflight, 2026-10-08
+
+The independent accounts image/Compose target and executable synthetic lifecycle
+are recorded in [ADR0085](adr/0085-explicit-private-root-container.md) and
+[verification data](measurements/2026-10-08-private-root-container/verification.json).
+Native stable/minimum preflights passed against real compiled Rust server/CLI:
+one refresh winner, five received-ACK process kills, credential epochs, WAL2
+common backup/restore, clone logout, source authority and corruption refusal.
+Both probe scripts pass Python format/lint; unchanged Rust/dependency hashes bind
+to the preceding checked source. A first probe run rejected Axum's empty405 body;
+that helper assumption and a lint-only unused import were corrected before final
+checks. No new Rust runtime changes or full workspace/ASan rerun are claimed.
+
+Docker is unavailable locally. The updated hosted container job must execute both
+legacy and private targets, including non-root/read-only/cgroup/mode inspection;
+its first new private run is pending publication. Native results are explicitly
+not container evidence. Stored formats, ACK and all production gates remain.

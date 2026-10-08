@@ -47,5 +47,6 @@ No stage is discovered or reset during server startup. Normal restart preserves
 sessions; [verified root restore](account-root-restore.md) changes clone scope.
 
 [ADR0083](adr/0083-explicit-private-root-initialization.md) records the protocol and
-late-substitution regression. Whole-process memory/staging admission, container
-root-mode deployment, dynamic private roster and production acceptance remain open.
+late-substitution regression. The separate [container adapter](deployment.md#private-root-container) uses the same
+explicit CLI lifecycle. Whole-process memory/staging admission, dynamic private
+roster and production acceptance remain open.

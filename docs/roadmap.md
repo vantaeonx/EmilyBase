@@ -682,3 +682,15 @@ Durable epoch changes revoke old access/refresh families; re-enable never revive
 them, while same-state disable requests preserve epoch/history. Scoped input and
 native ACK-kill/restart cases cover WAL1/2. Public password reset, user roles/RLS,
 family cleanup and production gates remain open.
+
+
+## Follow-up: separate private-root container adapter
+
+[ADR0085](adr/0085-explicit-private-root-container.md) keeps the default registry
+image behavior and adds an independent accounts target/Compose file. Explicit
+first-root initialization and offline common backup/restore remain operator
+operations. The same synthetic lifecycle has a native preflight and an actual
+Docker mode; five received-ACK kills, single-winner refresh, credential epochs,
+WAL2 clone/source authority, logout and corrupt private WAL refusal execute.
+Native stable/minimum checks passed; first new hosted container execution is
+pending. No stage, resource, security or production gate is declared complete.
