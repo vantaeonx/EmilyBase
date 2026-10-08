@@ -1,6 +1,7 @@
 //! Original bounded SQL parser, schema-resolved plans and managed transaction execution.
 pub mod ast;
 mod execute;
+mod insert_select;
 mod lexer;
 mod nested_join;
 mod parser;

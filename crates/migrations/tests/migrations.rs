@@ -477,3 +477,96 @@ fn existing_data_normal_writes_and_compaction_preserve_receipts_without_reapplyi
         assert_eq!(database.view().unwrap().scan("t", 10).unwrap().len(), 2);
     }
 }
+
+#[test]
+fn copied_schema_rebuild_and_receipt_commit_together_or_leave_original_table_exact() {
+    for format in [1, 2] {
+        let (_directory, mut database) = fixture(format);
+        apply_first(&mut database);
+        let old = database.view().unwrap().clone();
+        let before = database.committed_wal().unwrap();
+        let sql = "CREATE TABLE replacement(id INT PRIMARY KEY,value TEXT,note TEXT); INSERT INTO replacement(id,value) SELECT * FROM t; DROP TABLE t; CREATE TABLE t(id INT PRIMARY KEY,value TEXT,note TEXT); INSERT INTO t SELECT * FROM replacement; DROP TABLE replacement";
+        let failed = format!("{sql}; INSERT INTO t(id) VALUES(0)");
+        assert!(apply(&mut database, &prepare(2, "rebuild", &failed).unwrap()).is_err());
+        assert_eq!(database.committed_wal().unwrap(), before);
+        assert_eq!(inspect(&database).unwrap().len(), 1);
+        assert_eq!(
+            database.view().unwrap().schema("t").unwrap().columns.len(),
+            2
+        );
+        let migration = prepare(2, "rebuild", sql).unwrap();
+        apply(&mut database, &migration).unwrap();
+        assert_eq!(
+            database.view().unwrap().schema("t").unwrap().columns.len(),
+            3
+        );
+        assert_eq!(
+            database
+                .view()
+                .unwrap()
+                .get("t", &Key::Integer(0))
+                .unwrap()
+                .unwrap(),
+            &vec![
+                Value::Integer(0),
+                Value::Text("original".into()),
+                Value::Null
+            ]
+        );
+        assert_eq!(old.schema("t").unwrap().columns.len(), 2);
+        assert!(database.view().unwrap().schema("replacement").is_err());
+        let before = database.committed_wal().unwrap();
+        assert!(apply(&mut database, &migration).unwrap().already_applied);
+        assert_eq!(database.committed_wal().unwrap(), before);
+    }
+    for sql in [
+        "INSERT INTO _emilybase_migrations_v1 SELECT * FROM t",
+        "INSERT INTO t SELECT * FROM _emilybase_migrations_v1",
+        "INSERT INTO t SELECT a.id FROM t AS a JOIN _emilybase_migrations_v1 AS b ON TRUE",
+    ] {
+        assert!(matches!(prepare(1, "invalid", sql), Err(Error::Script)));
+    }
+}
+
+#[test]
+fn rebuild_event_boundary_counts_the_final_receipt_instead_of_committing_a_partial_migration() {
+    for count in [125, 126] {
+        let (_directory, mut database) = fixture(1);
+        let initial = format!(
+            "CREATE TABLE t(id INT PRIMARY KEY); INSERT INTO t VALUES {}",
+            (0..count)
+                .map(|id| format!("({id})"))
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+        apply(&mut database, &prepare(1, "initial", &initial).unwrap()).unwrap();
+        let sql = "CREATE TABLE replacement(id INT PRIMARY KEY,note TEXT); INSERT INTO replacement(id) SELECT * FROM t; DROP TABLE t; CREATE TABLE t(id INT PRIMARY KEY,note TEXT); INSERT INTO t SELECT * FROM replacement; DROP TABLE replacement";
+        let before = database.committed_wal().unwrap();
+        let result = apply(&mut database, &prepare(2, "rebuild", sql).unwrap());
+        if count == 125 {
+            assert!(result.is_ok());
+            assert_eq!(inspect(&database).unwrap().len(), 2);
+            assert_eq!(
+                database.view().unwrap().schema("t").unwrap().columns.len(),
+                2
+            );
+        } else {
+            // SQL itself fills all256 events; the required receipt must still fit.
+            assert!(matches!(
+                result,
+                Err(Error::Transaction(emilybase_transactions::Error::Limit))
+            ));
+            assert_eq!(database.committed_wal().unwrap(), before);
+            assert_eq!(inspect(&database).unwrap().len(), 1);
+            assert_eq!(
+                database.view().unwrap().schema("t").unwrap().columns.len(),
+                1
+            );
+        }
+        assert_eq!(
+            database.view().unwrap().scan("t", 1000).unwrap().len(),
+            count
+        );
+        assert!(database.view().unwrap().schema("replacement").is_err());
+    }
+}

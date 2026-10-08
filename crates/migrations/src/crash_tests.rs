@@ -5,7 +5,10 @@ use std::process::{Command, Stdio};
 use std::time::Duration;
 
 const FIRST: &str = "CREATE TABLE t(id INT PRIMARY KEY,value INT); INSERT INTO t VALUES(0,0)";
-const SECOND: &str = "UPDATE t SET value=9 WHERE id=0; CREATE TABLE next(id INT PRIMARY KEY)";
+const SECOND: &str = "CREATE TABLE replacement(id INT PRIMARY KEY,value INT,extra TEXT); \
+INSERT INTO replacement(id,value) SELECT * FROM t; UPDATE replacement SET value=9; DROP TABLE t; \
+CREATE TABLE t(id INT PRIMARY KEY,value INT,extra TEXT); INSERT INTO t SELECT * FROM replacement; \
+DROP TABLE replacement; CREATE TABLE next(id INT PRIMARY KEY)";
 
 #[test]
 fn killed_first_and_next_migrations_never_separate_schema_from_receipts() {
@@ -83,6 +86,10 @@ fn killed_first_and_next_migrations_never_separate_schema_from_receipts() {
                         Value::Integer(if committed { 9 } else { 0 })
                     );
                     assert_eq!(database.view().unwrap().schema("next").is_ok(), committed);
+                    assert_eq!(
+                        database.view().unwrap().schema("t").unwrap().columns.len(),
+                        if committed { 3 } else { 2 }
+                    );
                 }
                 if !committed {
                     assert_eq!(database.committed_wal().unwrap(), before);

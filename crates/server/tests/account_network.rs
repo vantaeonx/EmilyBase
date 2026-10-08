@@ -1013,3 +1013,72 @@ fn private_root_tcp_transfer_ack_survives_kill_without_private_history_changes()
         }
     }
 }
+
+#[test]
+fn actual_tcp_insert_select_ack_kill_keeps_project_copy_and_private_history_on_both_routers() {
+    let _case = CASES.lock().unwrap();
+    for compact in [false, true] {
+        for private in [false, true] {
+            let f = fixture(compact);
+            let private_path = f.root.join("private").join(&f.id).join("redo.wal");
+            let private_before = fs::read(&private_path).unwrap();
+            let public = f.root.join("registry").join(&f.id).join("data");
+            let mut database = Database::open(&public).unwrap();
+            let base = database.last_transaction();
+            let public_before = database.committed_wal().unwrap();
+            drop(database);
+            let start = || {
+                if private {
+                    support::Server::start_account(&f.root, MASTER)
+                } else {
+                    support::Server::start(&f.root.join("registry"), MASTER)
+                }
+            };
+            let server = start();
+            let route = format!("/v1/projects/{}/sql", f.id);
+            let script = json!({"sql":"CREATE TABLE copied(id INT PRIMARY KEY,v TEXT,note TEXT); INSERT INTO copied(id,v) SELECT * FROM t ORDER BY id; SELECT * FROM copied ORDER BY id"});
+            let invalid = emilybase_auth::issue_key().unwrap();
+            for key in [MASTER, invalid.as_str()] {
+                assert_eq!(
+                    support::call(server.address, "POST", &route, key, &script)
+                        .unwrap()
+                        .0,
+                    401
+                );
+            }
+            assert_eq!(fs::read(public.join("redo.wal")).unwrap(), public_before);
+            let (status, report) =
+                support::call(server.address, "POST", &route, &f.key, &script).unwrap();
+            assert_eq!(status, 200);
+            assert_eq!(report["transaction"], base + 1);
+            assert_eq!(report["results"][1]["affected"], 1);
+            assert_eq!(report["results"][2]["rows"][0].as_array().unwrap().len(), 3);
+            let first = server.kill();
+            let server = start();
+            let (status, recovered) = support::call(
+                server.address,
+                "POST",
+                &route,
+                &f.key,
+                &json!({"sql":"SELECT * FROM copied ORDER BY id"}),
+            )
+            .unwrap();
+            assert_eq!(status, 200);
+            assert_eq!(recovered["transaction"], base + 1);
+            assert_eq!(recovered["results"][0], report["results"][2]);
+            let public_before = fs::read(public.join("redo.wal")).unwrap();
+            let (status,error)=support::call(server.address,"POST",&route,&f.key,&json!({"sql":"UPDATE copied SET v='partial'; INSERT INTO copied(id,v) SELECT * FROM t"})).unwrap();
+            assert_eq!(status, 400);
+            assert_eq!(error, json!({"code":"query_rejected"}));
+            let second = server.stop();
+            assert_eq!(fs::read(public.join("redo.wal")).unwrap(), public_before);
+            assert_eq!(fs::read(&private_path).unwrap(), private_before);
+            for log in [first, second] {
+                clean_log(
+                    &log,
+                    &[MASTER, &f.id, &f.key, &invalid, "synthetic-row", PASSWORD],
+                );
+            }
+        }
+    }
+}

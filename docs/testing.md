@@ -3936,3 +3936,37 @@ run37839653338 remains in progress at this observation.
 [source-bound verification](measurements/2026-10-08-atomic-bounded-migrations/verification.json)
 record the boundary. Net growth1,064 Rust lines;totals87,952 Rust/84,397 effective,
 SDK1,880/Python1,735:91,567 combined. Production gates remain open.
+
+
+## Bounded INSERT SELECT and migration rebuilds, 2026-10-08
+
+On Rust1.99.0/1.89.0,333 query/transaction/migration/CLI cases and24 server HTTP/
+project/private-network cases pass per toolchain,12 ignored helper/opt-in entries.
+Thirteen new regular cases include16 independent filter/sort/limit copy models,
+exact numeric bits and3072-byte UTF-8/NUL keys, zero-input schema resolution, self-
+copy, joins, late duplicate/NULL/binding refusals, shared256-event capacity and
+work/output refusal without partial writes. Bounded materialization includes one
+overflow lookahead; explicit LIMIT is honored and implicit truncation is rejected.
+
+Migration first/next children run8 controlled staged/ACK kills per Rust on WAL1/2;
+next now rebuilds a schema through two original copies. Actual CLI also performs
+the rebuild. Existing-ledger125-row recipe succeeds;126-row SQL fills256 events
+but its receipt fails, discarding the complete replacement. Four new real TCP
+received-ACK kills per Rust cover both routers/WAL versions, matching exact copies
+after restart, late duplicate rollback and unchanged private histories/log hygiene.
+These process-level observations do not prove all power-loss cases.
+
+Parser ASan completes2,067,367 inputs/46 seconds/RSS443MiB;mutation
+ASan (including independently checked staged copies) completes855/46 seconds/
+RSS454MiB. Both use512MiB RSS limits and respective16,385/4096-byte
+input caps, no findings. These short campaigns are not security audits. Workspace/
+fuzz format, strict workspace Clippy, minimum workspace build and strict/minimum
+fuzz compilation pass. Final448 source/dependency hashes are verified unchanged.
+Full workspace/SDK/optional allocation/advisory scans and local Docker were not
+repeated. Staged-SQLddb3bed hosted run37839653338 now has all five jobs successful;
+migrationab0f5ab run37841098099 remains in progress at this observation.
+
+[ADR0097](adr/0097-bounded-insert-select.md) and
+[source-bound verification](measurements/2026-10-08-bounded-insert-select/verification.json)
+record this boundary. Net growth724 Rust lines;totals88,676 Rust/85,101 effective,
+SDK1,880/Python1,735:92,291 source lines. No production gate is closed.

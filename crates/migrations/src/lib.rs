@@ -76,6 +76,17 @@ pub fn prepare<'a>(version: u32, label: &'a str, sql: &'a str) -> Result<Migrati
     for statement in emilybase_query::parse(sql)? {
         let table = match &statement {
             Statement::Create(schema) => &schema.name,
+            Statement::InsertSelect { table, select, .. } => {
+                if select.from.name.eq_ignore_ascii_case(LEDGER_TABLE)
+                    || select
+                        .join
+                        .as_ref()
+                        .is_some_and(|(source, _)| source.name.eq_ignore_ascii_case(LEDGER_TABLE))
+                {
+                    return Err(Error::Script);
+                }
+                table
+            }
             Statement::Drop(table)
             | Statement::Insert { table, .. }
             | Statement::Update { table, .. }

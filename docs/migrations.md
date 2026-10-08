@@ -27,10 +27,11 @@ version skipping. Existing typed/SQL/backup commands preserve their contracts.
 Versions start at1 and continue through at most128. A label is1..63 ASCII bytes,
 starts with a letter/digit and contains letters/digits/underscore/hyphen. Scripts
 use the currently implemented CREATE TABLE, DROP TABLE, INSERT, UPDATE and DELETE
-subset; SELECT and every SQL transaction control are rejected. Parameters have no
+subset, including INSERT SELECT; standalone SELECT and every SQL transaction
+control are rejected. Parameters have no
 binding array in this API, so unresolved parameters refuse execution atomically.
-Parsed statement targets cannot address the reserved ledger (case-insensitive
-refusal); ledger-looking text literals remain data. Existing SQL token, statement,
+Parsed statement targets and INSERT SELECT FROM/JOIN sources cannot address
+the reserved ledger (case-insensitive refusal); ledger-looking text literals remain data. Existing SQL token, statement,
 query-work, physical record, page and WAL bounds still apply.
 
 `prepare` validates/hash-binds immutable borrowed input without a destination.
@@ -93,3 +94,25 @@ remote migration runner, large multi-transaction migration, online coordination,
 PostgreSQL compatibility or production readiness is claimed. Controlled child kills
 verify staged/ACK recovery on WAL1/2; full power-loss/upgrade/security/resource
 acceptance remains open.
+
+
+## Bounded table rebuild
+
+A small table can gain a nullable field through an explicit atomic script, using
+a fresh intermediate table name. All rows and the receipt must fit one transaction.
+
+```sql
+CREATE TABLE replacement(id INT PRIMARY KEY,title TEXT,note TEXT);
+INSERT INTO replacement(id,title) SELECT id,title FROM notes;
+DROP TABLE notes;
+CREATE TABLE notes(id INT PRIMARY KEY,title TEXT,note TEXT);
+INSERT INTO notes SELECT * FROM replacement;
+DROP TABLE replacement;
+```
+
+The selected original values are copied exactly and note becomes NULL. Replacement
+tables receive fresh IDs. This recipe spends2N+4 SQL events for N rows, plus the
+migration receipt (and ledger creation if first). On an existing ledger,125 rows
+fit;126 rows fill SQL's256 events but leave no receipt slot, so the complete rebuild
+is discarded. Other work/output/table/record/WAL bounds can refuse earlier. This is
+an explicit bounded operation, not an automatic online schema-change mechanism.

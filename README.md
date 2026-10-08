@@ -53,6 +53,8 @@ The Rust [owned staged SQL API](docs/staged-sql.md) also combines typed writes a
 SQL before one explicit commit; every error discards the complete transaction.
 [Offline migrations](docs/migrations.md) apply ordered bounded SQL scripts and
 receipts in that one commit, with exact historical retries and verified restore.
+Original INSERT SELECT also copies bounded typed rows for explicit table rebuilds;
+copy overflow or any late conflict discards the complete script.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

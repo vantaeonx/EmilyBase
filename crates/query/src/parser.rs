@@ -273,6 +273,13 @@ impl Parser {
         } else {
             None
         };
+        if self.word("SELECT") {
+            return Ok(Statement::InsertSelect {
+                table,
+                columns,
+                select: Box::new(self.select()?),
+            });
+        }
         self.require("VALUES")?;
         let mut rows = Vec::new();
         loop {

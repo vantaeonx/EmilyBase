@@ -149,6 +149,41 @@ fuzz_target!(|input: &[u8]| {
         .map(|(key, n)| vec![key.to_value(), n.map_or(Value::Null, Value::Integer)])
         .collect::<Vec<_>>();
     assert_eq!(database.view().unwrap().scan("t", 1000).unwrap(), expected);
+    // Copy selection is fixed before writes and agrees with an independent map.
+    let before_copy = database.committed_wal().unwrap();
+    let copy_digest = database.view().unwrap().page_fingerprint();
+    let descending = mode & 16 != 0;
+    let limit = usize::from(*a) % 250;
+    let mut expected_copy = model
+        .iter()
+        .filter(|(key, _)| **key >= lower && **key < upper)
+        .map(|(key, n)| vec![key.to_value(), n.map_or(Value::Null, Value::Integer)])
+        .collect::<Vec<_>>();
+    if descending {
+        expected_copy.reverse();
+    }
+    expected_copy.truncate(limit);
+    let copy_sql = format!(
+        "CREATE TABLE copied(id {} PRIMARY KEY,n INT); INSERT INTO copied SELECT id,n FROM t WHERE id >= $1 AND id < $2 ORDER BY id {} LIMIT $3; SELECT * FROM copied ORDER BY id {}",
+        if text { "TEXT" } else { "INT" },
+        if descending { "DESC" } else { "ASC" },
+        if descending { "DESC" } else { "ASC" }
+    );
+    let staged_copy = stage(
+        database.begin().unwrap(),
+        &copy_sql,
+        &[
+            lower.to_value(),
+            upper.to_value(),
+            Value::Integer(limit as i64),
+        ],
+    )
+    .unwrap();
+    assert_eq!(staged_copy.results()[1].affected, expected_copy.len());
+    assert_eq!(staged_copy.results()[2].rows, expected_copy);
+    drop(staged_copy);
+    assert_eq!(database.committed_wal().unwrap(), before_copy);
+    assert_eq!(database.view().unwrap().page_fingerprint(), copy_digest);
     // Caller-owned typed writes and SQL never reach WAL without explicit commit.
     // Drop successes too, so this invariant does not depend on SQL being invalid.
     let arbitrary = std::str::from_utf8(&input[7..]).unwrap_or("");

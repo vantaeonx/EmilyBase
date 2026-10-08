@@ -72,7 +72,7 @@ fn actual_cli_applies_and_retries_without_echoing_sql_on_both_wal_versions() {
             &path,
             2,
             "next",
-            b"UPDATE t SET value='next' WHERE id=1",
+            b"CREATE TABLE replacement(id INT PRIMARY KEY,value TEXT); INSERT INTO replacement SELECT * FROM t; UPDATE replacement SET value='next'; DROP TABLE t; CREATE TABLE t(id INT PRIMARY KEY,value TEXT,extra TEXT); INSERT INTO t(id,value) SELECT * FROM replacement; DROP TABLE replacement",
         ));
         assert_eq!(result["receipt"]["transaction"], 3);
         let database = Database::open(&path).unwrap();

@@ -78,6 +78,11 @@ pub enum Statement {
         columns: Option<Vec<String>>,
         rows: Vec<Vec<Scalar>>,
     },
+    InsertSelect {
+        table: String,
+        columns: Option<Vec<String>>,
+        select: Box<Select>,
+    },
     Select(Box<Select>),
     Update {
         table: String,

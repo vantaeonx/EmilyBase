@@ -221,7 +221,7 @@ pub fn query(
     )
 }
 
-fn indices(schema: &Schema, names: &[String]) -> RunResult<Vec<usize>> {
+pub(crate) fn indices(schema: &Schema, names: &[String]) -> RunResult<Vec<usize>> {
     let mut used = std::collections::BTreeSet::new();
     let mut positions = Vec::new();
     for name in names {
@@ -334,6 +334,20 @@ fn run(
                 tx.insert(&table, row)?;
                 affected += 1;
             }
+        }
+        Statement::InsertSelect {
+            table,
+            columns,
+            select,
+        } => {
+            affected = crate::insert_select::run(
+                tx,
+                &table,
+                columns.as_deref(),
+                &select,
+                parameters,
+                budget,
+            )?;
         }
         Statement::Select(select) => {
             return crate::select::run(

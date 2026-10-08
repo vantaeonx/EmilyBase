@@ -12,6 +12,8 @@ No PostgreSQL compatibility is promised.
 CREATE TABLE items (id INTEGER PRIMARY KEY, title TEXT, active BOOLEAN NOT NULL);
 CREATE TABLE labels (id INT, owner INTEGER NOT NULL, title TEXT, PRIMARY KEY (id));
 INSERT INTO items (id, title, active) VALUES (1, 'l''été', TRUE), ($1, $2, FALSE);
+INSERT INTO copied_items(id,title) SELECT id,title FROM items
+  WHERE active ORDER BY id DESC LIMIT 20;
 SELECT title AS label FROM items WHERE NOT active OR id >= $1
   ORDER BY title ASC NULLS LAST, id DESC LIMIT 20;
 SELECT a.id, b.title FROM items AS a INNER JOIN labels AS b ON a.id = b.owner
@@ -44,8 +46,9 @@ Bindings use catalog values with strict types; there are no implicit casts.
 
 Predicates support column/literal/parameter operands, `=`, `<>`/`!=`, `<`, `<=`,
 `>`, `>=`, `IS [NOT] NULL`, boolean operands, parentheses, `NOT`, `AND`, `OR`.
-Precedence is NOT, then AND, then OR. UPDATE assignments and INSERT values accept
-literals/parameters only. LIMIT accepts an integer 0..10000 or a parameter whose
+Precedence is NOT, then AND, then OR. UPDATE assignments and INSERT VALUES accept
+literals/parameters only. INSERT SELECT uses the same column-projection SELECT
+grammar and exact source/target declared types, without implicit casts. LIMIT accepts an integer 0..10000 or a parameter whose
 value will need executor validation. ORDER BY uses source columns and optional
 ASC/DESC and NULLS FIRST/LAST. Default null placement is LAST in both directions.
 Ties retain primary-key scan/join order. Text sorts by UTF-8 bytes without collation
@@ -205,3 +208,22 @@ fallback/single-table sorts retain their original limits. [Details](limited-prim
 occurrence before cloning its payload, across all read plans and script results.
 The logical byte formula, parser/type bounds, result metadata and errors remain
 unchanged; this is not an allocator or whole-process quota.
+
+
+## Bounded INSERT SELECT
+
+INSERT may take SELECT instead of VALUES, with optional named target columns.
+Source WHERE/JOIN/ORDER BY/LIMIT and separate bindings use the original SELECT
+planner. Target width/names/types resolve even for empty input or LIMIT0. Actual
+rows still pass nullable/primary/record validation; omitted columns become NULL.
+The source selection finishes before insertion, so self-copy observes no rows it
+has just written. Output reports only the affected count.
+
+Selection retains at most remaining transaction events plus one lookahead and
+refuses excess; it never silently copies a prefix when the transaction is full.
+An explicit smaller LIMIT is honored. Preceding writes share the256-event capacity,
+and work/output budgets include selected rows even though INSERT returns no rows.
+Late duplicate, NULL or record errors discard every earlier script change.
+
+This enables bounded [migration rebuilds](migrations.md#bounded-table-rebuild) without
+ALTER or a stored-format change. See [ADR0097](adr/0097-bounded-insert-select.md).

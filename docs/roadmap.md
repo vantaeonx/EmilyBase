@@ -820,3 +820,15 @@ first/next staged/ACK kills, a separate generated version model, digest oracle a
 actual CLI refusals cover this boundary. Owner-writable receipts are not independent
 audit authority. Online orchestration/schema diff/ALTER/down, global resource gates
 and production acceptance remain open.
+
+
+## Follow-up: bounded INSERT SELECT and migration rebuilds
+
+[ADR0097](adr/0097-bounded-insert-select.md) extends the original AST/parser/executor
+with typed column-copy writes using existing SELECT plans. Resolve before scanning,
+retain at most event-capacity+one, finish reading before self-inserts and refuse
+overflow/late conflicts atomically. Migrations can rebuild small schemas with a
+receipt in the same commit;125/126-row boundaries explicitly count that receipt.
+Independent copy models, exact history, native staged/ACK recovery, actual CLI/TCP
+and sanitizer parser/mutation campaigns cover the boundary. ALTER/schema diff/down,
+large/online changes, full upgrade/resource/security and production gates stay open.
