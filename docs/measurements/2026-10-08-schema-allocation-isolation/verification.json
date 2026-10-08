@@ -1,0 +1,85 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "869a8cfd8abc1d833b90b7e87f925dd2298b6168",
+  "source_sha256": {
+    "crates/model-profile/Cargo.toml": "34a08a7246648d5e5476f08e75ec5bd7cb0e1aa36142de32d9cb7c10a39506d7",
+    "crates/model-profile/tests/schema_validation.rs": "035b53495c89217ce1c4ef5584ca88c65fe7b9fac36c3ea228a5ef159bfb322a",
+    "crates/model-profile/src/schema_allocation.rs": "7660feed8f04a9be6caecc36342c95a0672314f20560f31482cace284e59b4c9"
+  },
+  "regression": {
+    "prior_hosted_run": 37703816085,
+    "prior_hosted_bytes": 144,
+    "original_local_repeats_passed": 100,
+    "controlled_parent_background_reproduction_before_fix_bytes": 328,
+    "controlled_regression_after_fix": "passes",
+    "counter_tolerance_bytes": 0,
+    "measured_process": "standalone native diagnostic, separate from libtest",
+    "columns": [
+      1,
+      2,
+      64
+    ],
+    "iterations_each": 1000,
+    "negative_control_bytes_each": 144,
+    "negative_control_blocks_each": 1,
+    "negative_control_exit": 1
+  },
+  "fresh_process_observation": {
+    "fresh_processes": 100,
+    "normal_samples": 300,
+    "normal_operation_bytes": 0,
+    "negative_exit": 1,
+    "negative_samples": [
+      {
+        "columns": 1,
+        "total_bytes": 144,
+        "total_blocks": 1,
+        "peak_bytes": 144,
+        "live_bytes": 144
+      },
+      {
+        "columns": 2,
+        "total_bytes": 144,
+        "total_blocks": 1,
+        "peak_bytes": 144,
+        "live_bytes": 144
+      },
+      {
+        "columns": 64,
+        "total_bytes": 144,
+        "total_blocks": 1,
+        "peak_bytes": 144,
+        "live_bytes": 144
+      }
+    ],
+    "elapsed_seconds": 1.1
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "release_diagnostic_cases_each": 54,
+    "default_profile_package_cases_each": 18,
+    "workspace_and_opt_in_all_target_warning_denied_clippy": true,
+    "rust_format": true,
+    "baseline_full_workspace_commit": "869a8cfd8abc1d833b90b7e87f925dd2298b6168",
+    "baseline_main_cases_each": 1059,
+    "baseline_main_suite_newly_rerun": false,
+    "new_parser_asan_campaign": false
+  },
+  "source_counts": {
+    "rust": 75844,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 77950,
+    "net_rust_this_block": 97
+  },
+  "exclusions": [
+    "whole-process database memory admission",
+    "database/server runtime allocator or format changes",
+    "hosted success before actual job completion",
+    "production acceptance"
+  ]
+}

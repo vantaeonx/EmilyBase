@@ -17,6 +17,13 @@ required-features = ["heap-profile"]
 test = false
 bench = false
 
+[[bin]]
+name = "emilybase-schema-allocation-check"
+path = "src/schema_allocation.rs"
+required-features = ["heap-profile"]
+test = false
+bench = false
+
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }

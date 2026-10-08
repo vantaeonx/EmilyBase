@@ -3267,3 +3267,27 @@ The [source-bound artifact](measurements/2026-10-08-account-root/verification.js
 records these local results and the separate prior hosted schema-allocation failure.
 That prior hosted job observed144 process-wide bytes despite serial libtest;100
 local repeats pass. A dedicated native measurement follow-up remains required.
+
+## Dedicated schema allocation process, 2026-10-08
+
+Hosted a7e1939 run37703816085 fails the schema-validation diagnostic after observing
+144 process-wide bytes;100 local repeats of the original sample pass. A deterministic
+background-buffer regression first fails with328 bytes from the unrelated144-byte
+buffer and thread startup. The sample therefore moves to an opt-in standalone
+native process, keeping strict zero total/block/peak/live assertions for the actual
+schema/key operations. No engine, validator, database format or server path changes.
+
+The parent regression now passes while retaining the unrelated background buffer.
+A negative control allocates144 bytes inside the child measurement and must report
+one block/144 total/peak/live bytes and exit1. The ordinary child reports zero for
+1/2/64 columns across1000 iterations each.100 fresh local native processes produce
+300 zero samples; negative-control samples are refused. There is no tolerance floor,
+counter filtering, warm-up exclusion of validator work or suppressed test failure.
+
+Both1.99.0/1.89.0 pass54 release diagnostic cases and18 default profile-package
+cases. Workspace-wide and opt-in all-target warning-denied Clippy and formatting
+pass. The preceding869a8cf frozen whole-workspace run passes1059 main cases on both
+toolchains; unrelated engine/SDK/parser suites are not claimed as newly rerun for
+this isolated diagnostic repair. Hosted results are verified separately after push.
+
+The [source-bound observation](measurements/2026-10-08-schema-allocation-isolation/verification.json) records the failing baseline, strict negative control and native repeats.

@@ -20,7 +20,7 @@ target/release/emilybase-model-profile --mode fingerprint --case short-text --ro
 target/release/emilybase-model-profile --case short-text --rows 10000 --value-bytes 768 --retain-old
 target/release/emilybase-model-profile --case long-text --rows 10000 --value-bytes 768 --retain-old
 target/release/emilybase-model-profile --case long-text --rows 10000 --value-bytes 768 --projects 4 --retain-old
-cargo test --release --locked -p emilybase-model-profile --features heap-profile
+cargo test --release --locked -p emilybase-model-profile --features heap-profile -- --test-threads=1
 target/release/emilybase-model-profile --mode index-only --case long-text --rows 10000 --value-bytes 768 --projects 4 --retain-old
 ```
 
@@ -51,7 +51,28 @@ it need not increase monotonically and is not the maximum observed block count.
 The peak is cumulative from profiler start and cannot be subtracted to produce a
 phase-local peak. The [builder testing mode](https://docs.rs/dhat/latest/dhat/struct.ProfilerBuilder.html)
 suppresses automatic output. The allocator is linked only into the feature-gated
-binary; report decoding and the runtime server use their usual allocators.
+diagnostic executables; report decoding and the runtime server use their usual allocators.
+
+### Isolated schema validation sample
+
+`emilybase-schema-allocation-check` is another opt-in native diagnostic executable.
+It validates one-, two- and64-column synthetic schemas and their primary keys1000
+times per sample. Fixture construction and JSON output remain outside profiling;
+the measured operation must allocate exactly zero bytes/blocks, including peak and
+live usage. The parent test harness runs in a different process and shares no
+allocator with this sample. The database/server do not launch this executable.
+
+```sh
+target/release/emilybase-schema-allocation-check
+target/release/emilybase-schema-allocation-check --negative-control
+```
+
+The first command succeeds with three zero samples. The negative control deliberately
+retains144 bytes inside each measurement, reports one block/144 total/peak/live
+bytes and exits1. Tests require that refusal, so isolation cannot hide allocations
+made inside the sampled process. Output contains counters only and creates no files.
+Unrecognized arguments fail without echoing input. This experiment does not admit
+whole-process database memory or replace model/cache/staging budgets.
 
 Counters include model construction and small diagnostic/report collections.
 They do not include the profiler's own internal bookkeeping, stack memory,
