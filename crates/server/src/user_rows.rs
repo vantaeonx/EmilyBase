@@ -1,4 +1,7 @@
 //! Synchronous typed user-row enforcement; no SQL, DDL or public HTTP authority.
+mod page;
+/// Maximum number of policy-visible rows retained by one native page.
+pub const MAX_USER_PAGE_ROWS: usize = 128;
 use emilybase_auth::{
     accounts::PolicyPrincipal,
     row_policy::{Change, PolicyError, TableContext},
@@ -26,11 +29,13 @@ pub enum UserWrite {
 }
 pub enum UserTableOperation {
     Get(Key),
+    Page { after: Option<Key>, limit: usize },
     Write(Vec<UserWrite>),
 }
 #[derive(PartialEq)]
 pub enum UserTableResult {
     Row(Option<Row>),
+    Page { rows: Vec<Row>, next: Option<Key> },
     Committed { transaction: u64, operations: usize },
 }
 macro_rules! redacted {
@@ -49,6 +54,11 @@ pub(crate) fn validate(table: &str, operation: &UserTableOperation) -> Result<()
     }
     if let UserTableOperation::Write(writes) = operation
         && (writes.is_empty() || writes.len() > MAX_TRANSACTION_EVENTS)
+    {
+        return Err(UserRowsError::Input);
+    }
+    if let UserTableOperation::Page { limit, .. } = operation
+        && !(1..=MAX_USER_PAGE_ROWS).contains(limit)
     {
         return Err(UserRowsError::Input);
     }
@@ -77,6 +87,9 @@ pub(crate) fn run(
         .check_context(context)
         .map_err(UserRowsError::Policy)?;
     match operation {
+        UserTableOperation::Page { after, limit } => {
+            page::run(database, proof, context, after.as_ref(), limit)
+        }
         UserTableOperation::Get(key) => {
             let Some(row) = database
                 .view()

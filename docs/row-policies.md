@@ -67,8 +67,10 @@ capability; existing private verification/revocation/restore semantics apply.
 The caller must keep authoritative transaction/context/row ownership through the
 decision and write. Returning a decision does not enforce unrelated SQL. The
 [owned root gateway](user-row-enforcement.md) now performs current installed-policy
-verification and atomic typed CRUD under both original owners. Role membership,
-bounded filtered ordering/continuation and end-user HTTP admission remain required
+verification and atomic typed CRUD under both original owners. Native
+[filtered primary-key pages](user-row-pages.md) retain permitted rows and expose
+only visible continuation keys. Role membership, custom ordering and end-user HTTP
+admission remain required
 before enabling user data routes. No production or security-audit gate is closed.
 
 

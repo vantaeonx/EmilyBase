@@ -14,7 +14,9 @@ mod row_api;
 mod table_api;
 mod user_rows;
 pub use table_api::TableError;
-pub use user_rows::{UserRowsError, UserTableOperation, UserTableResult, UserWrite};
+pub use user_rows::{
+    MAX_USER_PAGE_ROWS, UserRowsError, UserTableOperation, UserTableResult, UserWrite,
+};
 mod registry_archive;
 mod registry_files;
 pub use account_bundle::{

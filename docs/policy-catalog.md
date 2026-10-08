@@ -59,8 +59,9 @@ The root's service key and original public data identity remain preserved.
 
 This is policy persistence and a current borrowed decision API. The subsequent
 [owned root gateway](user-row-enforcement.md) derives the actual public table and
-applies current proofs to exact-key reads and atomic typed writes. End-user HTTP,
-role membership and bounded filtering/ordering/continuation remain open.
+applies current proofs to exact-key reads and atomic typed writes. Native
+[filtered primary-key pages](user-row-pages.md) also recheck those proofs on every
+call. End-user HTTP, role membership and custom ordering remain open.
 Project-service routes keep their existing trusted authority. No platform stage
 is complete. See [ADR0102](adr/0102-explicit-private-policy-catalog.md).
 

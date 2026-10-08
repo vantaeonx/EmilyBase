@@ -723,3 +723,5 @@ fn user_rows_update_using_and_check_do_not_gain_an_implicit_select_requirement_o
     ));
     assert_eq!(public(&f), before);
 }
+
+mod pages;

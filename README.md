@@ -70,8 +70,9 @@ old sessions. Root-mode [policy administration](docs/policy-administration.md) n
 uses current service keys and derives the real table context under a held data owner.
 A synchronous [owned user-row gateway](docs/user-row-enforcement.md) now verifies
 current sessions and installed policies while holding both original owners through
-exact-key reads or an atomic packet of typed writes. User HTTP routes, filtered
-pagination and roles remain pending.
+exact-key reads or an atomic packet of typed writes. Native
+[filtered keyset pages](docs/user-row-pages.md) retain only SELECT-permitted rows
+and continue by the last visible key. User HTTP routes and roles remain pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

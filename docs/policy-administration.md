@@ -72,5 +72,6 @@ held real-table boundary. A separate synchronous
 and a current user access token to apply installed rules under the original owners.
 It grants no detached private handle or end-user SQL/HTTP authority. See
 [ADR0103](adr/0103-service-key-policy-administration.md) and [OpenAPI](openapi.json).
-Filtered pagination, public admission, retirement, security, upgrade, resource and
+Native filtered pages are also available through the trusted gateway. Public
+admission, retirement, security, upgrade, resource and
 production gates remain open.

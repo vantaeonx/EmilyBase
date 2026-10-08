@@ -27,7 +27,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; end-user HTTP and filtering remain open |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages implemented; end-user HTTP remains open |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
@@ -905,3 +905,17 @@ result kills cover both original WALs. This synchronous trusted gateway requires
 a service key and user access token; it exposes no public user HTTP or SQL.
 Filtered pagination, roles, public admission and broader production gates remain
 open. See [the precise contract](user-row-enforcement.md).
+
+
+## Follow-up: current-policy filtered native pages
+
+[ADR0105](adr/0105-current-policy-filtered-keyset-pages.md) adds current-state
+primary-order pages of 1..128 permitted rows to the owned synchronous gateway.
+Hidden gaps/tails return neither rows nor scan watermarks; a continuation contains
+only the last returned visible key when another permitted row exists. Deleted
+cursor keys, current policy/session changes, exact large integers and long text
+bounds preserve the original key ordering. Independent owner-map models, full-source
+hidden scans, large row payloads, reopen and verified restore cover this boundary.
+No user HTTP, multi-request snapshot, signed capability, roles or new parser is
+introduced. See [page semantics](user-row-pages.md). Broader stage-5 and production
+gates remain open.

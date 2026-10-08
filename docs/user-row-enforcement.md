@@ -15,6 +15,7 @@ missing policy, wrong scope/schema and invalid/revoked credentials refuse.
 | Operation | Decision and result |
 | --- | --- |
 | Get(Key) | Check exact context even for an absent row; copy only a SELECT-permitted row. Absent and SELECT-denied both return Row(None). |
+| Page { after, limit } | Return 1..128 permitted rows in primary-key order; continuation uses only a visible key. See [page semantics](user-row-pages.md). |
 | Write(Insert(Row)) | Check the complete candidate against INSERT, then stage it. |
 | Write(Update { key, row }) | Load the actual staged old row, check UPDATE USING and candidate CHECK, refuse primary-key changes, then stage it. |
 | Write(Delete(Key)) | Load the actual staged old row and check DELETE before staging it. |
@@ -49,6 +50,6 @@ Local checks exercise both original WAL versions, independent generated row mode
 late rollback, current policy/session/project/schema boundaries, simultaneous
 public/private owner retention, competing same-key writers and controlled process
 kills before commit and after received results. See [verification](measurements/2026-10-09-owned-user-row-enforcement/verification.json)
-and [ADR0104](adr/0104-owned-user-row-policy-enforcement.md). Filtered continuation,
-end-user HTTP admission, roles, wider security/load/upgrade/resource and production
+and [ADR0104](adr/0104-owned-user-row-policy-enforcement.md). Native [filtered continuation](user-row-pages.md) is implemented separately.
+End-user HTTP admission, roles, wider security/load/upgrade/resource and production
 gates remain open. Only synthetic data is used.
