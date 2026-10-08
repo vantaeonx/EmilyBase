@@ -719,3 +719,15 @@ verifier/session export, KDF, clock observation or WAL commit occurs. Compatibil
 key rotation and real TCP restart cases cover this boundary. The expanded cleanup
 container lifecycle passed on90bba0b; listing needs its own next hosted run. Public
 account policy, roles/RLS, whole-process admission and production acceptance remain open.
+
+
+## Follow-up: private master-key files
+
+[ADR0088](adr/0088-private-master-key-file.md) adds one-source bounded startup
+configuration, exact private file validation and controlled-restart key replacement.
+A standalone private-root Compose variant receives only a path; explicit one-off
+stdin provisioning keeps secrets out of arguments and server ENV. Original
+environment deployments remain available. Files are plaintext and excluded from
+root bundles; encryption, runtime reload, parent sandboxing and production
+acceptance are not completed by this adapter. Native refusal/restart and the common
+environment/file lifecycle provide the corresponding local verification boundary.

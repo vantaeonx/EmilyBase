@@ -36,6 +36,8 @@ test(
         env: {
           ...process.env,
           EMILYBASE_MASTER_KEY: master,
+          EMILYBASE_MASTER_KEY_FILE: undefined,
+          EMILYBASE_ACCOUNT_ROOT: undefined,
           EMILYBASE_DATA_DIR: join(directory, "projects"),
           EMILYBASE_LISTEN: "127.0.0.1:0",
         },

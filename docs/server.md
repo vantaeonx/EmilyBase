@@ -12,7 +12,10 @@ cargo run --locked -p emilybase-server
 
 The master secret is exactly 64 lowercase hexadecimal characters (256 random
 bits). Supply it outside Git; never put it in URLs or public frontend code.
-Missing/invalid secrets fail before data-directory creation. The default listen
+Alternatively supply [EMILYBASE_MASTER_KEY_FILE](master-key-files.md) and remove
+EMILYBASE_MASTER_KEY entirely. Exactly one source is required; file keys accept one
+optional final LF and exact private0400/0600 mode. Missing/invalid/conflicting
+sources fail before data-directory creation. The default listen
 address is `127.0.0.1:7000`; override with `EMILYBASE_LISTEN`. Master-key replacement
 currently requires a controlled restart. No remote hosting or paid service is
 configured. The private root directory must have mode 0700, metadata files 0600.

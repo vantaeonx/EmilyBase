@@ -1,5 +1,6 @@
 use emilybase_server::{AccountRoot, Error, ProjectStore, account_router, router, serve};
 use std::process::ExitCode;
+mod config;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -13,11 +14,10 @@ async fn main() -> ExitCode {
     }
 }
 async fn run() -> emilybase_server::Result<()> {
-    let master = zeroize::Zeroizing::new(
-        std::env::var("EMILYBASE_MASTER_KEY").map_err(|_| Error::Config("master key required"))?,
-    );
-    // Validate secrets before creating data directories; errors never contain their values.
-    emilybase_auth::KeyDigest::from_token(&master)?;
+    // Bounded secret-file reads run off the reactor, before any data creation.
+    let master = tokio::task::spawn_blocking(config::load_master)
+        .await
+        .map_err(|_| Error::Config("configuration worker failed"))??;
     let root = std::env::var_os("EMILYBASE_DATA_DIR");
     let account_root = std::env::var_os("EMILYBASE_ACCOUNT_ROOT");
     if root.is_some() && account_root.is_some() {

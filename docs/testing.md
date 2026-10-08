@@ -3569,3 +3569,44 @@ No new full-workspace, optional diagnostic, SDK or ASan run is claimed. The prio
 7801d74 hosted run completed all five jobs;90bba0b's expanded cleanup container
 scenario passed. Listing's own hosted check follows publication; Docker is still
 unavailable locally. Stored formats, durable ACK and production gates remain.
+
+
+## Private master-key file startup, 2026-10-08
+
+The final targeted suites passed30 cases without ignored helpers on each of
+Rust1.99.0 and1.89.0:6 binary config units/property cases,3 native master-file
+cases,2 existing binary cases,7 private TCP cases and12 legacy network/recovery
+cases. Exact content/modes/links, Unicode paths,16 generated canonical keys,
+observed substitution and descriptor metadata changes are covered. Actual bad-file
+starts select both data modes and preserve absent target directories. A FIFO test
+has a five-second process deadline and kills a hanging child before failure.
+Actual legacy TCP restart switches master authority while preserving project
+metadata, service authority and committed WAL bytes.
+
+The common native private-root lifecycle passed with both environment and file
+keys on both Rust versions: four executions, each with six ACK kills across refresh,
+password, disable, enable, cleanup and restored-copy logout. It also verifies
+no-clobber backup/restore, independent source/copy state, private corruption refusal
+and log redaction. File mode does not supply the master-value environment variable.
+Native checks do not assert cgroup or image properties. Hosted CI now runs a real
+file-key container separately and inspects private file mode/UID/link count and
+the actual server environment. Its new result is pending publication.
+
+Workspace build, minimum server/CLI build, workspace/profile/fuzz strict Clippy,
+formatting, minimum fuzz compilation, Python probe checks and both warning-denied
+advisory scans passed. The modified SDK launcher passed formatting,11 unit cases
+and7 actual-server cases. The440 source/dependency/protocol files were checked
+against the final source freeze. No complete workspace test run, new sanitizer
+campaign or optional diagnostic execution was repeated in this scoped block.
+
+Early fixtures needed a bound temporary property value and the existing typed
+project-list/array contract. The shared fixture's intentionally unused file-start
+method also needed a documented dead-code lint scope in other test binaries; that
+attribute changed no executable test behavior. Runtime validation was not weakened.
+
+90bba0b completed all five hosted jobs. afa0bc1's real-container job also passed
+the private user-page lifecycle; other jobs were still running when this
+observation was recorded. [ADR0088](adr/0088-private-master-key-file.md) and
+[source-bound data](measurements/2026-10-08-private-master-key-file/verification.json)
+record the new boundary. Native source counts are82,133 Rust /78,718 excluding
+blank and standalone comment lines; SDK1,259; Python1,593; total84,985.

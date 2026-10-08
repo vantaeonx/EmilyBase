@@ -1,0 +1,117 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "afa0bc1349fa70842fd7d8a703ff962734573cec",
+  "source_sha256": {
+    "crates/server/src/main.rs": "9e5a11ebe559cfeaff7b67c7c5c355a8702602035c08d9b625d95e1beb0cfa6d",
+    "crates/server/src/config.rs": "d1dd51a2caadf03f8891d152cdfd62d6ccc994c51aa4286309e01c2ffad94aec",
+    "crates/server/src/config/tests.rs": "aa079306f3a5b4bf0a4e8585152aa4046d1bbcf0a1a7355ba4c4164b25f89dee",
+    "crates/server/tests/master_file.rs": "2c626978aef321850c47ad1b840d87ccef453a5b0d1fcfd9ffab3973a11ccc9b",
+    "crates/server/tests/support/mod.rs": "576c8dd9a3616fed4f0eae60af1799e6fb861b1a593d3204d6d005bae3624885",
+    "tests/containers.py": "28fab89b676dfad943cd0f1052153cb2bc8ad4afcaf45eb78842208728e238fd",
+    "tests/account_containers.py": "f3cf55ceb6d0bf9b752347291b2c9ffc72fa1bb9d6df684a2089631f77a6b26d",
+    "compose.accounts.file.yaml": "2315decee69e74725481d9ec6009eb8ff25f21553efc6e7cb8799458c6fe0b02",
+    ".github/workflows/rust.yml": "275aca29eb0243b0b3fdca1c5e6ac6bd40da4e331fe7dbe6dbe024880d45cd3d",
+    "sdks/typescript/tests/live.integration.mjs": "6b19e10fd3859dbf74775387c04ae2ca55d0995cfd4f0da96cb0ecb05cc93209",
+    "Cargo.lock": "a339a3a39589a0f438b3028f64eb757c109b4ad2164d98e405ff0decbdc5c56d",
+    "fuzz/Cargo.lock": "21ab8a0f1e2a2c7cd9c26ef2d8e49a3c7af8cd638810645d43f7369b16293fcb"
+  },
+  "protocol": {
+    "exactly_one_source_before_data_open": true,
+    "unchanged_environment_hex_policy": true,
+    "file_bytes": {
+      "minimum": 64,
+      "maximum": 65,
+      "optional_single_final_lf": true,
+      "physical_read_cap": 66
+    },
+    "private_modes": [
+      "0400",
+      "0600"
+    ],
+    "regular_single_link_required": true,
+    "descriptor_flags": [
+      "NOFOLLOW",
+      "NONBLOCK",
+      "CLOEXEC"
+    ],
+    "after_read_descriptor_name_identity_metadata_check": true,
+    "uid_equality_required": false,
+    "trusted_ancestors": true,
+    "owned_buffer_zeroization": true,
+    "file_plaintext": true,
+    "runtime_reload": false,
+    "no_stored_format_change": true
+  },
+  "matrix": {
+    "new_unit_property_cases": 6,
+    "generated_hex_cases": 16,
+    "new_native_cases": 3,
+    "native_bad_files_both_data_modes": true,
+    "fifo_native_startup_deadline_seconds": 5,
+    "controlled_restart_master_authority_and_wal_preservation": true,
+    "native_lifecycle_sources": [
+      "environment",
+      "file"
+    ],
+    "ack_kills_per_lifecycle": 6,
+    "native_lifecycle_runs": 4,
+    "file_mode_inherits_no_master_value_environment": true,
+    "logs_screened_for_secrets_and_paths": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "targeted_cases_each": 30,
+    "targeted_ignored_each": 0,
+    "targeted_suites": [
+      "server binary config units",
+      "master_file",
+      "binary",
+      "account_network",
+      "network_recovery"
+    ],
+    "frozen_source_dependency_protocol_files": 440,
+    "workspace_build_and_minimum_server_cli_build": true,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "python_probe_format_lint": true,
+    "sdk_unit_cases": 11,
+    "sdk_real_server_cases": 7,
+    "both_warning_denied_advisory_scans": true,
+    "full_workspace_tests_optional_diagnostics_repeated": false,
+    "new_asan_campaign": false
+  },
+  "prior_hosted": {
+    "last_all_five_success_commit": "90bba0b0774ea482dcf3ee5852bc4b5fef03a397",
+    "last_all_five_success_run": 37732719066,
+    "user_page_container_success_commit": "afa0bc1349fa70842fd7d8a703ff962734573cec",
+    "user_page_container_success_run": 37733844010,
+    "new_file_container_check": "pending publication"
+  },
+  "source_counts": {
+    ".rs": 82133,
+    ".ts": 455,
+    ".mjs": 804,
+    ".py": 1593,
+    "total": 84985,
+    "effective_rust": 78718
+  },
+  "net_rust": 494,
+  "net_python": 89,
+  "net_sdk_fixture": 2,
+  "fixture_repairs": [
+    "bind temporary property result",
+    "unwrap typed project listing and compare serialized metadata",
+    "use existing listing array contract",
+    "document shared fixture dead-code lint scope; no executable change"
+  ],
+  "exclusions": [
+    "secret encryption and external manager integration",
+    "hostile parent or filesystem sandbox",
+    "runtime master reload",
+    "new local Docker execution; CLI unavailable",
+    "whole-process resource gates and production acceptance"
+  ]
+}

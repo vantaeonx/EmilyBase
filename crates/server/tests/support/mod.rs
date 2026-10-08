@@ -23,7 +23,20 @@ impl Server {
         Self::start_mode(root, master, true)
     }
     fn start_mode(root: &Path, master: &str, private: bool) -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_emilybase-server"))
+        Self::start_source(root, Some(master), None, private)
+    }
+    #[allow(
+        dead_code,
+        reason = "Shared fixture also compiles in network binaries without file-key cases"
+    )]
+    pub fn start_file(root: &Path, path: &Path) -> Self {
+        Self::start_source(root, None, Some(path), false)
+    }
+    fn start_source(root: &Path, master: Option<&str>, path: Option<&Path>, private: bool) -> Self {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_emilybase-server"));
+        command
+            .env_remove("EMILYBASE_MASTER_KEY")
+            .env_remove("EMILYBASE_MASTER_KEY_FILE")
             .env_remove("EMILYBASE_DATA_DIR")
             .env_remove("EMILYBASE_ACCOUNT_ROOT")
             .env(
@@ -34,12 +47,16 @@ impl Server {
                 },
                 root,
             )
-            .env("EMILYBASE_MASTER_KEY", master)
             .env("EMILYBASE_LISTEN", "127.0.0.1:0")
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .unwrap();
+            .stderr(Stdio::piped());
+        if let Some(master) = master {
+            command.env("EMILYBASE_MASTER_KEY", master);
+        }
+        if let Some(path) = path {
+            command.env("EMILYBASE_MASTER_KEY_FILE", path);
+        }
+        let mut child = command.spawn().unwrap();
         let stdout = child.stdout.take().unwrap();
         let (sender, receiver) = std::sync::mpsc::channel();
         let reader = std::thread::spawn(move || {

@@ -7,6 +7,7 @@ fn command() -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_emilybase-server"));
     for name in [
         "EMILYBASE_MASTER_KEY",
+        "EMILYBASE_MASTER_KEY_FILE",
         "EMILYBASE_DATA_DIR",
         "EMILYBASE_ACCOUNT_ROOT",
         "EMILYBASE_LISTEN",

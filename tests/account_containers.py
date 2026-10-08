@@ -174,6 +174,55 @@ class AccountProbe(Probe):
             super().cleanup()
 
 
+class FileAccountProbe(AccountProbe):
+    """The server container receives a file path, never the master secret as ENV."""
+
+    def __init__(self):
+        super().__init__()
+        self.compose_args[-1] = str(ROOT / "compose.accounts.file.yaml")
+        self.key_file = "/var/lib/emilybase/master.key"
+        self.private.append(self.key_file)
+        self.env.pop("EMILYBASE_MASTER_KEY", None)
+
+    def setup(self, build):
+        self.docker_run("info", "--format", "{{.ServerVersion}}")
+        self.compose("config", "--quiet")
+        if build:
+            phase("Build private-root image for file-based master key")
+            self.compose("build", timeout=900)
+        # Explicit fixture provisioning as UID 10001. The key travels only on
+        # stdin; noclobber refuses an existing file in this disposable volume.
+        self.compose(
+            "run",
+            "--rm",
+            "--no-deps",
+            "-T",
+            "--entrypoint",
+            "/bin/sh",
+            "server",
+            "-c",
+            'set -C; umask 077; cat > "$1"',
+            "synthetic-master-file",
+            self.key_file,
+            stdin_bytes=self.master.encode(),
+        )
+
+    def configuration(self):
+        super().configuration()
+        environment = self.inspect()["Config"]["Env"]
+        require(
+            "EMILYBASE_MASTER_KEY_FILE=" + self.key_file in environment
+            and not any(
+                entry.startswith("EMILYBASE_MASTER_KEY=") for entry in environment
+            ),
+            "file-mode container does not expose the master key in ENV",
+        )
+        mode = self.compose(
+            "exec", "-T", "server", "stat", "-c", "%a:%u:%h:%s", self.key_file
+        ).stdout.strip()
+        require(mode == b"600:10001:1:64", "master file is private and singly linked")
+
+
 class NativeProbe(AccountProbe):
     """Same HTTP/CLI lifecycle, without claiming any Docker configuration check."""
 
@@ -186,6 +235,7 @@ class NativeProbe(AccountProbe):
         self.binary_dir = binary_dir.resolve()
         self.process = None
         self.output = None
+        self.env.pop("EMILYBASE_MASTER_KEY_FILE", None)
         self.env.pop("EMILYBASE_DATA_DIR", None)
         self.env.pop("EMILYBASE_ACCOUNT_ROOT", None)
         self.env["EMILYBASE_LISTEN"] = f"127.0.0.1:{self.port}"
@@ -288,6 +338,36 @@ class NativeProbe(AccountProbe):
             self.stop()
         finally:
             self.directory.cleanup()
+
+
+class NativeFileProbe(NativeProbe):
+    def __init__(self, binary_dir):
+        super().__init__(binary_dir)
+        self.key_file = Path(self.directory.name) / "master.key"
+        self.private.append(str(self.key_file))
+        self.env.pop("EMILYBASE_MASTER_KEY", None)
+        self.env["EMILYBASE_MASTER_KEY_FILE"] = str(self.key_file)
+
+    def setup(self, build):
+        super().setup(build)
+        descriptor = os.open(self.key_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "wb") as file:
+            file.write(self.master.encode() + b"\n")
+            file.flush()
+            os.fsync(file.fileno())
+
+    def configuration(self):
+        super().configuration()
+        require(
+            "EMILYBASE_MASTER_KEY" not in self.env, "native file mode has no key ENV"
+        )
+        metadata = self.key_file.stat()
+        require(
+            metadata.st_mode & 0o7777 == 0o600
+            and metadata.st_nlink == 1
+            and metadata.st_size == 65,
+            "native master file transport and permissions",
+        )
 
 
 class Lifecycle:
@@ -598,8 +678,16 @@ def main():
         help="run the same lifecycle on local Rust binaries; no Docker claim",
     )
     parser.add_argument("--binary-dir", type=Path, default=ROOT / "target/debug")
+    parser.add_argument(
+        "--master-file",
+        action="store_true",
+        help="read the master key from a private file",
+    )
     args = parser.parse_args()
-    probe = NativeProbe(args.binary_dir) if args.native else AccountProbe()
+    if args.native:
+        probe = (NativeFileProbe if args.master_file else NativeProbe)(args.binary_dir)
+    else:
+        probe = FileAccountProbe() if args.master_file else AccountProbe()
     failed = False
     try:
         probe.setup(not args.no_build)

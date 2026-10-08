@@ -122,3 +122,5 @@ jobs:
         run: python3 tests/containers.py --sdk
       - name: Private-root container, credentials, ACK kills and verified restore
         run: python3 tests/account_containers.py
+      - name: Private-root container with a file master key and no key environment
+        run: python3 tests/account_containers.py --master-file --no-build

@@ -63,13 +63,14 @@ class Probe:
         self.projects = []
         self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
-    def docker_run(self, *args, timeout=120, ok=True, env=None):
+    def docker_run(self, *args, timeout=120, ok=True, env=None, stdin_bytes=None):
         try:
             completed = subprocess.run(
                 [self.docker, *args],
                 cwd=ROOT,
                 env=env or self.env,
                 capture_output=True,
+                input=stdin_bytes,
                 timeout=timeout,
                 check=False,
             )

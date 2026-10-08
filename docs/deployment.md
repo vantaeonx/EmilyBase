@@ -29,7 +29,8 @@ The key is required, exactly 64 lowercase hexadecimal characters. Keep it in a
 private secret manager or private operator configuration outside the checkout;
 the example's generated value is not saved. Retain the same key before restarting.
 Compose currently passes it as environment configuration: the trusted Docker
-operator can inspect it. Secret-file loading and secret encryption are pending.
+operator can inspect it. A separate [private-file variant](master-key-files.md)
+loads a closed key file instead; secret encryption remains pending.
 Avoid publishing expanded Compose configuration or container inspection output.
 Never put the key in a URL, public frontend code, Git or logs.
 
@@ -112,6 +113,12 @@ this volume alone does not protect against volume loss; privately copy and verif
 it on independent storage. Never manually swap selected files or run both servers
 against one root. Failed/uncertain publications require inspection, not auto-retry.
 [ADR0085](adr/0085-explicit-private-root-container.md) records this adapter.
+
+A standalone [key-file variant](master-key-files.md#separate-container-variant)
+uses compose.accounts.file.yaml with explicit stdin provisioning. It reuses the
+accounts image while keeping the master value out of the server environment.
+The file remains private plaintext in its volume; root bundles exclude it.
+Do not merge Compose variants or automatically migrate existing volumes.
 
 ## Project backup and restore
 
@@ -266,3 +273,14 @@ The six-kill lifecycle including cleanup passed in the real hosted container job
 for90bba0b, run37732719066. The additional user-page check in this increment requires
 its own hosted run; local native and container evidence stay separate.
 No production gate closes.
+
+
+The same actual private-root container lifecycle also runs with a file master key:
+
+```sh
+python3 tests/account_containers.py --master-file
+```
+
+The server environment is inspected for the file path and absence of the master
+value variable; private file mode, UID and link count are checked inside the image.
+Use --native --master-file for local Rust-process evidence only.

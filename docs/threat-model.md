@@ -39,3 +39,15 @@ permission. [The transport contract](private-http.md),
 [retained ownership](retained-account-root.md) and
 [cleanup decision](adr/0086-bounded-private-session-cleanup.md) describe the tested
 boundary. This update records implementation/evidence, not a completed audit.
+
+
+Master-key file startup accepts one exact source and private regular singly linked
+files only. A retained NOFOLLOW/NONBLOCK/CLOEXEC descriptor,66-byte read cap and
+after-read identity/metadata checks reject observed substitution without echoing
+configuration. Reads run off the reactor before data opening. Trusted operators
+control ancestors; process/readable-file owners, Docker operators and malicious
+filesystems are outside this defense. No UID-equality or complete race-proof claim
+is made. Source files remain plaintext; owned temporary buffers alone are zeroized.
+A controlled restart is required to replace the live master digest. The standalone
+file Compose mode does not pass the master value in the server environment or
+archive it inside account roots. Encryption and an independent audit remain open.

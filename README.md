@@ -30,6 +30,11 @@ An optional [decoded plan pool](docs/decoded-plan-admission.md) reserves complet
 typed image/address/root vector payloads before owned decode and holds them until
 the last shared owner drops. Models, scratch and total heap remain outside that cap.
 
+[Private master-key files](docs/master-key-files.md) now provide bounded startup
+configuration in either data mode, with controlled-restart replacement. A separate
+Compose variant keeps the master value out of the server environment; the private
+file remains plaintext and is excluded from root bundles.
+
 **Early development. Not production-ready. Use synthetic data only.**
 
 Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is
