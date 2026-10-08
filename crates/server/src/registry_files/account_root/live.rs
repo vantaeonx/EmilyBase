@@ -139,6 +139,47 @@ impl AccountRoot {
             .find(|store| store.project() == project)
             .ok_or(Error::Denied)
     }
+    /// Explicit private v3-to-v4 migration, guarded by the current service key.
+    pub fn enable_row_policy_catalog(&mut self, project: &str, key: &str) -> Result<()> {
+        Ok(self.account(project, key)?.enable_row_policy_catalog()?)
+    }
+    /// Complete private policy metadata only; no clock observation or user grant.
+    pub fn row_policy_receipts(
+        &mut self,
+        project: &str,
+        key: &str,
+    ) -> Result<Vec<emilybase_auth::accounts::PolicyReceipt>> {
+        Ok(self.account(project, key)?.row_policy_receipts()?)
+    }
+    /// Derive the target identity/schema under the held public data gate/owner.
+    /// The caller cannot substitute an asserted project, table ID or schema.
+    pub fn install_row_policy(
+        &mut self,
+        project: &str,
+        key: &str,
+        table: &str,
+        expected: u64,
+        document: &[u8],
+    ) -> Result<emilybase_auth::accounts::PolicyReceipt> {
+        self.ready()?;
+        let authorized = self.contents.registry.authorize(project, key)?;
+        let account = self
+            .contents
+            .accounts
+            .iter_mut()
+            .find(|store| store.project() == project)
+            .ok_or(Error::Denied)?;
+        authorized.data_operation(|database| {
+            let snapshot = database.view()?;
+            let context = emilybase_auth::row_policy::TableContext {
+                project,
+                id: snapshot.table_id(table).map_err(crate::TableError::from)?,
+                schema: snapshot.schema(table).map_err(crate::TableError::from)?,
+            };
+            super::checkpoint("root_policy_context_acquired");
+            Ok(account.install_row_policy(context, expected, document)?)
+        })
+    }
     /// Trusted operator metadata, never proof of user authorization.
     pub fn projects(&self) -> Result<Vec<ProjectInfo>> {
         self.ready()?;

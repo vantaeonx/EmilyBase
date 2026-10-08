@@ -66,7 +66,9 @@ A [bounded record codec](docs/policy-records.md) also preserves complete policy
 groups within original page limits. An explicitly enabled [private v4 catalog](docs/policy-catalog.md)
 now stores/replaces these groups atomically with actual commit revisions and
 current borrowed policy proofs. Verified restore preserves policies and revokes
-old sessions. User data routes and roles remain pending.
+old sessions. Root-mode [policy administration](docs/policy-administration.md) now
+uses current service keys and derives the real table context under a held data owner.
+User data routes and roles remain pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

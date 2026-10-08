@@ -1,7 +1,7 @@
 //! Bounded HTTP transport over a synchronous isolated-project/key registry.
 mod account_bundle;
 mod account_http;
-pub use account_http::account_router;
+pub use account_http::{PolicyTransportError, account_router, validate_policy_install_request};
 #[cfg(test)]
 mod durability;
 mod http;
@@ -95,6 +95,8 @@ pub enum Error {
     Tables(#[from] TableError),
     #[error(transparent)]
     Migrations(#[from] MigrationError),
+    #[error(transparent)]
+    Policies(#[from] PolicyTransportError),
     #[error("project filesystem error")]
     Io(#[from] std::io::Error),
     #[error("HTTP transport failed")]

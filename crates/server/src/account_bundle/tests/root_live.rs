@@ -708,3 +708,85 @@ proptest! {
         prop_assert_eq!(histories(&f),before);
     }
 }
+
+#[test]
+fn root_policy_install_derives_current_table_context_and_holds_its_owner_through_private_commit() {
+    let _serial = durability::PROCESS_TESTS.blocking_lock();
+    let deny=br#"{"version":1,"select":{"kind":"deny"},"insert":{"kind":"deny"},"update_using":{"kind":"deny"},"update_check":{"kind":"deny"},"delete":{"kind":"deny"}}"#;
+    for compact in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let f = restored(dir.path(), 2, compact);
+        let (id, key) = &f.credentials[0];
+        let mut root = AccountRoot::open(&f.root, pool()).unwrap();
+        let before = histories(&f);
+        denied(root.enable_row_policy_catalog(id, &f.credentials[1].1));
+        denied(root.row_policy_receipts(id, &f.credentials[1].1));
+        denied(root.install_row_policy(id, &f.credentials[1].1, "t", 0, deny));
+        assert_eq!(histories(&f), before);
+        root.enable_row_policy_catalog(id, key).unwrap();
+        let enabled = histories(&f);
+        assert!(
+            root.install_row_policy(id, key, "missing", 0, deny)
+                .is_err()
+        );
+        let bad=br#"{"version":1,"select":{"kind":"owner","column":"unknown"},"insert":{"kind":"deny"},"update_using":{"kind":"deny"},"update_check":{"kind":"deny"},"delete":{"kind":"deny"}}"#;
+        assert!(root.install_row_policy(id, key, "t", 0, bad).is_err());
+        assert_eq!(histories(&f), enabled);
+        let path = f.root.join("registry").join(id).join("data");
+        let data = Database::open(&path).unwrap();
+        let original_id = data.view().unwrap().table_id("t").unwrap();
+        drop(data);
+        let owner_seen = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let seen = owner_seen.clone();
+        let guard = durability::on_boundary("root_policy_context_acquired", move || {
+            assert!(Database::open(&path).is_err());
+            seen.store(true, std::sync::atomic::Ordering::SeqCst);
+        });
+        let first = root.install_row_policy(id, key, "t", 0, deny).unwrap();
+        drop(guard);
+        assert!(owner_seen.load(std::sync::atomic::Ordering::SeqCst));
+        assert_eq!(first.table, original_id);
+        let installed = histories(&f);
+        assert_eq!(
+            root.install_row_policy(id, key, "t", 0, deny).unwrap(),
+            first
+        );
+        assert_eq!(histories(&f), installed);
+        root.execute(
+            id,
+            key,
+            "DROP TABLE t;CREATE TABLE t(id INT PRIMARY KEY,v INT);INSERT INTO t VALUES(1,0)",
+            &[],
+        )
+        .unwrap();
+        let changed = histories(&f);
+        assert!(
+            root.install_row_policy(id, key, "t", first.revision, deny)
+                .is_err()
+        );
+        assert_eq!(histories(&f), changed);
+        let second = root.install_row_policy(id, key, "t", 0, deny).unwrap();
+        assert!(second.table > first.table);
+        assert_eq!(second.previous, 0);
+        assert_eq!(
+            root.row_policy_receipts(id, key).unwrap(),
+            vec![first.clone(), second.clone()]
+        );
+        let rotated = root.rotate_project_key(id).unwrap();
+        let after = histories(&f);
+        denied(root.install_row_policy(id, key, "t", second.revision, deny));
+        assert_eq!(histories(&f), after);
+        assert_eq!(
+            root.row_policy_receipts(id, &rotated.api_key)
+                .unwrap()
+                .len(),
+            2
+        );
+        drop(root);
+        let mut root = AccountRoot::open(&f.root, pool()).unwrap();
+        assert_eq!(
+            root.row_policy_receipts(id, &rotated.api_key).unwrap(),
+            vec![first, second]
+        );
+    }
+}

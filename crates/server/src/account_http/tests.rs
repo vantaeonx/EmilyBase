@@ -17,6 +17,9 @@ struct Fixture {
     clock: Arc<AtomicU64>,
 }
 fn fixture() -> Fixture {
+    fixture_with_wal(false)
+}
+fn fixture_with_wal(compact: bool) -> Fixture {
     let dir = tempfile::tempdir().unwrap();
     let mut registry = ProjectStore::open(dir.path().join("registry")).unwrap();
     let pool = PasswordPool::new(1).unwrap();
@@ -43,6 +46,19 @@ fn fixture() -> Fixture {
             .unwrap();
         accounts.push(account);
         credentials.push((created.project.id, created.api_key));
+    }
+    if compact {
+        for store in &mut accounts {
+            store.compact().unwrap();
+        }
+        for (id, _) in &credentials {
+            emilybase_transactions::Database::open(
+                dir.path().join("registry").join(id).join("data"),
+            )
+            .unwrap()
+            .compact()
+            .unwrap();
+        }
     }
     let image = registry.capture_account_bundle(&mut accounts).unwrap();
     let path = dir.path().join("root");
@@ -1377,3 +1393,5 @@ mod transfer;
 mod rows;
 
 mod migrations;
+
+mod policies;

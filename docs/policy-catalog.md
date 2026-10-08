@@ -62,3 +62,10 @@ role membership, bounded filtering/ordering/continuation, public transaction
 context and atomic user CRUD enforcement remain open. Project-service routes keep
 their existing trusted authority. No end-user HTTP route or platform milestone is
 enabled by this change. See [ADR0102](adr/0102-explicit-private-policy-catalog.md).
+
+
+The retained root now derives the actual held table context for trusted installation.
+Its [service-only HTTP administration](policy-administration.md) adds explicit
+migration/list/install with exact revision strings. This does not enable user data
+routes, role grants or runtime row filtering. Existing direct AccountStore callers
+still bear the trusted-context obligation described above.

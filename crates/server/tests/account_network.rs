@@ -1191,3 +1191,162 @@ fn migration_tcp_ack_kills_exact_retries_and_concurrent_versions_preserve_both_m
         }
     }
 }
+
+#[test]
+fn policy_http_received_ack_kills_recover_catalog_replacements_exact_retry_and_verified_clone_on_both_wals()
+ {
+    let _case = CASES.lock().unwrap();
+    let deny = r#"{"version":1,"select":{"kind":"deny"},"insert":{"kind":"deny"},"update_using":{"kind":"deny"},"update_check":{"kind":"deny"},"delete":{"kind":"deny"}}"#;
+    for compact in [false, true] {
+        let f = fixture(compact);
+        let server = support::Server::start_account(&f.root, MASTER);
+        let pair = sign(&server, &f.id, &f.key);
+        for wrong in [
+            MASTER,
+            pair["access_token"].as_str().unwrap(),
+            pair["refresh_token"].as_str().unwrap(),
+        ] {
+            assert_eq!(
+                auth(&server, &f.id, wrong, "policies/enable", json!({})).0,
+                401
+            );
+        }
+        let original = fs::read(f.root.join("registry").join(&f.id).join("data/redo.wal")).unwrap();
+        assert_eq!(
+            auth(&server, &f.id, &f.key, "policies/enable", json!({})),
+            (200, json!({"private_version":4}))
+        );
+        clean_log(&server.kill(), &[MASTER, &f.key, PASSWORD, deny]);
+        let server = support::Server::start_account(&f.root, MASTER);
+        let path = format!("/v1/projects/{}/auth/policies", f.id);
+        assert_eq!(
+            support::call(server.address, "GET", &path, &f.key, &json!({})).unwrap(),
+            (200, json!({"policies":[]}))
+        );
+        let mut long = deny.to_owned();
+        long.push_str(&" ".repeat(16_384 - long.len()));
+        let request = json!({"table":"t","expected":"0","document":long});
+        let (status, first) = auth(&server, &f.id, &f.key, "policies/install", request.clone());
+        assert_eq!(status, 200);
+        let private = f.root.join("private").join(&f.id).join("redo.wal");
+        let before = fs::read(&private).unwrap();
+        clean_log(&server.kill(), &[MASTER, &f.key, PASSWORD, deny]);
+        let server = support::Server::start_account(&f.root, MASTER);
+        assert_eq!(
+            auth(&server, &f.id, &f.key, "policies/install", request),
+            (200, first.clone())
+        );
+        assert_eq!(fs::read(&private).unwrap(), before);
+        let next = json!({"table":"t","expected":first["receipt"]["revision"],"document":deny});
+        let (status, replacement) = auth(&server, &f.id, &f.key, "policies/install", next.clone());
+        assert_eq!(status, 200);
+        assert_eq!(
+            replacement["receipt"]["previous"],
+            first["receipt"]["revision"]
+        );
+        clean_log(&server.kill(), &[MASTER, &f.key, PASSWORD, deny]);
+        let server = support::Server::start_account(&f.root, MASTER);
+        let before = fs::read(&private).unwrap();
+        assert_eq!(
+            auth(&server, &f.id, &f.key, "policies/install", next),
+            (200, replacement.clone())
+        );
+        assert_eq!(fs::read(&private).unwrap(), before);
+        assert_eq!(
+            support::call(server.address, "GET", &path, &f.key, &json!({})).unwrap(),
+            (200, json!({"policies":[replacement["receipt"].clone()]}))
+        );
+        // The write client never reads its response. A separate inspection proves
+        // completion before the kill, then an explicit predecessor retry is exact.
+        use std::io::Write;
+        let unread_request = json!({"table":"t","expected":replacement["receipt"]["revision"],"document":format!("{deny} ")});
+        let bytes = serde_json::to_vec(&unread_request).unwrap();
+        let mut unread = support::socket(server.address).unwrap();
+        unread
+            .write_all(
+                support::headers(
+                    "POST",
+                    &format!("/v1/projects/{}/auth/policies/install", f.id),
+                    &f.key,
+                    bytes.len(),
+                )
+                .as_bytes(),
+            )
+            .unwrap();
+        unread.write_all(&bytes).unwrap();
+        let prior = replacement["receipt"]["revision"]
+            .as_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            let bytes = fs::read(&private).unwrap();
+            let report = emilybase_backup::encode(&bytes).ok().and_then(|archive| {
+                emilybase_auth::accounts::inspect_private_account_backup_bytes(&archive, &f.id).ok()
+            });
+            if report.is_some_and(|r| r.database.last_transaction > prior) {
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "unread policy request did not complete"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        let (status, observed) =
+            support::call(server.address, "GET", &path, &f.key, &json!({})).unwrap();
+        assert_eq!(status, 200);
+        let replacement = json!({"receipt":observed["policies"][0].clone()});
+        assert_eq!(replacement["receipt"]["previous"], prior.to_string());
+        drop(unread);
+        clean_log(&server.kill(), &[MASTER, &f.key, PASSWORD, deny]);
+        let server = support::Server::start_account(&f.root, MASTER);
+        let before = fs::read(&private).unwrap();
+        assert_eq!(
+            auth(&server, &f.id, &f.key, "policies/install", unread_request),
+            (200, replacement.clone())
+        );
+        assert_eq!(fs::read(&private).unwrap(), before);
+        assert_eq!(
+            auth(
+                &server,
+                &f.id,
+                &f.key,
+                "me",
+                json!({"access_token":pair["access_token"]})
+            )
+            .0,
+            200
+        );
+        assert_eq!(
+            fs::read(f.root.join("registry").join(&f.id).join("data/redo.wal")).unwrap(),
+            original
+        );
+        let log = server.stop();
+        clean_log(&log, &[MASTER, &f.key, PASSWORD, deny]);
+        let image = capture_account_bundle_root(&f.root, pool()).unwrap();
+        let clone = f._dir.path().join("policy-clone");
+        restore_account_bundle_bytes(&image, &clone, pool(), 0).unwrap();
+        let mut copied =
+            AccountStore::open(clone.join("private").join(&f.id), &f.id, pool()).unwrap();
+        assert_eq!(
+            copied.row_policy_receipts().unwrap()[0]
+                .revision
+                .to_string(),
+            replacement["receipt"]["revision"]
+        );
+        assert!(
+            copied
+                .verify_access(pair["access_token"].as_str().unwrap(), 0)
+                .is_err()
+        );
+        drop(copied);
+        let copied = support::Server::start_account(&clone, MASTER);
+        assert_eq!(
+            support::call(copied.address, "GET", &path, &f.key, &json!({})).unwrap(),
+            (200, json!({"policies":[replacement["receipt"].clone()]}))
+        );
+        copied.stop();
+    }
+}

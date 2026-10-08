@@ -3,8 +3,8 @@
 Pure experimental `row_policy::records` codec, now used by the explicitly enabled
 [private v4 policy catalog](policy-catalog.md). Existing private v1..v3 stores and
 default v3 root initialization remain supported. Do not insert these tables
-manually: use the atomic library migration. There is no policy-install CLI or HTTP
-route yet.
+manually: use the atomic library migration. A service-key-only [root HTTP installer](policy-administration.md) is available;
+there is no policy-install CLI or end-user data route.
 
 `encode(TableContext, revision, previous, document)` validates the strict bounded
 policy against its exact target schema and returns normal typed rows. It does

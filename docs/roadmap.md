@@ -884,3 +884,10 @@ validation and current borrowed policy proofs do not enable a user data route.
 Private/common-root restore preserves policies while resetting session incarnation.
 Roles, trusted public transaction context and bounded filtered CRUD remain open;
 no platform stage closes. See the [catalog contract](policy-catalog.md).
+
+
+[ADR0103](adr/0103-service-key-policy-administration.md) connects explicit policy
+administration to current project service keys and the actual held public table
+context. Root-only enable/list/install HTTP preserves exact u64 receipts, CAS
+retries and private/public/sibling histories. No user SQL/rows/roles or implicit
+migration is enabled. See [policy administration](policy-administration.md).

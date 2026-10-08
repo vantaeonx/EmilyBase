@@ -4168,3 +4168,42 @@ and [source-bound verification](measurements/2026-10-09-private-policy-catalog/v
 record the scope. Net growth1,206 Rust lines:92,373 physical/88,727 effective,
 SDK2,502/Python1,785,total96,660 source lines. Wider recovery/upgrade/security/load,
 policy retirement/roles/user transactions/filtering and production gates remain open.
+
+
+## Root policy administration verification, 2026-10-09
+
+Nine new regular server cases connect private v4 enable/list/install to current
+service keys and real public table context. Seven grammar/wire/error/in-process
+HTTP cases cover exact full-u64 strings, strict/duplicate/unknown fields,16KiB
+policy and64KiB transport bounds, concurrent identical and changed stale requests,
+private attempt limits, current-key rotation while both write bodies wait, no
+clock observations and unchanged public/sibling histories. A real held-context
+case proves the public database owner remains locked through installation on both
+WAL versions; dropped/recreated names obtain fresh policy table identities.
+
+One native case runs both WAL versions. Per toolchain it kills after six received
+HTTP write ACKs for migration/first/replace and after two deliberately unread write
+responses. A separate inspection establishes completion before the latter kill;
+explicit predecessor retries recover exact receipts without new WAL writes.
+Verified common-root clones preserve policies, revoke old user sessions and remain
+servable; source sessions and public rows/WAL remain unchanged by policy work.
+Secret/definition-free native logs are checked. Existing staged/ACK catalog crash
+acceptance remains the separate ADR0102 result.
+
+Frozen-source final checks pass44 cases per Rust1.99/1.89:32 private HTTP/grammar
+regression,11 complete native account-network and one held-context case. Workspace/
+fuzz formatting, strict all-target Clippy, minimum workspace build and minimum
+all-target fuzz compilation pass. ASan row_requests, now including policy grammar,
+executes5,615,985 runs in46 seconds with no findings, observed RSS419MiB under512MiB
+cap and maximum input65,538 bytes. OpenAPI checks33 operations, unique specified
+operation IDs, complete local references and required path parameters. Existing
+older operations without IDs are preserved. Full auth/workspace/server/SDK/advisory/
+optional allocation/local Docker suites were not repeated for this increment.
+
+Previous fba7c81 hosted run37852476688 remained in progress at this observation;
+a661bf8 had all five jobs successful. New hosted checks follow publication.
+[ADR0103](adr/0103-service-key-policy-administration.md) and
+[source-bound evidence](measurements/2026-10-09-policy-admin-http/verification.json)
+record this scope. Net growth865 Rust lines:93,238 physical/89,579 effective,
+SDK2,502/Python1,785,total97,525 source lines. No end-user data route, roles,
+retirement, upgrade/resource/security/load or production gate is closed.

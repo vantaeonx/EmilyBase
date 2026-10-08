@@ -19,6 +19,9 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use zeroize::{Zeroize, Zeroizing};
 
+mod policies;
+pub use policies::{PolicyTransportError, validate_policy_install_request};
+
 const PRIVATE_BODY: usize = 4096;
 const PRIVATE_ATTEMPTS: u32 = 30;
 const WINDOW: Duration = Duration::from_secs(60);
@@ -115,6 +118,15 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects/{id}/tables/rows/update", post(row_update))
         .route("/v1/projects/{id}/tables/rows/delete", post(row_delete))
         .route("/v1/projects/{id}/tables/rows/batch", post(row_batch))
+        .route("/v1/projects/{id}/auth/policies", get(policies::list))
+        .route(
+            "/v1/projects/{id}/auth/policies/enable",
+            post(policies::enable),
+        )
+        .route(
+            "/v1/projects/{id}/auth/policies/install",
+            post(policies::install),
+        )
         .route("/v1/projects/{id}/auth/users", post(create_user))
         .route("/v1/projects/{id}/auth/users/list", post(list_users))
         .route("/v1/projects/{id}/auth/sign-in", post(sign_in))
@@ -258,6 +270,13 @@ async fn blocking<T: Send + 'static>(
     scope: Scope,
     work: impl FnOnce(&mut AccountRoot, &Scope) -> crate::Result<T> + Send + 'static,
 ) -> ApiResult<T> {
+    blocking_mapped(scope, work, account_failure).await
+}
+async fn blocking_mapped<T: Send + 'static>(
+    scope: Scope,
+    work: impl FnOnce(&mut AccountRoot, &Scope) -> crate::Result<T> + Send + 'static,
+    failure: fn(Error) -> Failure,
+) -> ApiResult<T> {
     tokio::task::spawn_blocking(move || {
         let owner = scope.root.clone();
         let mut root = owner.blocking_lock();
@@ -265,7 +284,7 @@ async fn blocking<T: Send + 'static>(
     })
     .await
     .map_err(|_| Failure(StatusCode::INTERNAL_SERVER_ERROR, "worker_failed"))?
-    .map_err(account_failure)
+    .map_err(failure)
 }
 #[derive(Deserialize)]
 #[serde(transparent)]
