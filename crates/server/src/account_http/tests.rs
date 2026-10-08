@@ -712,3 +712,241 @@ async fn cancelled_started_worker_keeps_permit_and_root_until_its_durable_work_f
     .unwrap();
     assert_eq!(account.count().unwrap(), 2);
 }
+
+#[tokio::test]
+async fn credential_management_revokes_all_old_families_and_preserves_other_project_and_noop_history()
+ {
+    let _serial = durability::PROCESS_TESTS.lock().await;
+    let f = fixture();
+    let router = routes_app(f.app.clone());
+    let (id, key) = &f.credentials[0];
+    let (other, other_key) = &f.credentials[1];
+    let first = sign(&router, id, key).await;
+    let other_pair = sign(&router, other, other_key).await;
+    let before = wal(&f);
+    let (status, user) = call(
+        &router,
+        id,
+        key,
+        "disabled",
+        json!({"login":"synthetic_user","disabled":false}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(user["credential_epoch"], "1");
+    assert_eq!(wal(&f), before);
+    let replacement = "synthetic-new-界\0-password";
+    let (status,_) = call(&router,id,key,"password",json!({"login":"synthetic_user","current_password":"synthetic-wrong","replacement_password":replacement})).await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(wal(&f), before);
+    let (status,user) = call(&router,id,key,"password",json!({"login":"synthetic_user","current_password":PASSWORD,"replacement_password":replacement})).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(user["credential_epoch"], "2");
+    for (operation, field) in [("me", "access_token"), ("refresh", "refresh_token")] {
+        assert_eq!(
+            call(&router, id, key, operation, json!({field:first[field]}))
+                .await
+                .0,
+            StatusCode::UNAUTHORIZED
+        );
+    }
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "sign-in",
+            json!({"login":"synthetic_user","password":PASSWORD})
+        )
+        .await
+        .0,
+        StatusCode::UNAUTHORIZED
+    );
+    let (status, fresh) = call(
+        &router,
+        id,
+        key,
+        "sign-in",
+        json!({"login":"synthetic_user","password":replacement}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, user) = call(
+        &router,
+        id,
+        key,
+        "disabled",
+        json!({"login":"synthetic_user","disabled":true}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(user["credential_epoch"], "3");
+    assert_eq!(user["disabled"], true);
+    let disabled_wal = wal(&f);
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "disabled",
+            json!({"login":"synthetic_user","disabled":true})
+        )
+        .await
+        .1["credential_epoch"],
+        "3"
+    );
+    assert_eq!(wal(&f), disabled_wal);
+    for (operation, field) in [("me", "access_token"), ("refresh", "refresh_token")] {
+        assert_eq!(
+            call(&router, id, key, operation, json!({field:fresh[field]}))
+                .await
+                .0,
+            StatusCode::UNAUTHORIZED
+        );
+    }
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "sign-in",
+            json!({"login":"synthetic_user","password":replacement})
+        )
+        .await
+        .0,
+        StatusCode::UNAUTHORIZED
+    );
+    let (status, user) = call(
+        &router,
+        id,
+        key,
+        "disabled",
+        json!({"login":"synthetic_user","disabled":false}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(user["credential_epoch"], "4");
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "me",
+            json!({"access_token":fresh["access_token"]})
+        )
+        .await
+        .0,
+        StatusCode::UNAUTHORIZED
+    );
+    assert_eq!(
+        call(
+            &router,
+            id,
+            key,
+            "sign-in",
+            json!({"login":"synthetic_user","password":replacement})
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
+    assert_eq!(
+        call(
+            &router,
+            other,
+            other_key,
+            "me",
+            json!({"access_token":other_pair["access_token"]})
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
+    assert_eq!(wal(&f)[1], before[1]);
+    drop(router);
+    drop(f.app);
+    let mut root = AccountRoot::open(&f.path, PasswordPool::new(1).unwrap()).unwrap();
+    assert!(
+        root.sign_in(id, key, "synthetic_user", PASSWORD.as_bytes(), 50)
+            .is_err()
+    );
+    assert!(
+        root.sign_in(id, key, "synthetic_user", replacement.as_bytes(), 50)
+            .is_ok()
+    );
+}
+
+#[tokio::test]
+async fn management_body_limits_unknown_fields_types_and_unauthorized_scopes_never_change_history()
+{
+    let _serial = durability::PROCESS_TESTS.lock().await;
+    let f = fixture();
+    let router = routes_app(f.app.clone());
+    let (id, key) = &f.credentials[0];
+    let before = wal(&f);
+    for (operation, body) in [
+        (
+            "password",
+            json!({"login":"synthetic_user","current_password":PASSWORD,"replacement_password":""}),
+        ),
+        (
+            "password",
+            json!({"login":"synthetic_user","current_password":PASSWORD,"replacement_password":"x".repeat(1025)}),
+        ),
+        (
+            "password",
+            json!({"login":"synthetic_user","current_password":PASSWORD,"replacement_password":"synthetic-new","now":50}),
+        ),
+        (
+            "disabled",
+            json!({"login":"synthetic_user","disabled":"true"}),
+        ),
+        (
+            "disabled",
+            json!({"login":"synthetic_user","disabled":true,"now":50}),
+        ),
+    ] {
+        let (status, _) = call(&router, id, key, operation, body).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(wal(&f), before);
+    }
+    for operation in ["password", "disabled"] {
+        let path = format!("/v1/projects/{id}/auth/{operation}");
+        for forged in [MASTER, &f.credentials[1].1] {
+            assert_eq!(
+                send(
+                    &router,
+                    request(&path, forged, Body::from("malformed-private-input"))
+                )
+                .await
+                .0,
+                StatusCode::UNAUTHORIZED
+            );
+        }
+        assert_eq!(
+            send(
+                &router,
+                request(&path, key, Body::from("x".repeat(PRIVATE_BODY + 1)))
+            )
+            .await
+            .0,
+            StatusCode::PAYLOAD_TOO_LARGE
+        );
+        assert_eq!(wal(&f), before);
+    }
+    let duplicate = r#"{"login":"synthetic_user","disabled":true,"disabled":false}"#;
+    assert_eq!(
+        send(
+            &router,
+            request(
+                &format!("/v1/projects/{id}/auth/disabled"),
+                key,
+                Body::from(duplicate)
+            )
+        )
+        .await
+        .0,
+        StatusCode::BAD_REQUEST
+    );
+    assert_eq!(wal(&f), before);
+}

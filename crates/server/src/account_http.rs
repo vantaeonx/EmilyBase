@@ -106,6 +106,8 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects/{id}/auth/refresh", post(refresh))
         .route("/v1/projects/{id}/auth/logout", post(logout))
         .route("/v1/projects/{id}/auth/me", post(me))
+        .route("/v1/projects/{id}/auth/password", post(change_password))
+        .route("/v1/projects/{id}/auth/disabled", post(set_disabled))
         .route_layer(middleware::from_fn_with_state(app.clone(), guard));
     Router::new()
         .route(
@@ -277,6 +279,19 @@ struct Refresh {
 struct Access {
     access_token: Secret,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PasswordChange {
+    login: String,
+    current_password: Secret,
+    replacement_password: Secret,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Disabled {
+    login: String,
+    disabled: bool,
+}
 async fn private_json<T: serde::de::DeserializeOwned>(request: Request) -> ApiResult<T> {
     if !request
         .headers()
@@ -341,6 +356,37 @@ async fn create_user(Extension(scope): Extension<Scope>, request: Request) -> Ap
         let mut out = response(&user(info))?;
         *out.status_mut() = StatusCode::CREATED;
         Ok(out)
+    })
+    .await
+}
+async fn change_password(
+    Extension(scope): Extension<Scope>,
+    request: Request,
+) -> ApiResult<Response> {
+    let body: PasswordChange = private_json(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        let info = root.change_password(
+            id,
+            key,
+            &body.login,
+            body.current_password.0.as_bytes(),
+            body.replacement_password.0.as_bytes(),
+        )?;
+        response(&user(info))
+    })
+    .await
+}
+async fn set_disabled(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let body: Disabled = private_json(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        response(&user(root.set_disabled(
+            id,
+            key,
+            &body.login,
+            body.disabled,
+        )?))
     })
     .await
 }

@@ -528,3 +528,164 @@ fn fresh_empty_root_can_be_provisioned_using_only_the_operator_and_private_http_
     );
     server.stop();
 }
+
+#[test]
+fn credential_mutation_acks_survive_three_kills_without_reviving_old_sessions_on_both_wals() {
+    let _case = CASES.lock().unwrap();
+    for compact in [false, true] {
+        let f = fixture(compact);
+        let replacement = "synthetic-replacement-界\0-password";
+        let server = support::Server::start_account(&f.root, MASTER);
+        let old = sign(&server, &f.id, &f.key);
+        let (status, user) = auth(
+            &server,
+            &f.id,
+            &f.key,
+            "password",
+            json!({"login":"synthetic_user","current_password":PASSWORD,"replacement_password":replacement}),
+        );
+        assert_eq!(status, 200);
+        assert_eq!(user["credential_epoch"], "2");
+        let log = server.kill();
+        clean_log(
+            &log,
+            &[
+                MASTER,
+                &f.id,
+                &f.key,
+                PASSWORD,
+                replacement,
+                old["access_token"].as_str().unwrap(),
+                old["refresh_token"].as_str().unwrap(),
+            ],
+        );
+        let server = support::Server::start_account(&f.root, MASTER);
+        assert_eq!(
+            auth(
+                &server,
+                &f.id,
+                &f.key,
+                "sign-in",
+                json!({"login":"synthetic_user","password":PASSWORD})
+            )
+            .0,
+            401
+        );
+        assert_eq!(
+            auth(
+                &server,
+                &f.id,
+                &f.key,
+                "me",
+                json!({"access_token":old["access_token"]})
+            )
+            .0,
+            401
+        );
+        let (status, fresh) = auth(
+            &server,
+            &f.id,
+            &f.key,
+            "sign-in",
+            json!({"login":"synthetic_user","password":replacement}),
+        );
+        assert_eq!(status, 200);
+        let (status, user) = auth(
+            &server,
+            &f.id,
+            &f.key,
+            "disabled",
+            json!({"login":"synthetic_user","disabled":true}),
+        );
+        assert_eq!(status, 200);
+        assert_eq!(user["credential_epoch"], "3");
+        let log = server.kill();
+        clean_log(
+            &log,
+            &[
+                MASTER,
+                &f.id,
+                &f.key,
+                PASSWORD,
+                replacement,
+                fresh["access_token"].as_str().unwrap(),
+                fresh["refresh_token"].as_str().unwrap(),
+            ],
+        );
+        let server = support::Server::start_account(&f.root, MASTER);
+        assert_eq!(
+            auth(
+                &server,
+                &f.id,
+                &f.key,
+                "sign-in",
+                json!({"login":"synthetic_user","password":replacement})
+            )
+            .0,
+            401
+        );
+        for (operation, field) in [("me", "access_token"), ("refresh", "refresh_token")] {
+            assert_eq!(
+                auth(
+                    &server,
+                    &f.id,
+                    &f.key,
+                    operation,
+                    json!({field:fresh[field]})
+                )
+                .0,
+                401
+            );
+        }
+        let (status, user) = auth(
+            &server,
+            &f.id,
+            &f.key,
+            "disabled",
+            json!({"login":"synthetic_user","disabled":false}),
+        );
+        assert_eq!(status, 200);
+        assert_eq!(user["credential_epoch"], "4");
+        let log = server.kill();
+        clean_log(&log, &[MASTER, &f.id, &f.key, PASSWORD, replacement]);
+        let server = support::Server::start_account(&f.root, MASTER);
+        assert_eq!(
+            auth(
+                &server,
+                &f.id,
+                &f.key,
+                "sign-in",
+                json!({"login":"synthetic_user","password":replacement})
+            )
+            .0,
+            200
+        );
+        for pair in [&old, &fresh] {
+            for (operation, field) in [("me", "access_token"), ("refresh", "refresh_token")] {
+                assert_eq!(
+                    auth(
+                        &server,
+                        &f.id,
+                        &f.key,
+                        operation,
+                        json!({field:pair[field]})
+                    )
+                    .0,
+                    401
+                );
+            }
+        }
+        let log = server.stop();
+        clean_log(
+            &log,
+            &[
+                MASTER,
+                &f.id,
+                &f.key,
+                PASSWORD,
+                replacement,
+                "synthetic_user",
+            ],
+        );
+    }
+}

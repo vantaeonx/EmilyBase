@@ -88,7 +88,9 @@ current-project-key-gated service over the exact inspected owners. Normal reopen
 preserves sessions; fixed-roster admission is capped at four active private stores.
 Borrowed user proofs grant no SQL permission. The explicit
 [private HTTP transport](docs/private-http.md) now supplies service-key-gated user/
-session routes with body/worker/rate bounds. Set `EMILYBASE_ACCOUNT_ROOT` to an
+session routes with body/worker/rate bounds. Private password changes and
+disable/enable operations durably revoke older credential epochs; re-enabling
+does not revive old sessions. Set `EMILYBASE_ACCOUNT_ROOT` to an
 existing verified root, leaving `EMILYBASE_DATA_DIR` unset, to select this mode
 in the actual binary. Real TCP refresh/ACK-kill/restart/clone tests cover WAL1/2;
 one damaged declared private store refuses the whole root at startup. See

@@ -672,3 +672,13 @@ initialization and restore. Eight initialization cases cover generated empty mod
 eight sync faults, six native kills, eight final substitutions and two competing
 processes; CLI and real HTTP checks remain separate evidence. Public signup/RLS,
 dynamic roster, resource/container and production gates remain open.
+
+
+## Follow-up: private HTTP credential management
+
+[ADR0084](adr/0084-private-http-credential-management.md) exposes current-password
+change and trusted disable/enable under the existing current project service key.
+Durable epoch changes revoke old access/refresh families; re-enable never revives
+them, while same-state disable requests preserve epoch/history. Scoped input and
+native ACK-kill/restart cases cover WAL1/2. Public password reset, user roles/RLS,
+family cleanup and production gates remain open.

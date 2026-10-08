@@ -290,8 +290,8 @@ impl AccountStore {
         self.replace(record)
     }
 
-    /// Trusted local administrative operation. Epoch changes invalidate future
-    /// epoch-bound sessions only once that separate session layer is implemented.
+    /// Trusted administrative operation. Changed state advances the epoch and
+    /// invalidates existing epoch-bound access/refresh families; a no-op does not.
     pub fn set_disabled(&mut self, login: &str, disabled: bool) -> Result<AccountInfo> {
         let mut record = self.record(login)?.ok_or(Error::Denied)?;
         if record.info.disabled == disabled {

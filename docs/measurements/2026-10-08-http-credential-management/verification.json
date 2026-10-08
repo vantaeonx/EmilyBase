@@ -1,0 +1,94 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "ecc556f512922e8898864b31639bf3ea4a02d53d",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "4f5ccd3c5c7624ecd0e32362dd53052ae550ef1a1f1251a1382b777f68bd97f0",
+    "crates/server/src/account_http.rs": "fda9c1c44c50e4a3a277e5cdc85fc8525a79c69e885687239d87fc54f2707f3d",
+    "crates/server/src/account_http/tests.rs": "64b902af481b913865651b562cfd2bf72af72943fb9f0de680262a79aa47079a",
+    "crates/server/tests/account_network.rs": "8c21562164b5c6b1538e05211b4bd4a189b73868d25b24bc9d09f1208cfb70db",
+    "Cargo.lock": "a339a3a39589a0f438b3028f64eb757c109b4ad2164d98e405ff0decbdc5c56d",
+    "fuzz/Cargo.lock": "21ab8a0f1e2a2c7cd9c26ef2d8e49a3c7af8cd638810645d43f7369b16293fcb"
+  },
+  "protocol": {
+    "private_routes": [
+      "password",
+      "disabled"
+    ],
+    "current_project_service_key_required_before_body_and_at_execution": true,
+    "password_change_requires_current_password": true,
+    "changed_credentials_revoke_older_access_refresh_families": true,
+    "reenable_does_not_revive_old_families": true,
+    "same_disabled_state_preserves_epoch_and_wal": true,
+    "shared_body_worker_rate_nocache_redacted_error_rules": true,
+    "no_public_password_reset_or_user_role_permission": true
+  },
+  "matrix": {
+    "new_in_process_cases": 2,
+    "new_native_process_cases": 1,
+    "native_wal_versions": [
+      1,
+      2
+    ],
+    "ack_kill_phases": [
+      "password_change",
+      "disable",
+      "reenable"
+    ],
+    "native_ack_kills_per_toolchain": 6,
+    "unicode_nul_replacement_password_preserved": true,
+    "wrong_current_password_no_history_change": true,
+    "other_project_history_and_authority_unchanged": true,
+    "unknown_duplicate_client_time_input_and_byte_password_limits": true,
+    "master_and_other_project_keys_refuse": true,
+    "native_logs_screened_for_credentials": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "scope": [
+      "emilybase-server",
+      "emilybase-cli"
+    ],
+    "scoped_cases_each": 207,
+    "scoped_ignored_helpers_each": 5,
+    "full_workspace_baseline": {
+      "commit": "ecc556f512922e8898864b31639bf3ea4a02d53d",
+      "cases_each": 1111,
+      "ignored_helpers_each": 22,
+      "optional_diagnostics_each": 54
+    },
+    "full_workspace_tests_repeated_this_block": false,
+    "frozen_source_dependency_files": 431,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_legacy_http_restart_cases": 7,
+    "both_warning_denied_advisory_scans": true,
+    "openapi_seven_private_routes_and_local_references_resolve": true,
+    "new_asan_campaign": false
+  },
+  "source_counts": {
+    "rust": 80552,
+    "effective": 77175,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 82658,
+    "net_rust": 445
+  },
+  "prior_hosted_ci": {
+    "commit": "add6c57c878f1824b65cbe1c9978f7f7bc8715de",
+    "run": 37713905976,
+    "all_five_jobs": "success"
+  },
+  "exclusions": [
+    "public signup and password reset",
+    "user SQL authority, roles and row policies",
+    "automatic session family cleanup",
+    "private-root container execution",
+    "whole-process resource admission, secret encryption and production acceptance"
+  ]
+}

@@ -53,6 +53,8 @@ never authorize project SQL. Roles and row policies remain unimplemented.
 | `/refresh` | `refresh_token` | 200, replacement pair; old pair denied |
 | `/logout` | `refresh_token` | 200, `logged_out:true` |
 | `/me` | `access_token` | 200, current account metadata |
+| `/password` | `login`, `current_password`, `replacement_password` | 200, updated account metadata |
+| `/disabled` | `login`, `disabled` boolean | 200, updated account metadata |
 
 Account metadata contains a32-hex-character user ID, canonical login, decimal
 string `credential_epoch` and `disabled`. Session responses explicitly contain
@@ -109,3 +111,21 @@ roles/RLS, dynamic catalogs and production/security acceptance remain open.
 See [OpenAPI](openapi.json), [ADR0081](adr/0081-private-root-http-mode.md),
 [ADR0082](adr/0082-native-private-root-mode.md), the
 [retained root contract](retained-account-root.md) and [testing](testing.md).
+
+
+## Private credential management
+
+Password change requires the current password and the current project service key.
+A successful durable change increments the credential epoch and invalidates all
+previous access/refresh families. Replacement bytes remain exact UTF-8, including
+Unicode/NUL, within1..1024 bytes; both passwords share the4096-byte encoded JSON
+bound. Even selecting the same password advances the epoch under the existing
+store contract. Passwords belong in the private JSON body only.
+
+The trusted disabled-state route requires the current service key. A changed state
+increments the epoch; re-enabling cannot revive older families. Repeating the same
+state preserves epoch/WAL. These operations expose existing synchronous account
+semantics with shared worker/rate/body/no-cache/error rules, not user roles or public
+password reset. Unknown/duplicate/client-time fields refuse. No family cleanup,
+automatic replay, public signup or SQL user authority is added. See
+[ADR0084](adr/0084-private-http-credential-management.md).

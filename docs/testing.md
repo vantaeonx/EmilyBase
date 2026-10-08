@@ -3472,3 +3472,31 @@ Prior1af8319 hosted run37712364907 completes all five jobs successfully. Docker 
 unavailable locally; this block claims no new container-root or ASan execution.
 The [source-bound observation](measurements/2026-10-08-private-root-initialization/verification.json)
 keeps hardware power-loss, public policy and production gates open.
+
+
+## Private HTTP credential management, 2026-10-08
+
+Two new in-process cases exercise current-password change, disable/re-enable,
+old access/refresh denial, no-op epoch/history preservation, exact Unicode/NUL
+replacement bytes, wrong-current-password no-change and independent other-project
+history/authority. Unknown/duplicate/client-time fields, input types, password/body
+limits and master/cross-project credentials refuse without history changes at the
+fixed trusted time. Shared response helpers verify no-cache headers.
+
+One new actual TCP case runs WAL1/2. For each version, SIGKILL follows received
+password-change, disable and re-enable acknowledgements: six kill scenarios per
+toolchain. Restart keeps the new password/state/epoch and never revives either
+older family. Native logs are screened for credentials. No hardware power-loss,
+public reset or role-policy acceptance is claimed.
+
+Final locked checks keep all431 frozen source/dependency hashes unchanged. Both
+Rust1.99.0/1.89.0 pass207 server/CLI cases with5 ignored helpers each. This is a
+scoped run; the preceding ecc556f complete workspace passed1111/22 and54 optional
+diagnostics on each toolchain. Unchanged storage/query/crypto suites are not
+reported as newly rerun here. Format, strict workspace/profile/fuzz Clippy, minimum
+fuzz compilation, full workspace build, SDK11 unit/7 legacy real HTTP restart cases
+and both warning-denied advisory scans pass. OpenAPI has seven private routes,
+resolving local references and no duplicate operation IDs. Prior add6c57 hosted
+run37713905976 completes all five jobs successfully. Current hosted full-workspace
+results are checked separately after publication. No new ASan campaign executes.
+See the [source-bound observation](measurements/2026-10-08-http-credential-management/verification.json).
