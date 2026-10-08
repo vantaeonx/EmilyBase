@@ -3724,3 +3724,47 @@ in progress at this observation. No stage or production gate is marked complete.
 record this boundary. Net growth:760 Rust and53 Python lines. Current source size:
 84,482 Rust /81,038 excluding blanks and standalone comments; SDK1,259; Python1,677;
 87,418 total. Documentation/configuration/lockfiles/build output are excluded.
+
+
+## Bounded typed project rows, 2026-10-08
+
+Both Rust1.99.0 and1.89.0 pass71 scoped cases each:6 row-core,4 schema-core,
+22 private HTTP and39 network/project/recovery cases, with no ignored cases in
+scope. Nine are new (6 core,2 private HTTP,1 native TCP). Independent16 CRUD
+models and16 finite-bit models cover current ordered state and exact numeric
+wire. Tests exercise i64 extrema, float extrema/signed zero,3072-byte Unicode
+keys, bytes/null/boolean/text, strict canonical numbers/fields, missing/duplicate/
+primary-change refusals, exclusive continuation and whole-response byte caps.
+
+Two concurrent duplicate inserts have exactly one winner. User access/refresh,
+master and sibling credentials cannot read/write rows. All five routes recheck
+current service keys after waiting bodies and reject malformed/oversized input
+without public/private history changes. Reads and public mutations work with an
+injected backward private clock without observing it. Native TCP insert/update/
+delete each survive received-ACK kills on both routers and WAL1/2:12 new kills per
+Rust,20 including schema checks. Four shared native lifecycle runs (stable/minimum,
+environment/file master source) each pass12 ACK kills, then the existing refresh,
+credentials, backup/restore, source/copy scope and corruption scenario.
+
+The exact runtime decoder is also used by the pure public grammar validator and
+new row_requests ASan target:5,547,233 executions in46 seconds, observed RSS405MiB,
+configured512MiB and65,538-byte input cap, no findings. This short campaign is not
+an audit. Input arrays are retained under the body cap before column/value/encoded
+row checks; serialized output is capped before retaining excess bytes. No whole-
+process heap bound is claimed.
+
+Workspace and minimum server/CLI builds, both formatting suites, strict workspace/
+profile/fuzz Clippy, minimum fuzz compilation, Python format/lint and warning-denied
+workspace/fuzz advisory scans pass. Final459 source/dependency/protocol hashes are
+unchanged. OpenAPI references resolve and operation IDs are unique; all previous
+contracts are unchanged. Full workspace/SDK tests and optional allocation
+measurements were not repeated. The schema documentation example corrects int to
+the actual integer tag. Priorbc683b7 hosted run37737773033 is fully successful;
+ff207db run37739476397 has Docker and three other jobs successful, general check
+still in progress at this observation. Local Docker remains unavailable.
+
+[ADR0092](adr/0092-bounded-project-row-api.md) and
+[source-bound data](measurements/2026-10-08-project-row-api/verification.json)
+record this scope. Net growth:1,024 Rust and28 Python lines. Current totals:85,506
+Rust /82,053 excluding blanks/standalone comments; SDK1,259; Python1,705;88,470
+source lines. Documents/configuration/lockfiles/build output are excluded.

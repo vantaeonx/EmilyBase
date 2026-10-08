@@ -18,15 +18,15 @@ All successful operations return200. Example schema:
 {
   "name": "items",
   "columns": [
-    { "name": "id", "data_type": "int", "nullable": false },
+    { "name": "id", "data_type": "integer", "nullable": false },
     { "name": "title", "data_type": "text", "nullable": true }
   ],
   "primary_key": 0
 }
 ```
 
-The primary key is a zero-based column index and must be a non-null int or text.
-Supported column types are boolean, int, float, text and bytes. Names follow the
+The primary key is a zero-based column index and must be a non-null integer or text.
+Supported column types are boolean, integer, float, text and bytes. Names follow the
 catalog ASCII identifier rules; maximum63 bytes. Schemas have1..64 columns and
 must also fit the original encoded schema. Unknown/duplicate fields and invalid
 schemas refuse. Inventory lists up to128 live tables in ascending ID order.

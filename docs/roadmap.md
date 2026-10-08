@@ -763,3 +763,14 @@ private-root keys are rechecked after body waits; private history/time is unchan
 Generated catalog sequences, maximum inventory, scoped refusals and native create/
 drop ACK kills cover this adapter; common lifecycle now has nine kills. Public user
 policy, migrations, resource gates and production acceptance remain open.
+
+
+## Follow-up: bounded typed row HTTP
+
+[ADR0092](adr/0092-bounded-project-row-api.md) exposes original-engine get/page and
+single-row insert/update/delete in both service routers. Exact numeric wire,
+checked primary cursors, exclusive current-state continuation, bounded output and
+single durable mutation preserve the engine boundary. Private/sibling histories,
+user/current-key authority, generated models, ASan parsing and real TCP CRUD ACK
+kills cover the adapter. Common lifecycle now has twelve kills. Batch/idempotency,
+public account policy, RLS, global admission and production acceptance remain open.

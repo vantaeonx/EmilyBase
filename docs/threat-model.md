@@ -81,3 +81,14 @@ destructive service-key capability and commits rows/schema together. Reads and
 public writes do not observe private clocks or modify private WAL. Decimal-string
 IDs avoid client precision loss. No idempotency, public user/RLS authority,
 whole-process quota or completed security audit is implied.
+
+
+Typed row HTTP inherits table service authority and retained owners. Strict fields,
+canonical i64 strings and finite float bits avoid ambiguous numeric conversion;
+original schema/encoded-record checks still apply. Reads use checked physical
+primary rows, including long keys. Exclusive continuation is caller-selected
+current-state position, not an authorization token or snapshot. Input is body-
+bounded before JSON parsing; row limits follow decoding. A capped serializer
+refuses excess output before retaining more serialized bytes. Whole-process heap,
+slow-client/output admission, idempotency and public-user RLS remain open. Mutations
+acknowledge only original commits and do not touch private clock/history.

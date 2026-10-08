@@ -186,6 +186,11 @@ fn routes(app: App) -> Router {
         .route("/v1/projects/{id}/tables/schema", post(table_schema))
         .route("/v1/projects/{id}/tables/create", post(table_create))
         .route("/v1/projects/{id}/tables/drop", post(table_drop))
+        .route("/v1/projects/{id}/tables/rows/get", post(row_get))
+        .route("/v1/projects/{id}/tables/rows/page", post(row_page))
+        .route("/v1/projects/{id}/tables/rows/insert", post(row_insert))
+        .route("/v1/projects/{id}/tables/rows/update", post(row_update))
+        .route("/v1/projects/{id}/tables/rows/delete", post(row_delete))
         .route_layer(middleware::from_fn_with_state(app.clone(), guard));
     Router::new()
         .route(
@@ -372,6 +377,33 @@ async fn import_table(
     })
     .await?;
     Ok(Json(report))
+}
+async fn row_get(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Get).await
+}
+async fn row_page(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Page).await
+}
+async fn row_insert(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Insert).await
+}
+async fn row_update(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Update).await
+}
+async fn row_delete(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Delete).await
+}
+async fn row_operation(
+    scope: Scope,
+    request: Request,
+    op: crate::row_api::Operation,
+) -> ApiResult<Response> {
+    let bytes = body(request).await?;
+    let project = take_project(&scope)?;
+    blocking(scope, move || {
+        project.table_operation(|db| crate::row_api::run(db, op, &bytes))
+    })
+    .await
 }
 async fn table_list(Extension(scope): Extension<Scope>) -> ApiResult<Response> {
     let project = take_project(&scope)?;

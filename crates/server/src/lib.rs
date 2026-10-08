@@ -8,6 +8,7 @@ mod http;
 mod metadata;
 mod projects;
 mod rate;
+mod row_api;
 mod table_api;
 pub use table_api::TableError;
 mod registry_archive;
@@ -97,3 +98,5 @@ pub enum Error {
     #[error("invalid server configuration: {0}")]
     Config(&'static str),
 }
+
+pub use row_api::{Operation as RowOperation, validate_row_request};

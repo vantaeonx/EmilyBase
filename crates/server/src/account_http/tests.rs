@@ -1373,3 +1373,5 @@ async fn metadata_page_bounds_cursor_shape_and_unauthorized_bodies_never_write_h
 
 mod tables;
 mod transfer;
+
+mod rows;

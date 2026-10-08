@@ -107,6 +107,11 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects/{id}/tables/schema", post(table_schema))
         .route("/v1/projects/{id}/tables/create", post(table_create))
         .route("/v1/projects/{id}/tables/drop", post(table_drop))
+        .route("/v1/projects/{id}/tables/rows/get", post(row_get))
+        .route("/v1/projects/{id}/tables/rows/page", post(row_page))
+        .route("/v1/projects/{id}/tables/rows/insert", post(row_insert))
+        .route("/v1/projects/{id}/tables/rows/update", post(row_update))
+        .route("/v1/projects/{id}/tables/rows/delete", post(row_delete))
         .route("/v1/projects/{id}/auth/users", post(create_user))
         .route("/v1/projects/{id}/auth/users/list", post(list_users))
         .route("/v1/projects/{id}/auth/sign-in", post(sign_in))
@@ -549,6 +554,34 @@ async fn import_table(Extension(scope): Extension<Scope>, request: Request) -> A
         root.admits_project(id, key, false)?;
         let table = emilybase_transfer::decode_table(&bytes)?;
         response(&root.import_table(id, key, table)?)
+    })
+    .await
+}
+async fn row_get(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Get).await
+}
+async fn row_page(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Page).await
+}
+async fn row_insert(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Insert).await
+}
+async fn row_update(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Update).await
+}
+async fn row_delete(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    row_operation(scope, request, crate::row_api::Operation::Delete).await
+}
+async fn row_operation(
+    scope: Scope,
+    request: Request,
+    op: crate::row_api::Operation,
+) -> ApiResult<Response> {
+    let bytes = crate::http::body(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        root.admits_project(id, key, false)?;
+        root.table_operation(id, key, |db| crate::row_api::run(db, op, &bytes))
     })
     .await
 }

@@ -529,6 +529,34 @@ class Lifecycle:
             "created schema survives kill",
         )
         self.p.request(route + "/create", key, schema, 400)
+        row_key = {"type": "integer", "value": "9223372036854775807"}
+        point = {"table": "schema_probe", "key": row_key}
+        original = [row_key, {"type": "text", "value": "synthetic-row-before"}]
+        replacement = [row_key, {"type": "text", "value": "synthetic-row-after"}]
+        self.p.private.extend(["synthetic-row-before", "synthetic-row-after"])
+        for operation, payload, expected in [
+            ("insert", {"table": "schema_probe", "row": original}, original),
+            ("update", {**point, "row": replacement}, replacement),
+            ("delete", point, None),
+        ]:
+            changed = self.p.request(route + "/rows/" + operation, key, payload)
+            require(
+                changed["key"] == row_key and changed["transaction"].isdecimal(),
+                "lossless durable row acknowledgement",
+            )
+            self.p.stop(hard=True)
+            self.p.up()
+            require(
+                self.p.request(route + "/rows/get", key, point) == {"row": expected},
+                "acknowledged typed row state survives kill",
+            )
+            page = self.p.request(
+                route + "/rows/page", key, {"table": "schema_probe", "limit": 1}
+            )
+            require(
+                page == {"rows": [] if expected is None else [expected], "next": None},
+                "bounded typed row page after restart",
+            )
         dropped = self.p.request(route + "/drop", key, {"table": "schema_probe"})
         require(dropped["transaction"].isdecimal(), "durable drop acknowledgement")
         self.p.stop(hard=True)

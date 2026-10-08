@@ -3452,6 +3452,356 @@
           }
         }
       }
+    },
+    "/v1/projects/{id}/tables/rows/get": {
+      "post": {
+        "operationId": "row_get",
+        "summary": "Read one row by exact typed primary key",
+        "description": "Project service authority only in both data modes. Strict65,536-byte body and response caps,5-second body deadline,four shared admitted workers. Integer values use canonical decimal strings; finite floats use16 lowercase hexadecimal bit digits. No SQL interpolation or private-clock/WAL change. Success/refusal disable caches. Page output refuses as a whole above the byte cap; lower limit and retry. Missing point is row:null. Update/delete missing and duplicate insert refuse. Replies to writes follow original durable commit; no idempotency key.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowFound"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowPointRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/tables/rows/page": {
+      "post": {
+        "operationId": "row_page",
+        "summary": "Read a bounded exclusive page in primary order",
+        "description": "Project service authority only in both data modes. Strict65,536-byte body and response caps,5-second body deadline,four shared admitted workers. Integer values use canonical decimal strings; finite floats use16 lowercase hexadecimal bit digits. No SQL interpolation or private-clock/WAL change. Success/refusal disable caches. Page output refuses as a whole above the byte cap; lower limit and retry. Missing point is row:null. Update/delete missing and duplicate insert refuse. Replies to writes follow original durable commit; no idempotency key.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowPageRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/tables/rows/insert": {
+      "post": {
+        "operationId": "row_insert",
+        "summary": "Insert one row with durable acknowledgment",
+        "description": "Project service authority only in both data modes. Strict65,536-byte body and response caps,5-second body deadline,four shared admitted workers. Integer values use canonical decimal strings; finite floats use16 lowercase hexadecimal bit digits. No SQL interpolation or private-clock/WAL change. Success/refusal disable caches. Page output refuses as a whole above the byte cap; lower limit and retry. Missing point is row:null. Update/delete missing and duplicate insert refuse. Replies to writes follow original durable commit; no idempotency key.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowInsertRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/tables/rows/update": {
+      "post": {
+        "operationId": "row_update",
+        "summary": "Replace one complete existing row preserving its primary key",
+        "description": "Project service authority only in both data modes. Strict65,536-byte body and response caps,5-second body deadline,four shared admitted workers. Integer values use canonical decimal strings; finite floats use16 lowercase hexadecimal bit digits. No SQL interpolation or private-clock/WAL change. Success/refusal disable caches. Page output refuses as a whole above the byte cap; lower limit and retry. Missing point is row:null. Update/delete missing and duplicate insert refuse. Replies to writes follow original durable commit; no idempotency key.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowUpdateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/tables/rows/delete": {
+      "post": {
+        "operationId": "row_delete",
+        "summary": "Delete one existing row with durable acknowledgment",
+        "description": "Project service authority only in both data modes. Strict65,536-byte body and response caps,5-second body deadline,four shared admitted workers. Integer values use canonical decimal strings; finite floats use16 lowercase hexadecimal bit digits. No SQL interpolation or private-clock/WAL change. Success/refusal disable caches. Page output refuses as a whole above the byte cap; lower limit and retry. Missing point is row:null. Update/delete missing and duplicate insert refuse. Replies to writes follow original durable commit; no idempotency key.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowPointRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4356,6 +4706,343 @@
           }
         },
         "required": [
+          "transaction"
+        ]
+      },
+      "RowKey": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "integer"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "maxLength": 20,
+                "pattern": "^(0|-[1-9][0-9]{0,18}|[1-9][0-9]{0,18})$",
+                "description": "Canonical signed decimal within i64 range; exact numeric range is validated by the server."
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "text"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "maxLength": 3072,
+                "description": "At most3072 UTF-8 bytes."
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          }
+        ]
+      },
+      "RowValue": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "null"
+                ]
+              },
+              "value": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "boolean"
+                ]
+              },
+              "value": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "integer"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "maxLength": 20,
+                "pattern": "^(0|-[1-9][0-9]{0,18}|[1-9][0-9]{0,18})$",
+                "description": "Canonical signed decimal within i64 range; exact numeric range is validated by the server."
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "float_bits"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{16}$",
+                "description": "Finite IEEE754 binary64 bits only; preserves signed zero."
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "text"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "maxLength": 3072,
+                "description": "At most3072 UTF-8 bytes."
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "bytes"
+                ]
+              },
+              "value": {
+                "type": "array",
+                "maxItems": 3072,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                }
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ]
+          }
+        ]
+      },
+      "TypedRow": {
+        "type": "array",
+        "maxItems": 64,
+        "items": {
+          "$ref": "#/components/schemas/RowValue"
+        },
+        "description": "Exactly the selected schema column count; original encoded record at most4000 bytes."
+      },
+      "RowPointRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "table": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "key": {
+            "$ref": "#/components/schemas/RowKey"
+          }
+        },
+        "required": [
+          "table",
+          "key"
+        ]
+      },
+      "RowPageRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "table": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 128
+          },
+          "after": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RowKey"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exclusive continuation in current primary-key order; no cross-request snapshot."
+          }
+        },
+        "required": [
+          "table",
+          "limit"
+        ]
+      },
+      "RowInsertRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "table": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "row": {
+            "$ref": "#/components/schemas/TypedRow"
+          }
+        },
+        "required": [
+          "table",
+          "row"
+        ]
+      },
+      "RowUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "table": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "key": {
+            "$ref": "#/components/schemas/RowKey"
+          },
+          "row": {
+            "$ref": "#/components/schemas/TypedRow"
+          }
+        },
+        "required": [
+          "table",
+          "key",
+          "row"
+        ]
+      },
+      "RowFound": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "row": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TypedRow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "row"
+        ]
+      },
+      "RowPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rows": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "$ref": "#/components/schemas/TypedRow"
+            }
+          },
+          "next": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RowKey"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "rows",
+          "next"
+        ]
+      },
+      "RowChanged": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/RowKey"
+          },
+          "transaction": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$"
+          }
+        },
+        "required": [
+          "key",
           "transaction"
         ]
       }

@@ -1,0 +1,121 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "ff207dbec9ff28163e61df80359e335c589293da",
+  "source_sha256": {
+    "crates/server/src/row_api.rs": "7caffef1a357e91ef201cdce4405462dada3919026ab44186a92df5b60178964",
+    "crates/server/src/row_api/wire.rs": "983894f5d1a45d3f893d60957ed088fd820d6beef511af8fadc2ea0e76c90db2",
+    "crates/server/src/row_api/tests.rs": "9d9fccea1b4c5b0445ad1ff93d3f5566ef130f00675c5c95c98d9a81013a4fb5",
+    "crates/server/src/lib.rs": "3de1274cf9a844bf7be93e2467d3bc9eca53e90e6a2262a81a5c2364d812aeb2",
+    "crates/server/src/http.rs": "0439e495d75e90abde579a998a6343a2396ca4f1b2dee4237d4ca513eff97f62",
+    "crates/server/src/account_http.rs": "3dfc2bb41ac24a052896dcb7c7fa4277469679f9c9e16a1cb01d9015fc8c1e85",
+    "crates/server/src/account_http/tests.rs": "94102824de9c1157aa3c5d10e341b8247619cb388db59853392edd0edfa6ac55",
+    "crates/server/src/account_http/tests/rows.rs": "15c0bcea2a99ce687ca22c2f41d664024cb31698a5137a60c1c17f5d4b6654f4",
+    "crates/server/tests/table_schema.rs": "9f3a437e63a12a34aa7921410d6551913be7d1e7ad7f47f3e977838dbfc18795",
+    "fuzz/fuzz_targets/row_requests.rs": "0395d5b3a2710983359d20f390a8a90b4beec8e2381ec920a1822d86d6e7c480",
+    "fuzz/Cargo.toml": "11a76edaadbbabf6b2b7935061af0a742305ba19af7ef8df13b70c04946900cd",
+    "tests/account_containers.py": "44c004ba485e04e60923466753bf5610a3a95cc4bebc2465e5423b3451db9326",
+    "docs/openapi.json": "ce666b5a7af4c13c9132e59e751ffdc13488ab57e24b0370ce3423b4816c866f",
+    "Cargo.lock": "a54c26375bd64ec25d817376db1e5dc4d590852989b1c4210b520ba0d3f49825",
+    "fuzz/Cargo.lock": "9d834449ee864d2f272898a2b2fdabf661fd04fce187d3081d4144f8b6f8fc69"
+  },
+  "protocol": {
+    "routers": [
+      "legacy registry",
+      "explicit private root"
+    ],
+    "operations": [
+      "get",
+      "page",
+      "insert",
+      "update",
+      "delete"
+    ],
+    "service_authority_only": true,
+    "root_key_recheck_after_body_wait": true,
+    "integer_values_decimal_strings": true,
+    "finite_binary64_bits_lower_hex": true,
+    "max_body_serialized_response_bytes": 65536,
+    "body_timeout_seconds": 5,
+    "admitted_workers": 4,
+    "page_limit": [
+      1,
+      128
+    ],
+    "continuation_exclusive_current_state": true,
+    "checked_physical_primary_cursor": true,
+    "borrowed_row_body_serialization": true,
+    "single_original_commit_per_mutation": true,
+    "no_private_clock_wal_change": true,
+    "no_cache_success_refusal": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "scoped_passed_each": 71,
+    "scoped_ignored_each": 0,
+    "suites_each": {
+      "row_core": 6,
+      "schema_core": 4,
+      "private_http": 22,
+      "network": 39
+    },
+    "new_cases": {
+      "core": 6,
+      "private_http": 2,
+      "native_tcp": 1
+    },
+    "generated_crud_models": 16,
+    "generated_float_bit_models": 16,
+    "new_tcp_row_ack_kills_each": 12,
+    "schema_and_row_tcp_ack_kills_each": 20,
+    "common_native_lifecycle_runs": 4,
+    "ack_kills_per_common_lifecycle": 12,
+    "frozen_source_dependency_protocol_files": 459,
+    "workspace_minimum_builds": true,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "python_format_lint": true,
+    "both_warning_denied_advisory_scans": true,
+    "openapi_refs_unique_operation_ids": true,
+    "existing_openapi_contracts_unchanged": true,
+    "full_workspace_sdk_optional_diagnostics_repeated": false
+  },
+  "asan": {
+    "target": "row_requests",
+    "runs": 5547233,
+    "seconds": 46,
+    "observed_rss_mib": 405,
+    "rss_limit_mib": 512,
+    "input_limit_bytes": 65538,
+    "findings": 0,
+    "scope": "short bounded parser campaign, not an audit"
+  },
+  "prior_hosted": {
+    "last_all_five_success_commit": "bc683b73315860360831168a2d79ec76e9db042b",
+    "last_all_five_success_run": 37737773033,
+    "schema_run": 37739476397,
+    "schema_container_and_other_three_jobs": "success",
+    "schema_general_check": "in progress",
+    "new_row_container_run": "pending publication"
+  },
+  "source_counts": {
+    ".rs": 85506,
+    ".ts": 455,
+    ".mjs": 804,
+    ".py": 1705,
+    "total": 88470,
+    "effective_rust": 82053
+  },
+  "net_rust": 1024,
+  "net_python": 28,
+  "documentation_correction": "schema examples use actual integer tag instead of int",
+  "exclusions": [
+    "public user authority, roles and RLS",
+    "batch/idempotency and cross-request snapshots",
+    "whole-process memory/output/connection admission",
+    "new local Docker execution; CLI unavailable",
+    "stable format and production acceptance"
+  ]
+}

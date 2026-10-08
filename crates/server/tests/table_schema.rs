@@ -5,6 +5,7 @@ use emilybase_server::{ProjectStore, restore_account_bundle_bytes};
 use serde_json::{Value, json};
 use std::fs;
 use std::path::{Path, PathBuf};
+static CASES: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 const MASTER: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 fn schema() -> Value {
     json!({"name":"temporary","columns":[{"name":"flag","data_type":"boolean","nullable":true},{"name":"key","data_type":"text","nullable":false}],"primary_key":1})
@@ -92,6 +93,7 @@ fn call(
 }
 #[test]
 fn real_tcp_schema_create_and_drop_ack_kills_preserve_ids_rows_and_private_wal() {
+    let _serial = CASES.blocking_lock();
     for private in [false, true] {
         for compact in [false, true] {
             let f = fixture(private, compact);
@@ -178,6 +180,127 @@ fn real_tcp_schema_create_and_drop_ack_kills_preserve_ids_rows_and_private_wal()
             }
             for log in [&first, &second, &third] {
                 for secret in [MASTER, &f.id, &f.key, "temporary", "synthetic-key"] {
+                    assert!(!log.contains(secret));
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn real_tcp_row_insert_replace_delete_ack_kills_recover_exact_typed_values() {
+    let _serial = CASES.blocking_lock();
+    for private in [false, true] {
+        for compact in [false, true] {
+            let f = fixture(private, compact);
+            let before = f.private.as_ref().map(|p| fs::read(p).unwrap());
+            let key = json!({"type":"text","value":"synthetic-row-key'\n界"});
+            let row = |flag| json!([{"type":"boolean","value":flag},key]);
+            let point = json!({"table":"temporary","key":key});
+            let server = start(&f.root, private);
+            assert_eq!(call(&server, &f, "POST", "/create", &schema()).0, 200);
+            let (status, inserted) = call(
+                &server,
+                &f,
+                "POST",
+                "/rows/insert",
+                &json!({"table":"temporary","row":row(false)}),
+            );
+            assert_eq!(status, 200);
+            assert_eq!(inserted["key"], key);
+            let mut transaction = inserted["transaction"]
+                .as_str()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap();
+            let first = server.kill();
+            let server = start(&f.root, private);
+            assert_eq!(
+                call(&server, &f, "POST", "/rows/get", &point),
+                (200, json!({"row":row(false)}))
+            );
+            assert_eq!(
+                call(
+                    &server,
+                    &f,
+                    "POST",
+                    "/rows/insert",
+                    &json!({"table":"temporary","row":row(false)})
+                )
+                .0,
+                400
+            );
+            let (status, updated) = call(
+                &server,
+                &f,
+                "POST",
+                "/rows/update",
+                &json!({"table":"temporary","key":key,"row":row(true)}),
+            );
+            assert_eq!(status, 200);
+            let next = updated["transaction"]
+                .as_str()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap();
+            assert!(next > transaction);
+            transaction = next;
+            let second = server.kill();
+            let server = start(&f.root, private);
+            assert_eq!(
+                call(&server, &f, "POST", "/rows/get", &point),
+                (200, json!({"row":row(true)}))
+            );
+            assert_eq!(
+                call(
+                    &server,
+                    &f,
+                    "POST",
+                    "/rows/page",
+                    &json!({"table":"temporary","limit":1})
+                ),
+                (200, json!({"rows":[row(true)],"next":null}))
+            );
+            let (status, deleted) = call(&server, &f, "POST", "/rows/delete", &point);
+            assert_eq!(status, 200);
+            assert!(
+                deleted["transaction"]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+                    > transaction
+            );
+            let third = server.kill();
+            let server = start(&f.root, private);
+            assert_eq!(
+                call(&server, &f, "POST", "/rows/get", &point),
+                (200, json!({"row":null}))
+            );
+            assert_eq!(
+                call(
+                    &server,
+                    &f,
+                    "POST",
+                    "/rows/page",
+                    &json!({"table":"temporary","limit":1})
+                ),
+                (200, json!({"rows":[],"next":null}))
+            );
+            assert_eq!(call(&server, &f, "POST", "/rows/delete", &point).0, 400);
+            let fourth = server.stop();
+            if let Some(path) = &f.private {
+                assert_eq!(fs::read(path).unwrap(), before.unwrap());
+            }
+            for log in [&first, &second, &third, &fourth] {
+                for secret in [
+                    MASTER,
+                    &f.id,
+                    &f.key,
+                    "temporary",
+                    "synthetic-row-key",
+                    r"synthetic-row-key'\n",
+                ] {
                     assert!(!log.contains(secret));
                 }
             }
