@@ -63,7 +63,7 @@ purpose-bound random credentials and strict private verifier formats.
 Private versions1/2/3 remain readable; session checks require explicit v3 activation.
 This library remains separate from server projects and current whole-registry
 archives. HTTP signup/login/session routes, account policy, roles, row policies
-and coordinated account/data restore remain pending. The separate
+and automatic HTTP account attachment remain pending. The separate
 [private restore API](docs/adr/0073-private-restore-reset-before-publication.md)
 validates account schema/project and durably resets scope before atomic directory
 publication. Use it for private archives; generic engine restore retains old scope.
@@ -74,14 +74,18 @@ The [offline account bundle](docs/account-bundle-format.md) now captures every
 registry data database plus an explicitly supplied private roster while retaining
 all source owners across the whole operation. It validates complete nested private
 schemas, project scopes and unique database identities. Bundle bytes are sensitive;
-combined restore and automatic private-store discovery remain open.
+automatic private-store discovery remains open.
 The [private bundle publisher](docs/adr/0076-owned-account-bundle-file-publication.md)
 now saves verified no-replace files; account-bundle-verify inspects them through the
 real CLI with aggregate counts only. No private credentials or rows are printed.
 The [byte restore APIs](docs/adr/0077-restore-private-byte-images.md) restore nested
 images through the same owned publisher without intermediate input archive files.
 Use the private account wrapper to reset sessions before publication; ordinary
-engine restore preserves historical private scope. Combined root restore remains open.
+engine restore preserves historical private scope.
+The [offline root restore](docs/account-root-restore.md) prepares registry data and
+every explicitly bundled private store under one owned root. Private session reset
+and exact prepared-history validation precede no-replace root publication. API keys
+are preserved; automatic HTTP account attachment remains open.
 Verified backup/restore works through the library and CLI. Archives contain only
 the committed WAL; restore publishes a fully replayed new directory. Process-kill
 and competing-publication tests execute. Broader power-loss and upgrade checks

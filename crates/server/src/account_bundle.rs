@@ -25,6 +25,15 @@ pub struct AccountBundleReport {
 /// Pure bounded integrity, scope and complete nested engine/private validation.
 /// Metadata describes supplied contents, not capture provenance or permissions.
 pub fn inspect_account_bundle_bytes(bytes: &[u8]) -> Result<AccountBundleReport> {
+    Ok(decode(bytes)?.report)
+}
+
+pub(crate) struct DecodedBundle<'a> {
+    pub registry: &'a [u8],
+    pub private: Vec<(&'a str, &'a [u8])>,
+    pub report: AccountBundleReport,
+}
+pub(crate) fn decode(bytes: &[u8]) -> Result<DecodedBundle<'_>> {
     if bytes.len() > MAX_ACCOUNT_BUNDLE_BYTES {
         return Err(Error::Limit);
     }
@@ -75,6 +84,7 @@ pub fn inspect_account_bundle_bytes(bytes: &[u8]) -> Result<AccountBundleReport>
         .collect();
     let mut previous: Option<&str> = None;
     let mut reports = Vec::with_capacity(count);
+    let mut private = Vec::with_capacity(count);
     for _ in 0..count {
         let entry = cursor.take(ENTRY)?;
         let project = std::str::from_utf8(&entry[..32])
@@ -95,6 +105,7 @@ pub fn inspect_account_bundle_bytes(bytes: &[u8]) -> Result<AccountBundleReport>
             return Err(Error::BundleFormat("duplicate database identity"));
         }
         previous = Some(project);
+        private.push((project, archive));
         reports.push(BundledAccountReport {
             project: project.into(),
             inventory,
@@ -103,10 +114,14 @@ pub fn inspect_account_bundle_bytes(bytes: &[u8]) -> Result<AccountBundleReport>
     if cursor.at != bytes.len() {
         return Err(Error::BundleFormat("trailing payload"));
     }
-    Ok(AccountBundleReport {
-        registry: decoded_registry.report,
-        private_accounts: reports,
-        archive_bytes: bytes.len(),
+    Ok(DecodedBundle {
+        registry,
+        private,
+        report: AccountBundleReport {
+            registry: decoded_registry.report,
+            private_accounts: reports,
+            archive_bytes: bytes.len(),
+        },
     })
 }
 

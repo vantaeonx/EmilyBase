@@ -187,7 +187,7 @@ impl ProjectStore {
         crate::account_bundle::files::publish(&bytes, target.as_ref())
     }
 
-    fn capture_registry_with<T>(
+    pub(crate) fn capture_registry_with<T>(
         &mut self,
         capture: impl FnOnce(Vec<u8>) -> Result<T>,
     ) -> Result<T> {

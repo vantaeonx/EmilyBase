@@ -6,6 +6,7 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsExt};
 use std::path::Path;
 
+pub(crate) mod account_root;
 mod pending;
 
 pub fn inspect_registry_backup(path: impl AsRef<Path>) -> Result<RegistryBackupReport> {
@@ -139,7 +140,19 @@ pub fn restore_registry_backup(
 
 fn restore_bytes(bytes: &[u8], target: &Path) -> Result<RegistryBackupReport> {
     let archive = registry_archive::decode(bytes)?;
-    let mut pending = pending::Pending::directory(target)?;
+    let pending = pending::Pending::directory(target)?;
+    restore_decoded(bytes, archive, pending)
+}
+fn restore_bytes_under(bytes: &[u8], parent: &File) -> Result<RegistryBackupReport> {
+    let archive = registry_archive::decode(bytes)?;
+    let pending = pending::Pending::directory_under(parent, "registry")?;
+    restore_decoded(bytes, archive, pending)
+}
+fn restore_decoded(
+    bytes: &[u8],
+    archive: registry_archive::Archive<'_>,
+    mut pending: pending::Pending,
+) -> Result<RegistryBackupReport> {
     for (entry, report) in archive.entries.iter().zip(&archive.report.projects) {
         let project = pending.path().join(&entry.metadata.id);
         std::fs::DirBuilder::new().mode(0o700).create(&project)?;

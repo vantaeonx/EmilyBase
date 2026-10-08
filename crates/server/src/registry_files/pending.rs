@@ -13,6 +13,26 @@ struct Parent {
     target: OsString,
 }
 impl Parent {
+    fn under(owner: &File, target: &str) -> Result<Self> {
+        if !matches!(
+            Path::new(target)
+                .components()
+                .collect::<Vec<_>>()
+                .as_slice(),
+            [std::path::Component::Normal(_)]
+        ) {
+            return Err(Error::Path);
+        }
+        let owner = owner.try_clone()?;
+        let path = descriptor_path(&owner).join(".");
+        let parent = Self {
+            owner,
+            path,
+            target: target.into(),
+        };
+        parent.check()?;
+        Ok(parent)
+    }
     fn new(target: &Path) -> Result<Self> {
         let name = target.file_name().ok_or(Error::Path)?.to_os_string();
         let path = if parent(target).is_absolute() {
@@ -64,6 +84,7 @@ pub(super) struct Pending {
     pub owner: File,
     directory: bool,
     published: bool,
+    retained: bool,
 }
 impl Pending {
     pub fn file(target: &Path, prefix: &str) -> Result<Self> {
@@ -80,12 +101,25 @@ impl Pending {
             owner,
             directory: false,
             published: false,
+            retained: false,
         })
     }
     pub fn directory(target: &Path) -> Result<Self> {
+        Self::directory_with_prefix(target, ".emilybase-registry-restore-")
+    }
+    pub fn directory_with_prefix(target: &Path, prefix: &str) -> Result<Self> {
         let parent = Parent::new(target)?;
+        Self::directory_at(parent, prefix)
+    }
+    pub fn directory_under(parent: &File, target: &str) -> Result<Self> {
+        Self::directory_at(
+            Parent::under(parent, target)?,
+            ".emilybase-registry-restore-",
+        )
+    }
+    fn directory_at(parent: Parent, prefix: &str) -> Result<Self> {
         let temporary = tempfile::Builder::new()
-            .prefix(".emilybase-registry-restore-")
+            .prefix(prefix)
             .tempdir_in(descriptor_path(&parent.owner))?;
         std::fs::set_permissions(temporary.path(), std::fs::Permissions::from_mode(0o700))?;
         let owner = metadata::open_directory(temporary.path())?;
@@ -97,11 +131,17 @@ impl Pending {
             owner,
             directory: true,
             published: false,
+            retained: false,
         })
     }
     pub fn path(&self) -> PathBuf {
         // Final dot denotes the owned real directory, not the proc descriptor symlink.
         descriptor_path(&self.owner).join(".")
+    }
+    /// A failed child-identity/integrity check may mean the directory now
+    /// contains foreign entries. Preserve the whole stage instead of sweeping it.
+    pub fn retain(&mut self) {
+        self.retained = true;
     }
     fn check(&self) -> Result<()> {
         self.parent.check()?;
@@ -135,7 +175,7 @@ impl Pending {
 }
 impl Drop for Pending {
     fn drop(&mut self) {
-        if self.published || !self.parent.owns(&self.name, &self.owner) {
+        if self.published || self.retained || !self.parent.owns(&self.name, &self.owner) {
             return;
         }
         if self.directory {

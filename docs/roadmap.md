@@ -103,6 +103,12 @@ archive file is required. File/byte version matrices, independent account-state
 model and additional native kill modes execute. Combined root coordination remains
 open; no platform or production milestone closes.
 
+[ADR0078](adr/0078-atomic-account-bundle-root-restore.md) coordinates offline registry
+and explicit private roster restoration under one root. Every private scope resets
+before selection; exact prepared histories and descriptor-owned inventories are
+verified. The experimental root manifest records selected scope/time without granting
+authority. Automatic HTTP account attachment/roster and production gates remain open.
+
 The declared Linux Rust floor is verified on 1.89.0 with the 575 prior main tests;
 CI adds a dedicated minimum-toolchain job alongside stable/SDK and real Docker
 checks. This is build/test compatibility, not a stable file-format upgrade gate.

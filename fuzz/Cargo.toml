@@ -387,3 +387,10 @@ path = "fuzz_targets/account_bundle.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "account_root_manifest"
+path = "fuzz_targets/account_root_manifest.rs"
+test = false
+doc = false
+bench = false

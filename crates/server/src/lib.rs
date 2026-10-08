@@ -18,6 +18,11 @@ pub use registry_archive::{
     MAX_REGISTRY_BACKUP_BYTES, REGISTRY_BACKUP_VERSION, RegistryBackupReport,
     RegistryProjectReport, inspect_registry_backup_bytes,
 };
+pub use registry_files::account_root::{
+    AccountBundleRootManifest, AccountBundleRootReport, inspect_account_bundle_root,
+    inspect_account_bundle_root_manifest_bytes, restore_account_bundle,
+    restore_account_bundle_bytes,
+};
 pub use registry_files::{inspect_registry_backup, restore_registry_backup};
 
 /// Pure, bounded inspection without credentials, filesystem operations or data access.
@@ -50,6 +55,8 @@ pub enum Error {
     BundleVersion(u16),
     #[error("account bundle checksum mismatch")]
     BundleChecksum,
+    #[error("invalid account bundle root: {0}")]
+    BundleRoot(&'static str),
     #[error("private account storage failed")]
     Accounts(#[from] emilybase_auth::accounts::Error),
     #[error("invalid project metadata")]

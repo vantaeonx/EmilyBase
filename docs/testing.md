@@ -3219,3 +3219,51 @@ SDK11 unit/7 real-server restart cases, both independent synthetic cryptographic
 oracles and both warning-denied advisory scans pass. The
 [source-bound artifact](measurements/2026-10-08-restore-bytes/verification.json)
 records actual byte-entry and native recovery observations.
+
+## One-root registry/private restoration, 2026-10-08
+
+Fourteen new server cases exercise offline file/byte restoration under one owned
+root, complete inspection and the canonical bounded root manifest. The12 input/
+private-version/WAL combinations preserve exact source history and passwords while
+resetting every historical private scope before the final root name exists. Old
+access/refresh tokens fail and freshly issued sessions work. Generic project API
+keys are deliberately preserved. Empty/multiple/subset private rosters remain explicit.
+
+Malformed nested archives and invalid trusted time refuse before staging. Existing
+targets, links, source stores and foreign entries are preserved. Root/manifest/
+private/history substitutions fail; the entire suspect stage is retained instead
+of recursively deleting substituted child entries. A regression test first exposed
+that cleanup failure, then passed with retention enabled. Parent/staging/selected
+root substitutions distinguish refusal from post-rename uncertainty. Late manifest
+replacement, broad permissions and canonical-but-changed reset time are rejected.
+
+The manifest's128-ID boundary and8192-byte cap execute with complete one-byte
+corruption, scope/order/version/time, duplicate fields and noncanonical encodings.
+Offline inspection rejects extra/missing roster entries, unsafe files and busy
+owners. A callback checks every data/private/root owner remains held through final
+inventory validation, and all owners are released afterwards.
+
+Sixteen injected failures before/after actual private-directory/manifest/root/parent
+fsync cover WAL1/2. Eighteen native forced kills cover registry/private preparation,
+manifest, owner retention, final inventory, stage sync, rename, parent sync and ACK.
+Selected roots remain complete with old private sessions denied; source histories
+and archive bytes remain exact. Independent new-target retry succeeds. Two
+synchronized native restorers publish exactly one complete root. A24-case independent
+row/disabled/time model checks refusal, retry and restored contents on both WAL modes.
+
+[ADR0078](adr/0078-atomic-account-bundle-root-restore.md) and the
+[operator contract](account-root-restore.md) retain separate HTTP account attachment,
+authoritative roster, whole-process quotas and production/power-loss gates.
+
+Frozen-source locked checks pass on1.99.0/1.89.0:1059 main cases/22 ignored helpers
+and53 optional release diagnostic cases each locally. Workspace/profile/fuzz
+warning-denied Clippy, both format checks, minimum fuzz compilation and workspace
+build pass. SDK11 unit/7 actual native restart checks, both independent synthetic
+cryptographic oracles and both warning-denied advisory scans pass. Final ASan
+campaigns execute280755 account-bundle cases and2187494 root-manifest cases in46
+seconds each, under512MiB RSS, with no findings. Input caps are262144/8193 bytes;
+short campaigns do not prove arbitrary power loss or exhaustive security.
+The [source-bound artifact](measurements/2026-10-08-account-root/verification.json)
+records these local results and the separate prior hosted schema-allocation failure.
+That prior hosted job observed144 process-wide bytes despite serial libtest;100
+local repeats pass. A dedicated native measurement follow-up remains required.

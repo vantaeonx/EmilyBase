@@ -335,13 +335,19 @@ fn final_parent_symlink_is_refused_without_writing_through_it() {
     assert_eq!(fs::read_dir(parent).unwrap().count(), 0);
 }
 
-struct Worker {
+pub(super) struct Worker {
     child: Child,
     lines: Receiver<String>,
     reader: Option<std::thread::JoinHandle<()>>,
 }
 impl Worker {
-    fn start(source: &Path, target: &Path, project: &str, action: &str, point: &str) -> Self {
+    pub(super) fn start(
+        source: &Path,
+        target: &Path,
+        project: &str,
+        action: &str,
+        point: &str,
+    ) -> Self {
         let mut child = Command::new(std::env::current_exe().unwrap())
             .args([
                 "--ignored",
@@ -356,7 +362,7 @@ impl Worker {
             .env("EMILYBASE_REGISTRY_KILL_POINT", point)
             .env(
                 "EMILYBASE_REGISTRY_RESUME_POINT",
-                if action == "race" { point } else { "" },
+                if action.ends_with("race") { point } else { "" },
             )
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -381,7 +387,7 @@ impl Worker {
             reader: Some(reader),
         }
     }
-    fn reach(&self, point: &str) {
+    pub(super) fn reach(&self, point: &str) {
         let deadline = Instant::now() + Duration::from_secs(15);
         loop {
             let line = self
@@ -393,15 +399,15 @@ impl Worker {
             }
         }
     }
-    fn kill(mut self) {
+    pub(super) fn kill(mut self) {
         self.child.kill().unwrap();
         assert!(!self.child.wait().unwrap().success());
         self.reader.take().unwrap().join().unwrap();
     }
-    fn release(&mut self) {
+    pub(super) fn release(&mut self) {
         self.child.stdin.take().unwrap().write_all(b"1").unwrap();
     }
-    fn finish(mut self) -> String {
+    pub(super) fn finish(mut self) -> String {
         let deadline = Instant::now() + Duration::from_secs(15);
         loop {
             if let Some(status) = self.child.try_wait().unwrap() {
@@ -431,7 +437,17 @@ fn publication_worker() {
     let source = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_SOURCE").unwrap());
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
-    if std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").as_deref() == Ok("race") {
+    let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
+    if action.starts_with("root") {
+        match crate::restore_account_bundle(&source, &target, PasswordPool::new(1).unwrap(), 50) {
+            Ok(_) => println!("BUNDLE_OK"),
+            Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                println!("BUNDLE_CONFLICT")
+            }
+            Err(_) => panic!("unexpected root restore result"),
+        }
+        durability::checkpoint("bundle_restore_ack");
+    } else if action == "race" {
         let bytes = crate::registry_files::read_bounded(&source, MAX_ACCOUNT_BUNDLE_BYTES).unwrap();
         let result = publish(&bytes, &target);
         match result {

@@ -13,6 +13,7 @@ dist/
 *.backup
 *.account-bundle
 .emilybase-account-bundle-*
+.emilybase-account-restore-*
 *.table-index
 .emilybase-table-index-*
 .emilybase-backup-*

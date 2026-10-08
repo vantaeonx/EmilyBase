@@ -1,0 +1,114 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "a7e193981bff59b299f0635831f8013c1485bd89",
+  "source_sha256": {
+    "crates/server/src/account_bundle.rs": "f4c1dbff2f7065a434f2f345338cdeda93c9a39fcd3afdce81b790f58fea84e2",
+    "crates/server/src/account_bundle/tests.rs": "18ce11b87ae3e695817fc17849edc1dd935b7b434b749ea5f63d948251b3c642",
+    "crates/server/src/account_bundle/tests/files.rs": "141bb6cda89512a11bc3a94365e893e22f5671627e98ff54a1bcb7d60a90f59d",
+    "crates/server/src/account_bundle/tests/root.rs": "97962a86d20e76a68a5d6dd36e4b0d93bd6cc6e3a6183b5017febe4c3dc960bf",
+    "crates/server/src/lib.rs": "bac35d253a87ced6504ae7f83d72840c22f6505b84cc7da08f9f7b288366f6da",
+    "crates/server/src/projects.rs": "564e6c01bb0019515269c1e45c7c61ae7b448647967a3d58917b127528dae2bc",
+    "crates/server/src/registry_files.rs": "a29c91e9dfcd24c811d534c67aee7b1f9beb6b92c6df44373e73eeecc371e45d",
+    "crates/server/src/registry_files/account_root.rs": "e6d63d1c93410ba695738874f3f39066f2b2f22304f7fd6c0f14f645655ab7be",
+    "crates/server/src/registry_files/pending.rs": "294eba9a8bb4bcadc40d9cb0bd18fe0a989585f95a4a7f25068dac47101a77a2",
+    "fuzz/Cargo.toml": "7b0d3a76c59636e9490fb81caa1724d570343b2c4216ae6cc97d2060d8cfaf47",
+    "fuzz/fuzz_targets/account_root_manifest.rs": "23fd2e7f307a71917bd7c5f8bd35f72855deb55e3958c87e0873f5d0e1a83853"
+  },
+  "protocol": {
+    "experimental_root_manifest_version": 1,
+    "manifest_byte_cap": 8192,
+    "private_roster_cap": 128,
+    "exact_selected_registry": true,
+    "fresh_private_reset_before_root_selection": true,
+    "prepared_private_image_hashes_verified": true,
+    "all_data_private_owners_retained_through_final_inventory": true,
+    "root_manifest_and_child_identities_verified": true,
+    "single_no_replace_root_publication": true,
+    "owned_parent_sync_before_success": true,
+    "post_rename_errors_are_publication_unknown": true,
+    "suspect_child_integrity_stages_retained": true,
+    "source_api_key_digests_preserved": true,
+    "no_automatic_private_discovery": true
+  },
+  "matrix": {
+    "new_main_cases": 14,
+    "file_byte_private_version_wal_combinations": 12,
+    "private_versions": [
+      1,
+      2,
+      3
+    ],
+    "wal_versions": [
+      1,
+      2
+    ],
+    "actual_before_after_sync_faults": 16,
+    "native_forced_kills": 18,
+    "synchronized_native_restorers": 2,
+    "selected_winners": 1,
+    "independent_row_disabled_time_cases": 24,
+    "early_complete_source_validation": true,
+    "empty_subset_multiple_rosters": true,
+    "old_access_refresh_denied_and_new_sessions_work": true,
+    "foreign_child_cleanup_regression_first_failed_then_passed": true,
+    "late_manifest_and_parent_stage_selected_substitutions": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "main_cases_each": 1059,
+    "ignored_helpers_each": 22,
+    "optional_release_diagnostics_each_locally": 53,
+    "format_and_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "workspace_build": true,
+    "sdk_unit_cases": 11,
+    "sdk_native_http_restart_cases": 7,
+    "both_independent_python_oracles_reproduced": true,
+    "both_warning_denied_advisory_scans": true,
+    "rustsec_revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74"
+  },
+  "parser_campaigns": [
+    {
+      "target": "account_bundle",
+      "executions": 280755,
+      "seconds": 46,
+      "input_cap": 262144,
+      "rss_limit_mib": 512,
+      "peak_rss_mib": 398,
+      "findings": 0
+    },
+    {
+      "target": "account_root_manifest",
+      "executions": 2187494,
+      "seconds": 46,
+      "input_cap": 8193,
+      "rss_limit_mib": 512,
+      "peak_rss_mib": 370,
+      "findings": 0
+    }
+  ],
+  "source_counts": {
+    "rust": 75747,
+    "typescript": 455,
+    "mjs": 802,
+    "python": 849,
+    "total": 77853,
+    "net_rust_this_block": 1150
+  },
+  "hosted_ci_boundary": {
+    "prior_commit": "a7e193981bff59b299f0635831f8013c1485bd89",
+    "run": 37703816085,
+    "known_failure": "schema_validation process-wide allocation sample observed144 bytes; local100 repeated samples pass",
+    "follow_up": "isolate native schema sample from test harness without relaxing zero-allocation assertions"
+  },
+  "exclusions": [
+    "automatic HTTP private-store attachment and authoritative service roster",
+    "API key rotation, roles and row policies",
+    "whole-process retained model, staging, transient and worker quotas",
+    "physical power loss, encryption and automatic orphan cleanup",
+    "production/security acceptance gate"
+  ]
+}
