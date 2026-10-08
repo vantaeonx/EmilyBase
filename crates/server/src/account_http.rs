@@ -103,6 +103,10 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects/{id}/explain", post(explain))
         .route("/v1/projects/{id}/tables/export", post(export_table))
         .route("/v1/projects/{id}/tables/import", post(import_table))
+        .route("/v1/projects/{id}/tables", get(table_list))
+        .route("/v1/projects/{id}/tables/schema", post(table_schema))
+        .route("/v1/projects/{id}/tables/create", post(table_create))
+        .route("/v1/projects/{id}/tables/drop", post(table_drop))
         .route("/v1/projects/{id}/auth/users", post(create_user))
         .route("/v1/projects/{id}/auth/users/list", post(list_users))
         .route("/v1/projects/{id}/auth/sign-in", post(sign_in))
@@ -545,6 +549,51 @@ async fn import_table(Extension(scope): Extension<Scope>, request: Request) -> A
         root.admits_project(id, key, false)?;
         let table = emilybase_transfer::decode_table(&bytes)?;
         response(&root.import_table(id, key, table)?)
+    })
+    .await
+}
+async fn table_list(Extension(scope): Extension<Scope>) -> ApiResult<Response> {
+    blocking(scope, |root, s| {
+        let (id, key) = s.credentials()?;
+        root.table_operation(id, key, |db| {
+            crate::table_api::response(&crate::table_api::list(db)?)
+        })
+    })
+    .await
+}
+async fn table_schema(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let bytes = crate::http::body(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        root.admits_project(id, key, false)?;
+        let name = crate::table_api::name_request(&bytes)?;
+        root.table_operation(id, key, |db| {
+            crate::table_api::response(&crate::table_api::describe(db, &name)?)
+        })
+    })
+    .await
+}
+async fn table_create(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let bytes = crate::http::body(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        root.admits_project(id, key, false)?;
+        let schema = crate::table_api::schema_request(&bytes)?;
+        root.table_operation(id, key, |db| {
+            crate::table_api::response(&crate::table_api::create(db, schema)?)
+        })
+    })
+    .await
+}
+async fn table_drop(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let bytes = crate::http::body(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        root.admits_project(id, key, false)?;
+        let name = crate::table_api::name_request(&bytes)?;
+        root.table_operation(id, key, |db| {
+            crate::table_api::response(&crate::table_api::drop_table(db, &name)?)
+        })
     })
     .await
 }

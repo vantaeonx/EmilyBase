@@ -115,7 +115,7 @@ class Probe:
         with response:
             status = response.status
             raw = response.read(MAX_RESPONSE + 1)
-            if "/auth/" in route or "/tables/" in route:
+            if "/auth/" in route or "/tables/" in route or route.endswith("/tables"):
                 require(
                     response.headers.get("Cache-Control") == "no-store"
                     and response.headers.get("Pragma") == "no-cache",

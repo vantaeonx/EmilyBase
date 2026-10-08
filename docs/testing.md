@@ -3689,3 +3689,38 @@ New seven-kill HTTP/container checks follow publication.
 [source-bound data](measurements/2026-10-08-project-http-transfer/verification.json)
 record the scope. Current source size:83,722 Rust /80,282 excluding blank and
 standalone comment lines; SDK1,259; Python1,624; total86,605.
+
+
+## Project table schema HTTP, 2026-10-08
+
+Both Rust1.99.0 and1.89.0 pass62 scoped cases each:4 synchronous schema cases,
+20 private HTTP cases and38 legacy/private network/project/recovery cases. Seven
+cases are new (4 core,2 private transport,1 native). Generated16 create/drop
+sequences compare independent name/ID state;128-table by64-column inventory with
+maximum identifier lengths fits the response cap without changing WAL. Strict
+fields, schema/type/key limits, duplicate names and refused operations preserve
+history. Private/sibling isolation and key replacement during waiting bodies are
+covered without private-clock advancement, even with an injected backward clock.
+
+The new native TCP case executes8 acknowledged process kills on each Rust,
+covering create/drop in both data modes and both WAL versions. Reopen preserves
+schema/IDs; deleted rows do not appear after empty recreation. Four shared native
+lifecycle executions (stable/minimum, environment/file master source) each pass9
+acknowledged kills plus refresh races, credential epochs, backup/restore, source/
+copy authority and corruption refusal. Docker is unavailable locally; these are
+native checks. The common scripts also extend the next hosted container run.
+
+Workspace and minimum server/CLI builds, workspace/fuzz formatting, strict
+workspace/profile/fuzz Clippy, minimum fuzz compilation, both Python format/lint
+checks and warning-denied workspace/fuzz advisory scans pass. Final454 source,
+dependency and protocol hashes are verified unchanged. OpenAPI references resolve
+and operation IDs are unique. Full workspace tests, SDK checks, a new ASan campaign
+and optional allocation diagnostics were not repeated for this adapter.
+Prior7f012e8 hosted run37736164028 is successful;bc683b7 run37737773033 is still
+in progress at this observation. No stage or production gate is marked complete.
+
+[ADR0091](adr/0091-project-table-schema-api.md) and
+[source-bound data](measurements/2026-10-08-table-schema-api/verification.json)
+record this boundary. Net growth:760 Rust and53 Python lines. Current source size:
+84,482 Rust /81,038 excluding blanks and standalone comments; SDK1,259; Python1,677;
+87,418 total. Documentation/configuration/lockfiles/build output are excluded.

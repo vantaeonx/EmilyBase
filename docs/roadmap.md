@@ -752,3 +752,14 @@ new-table commit. Private-root mode rechecks current keys after body waits witho
 private-clock/WAL writes. Native/real-TCP and seven-kill common lifecycle checks
 cover this boundary. Large transfer, user policy/roles/RLS, global resource gates
 and production acceptance remain open.
+
+
+## Follow-up: project table schemas over HTTP
+
+[ADR0091](adr/0091-project-table-schema-api.md) adds bounded inventory, schema
+inspection and typed create/drop through both service routers. Original catalog
+and WAL transactions preserve IDs, atomic deletion and empty recreation. Current
+private-root keys are rechecked after body waits; private history/time is unchanged.
+Generated catalog sequences, maximum inventory, scoped refusals and native create/
+drop ACK kills cover this adapter; common lifecycle now has nine kills. Public user
+policy, migrations, resource gates and production acceptance remain open.

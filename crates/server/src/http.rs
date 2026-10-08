@@ -44,6 +44,7 @@ impl From<Error> for Failure {
     fn from(error: Error) -> Self {
         use emilybase_query::ExecutionError as Q;
         match error {
+            Error::Tables(error) => table_failure(error),
             Error::Transfer(error) => transfer_failure(error),
             Error::Denied => Self(StatusCode::UNAUTHORIZED, "access_denied"),
             Error::Name | Error::Limit => Self(StatusCode::BAD_REQUEST, "invalid_project_request"),
@@ -127,6 +128,40 @@ fn transfer_failure(error: emilybase_transfer::Error) -> Failure {
         T::Io(_) => Failure(StatusCode::SERVICE_UNAVAILABLE, "storage_unavailable"),
     }
 }
+fn table_failure(error: crate::TableError) -> Failure {
+    use crate::TableError as T;
+    match error {
+        T::Document | T::Limit | T::Catalog(_) => {
+            Failure(StatusCode::BAD_REQUEST, "table_rejected")
+        }
+        T::Database(e) | T::Transaction(emilybase_transactions::Error::Database(e)) => {
+            use emilybase_database::Error as D;
+            if matches!(
+                e,
+                D::Catalog(_)
+                    | D::TableExists
+                    | D::NoTable
+                    | D::DuplicateKey
+                    | D::NoRow
+                    | D::PrimaryKeyChange
+                    | D::Limit(_)
+            ) {
+                Failure(StatusCode::BAD_REQUEST, "table_rejected")
+            } else {
+                Failure(StatusCode::SERVICE_UNAVAILABLE, "storage_unavailable")
+            }
+        }
+        T::Transaction(
+            emilybase_transactions::Error::Catalog(_)
+            | emilybase_transactions::Error::Limit
+            | emilybase_transactions::Error::Aborted,
+        ) => Failure(StatusCode::BAD_REQUEST, "table_rejected"),
+        T::Transaction(_) => Failure(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "transaction_outcome_requires_inspection",
+        ),
+    }
+}
 
 /// All filesystem/recovery/query work runs in bounded blocking tasks, outside reactor threads.
 pub fn router(store: ProjectStore, master_token: &str) -> crate::Result<Router> {
@@ -147,6 +182,10 @@ fn routes(app: App) -> Router {
         .route("/v1/projects/{id}/status", get(status))
         .route("/v1/projects/{id}/tables/export", post(export_table))
         .route("/v1/projects/{id}/tables/import", post(import_table))
+        .route("/v1/projects/{id}/tables", get(table_list))
+        .route("/v1/projects/{id}/tables/schema", post(table_schema))
+        .route("/v1/projects/{id}/tables/create", post(table_create))
+        .route("/v1/projects/{id}/tables/drop", post(table_drop))
         .route_layer(middleware::from_fn_with_state(app.clone(), guard));
     Router::new()
         .route(
@@ -183,10 +222,7 @@ async fn guard(State(app): State<App>, request: Request, next: Next) -> Response
         Ok(request) => next.run(request).await,
         Err(error) => error.into_response(),
     };
-    if matches!(
-        route.as_str(),
-        "/v1/projects/{id}/tables/export" | "/v1/projects/{id}/tables/import"
-    ) {
+    if route == "/v1/projects/{id}/tables" || route.starts_with("/v1/projects/{id}/tables/") {
         prevent_cache(&mut response);
     }
     // Static labels exclude extension-method text, IDs and query strings.
@@ -336,6 +372,46 @@ async fn import_table(
     })
     .await?;
     Ok(Json(report))
+}
+async fn table_list(Extension(scope): Extension<Scope>) -> ApiResult<Response> {
+    let project = take_project(&scope)?;
+    blocking(scope, move || {
+        project.table_operation(|db| crate::table_api::response(&crate::table_api::list(db)?))
+    })
+    .await
+}
+async fn table_schema(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let bytes = body(request).await?;
+    let project = take_project(&scope)?;
+    blocking(scope, move || {
+        let name = crate::table_api::name_request(&bytes)?;
+        project.table_operation(|db| {
+            crate::table_api::response(&crate::table_api::describe(db, &name)?)
+        })
+    })
+    .await
+}
+async fn table_create(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let bytes = body(request).await?;
+    let project = take_project(&scope)?;
+    blocking(scope, move || {
+        let schema = crate::table_api::schema_request(&bytes)?;
+        project.table_operation(|db| {
+            crate::table_api::response(&crate::table_api::create(db, schema)?)
+        })
+    })
+    .await
+}
+async fn table_drop(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let bytes = body(request).await?;
+    let project = take_project(&scope)?;
+    blocking(scope, move || {
+        let name = crate::table_api::name_request(&bytes)?;
+        project.table_operation(|db| {
+            crate::table_api::response(&crate::table_api::drop_table(db, &name)?)
+        })
+    })
+    .await
 }
 async fn blocking<T: Send + 'static>(
     scope: Scope,

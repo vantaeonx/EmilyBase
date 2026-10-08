@@ -70,3 +70,14 @@ the same byte cap. Invalid import never partially commits; existing tables refus
 Success/refusal disable caches and use static errors/log patterns. Transfer data
 is explicit plaintext and does not grant user SQL/RLS authority. Whole-process
 heap, queued-output/connection admission and an independent audit remain open.
+
+
+Table schema HTTP uses the same retained project scope and service authority as
+logical transfer. Strict typed fields and original schema encoding avoid SQL
+interpolation or caller-selected paths. Four workers, bounded bodies/deadlines,
+128-table/64-column metadata and65,536-byte responses constrain this adapter.
+Private-root credentials are rechecked after body wait. Drop is an intentionally
+destructive service-key capability and commits rows/schema together. Reads and
+public writes do not observe private clocks or modify private WAL. Decimal-string
+IDs avoid client precision loss. No idempotency, public user/RLS authority,
+whole-process quota or completed security audit is implied.

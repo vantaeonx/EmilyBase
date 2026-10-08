@@ -491,6 +491,58 @@ class Lifecycle:
         )
         return pair
 
+    def table_schema(self):
+        phase("Verify table schemas and kill after create/drop acknowledgements")
+        identifier, key = self.project
+        route = f"/v1/projects/{identifier}/tables"
+        private_path = self.p.data_directory + f"/private/{identifier}/redo.wal"
+        before = self.p.digest(private_path)
+        tables = self.p.request(route, key)["tables"]
+        require(
+            len(tables) == 1 and tables[0]["name"] == "t",
+            "initial typed table inventory",
+        )
+        description = self.p.request(route + "/schema", key, {"table": "t"})
+        require(
+            description["name"] == "t" and len(description["columns"]) == 2,
+            "complete selected schema",
+        )
+        schema = {
+            "name": "schema_probe",
+            "primary_key": 0,
+            "columns": [
+                {"name": "id", "data_type": "integer", "nullable": False},
+                {"name": "value", "data_type": "text", "nullable": True},
+            ],
+        }
+        self.p.private.append("schema_probe")
+        self.p.request(route + "/create", self.p.master, schema, 401)
+        created = self.p.request(route + "/create", key, schema)
+        require(
+            created["transaction"].isdecimal() and created["table"]["id"].isdecimal(),
+            "lossless schema acknowledgement IDs",
+        )
+        self.p.stop(hard=True)
+        self.p.up()
+        require(
+            self.p.request(route + "/schema", key, {"table": "schema_probe"}) == schema,
+            "created schema survives kill",
+        )
+        self.p.request(route + "/create", key, schema, 400)
+        dropped = self.p.request(route + "/drop", key, {"table": "schema_probe"})
+        require(dropped["transaction"].isdecimal(), "durable drop acknowledgement")
+        self.p.stop(hard=True)
+        self.p.up()
+        self.p.request(route + "/schema", key, {"table": "schema_probe"}, 400)
+        require(
+            len(self.p.request(route, key)["tables"]) == 1,
+            "dropped schema remains absent",
+        )
+        require(
+            self.p.digest(private_path) == before,
+            "public schema work preserves private WAL",
+        )
+
     def transfer(self):
         phase("Verify bounded table transfer and kill after import acknowledgement")
         identifier, key = self.project
@@ -723,6 +775,7 @@ def main():
         probe.setup(not args.no_build)
         lifecycle = Lifecycle(probe)
         pair = lifecycle.provision()
+        lifecycle.table_schema()
         lifecycle.transfer()
         pair = lifecycle.session_kill(pair)
         pair = lifecycle.credentials(pair)

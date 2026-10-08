@@ -26,6 +26,18 @@ impl std::fmt::Debug for AccountRoot {
     }
 }
 impl AccountRoot {
+    pub(crate) fn table_operation<T>(
+        &self,
+        project: &str,
+        key: &str,
+        work: impl FnOnce(&mut emilybase_transactions::Database) -> crate::table_api::Result<T>,
+    ) -> Result<T> {
+        self.ready()?;
+        self.contents
+            .registry
+            .authorize(project, key)?
+            .table_operation(work)
+    }
     pub(crate) fn export_table(
         &self,
         project: &str,

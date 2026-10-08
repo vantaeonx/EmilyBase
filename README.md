@@ -40,6 +40,9 @@ small table through CLI streams, with strict typed validation and a single durab
 new-table commit. The explicit255-row limit follows the existing transaction cap.
 Project-service HTTP exchange is available in both data modes with a stricter
 65,536-byte request/export cap and the same original-engine commit behavior.
+[Table schema HTTP](docs/table-schema-api.md) also lists/describes public tables
+and creates/drops them through original durable transactions in both modes.
+Metadata and transaction IDs are decimal strings; only project service keys apply.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

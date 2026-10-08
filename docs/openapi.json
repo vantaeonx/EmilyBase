@@ -3138,6 +3138,320 @@
           }
         }
       }
+    },
+    "/v1/projects/{id}/tables": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "table_list",
+        "summary": "List live public table metadata in table-ID order",
+        "description": "Both data modes; project service key only. Private-root authority is rechecked at execution. Body/output cap65536 bytes; no-cache responses. Listing includes no rows or private account schemas. Table IDs survive drops as gaps and are not reused.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; create/drop acknowledgements follow WAL sync. Metadata IDs are decimal strings.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableInventory"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/tables/schema": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "table_schema",
+        "summary": "Read the complete selected public schema",
+        "description": "Both data modes; project service key only. Private-root authority is rechecked at execution. Body/output cap65536 bytes; no-cache responses. Listing includes no rows or private account schemas. Table IDs survive drops as gaps and are not reused.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; create/drop acknowledgements follow WAL sync. Metadata IDs are decimal strings.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableExportRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/tables/create": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "table_create",
+        "summary": "Create one empty public table durably",
+        "description": "Both data modes; project service key only. Private-root authority is rechecked at execution. Body/output cap65536 bytes; no-cache responses. Listing includes no rows or private account schemas. Table IDs survive drops as gaps and are not reused.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; create/drop acknowledgements follow WAL sync. Metadata IDs are decimal strings.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferSchema"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/tables/drop": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "table_drop",
+        "summary": "Drop one public table and its rows durably",
+        "description": "Both data modes; project service key only. Private-root authority is rechecked at execution. Body/output cap65536 bytes; no-cache responses. Listing includes no rows or private account schemas. Table IDs survive drops as gaps and are not reused.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; create/drop acknowledgements follow WAL sync. Metadata IDs are decimal strings.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableDropped"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/TableError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "$ref": "#/components/responses/TransferError503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableExportRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3962,6 +4276,88 @@
           "transfer",
           "transaction"
         ]
+      },
+      "TableSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$",
+            "description": "Canonical positive u64 decimal; preserve as text."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "columns": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+          },
+          "primary_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "columns",
+          "primary_key"
+        ]
+      },
+      "TableInventory": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "tables": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "$ref": "#/components/schemas/TableSummary"
+            }
+          }
+        },
+        "required": [
+          "tables"
+        ]
+      },
+      "TableCreated": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "table": {
+            "$ref": "#/components/schemas/TableSummary"
+          },
+          "transaction": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$",
+            "description": "Canonical positive u64 decimal; preserve as text."
+          }
+        },
+        "required": [
+          "table",
+          "transaction"
+        ]
+      },
+      "TableDropped": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "transaction": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$",
+            "description": "Canonical positive u64 decimal; preserve as text."
+          }
+        },
+        "required": [
+          "transaction"
+        ]
       }
     },
     "responses": {
@@ -4121,6 +4517,28 @@
       },
       "TransferError503": {
         "description": "Storage unavailable, admission full or write outcome requires inspection",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Pragma": {
+            "schema": {
+              "const": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TableError400": {
+        "description": "Invalid schema/name request, duplicate or missing table, or catalog limit; code table_rejected.",
         "headers": {
           "Cache-Control": {
             "schema": {

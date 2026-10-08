@@ -8,6 +8,8 @@ mod http;
 mod metadata;
 mod projects;
 mod rate;
+mod table_api;
+pub use table_api::TableError;
 mod registry_archive;
 mod registry_files;
 pub use account_bundle::{
@@ -86,6 +88,8 @@ pub enum Error {
     Query(#[from] emilybase_query::ExecutionError),
     #[error(transparent)]
     Transfer(#[from] emilybase_transfer::Error),
+    #[error(transparent)]
+    Tables(#[from] TableError),
     #[error("project filesystem error")]
     Io(#[from] std::io::Error),
     #[error("HTTP transport failed")]

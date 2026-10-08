@@ -1,0 +1,98 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "bc683b73315860360831168a2d79ec76e9db042b",
+  "source_sha256": {
+    "Cargo.lock": "a54c26375bd64ec25d817376db1e5dc4d590852989b1c4210b520ba0d3f49825",
+    "crates/server/src/account_http.rs": "ee4422f124b5f55401acd26f0ca588a93290492169461f7e70ce0adacd0d8098",
+    "crates/server/src/account_http/tests.rs": "12d75f5b1fc1e335ad6a45fc06397cb3b06ed765af6ff634b6923d7ceb5c4566",
+    "crates/server/src/account_http/tests/tables.rs": "8625bce10186f87fe895d834225964b30279f9aa78140550705dacc901b1bfe9",
+    "crates/server/src/http.rs": "fd68a87acc2c63951b33db0ebfb6665f01a05cc60c97fa55c112e38d6c4163ba",
+    "crates/server/src/lib.rs": "5298746eb84647fff8eb82169930ce92cf75d846c7c2523eac05ac6cfd68f22e",
+    "crates/server/src/projects.rs": "329eea22de466d8ce5f94d9d989993873999b7bea9d6be9b9ece91e41005bcdc",
+    "crates/server/src/registry_files/account_root/live.rs": "5e94771e560d06e87173e9b7285cbc2c6135241d6ddf9dd87fcc8a7f144b5336",
+    "crates/server/src/table_api.rs": "9251f4fae6b679cac6a28f4ca8668728b8fc56c92e3a246f798c364962b677a6",
+    "crates/server/src/table_api/tests.rs": "a0027d60ab2381e8eab4a2eae9dfbe4a25fca555507e9ff6108b2f28a53fde2e",
+    "crates/server/tests/table_schema.rs": "e0bd816a24bce4e377f451aa2310e26d4e4a26ae69d4c338b0b0ba39d53c6ba9",
+    "docs/openapi.json": "c8a47d0b7c2a348918403963601689804a294329c6f044da75be61aa2cbfac5d",
+    "fuzz/Cargo.lock": "9d834449ee864d2f272898a2b2fdabf661fd04fce187d3081d4144f8b6f8fc69",
+    "tests/account_containers.py": "2910dfa14dd036fa96aed1be6d7533e6821541d0386747bd4497d67e80c7d6a0",
+    "tests/containers.py": "1e712a68b3357eedaa6c9b2b16b4e13f006a3812e4a9868e521206c7f5eee1ec"
+  },
+  "protocol": {
+    "routers": [
+      "legacy registry",
+      "explicit private root"
+    ],
+    "routes": [
+      "GET /v1/projects/{id}/tables",
+      "POST /v1/projects/{id}/tables/schema",
+      "POST /v1/projects/{id}/tables/create",
+      "POST /v1/projects/{id}/tables/drop"
+    ],
+    "project_service_authority_only": true,
+    "root_current_key_recheck_after_body_before_decode": true,
+    "legacy_admitted_capability_unchanged": true,
+    "max_body_response_bytes": 65536,
+    "body_timeout_seconds": 5,
+    "admitted_workers": 4,
+    "max_tables": 128,
+    "max_columns": 64,
+    "integer_ids_as_decimal_strings": true,
+    "create_drop_original_durable_commit": true,
+    "no_private_clock_wal_changes": true,
+    "no_cache_success_refusal": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "scoped_passed_each": 62,
+    "scoped_ignored_each": 0,
+    "new_cases": {
+      "core": 4,
+      "private_http": 2,
+      "native_tcp": 1
+    },
+    "generated_sequences": 16,
+    "max_inventory_tables_columns": [
+      128,
+      64
+    ],
+    "new_tcp_ack_kills_each": 8,
+    "common_native_lifecycle_runs": 4,
+    "ack_kills_per_common_lifecycle": 9,
+    "frozen_source_dependency_protocol_files": 454,
+    "workspace_minimum_builds": true,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "python_format_lint": true,
+    "both_warning_denied_advisory_scans": true,
+    "openapi_refs_unique_operation_ids": true,
+    "full_workspace_sdk_new_asan_optional_diagnostics_repeated": false
+  },
+  "prior_hosted": {
+    "last_success_commit": "7f012e83d6fc18005611e35774bb65a26c985c87",
+    "last_success_run": 37736164028,
+    "http_transfer_run": 37737773033,
+    "http_transfer_status": "in progress",
+    "new_schema_container_run": "pending publication"
+  },
+  "source_counts": {
+    ".rs": 84482,
+    ".ts": 455,
+    ".mjs": 804,
+    ".py": 1677,
+    "total": 87418,
+    "effective_rust": 81038
+  },
+  "net_rust": 760,
+  "net_python": 53,
+  "exclusions": [
+    "public user authority and RLS",
+    "schema migration and idempotency",
+    "whole-process heap/output/connection admission",
+    "new local Docker execution; CLI unavailable",
+    "stable format and production acceptance"
+  ]
+}

@@ -1371,4 +1371,5 @@ async fn metadata_page_bounds_cursor_shape_and_unauthorized_bodies_never_write_h
     assert_eq!(wal(&f), before);
 }
 
+mod tables;
 mod transfer;
