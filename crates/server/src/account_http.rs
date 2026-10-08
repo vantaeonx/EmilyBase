@@ -102,6 +102,7 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects/{id}/sql", post(sql))
         .route("/v1/projects/{id}/explain", post(explain))
         .route("/v1/projects/{id}/auth/users", post(create_user))
+        .route("/v1/projects/{id}/auth/users/list", post(list_users))
         .route("/v1/projects/{id}/auth/sign-in", post(sign_in))
         .route("/v1/projects/{id}/auth/refresh", post(refresh))
         .route("/v1/projects/{id}/auth/logout", post(logout))
@@ -226,7 +227,7 @@ fn account_failure(error: Error) -> Failure {
         Error::Accounts(A::Denied | A::Token(T::Format)) => {
             Failure(StatusCode::UNAUTHORIZED, "access_denied")
         }
-        Error::Accounts(A::Login | A::Cleanup | A::Password(P::Input)) => {
+        Error::Accounts(A::Login | A::Cleanup | A::Page | A::Password(P::Input)) => {
             Failure(StatusCode::BAD_REQUEST, "invalid_account_request")
         }
         Error::Accounts(A::Password(P::Busy)) => {
@@ -301,6 +302,12 @@ struct Disabled {
 struct Prune {
     limit: u16,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ListUsers {
+    limit: u16,
+    after: Option<String>,
+}
 async fn private_json<T: serde::de::DeserializeOwned>(request: Request) -> ApiResult<T> {
     if !request
         .headers()
@@ -365,6 +372,23 @@ async fn create_user(Extension(scope): Extension<Scope>, request: Request) -> Ap
         let mut out = response(&user(info))?;
         *out.status_mut() = StatusCode::CREATED;
         Ok(out)
+    })
+    .await
+}
+async fn list_users(Extension(scope): Extension<Scope>, request: Request) -> ApiResult<Response> {
+    let body: ListUsers = private_json(request).await?;
+    blocking(scope, move |root, s| {
+        let (id, key) = s.credentials()?;
+        let page = root.list_users(id, key, body.after.as_deref(), usize::from(body.limit))?;
+        #[derive(Serialize)]
+        struct Wire {
+            users: Vec<User>,
+            next_after: Option<String>,
+        }
+        response(&Wire {
+            users: page.users.into_iter().map(user).collect(),
+            next_after: page.next_after,
+        })
     })
     .await
 }

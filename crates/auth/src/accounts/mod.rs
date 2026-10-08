@@ -1,7 +1,11 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod archive;
+mod page;
+pub use page::{AccountPage, MAX_ACCOUNT_PAGE};
 #[cfg(test)]
 mod archive_tests;
+#[cfg(test)]
+mod page_tests;
 mod records;
 mod restore;
 #[cfg(test)]
@@ -68,6 +72,8 @@ pub enum Error {
     Generation,
     #[error("invalid bounded session cleanup limit")]
     Cleanup,
+    #[error("invalid bounded account page limit")]
+    Page,
     #[error("session token operation failed")]
     Token(#[from] crate::tokens::TokenError),
     #[error("session clock storage is not enabled")]

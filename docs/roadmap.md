@@ -707,3 +707,15 @@ checks, eight generated count models, a real TCP cleanup race and ACK-kill/reope
 on WAL1/2 cover this boundary. The initial private-root container lifecycle passed
 on7801d74; the expanded cleanup scenario requires its next hosted run. Automatic
 scheduling, public account policy, roles/RLS and production acceptance remain open.
+
+
+## Follow-up: bounded private user metadata pages
+
+[ADR0087](adr/0087-bounded-private-user-pages.md) adds synchronous/current-service-key
+listing and strict HTTP pages of at most128 users. Exclusive canonical-login
+continuation reads current state without a cross-request snapshot; no private
+verifier/session export, KDF, clock observation or WAL commit occurs. Compatibility,
+130-user boundaries, corruption, eight generated models, exact history, waiting-body
+key rotation and real TCP restart cases cover this boundary. The expanded cleanup
+container lifecycle passed on90bba0b; listing needs its own next hosted run. Public
+account policy, roles/RLS, whole-process admission and production acceptance remain open.

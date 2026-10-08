@@ -1173,3 +1173,200 @@ async fn pruning_rejects_invalid_limits_and_client_time_without_advancing_privat
     assert_ne!(wal(&f)[0], before[0]);
     assert_eq!(wal(&f)[1], before[1]);
 }
+
+#[tokio::test]
+async fn metadata_pages_are_private_readonly_and_recheck_rotated_key_after_waiting_body() {
+    let _serial = durability::PROCESS_TESTS.lock().await;
+    let f = fixture();
+    let router = routes_app(f.app.clone());
+    let (id, key) = &f.credentials[0];
+    for login in ["z_last", "a_first", "m_middle"] {
+        assert_eq!(
+            call(
+                &router,
+                id,
+                key,
+                "users",
+                json!({"login":login,"password":PASSWORD})
+            )
+            .await
+            .0,
+            StatusCode::CREATED
+        );
+    }
+    let (_, disabled) = call(
+        &router,
+        id,
+        key,
+        "disabled",
+        json!({"login":"m_middle","disabled":true}),
+    )
+    .await;
+    let before = wal(&f);
+    // Listing has no time check and must not advance a floor, even on rollback.
+    f.clock.store(0, Ordering::SeqCst);
+    let (status, first) = call(&router, id, key, "users/list", json!({"limit":2})).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(first["next_after"], "m_middle");
+    assert_eq!(first["users"].as_array().unwrap().len(), 2);
+    assert_eq!(first["users"][0]["login"], "a_first");
+    assert_eq!(first["users"][1], disabled);
+    for user in first["users"].as_array().unwrap() {
+        let keys: std::collections::BTreeSet<_> = user
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            keys,
+            ["credential_epoch", "disabled", "id", "login"]
+                .into_iter()
+                .collect()
+        );
+    }
+    let (status, last) = call(
+        &router,
+        id,
+        key,
+        "users/list",
+        json!({"limit":2,"after":first["next_after"]}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(last["next_after"], Value::Null);
+    assert_eq!(
+        last["users"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|u| u["login"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        vec!["synthetic_user", "z_last"]
+    );
+    let (status, sibling) = call(
+        &router,
+        &f.credentials[1].0,
+        &f.credentials[1].1,
+        "users/list",
+        json!({"limit":128,"after":null}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(sibling["users"].as_array().unwrap().len(), 1);
+    assert_eq!(sibling["users"][0]["login"], "synthetic_user");
+    assert_eq!(wal(&f), before);
+    let (release, wait) = tokio::sync::oneshot::channel::<Bytes>();
+    let body = Body::from_stream(futures_util::stream::once(async move {
+        Ok::<_, std::io::Error>(wait.await.unwrap())
+    }));
+    let path = format!("/v1/projects/{id}/auth/users/list");
+    let pending = tokio::spawn(router.clone().oneshot(request(&path, key, body)));
+    tokio::time::timeout(Duration::from_secs(2), async {
+        while f.app.workers.available_permits() != 3 {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
+    let (status, rotated) = send(
+        &router,
+        request(
+            &format!("/v1/projects/{id}/keys/rotate"),
+            MASTER,
+            Body::empty(),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    release.send(Bytes::from_static(b"{\"limit\":2}")).unwrap();
+    let response = pending.await.unwrap().unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+    let denied: Value =
+        serde_json::from_slice(&to_bytes(response.into_body(), 4096).await.unwrap()).unwrap();
+    assert_eq!(denied, json!({"code":"access_denied"}));
+    let (status, current) = call(
+        &router,
+        id,
+        rotated["api_key"].as_str().unwrap(),
+        "users/list",
+        json!({"limit":128}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(current["users"].as_array().unwrap().len(), 4);
+    assert_eq!(wal(&f), before);
+}
+
+#[tokio::test]
+async fn metadata_page_bounds_cursor_shape_and_unauthorized_bodies_never_write_history() {
+    let _serial = durability::PROCESS_TESTS.lock().await;
+    let f = fixture();
+    let router = routes_app(f.app.clone());
+    let (id, key) = &f.credentials[0];
+    let before = wal(&f);
+    f.clock.store(1000, Ordering::SeqCst);
+    for body in [
+        json!({"limit":0}),
+        json!({"limit":129}),
+        json!({"limit":65536}),
+        json!({"limit":-1}),
+        json!({"limit":1.5}),
+        json!({"limit":"1"}),
+        json!({}),
+        json!({"limit":1,"after":""}),
+        json!({"limit":1,"after":"../escape"}),
+        json!({"limit":1,"after":"A"}),
+        json!({"limit":1,"after":"界"}),
+        json!({"limit":1,"after": "a".repeat(65)}),
+        json!({"limit":1,"after":12}),
+        json!({"limit":1,"now":1000}),
+    ] {
+        assert_eq!(
+            call(&router, id, key, "users/list", body).await.0,
+            StatusCode::BAD_REQUEST
+        );
+    }
+    let path = format!("/v1/projects/{id}/auth/users/list");
+    for duplicate in [
+        "{\"limit\":1,\"limit\":2}",
+        "{\"limit\":1,\"after\":null,\"after\":\"a\"}",
+    ] {
+        assert_eq!(
+            send(&router, request(&path, key, Body::from(duplicate)))
+                .await
+                .0,
+            StatusCode::BAD_REQUEST
+        );
+    }
+    for wrong in [
+        MASTER,
+        f.credentials[1].1.as_str(),
+        "synthetic-invalid-service-key",
+    ] {
+        assert_eq!(
+            send(&router, request(&path, wrong, Body::from(vec![b'x'; 4097])))
+                .await
+                .0,
+            StatusCode::UNAUTHORIZED
+        );
+    }
+    assert_eq!(
+        send(&router, request(&path, key, Body::from(vec![b'x'; 4097])))
+            .await
+            .0,
+        StatusCode::PAYLOAD_TOO_LARGE
+    );
+    let (status, gap) = call(
+        &router,
+        id,
+        key,
+        "users/list",
+        json!({"limit":1,"after":"synthetic_usert"}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(gap, json!({"users":[],"next_after":null}));
+    assert_eq!(wal(&f), before);
+}

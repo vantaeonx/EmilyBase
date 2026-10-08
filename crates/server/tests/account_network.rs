@@ -816,3 +816,122 @@ fn actual_tcp_prune_race_ack_kill_keeps_removal_and_live_authority_on_both_wals(
         assert_eq!(report.private_accounts[0].inventory.session_families, 1);
     }
 }
+
+#[test]
+fn actual_tcp_user_pages_keep_exact_private_history_and_current_service_scope_across_restart() {
+    let _case = CASES.lock().unwrap();
+    for compact in [false, true] {
+        let f = fixture(compact);
+        let server = support::Server::start_account(&f.root, MASTER);
+        for login in ["z_last", "a_first"] {
+            assert_eq!(
+                auth(
+                    &server,
+                    &f.id,
+                    &f.key,
+                    "users",
+                    json!({"login":login,"password":PASSWORD})
+                )
+                .0,
+                201
+            );
+        }
+        let (status, disabled) = auth(
+            &server,
+            &f.id,
+            &f.key,
+            "disabled",
+            json!({"login":"a_first","disabled":true}),
+        );
+        assert_eq!(status, 200);
+        let private_path = f.root.join("private").join(&f.id).join("redo.wal");
+        let public_path = f.root.join("registry").join(&f.id).join("data/redo.wal");
+        let private_before = fs::read(&private_path).unwrap();
+        let public_before = fs::read(&public_path).unwrap();
+        let (status, first) = auth(&server, &f.id, &f.key, "users/list", json!({"limit":2}));
+        assert_eq!(status, 200);
+        assert_eq!(first["users"][0], disabled);
+        assert_eq!(first["next_after"], "synthetic_user");
+        let (status, last) = auth(
+            &server,
+            &f.id,
+            &f.key,
+            "users/list",
+            json!({"limit":2,"after":first["next_after"]}),
+        );
+        assert_eq!(status, 200);
+        assert_eq!(last["users"].as_array().unwrap().len(), 1);
+        assert_eq!(last["users"][0]["login"], "z_last");
+        assert_eq!(last["next_after"], Json::Null);
+        assert_eq!(
+            auth(&server, &f.id, MASTER, "users/list", json!({"limit":1})).0,
+            401
+        );
+        let (status, rotated) = support::call(
+            server.address,
+            "POST",
+            &format!("/v1/projects/{}/keys/rotate", f.id),
+            MASTER,
+            &json!({}),
+        )
+        .unwrap();
+        assert_eq!(status, 200);
+        let key = rotated["api_key"].as_str().unwrap();
+        assert_eq!(
+            auth(&server, &f.id, &f.key, "users/list", json!({"limit":1})).0,
+            401
+        );
+        assert_eq!(fs::read(&private_path).unwrap(), private_before);
+        assert_eq!(fs::read(&public_path).unwrap(), public_before);
+        let log = server.stop();
+        clean_log(
+            &log,
+            &[
+                MASTER,
+                &f.id,
+                &f.key,
+                key,
+                PASSWORD,
+                "synthetic_user",
+                "a_first",
+                "z_last",
+            ],
+        );
+        let report = emilybase_server::inspect_account_bundle_root(&f.root, pool()).unwrap();
+        assert_eq!(report.private_accounts[0].inventory.accounts, 3);
+        assert_eq!(report.private_accounts[0].inventory.session_families, 0);
+        assert_eq!(
+            report.private_accounts[0].inventory.database.wal_version,
+            if compact { 2 } else { 1 }
+        );
+        let server = support::Server::start_account(&f.root, MASTER);
+        let (status, again) = auth(&server, &f.id, key, "users/list", json!({"limit":2}));
+        assert_eq!(status, 200);
+        assert_eq!(again, first);
+        let (status, after) = auth(
+            &server,
+            &f.id,
+            key,
+            "users/list",
+            json!({"limit":128,"after":"zzzz"}),
+        );
+        assert_eq!(status, 200);
+        assert_eq!(after, json!({"users":[],"next_after":null}));
+        assert_eq!(fs::read(&private_path).unwrap(), private_before);
+        assert_eq!(fs::read(&public_path).unwrap(), public_before);
+        let log = server.stop();
+        clean_log(
+            &log,
+            &[
+                MASTER,
+                &f.id,
+                &f.key,
+                key,
+                PASSWORD,
+                "synthetic_user",
+                "a_first",
+                "z_last",
+            ],
+        );
+    }
+}

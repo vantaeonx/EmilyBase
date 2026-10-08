@@ -391,6 +391,11 @@ class Lifecycle:
             user["credential_epoch"] == "1" and not user["disabled"],
             "first private user",
         )
+        require(
+            self.auth("users/list", {"limit": 1})
+            == {"users": [user], "next_after": None},
+            "bounded private user metadata",
+        )
         pair = self.sign(self.password)
         require(self.me(pair) == user, "private session principal")
         self.p.request(

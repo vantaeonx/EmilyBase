@@ -57,6 +57,7 @@ never authorize project SQL. Roles and row policies remain unimplemented.
 | `/password` | `login`, `current_password`, `replacement_password` | 200, updated account metadata |
 | `/disabled` | `login`, `disabled` boolean | 200, updated account metadata |
 | `/sessions/prune` | `limit` integer1..128 | 200, `removed` count |
+| `/users/list` | `limit` integer1..128; optional `after` login/null | 200, metadata page |
 
 Account metadata contains a32-hex-character user ID, canonical login, decimal
 string `credential_epoch` and `disabled`. Session responses explicitly contain
@@ -150,3 +151,23 @@ No automatic scheduling, session identifiers, remaining-count receipt or byte-sp
 reclamation is supplied. Invalid limits refuse before private time advancement.
 The existing worker/body/rate/no-cache/static error and uncertain-outcome rules
 apply. See [ADR0086](adr/0086-bounded-private-session-cleanup.md).
+
+
+## Bounded private user metadata pages
+
+POST /v1/projects/{id}/auth/users/list requires the current project service key.
+Strict JSON contains limit from1 to128, plus optional after as a canonical ASCII
+login or null. The exclusive boundary need not name an existing user. No query
+string, client time, unknown/duplicate field or implicit normalized cursor is used.
+Response users contain only the existing ID/login/credential_epoch/disabled shape;
+next_after contains the last emitted login only when the current read sees another
+record, otherwise null. No password, verifier, session, scope or remaining count
+is returned. This trusted service view grants no user SQL authority.
+
+Each page reads current state. Continuation retains no cross-request snapshot:
+insertions behind a previous cursor may be absent, and newer entries ahead may
+appear. Consumed private records, including lookahead, are completely validated;
+corruption refuses instead of returning a partial page. Bounds precede page
+allocation. Listing never hashes a password, observes session time or commits WAL.
+The worker/rate/body/no-cache/static error rules apply, including current key
+revalidation after a waiting body. See [ADR0087](adr/0087-bounded-private-user-pages.md).

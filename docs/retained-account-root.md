@@ -15,7 +15,7 @@ Project and private rosters stay fixed for this owner. `projects` reports truste
 operator metadata; `rotate_project_key` is an explicit trusted operator action.
 There is no dynamic create/attach operation. Private operations require the current
 project service key: `create_user`, `sign_in`, `refresh_session`, `logout_session`,
-`set_disabled`, `change_password`, `prune_session_families` and `with_access`. A generic project without a
+`set_disabled`, `change_password`, `prune_session_families`, `list_users` and `with_access`. A generic project without a
 declared private store keeps its service-key SQL path but private operations refuse
 without implicitly provisioning directories.
 
@@ -34,6 +34,9 @@ invalidate historical families. Project-key rotation changes the service gate
 without silently resetting user families. Explicit [bounded cleanup](adr/0086-bounded-private-session-cleanup.md)
 removes at most128 inactive families per commit, preserving refreshable sessions.
 Clock observation is separate; deletion does not reclaim appended WAL bytes.
+Bounded user listing returns current metadata in canonical-login order, with an
+exclusive continuation boundary and no retained cross-call snapshot. It changes
+no private clock/WAL and exports no verifier or session data.
 
 `with_access` invokes an immediate callback with the borrowed current principal.
 It cannot return that borrowed proof as a detached authorization object; copied

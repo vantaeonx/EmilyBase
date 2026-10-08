@@ -585,6 +585,7 @@ fn explicit_subset_keeps_unattached_project_data_available_but_never_creates_pri
     denied(live.refresh_session(id, key, "synthetic-refresh", 500));
     denied(live.logout_session(id, key, "synthetic-refresh", 500));
     denied(live.prune_session_families(id, key, 500, 128));
+    denied(live.list_users(id, key, None, 1));
     denied(live.with_access(id, key, "synthetic-access", 500, |_| ()));
     assert!(!private.exists());
     assert_eq!(fs::read(&data).unwrap(), before);

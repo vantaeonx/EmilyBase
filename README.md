@@ -92,7 +92,10 @@ session routes with body/worker/rate bounds. Private password changes and
 disable/enable operations durably revoke older credential epochs; re-enabling
 does not revive old sessions. Explicit [bounded cleanup](docs/private-http.md#explicit-inactive-session-cleanup)
 removes at most128 inactive families per request while preserving refreshable ones;
-clock advancement and WAL compaction remain separate. Set `EMILYBASE_ACCOUNT_ROOT` to an
+clock advancement and WAL compaction remain separate. A bounded service-only
+[user metadata view](docs/private-http.md#bounded-private-user-metadata-pages)
+provides exclusive-login pagination without verifier/session exports or WAL writes.
+Set `EMILYBASE_ACCOUNT_ROOT` to an
 existing verified root, leaving `EMILYBASE_DATA_DIR` unset, to select this mode
 in the actual binary. Real TCP refresh/ACK-kill/restart/clone tests cover WAL1/2;
 one damaged declared private store refuses the whole root at startup. See

@@ -262,7 +262,7 @@ runs both probes. --no-build reuses emilybase:accounts-local.
 
 An explicitly separate --native preflight uses compiled local Rust binaries and
 the same HTTP/CLI lifecycle, but does not execute or claim Docker/cgroup checks.
-The initial five-kill lifecycle also passed in the real hosted container job for
-7801d74, run37731427090. The additional cleanup acknowledgement/kill in this increment
-requires its own hosted run; local native and container evidence stay separate.
+The six-kill lifecycle including cleanup passed in the real hosted container job
+for90bba0b, run37732719066. The additional user-page check in this increment requires
+its own hosted run; local native and container evidence stay separate.
 No production gate closes.

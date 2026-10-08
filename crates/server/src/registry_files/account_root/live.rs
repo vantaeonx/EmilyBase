@@ -1,7 +1,9 @@
 //! Synchronous service ownership. Network admission and policies are separate.
 use super::{Contents, inspect_owned_limited, lock, metadata};
 use crate::{CreatedProject, Error, ProjectInfo, Result};
-use emilybase_auth::accounts::{AccountInfo, AccountStore, IssuedSession, SessionPrincipal};
+use emilybase_auth::accounts::{
+    AccountInfo, AccountPage, AccountStore, IssuedSession, SessionPrincipal,
+};
 use emilybase_auth::password::PasswordPool;
 use emilybase_catalog::Value;
 use std::fs::File;
@@ -110,6 +112,17 @@ impl AccountRoot {
         password: &[u8],
     ) -> Result<AccountInfo> {
         Ok(self.account(project, key)?.create_user(login, password)?)
+    }
+    /// Current metadata page only: no verifier, token or authorization receipt.
+    /// Continuation does not retain a snapshot across separate calls.
+    pub fn list_users(
+        &mut self,
+        project: &str,
+        key: &str,
+        after: Option<&str>,
+        limit: usize,
+    ) -> Result<AccountPage> {
+        Ok(self.account(project, key)?.list_users(after, limit)?)
     }
     /// Trusted service time only; a forward denied attempt can persist its clock.
     pub fn sign_in(

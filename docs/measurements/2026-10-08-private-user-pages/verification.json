@@ -1,0 +1,110 @@
+{
+  "observation_version": 1,
+  "source_parent_commit": "90bba0b0774ea482dcf3ee5852bc4b5fef03a397",
+  "source_sha256": {
+    "crates/auth/src/accounts/mod.rs": "860e62e610db37cf2b57ef0862479abffa273d6dd9e4c9546dba18a079a14739",
+    "crates/auth/src/accounts/page.rs": "5b82c54a68fdeccdca434ad20b3e0887417165c9fafad8624ab6efb09429aabe",
+    "crates/auth/src/accounts/page_tests.rs": "ed37abafca685065127b8a3d7168b22a0fd9f8dd9af9742f44a59b69824a24dd",
+    "crates/server/src/registry_files/account_root/live.rs": "6390205a26911c588f7939f2a0fa21fd471b434ed6aa905306b4f1d6421790a1",
+    "crates/server/src/account_http.rs": "ad5ca5ba0a9c2714f5cb39351c653caf049edcccb147ff50c3b68b749f1a1ed0",
+    "crates/server/src/account_http/tests.rs": "5923269cd8da785d8829e25793db40a81f10ec571db95704ed8db7cce672838f",
+    "crates/server/src/account_bundle/tests/root_live.rs": "8888c41cf28672f4749eb00f41aea76813edf73483655cff1994cd7bd2b8c11e",
+    "crates/server/tests/account_network.rs": "78312c81e04ce5ff8515ee3d91f4159e592601c38ef4b88ab227a9f371b18d82",
+    "tests/account_containers.py": "b8b8735ee09f630c02c18c75802b53fe5375a5563b28516f1d9a7991792cf454",
+    "docs/openapi.json": "f8f92bde86644a53e764c8125edacce7bbc96b072e643bfac8163ddec12fd953",
+    "Cargo.lock": "a339a3a39589a0f438b3028f64eb757c109b4ad2164d98e405ff0decbdc5c56d",
+    "fuzz/Cargo.lock": "21ab8a0f1e2a2c7cd9c26ef2d8e49a3c7af8cd638810645d43f7369b16293fcb"
+  },
+  "protocol": {
+    "current_service_key_before_body_and_at_execution": true,
+    "max_account_page": 128,
+    "exclusive_canonical_login_cursor_max_bytes": 64,
+    "absent_login_cursor_allowed": true,
+    "strict_unknown_duplicate_client_time_refusal": true,
+    "complete_consumed_record_and_lookahead_validation": true,
+    "explicit_metadata_only_no_verifier_session_export": true,
+    "no_cross_request_snapshot_claim": true,
+    "read_only_no_clock_or_wal_commit": true,
+    "no_file_token_format_change": true
+  },
+  "matrix": {
+    "new_auth_cases": 5,
+    "new_in_process_http_cases": 2,
+    "new_actual_tcp_cases": 1,
+    "private_versions": [
+      1,
+      2,
+      3
+    ],
+    "wal_versions": [
+      1,
+      2
+    ],
+    "boundary_inventory_users": 130,
+    "independent_generated_inventory_sequences": 8,
+    "invalid_cursors_limits_corrupt_lookahead": true,
+    "between_page_current_mutations_documented": true,
+    "waiting_body_key_rotation_denies_stale_request": true,
+    "exact_private_sibling_public_wal_preservation": true,
+    "native_restart_metadata_and_rotated_key_preserved": true,
+    "common_native_lifecycle_ack_kills_each": 6,
+    "logs_screen_plaintext_and_json_escaped_secrets": true
+  },
+  "checks": {
+    "rust": [
+      "1.99.0",
+      "1.89.0"
+    ],
+    "targeted_cases_each": 29,
+    "targeted_ignored_each": 0,
+    "targeted_suites": [
+      "accounts::page_tests",
+      "account_http::tests",
+      "explicit_subset_keeps",
+      "account_network"
+    ],
+    "preceding_full_scoped_baseline": {
+      "commit": "90bba0b0774ea482dcf3ee5852bc4b5fef03a397",
+      "auth_server_cli_cases_each": 310,
+      "ignored_helpers_each": 7
+    },
+    "frozen_source_dependency_protocol_files": 436,
+    "workspace_build_and_minimum_server_cli_build": true,
+    "format_strict_workspace_profile_fuzz_clippy": true,
+    "minimum_fuzz_compilation": true,
+    "python_probe_format_lint": true,
+    "both_warning_denied_advisory_scans": true,
+    "nine_private_openapi_routes_and_references_resolve": true,
+    "full_workspace_tests_optional_diagnostics_or_sdk_repeated": false,
+    "new_asan_campaign": false
+  },
+  "prior_hosted": {
+    "last_all_five_success_commit": "7801d74c3a57420bf970c70ca29f1ebc3a5851fb",
+    "last_all_five_success_run": 37731427090,
+    "cleanup_container_success_commit": "90bba0b0774ea482dcf3ee5852bc4b5fef03a397",
+    "cleanup_container_success_run": 37732719066,
+    "new_user_page_container_check": "pending publication"
+  },
+  "source_counts": {
+    ".rs": 81639,
+    ".ts": 455,
+    ".mjs": 802,
+    ".py": 1504,
+    "total": 84400,
+    "effective_rust": 78229
+  },
+  "net_rust": 642,
+  "net_python": 5,
+  "fixture_repairs": [
+    "mutable WAL export fixture",
+    "distinct synthetic identity after boundary inventory expansion",
+    "bounded reopen expectation after expansion",
+    "strict lint fixture is_multiple_of predicate without warning suppression"
+  ],
+  "exclusions": [
+    "public user directory, signup, user SQL roles and row policies",
+    "cross-request snapshots and total counts",
+    "new local Docker execution; CLI unavailable",
+    "whole-process admission, encrypted secrets and production acceptance"
+  ]
+}

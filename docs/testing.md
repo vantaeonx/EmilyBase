@@ -3544,3 +3544,28 @@ components retain their preceding evidence. The preceding c9a1e2e hosted run
 lifecycle passed for7801d74; expanded cleanup container execution needs the next
 hosted run. Docker remains unavailable locally. Formats/ACK and production gates
 are unchanged; deletion releases row capacity rather than appended WAL bytes.
+
+
+## Bounded private user metadata pages, 2026-10-08
+
+[ADR0087](adr/0087-bounded-private-user-pages.md) and
+[verification data](measurements/2026-10-08-private-user-pages/verification.json)
+record the read-only account/root/HTTP boundary. Stable1.99.0 and minimum1.89.0 each
+passed29 targeted cases: five auth page cases, all16 private HTTP cases, one
+unattached-root case and all seven actual TCP cases. No ignored helpers enter this
+count. Eight new cases cover versions1/2/3 and WAL1/2,130-user/128-page boundaries,
+64-byte logins, gaps/end/invalid input, corrupt lookahead, current between-page
+mutations, eight generated inventories, exact histories, waiting-body key rotation
+and native restart authority. Initial fixture mutability, identity collisions and
+an unbounded reopen expectation were corrected; strict lint then required the
+fixture is_multiple_of predicate. Affected auth cases were rerun on both Rust.
+
+Workspace build, minimum server/CLI build, both format checks, strict workspace/
+profile/fuzz Clippy, minimum fuzz compilation, Python probe format/lint and both
+warning-denied advisory scans passed on436 frozen source/dependency/protocol files.
+The common native lifecycle passed on both Rust with six ACK kills and the new
+user-page check. OpenAPI has nine private routes and resolved local references.
+No new full-workspace, optional diagnostic, SDK or ASan run is claimed. The prior
+7801d74 hosted run completed all five jobs;90bba0b's expanded cleanup container
+scenario passed. Listing's own hosted check follows publication; Docker is still
+unavailable locally. Stored formats, durable ACK and production gates remain.
