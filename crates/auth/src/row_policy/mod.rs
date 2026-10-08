@@ -2,6 +2,7 @@
 //! This library grants no database handle, user HTTP route or detached capability.
 mod compile;
 mod evaluate;
+pub mod records;
 use crate::accounts::SessionPrincipal;
 use emilybase_catalog::{Schema, Value};
 use serde::Deserialize;

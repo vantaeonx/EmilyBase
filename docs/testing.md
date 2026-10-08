@@ -4086,3 +4086,40 @@ record the boundary. Net growth1,026 Rust lines:90,384 physical/86,773 effective
 SDK2,502/Python1,785,total94,671 source lines. Durable policy installation/revisions,
 roles, filtering and atomic user CRUD/HTTP remain open; no RLS/stage/production gate
 is marked complete.
+
+
+## Bounded original policy record groups, 2026-10-08
+
+Rust1.99.0 and1.89.0 each pass21 policy/adjacent cases. Ten new regular cases
+include a separate Python schema/digest vector, exact maximum u64 metadata,
+maximum document/near-maximum schema in one header plus seven normal fragments,
+strict canonical metadata/group bounds, missing/extra/reordered/duplicate/altered
+fragments, repaired-checksum nested errors, redaction and128 generated roundtrip/
+mutation cases. Revision/predecessor/header/body identity remain exact; the codec
+allocates no revision and grants no storage or authentication authority.
+
+Original typed transactions on WAL1/2 compose complete groups. A partial staged
+header/fragment replacement is discarded with byte-exact prior WAL, then reopening
+recovers the original complete definition. Full replacement, compact and verified
+backup/restore retain exact document/revision/predecessor; deliberate semantic
+metadata damage refuses inspection while the independently restored clone stays
+valid. These are ordinary storage composition tests, not an installed private
+catalog or a new crash-writer implementation.
+
+Workspace/fuzz format, strict all-target workspace Clippy, minimum workspace
+build, strict all-bin fuzz Clippy and minimum fuzz compilation pass on frozen
+sources. Dedicated policy_records ASan completes3,639,458 runs in46 seconds,
+observed RSS441MiB under512MiB cap, maximum input65,536 bytes, no findings. It
+inspects arbitrary typed groups and independently mutates accepted encode/inspect
+roundtrips. Full auth/workspace/server/SDK/advisory/optional allocation/local Docker
+checks were not repeated for this pure codec increment.
+
+Previouscdc669b run37845593286 and e66a132 run37846249089 are successful; all five
+e66a132 jobs were individually observed successful. a57f071 run37847818143 remains
+in progress at this observation; this new hosted run follows publication.
+[ADR0101](adr/0101-bounded-original-policy-records.md) and
+[source-bound verification](measurements/2026-10-08-bounded-policy-records/verification.json)
+record this scope. Net growth783 Rust lines:91,167 physical/87,541 effective,
+SDK2,502/Python1,785,total95,454 source lines. Private v1..v3 stores, server authority
+and existing WAL/file formats are unchanged. Actual catalog installation/revisions,
+roles and atomic user-data enforcement remain open; no production gate is closed.

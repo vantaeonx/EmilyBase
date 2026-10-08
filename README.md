@@ -62,7 +62,9 @@ with explicit retries and conservative handling of lost responses.
 
 A synchronous [row policy decision library](docs/row-policies.md) now binds typed
 owner/field rules to current borrowed private principals and complete table identity.
-User data routes, installed policies and roles remain pending.
+A [bounded record codec](docs/policy-records.md) also preserves complete policy
+groups within original page limits. User data routes, installed policies and roles
+remain pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

@@ -71,3 +71,9 @@ an installed server policy subsystem. Durable private policy catalog/revisions,
 role membership and revocation, policy installation/backup, bounded filtering/
 ordering/continuation and atomic user CRUD/HTTP remain required before enabling
 user data routes. No production or security-audit gate is closed.
+
+
+The separate [bounded original record codec](policy-records.md) now packages
+exact schema/document bytes into one header plus at most seven normal typed
+fragments. It verifies complete integrity and recompiles nested policy constraints.
+Private catalog versioning/install/revisions and user authority remain pending.

@@ -422,3 +422,125 @@ fn decisions_compose_inside_original_transactions_and_old_bindings_refuse_real_t
     drop(principal);
     assert_eq!(private.database.committed_wal().unwrap(), before_private);
 }
+
+#[test]
+fn policy_records_survive_original_atomic_replace_compact_and_verified_restore_on_both_wals() {
+    use crate::row_policy::records::{chunk_schema, encode, header_schema, inspect};
+    let _io = TEST_IO.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let schema = schema();
+    let mut document=br#"{"version":1,"select":{"kind":"deny"},"insert":{"kind":"deny"},"update_using":{"kind":"deny"},"update_check":{"kind":"deny"},"delete":{"kind":"deny"}}"#.to_vec();
+    document.resize(crate::row_policy::MAX_DOCUMENT_BYTES, b' ');
+    for format in [1, 2] {
+        let path = dir.path().join(format!("records-{format}"));
+        let mut data = Database::create(&path).unwrap();
+        if format == 2 {
+            data.compact().unwrap();
+        }
+        let mut tx = data.begin().unwrap();
+        tx.create_table(header_schema()).unwrap();
+        tx.create_table(chunk_schema()).unwrap();
+        tx.commit().unwrap();
+        let original = data.last_transaction() + 1;
+        let records = encode(context(&schema), original, 0, &document).unwrap();
+        let mut tx = data.begin().unwrap();
+        tx.insert(&header_schema().name, records.header().to_vec())
+            .unwrap();
+        for row in records.chunks() {
+            tx.insert(&chunk_schema().name, row.to_vec()).unwrap();
+        }
+        tx.commit().unwrap();
+        assert_eq!(data.last_transaction(), original);
+        let before = data.committed_wal().unwrap();
+        let mut changed = document.clone();
+        *changed.last_mut().unwrap() = b'\n';
+        let next = data.last_transaction() + 1;
+        let replacement = encode(context(&schema), next, original, &changed).unwrap();
+        {
+            let mut tx = data.begin().unwrap();
+            tx.update(
+                &header_schema().name,
+                &Key::Text("7".into()),
+                replacement.header().to_vec(),
+            )
+            .unwrap();
+            let first = replacement.chunks().next().unwrap();
+            tx.update(
+                &chunk_schema().name,
+                &Key::Text("7:0".into()),
+                first.to_vec(),
+            )
+            .unwrap();
+            // Discarding a partial staged record group publishes no metadata/chunks.
+        }
+        assert_eq!(data.committed_wal().unwrap(), before);
+        drop(data);
+        let mut data = Database::open(&path).unwrap();
+        let read = |database: &Database| {
+            let snapshot = database.view().unwrap();
+            let header = snapshot
+                .get(&header_schema().name, &Key::Text("7".into()))
+                .unwrap()
+                .unwrap();
+            let chunks = snapshot
+                .primary_rows(&chunk_schema().name, None, None)
+                .unwrap()
+                .map(|row| row.unwrap().as_slice())
+                .collect::<Vec<_>>();
+            inspect(PROJECT, header, chunks).unwrap()
+        };
+        let decoded = read(&data);
+        assert_eq!(decoded.document(), document);
+        assert_eq!(decoded.revision, original);
+        let mut tx = data.begin().unwrap();
+        tx.update(
+            &header_schema().name,
+            &Key::Text("7".into()),
+            replacement.header().to_vec(),
+        )
+        .unwrap();
+        for row in replacement.chunks() {
+            let Value::Text(key) = &row[0] else {
+                unreachable!()
+            };
+            tx.update(&chunk_schema().name, &Key::Text(key.clone()), row.to_vec())
+                .unwrap();
+        }
+        tx.commit().unwrap();
+        assert_eq!(data.last_transaction(), next);
+        assert_eq!(read(&data).document(), changed);
+        data.compact().unwrap();
+        let archive = dir.path().join(format!("archive-{format}"));
+        emilybase_backup::create(&mut data, &archive).unwrap();
+        emilybase_backup::inspect(&archive).unwrap();
+        let clone = dir.path().join(format!("clone-{format}"));
+        emilybase_backup::restore(&archive, &clone).unwrap();
+        let clone = Database::open(clone).unwrap();
+        let decoded = read(&clone);
+        assert_eq!(decoded.document(), changed);
+        assert_eq!(decoded.revision, next);
+        assert_eq!(decoded.previous, original);
+        let mut damaged_header = replacement.header().to_vec();
+        damaged_header[5] = Value::Integer(4001);
+        let mut tx = data.begin().unwrap();
+        tx.update(
+            &header_schema().name,
+            &Key::Text("7".into()),
+            damaged_header,
+        )
+        .unwrap();
+        tx.commit().unwrap();
+        let snapshot = data.view().unwrap();
+        let header = snapshot
+            .get(&header_schema().name, &Key::Text("7".into()))
+            .unwrap()
+            .unwrap();
+        let chunks = snapshot
+            .primary_rows(&chunk_schema().name, None, None)
+            .unwrap()
+            .map(|r| r.unwrap().as_slice())
+            .collect::<Vec<_>>();
+        assert!(inspect(PROJECT, header, chunks).is_err());
+        assert_eq!(read(&clone).document(), changed);
+    }
+}

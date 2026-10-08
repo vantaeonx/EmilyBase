@@ -865,3 +865,13 @@ UPDATE checks. Exact-history, independent decision models and original transacti
 rollback/recreation tests cover this library. Durable policy installation/revisions,
 roles, query filtering and atomic authenticated user CRUD/HTTP remain open. Existing
 service authority is unchanged; stage5 and RLS acceptance are not complete.
+
+
+## Follow-up: bounded original policy records
+
+[ADR0101](adr/0101-bounded-original-policy-records.md) encodes exact policy/schema
+bytes as one metadata row plus at most seven original typed fragments, preserving
+existing engine limits. Complete identity/checksum/order/length validation precedes
+nested schema/policy compilation. Atomic replacement rollback and original verified
+backup/restore compose in tests on both WALs. Actual private catalog versioning,
+install/CAS/inventory/revisions, roles and user-data enforcement remain open.

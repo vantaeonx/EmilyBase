@@ -417,3 +417,10 @@ path = "fuzz_targets/row_policy.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "policy_records"
+path = "fuzz_targets/policy_records.rs"
+test = false
+doc = false
+bench = false
