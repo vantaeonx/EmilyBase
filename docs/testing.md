@@ -4593,3 +4593,35 @@ real decoder. Fuzz is smaller than the independently tested maximum archive; it
 does not cover filesystem consistency, publication/restore or user authorization.
 Current root backups still exclude objects; encoding a Vec is not a durable backup.
 See [evidence](measurements/2026-10-09-object-archive/verification.json).
+
+
+## Owned native object archive publication, 2026-10-09
+
+Stable1.99/minimum1.89.0 each pass111 targeted checks on555 frozen hashes:
+59 object,35 storage and17 actual CLI. Nineteen new regular cases include24
+generated binary publication histories, eight competing complete sources selecting
+exactly one whole archive, exact128-object/64 MiB/67,124,352-byte publication,
+existing-name preservation, source/destination namespace changes, stale source,
+final corruption/aliases/modes and actual stdout failure. The new draft's
+identical-content final-name substitution test failed before retaining the original
+selected descriptor and passes after the change.
+
+Each toolchain executes four new native kills: complete capture before selection;
+selected/synced archive before native result; caller-received empty and nonempty
+results. Selected/unreturned is explicitly an uncertain result, not an absent
+backup. Fresh readonly inspection verifies all bytes and retry never replaces the
+artifact. All eight original kills rerun. Four new original sync injections on
+the retained-file entry point cover before/after file/parent sync with cleanup
+only before selection. Process termination does not prove power-loss safety.
+
+Workspace/fuzz formatting/strict lint, stable CLI/server build, minimum workspace
+build and all-fuzz compilation pass. ASAN unchanged object_archive decoder
+executes2,738,927 inputs in46s, RSS406MiB under512,
+max262144/prefix16,940 seeds, raw/outer-resealed branches, zero findings. This
+parser-only smoke does not fuzz filesystem races or the separately tested maximum.
+
+The previous1460cd9 hosted run37967197534 failed its separate session_token
+allocation diagnostic (144 bytes/two blocks in a zero-allocation sample). Local
+targeted checks are not a full hosted-CI success; that diagnostic is separately
+under investigation. Object restore/root integration and production gates remain
+open. See [evidence](measurements/2026-10-09-object-backup/verification.json).

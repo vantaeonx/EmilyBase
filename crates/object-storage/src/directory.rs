@@ -9,6 +9,7 @@ use std::path::Path;
 
 const SCOPE_FILE: &str = ".emilybase-objects";
 const SCOPE_OBJECT: ObjectId = ObjectId::from_bytes([0; 16]);
+mod backup;
 pub(crate) mod inventory;
 pub use inventory::{
     Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ObjectSnapshot,

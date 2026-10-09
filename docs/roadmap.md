@@ -1107,3 +1107,13 @@ objects with complete scoped count/length/digest validation and nested envelope
 checks. It supports canonical encoding/borrowed verification and a bounded readonly
 metadata CLI. See [format](object-archive-format.md). Encoding bytes is not durable
 backup publication or restore. Those gates and AccountRoot integration remain open.
+
+## Follow-up: owned native object archive publication
+
+[ADR0121](adr/0121-owned-native-object-backup.md) retains the actual destination
+parent before complete capture, excludes the source inode, and reuses the original
+owned private byte publisher. A retained selected-file result permits final full
+archive/inode/report verification without reopening a substituted name. The native
+CLI publishes metadata only; uncertain or lost results require explicit inspection.
+See [contract](object-backup.md). Verified object restore and coordinated AccountRoot
+backup integration remain open; no platform or production milestone is closed.

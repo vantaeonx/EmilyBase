@@ -25,16 +25,23 @@ pub fn inspect_archive_file(
 ) -> Result<ArchiveReport> {
     let path = path.as_ref();
     let mut file = crate::inspect::open_private(path)?;
-    let (bytes, before) = crate::inspect::read_image(&mut file, MAX_ARCHIVE_BYTES)?;
+    let (report, after) = inspect_open_archive(&mut file, project)?;
+    crate::inspect::check_visible(path, &after)?;
+    Ok(report)
+}
+pub(crate) fn inspect_open_archive(
+    file: &mut std::fs::File,
+    project: ProjectId,
+) -> Result<(ArchiveReport, std::fs::Metadata)> {
+    let (bytes, before) = crate::inspect::read_image(file, MAX_ARCHIVE_BYTES)?;
     let view = verify_archive(&bytes, project)?;
     let report = ArchiveReport {
         objects: view.objects.len(),
         payload_bytes: view.payload_bytes,
         digest: view.digest,
     };
-    let after = crate::inspect::recheck(&file, &before, MAX_ARCHIVE_BYTES)?;
-    crate::inspect::check_visible(path, &after)?;
-    Ok(report)
+    let after = crate::inspect::recheck(file, &before, MAX_ARCHIVE_BYTES)?;
+    Ok((report, after))
 }
 
 pub struct ArchivedObject<'a> {

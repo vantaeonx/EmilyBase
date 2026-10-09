@@ -109,6 +109,56 @@ fn private_byte_directory_handle_uses_original_sync_failure_outcomes() {
 
 static CASES: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+#[test]
+fn retained_private_byte_publisher_returns_selected_inode_even_after_name_replacement() {
+    use std::io::{Read, Seek, SeekFrom};
+    use std::os::unix::fs::MetadataExt;
+    let temporary = tempfile::tempdir().unwrap();
+    let parent = fs::File::open(temporary.path()).unwrap();
+    let mut file =
+        crate::publish_private_file_at_retained(&parent, "selected", b"synthetic", 64).unwrap();
+    let metadata = file.metadata().unwrap();
+    let target = temporary.path().join("selected");
+    assert_eq!(metadata.ino(), fs::metadata(&target).unwrap().ino());
+    assert_eq!(file.stream_position().unwrap(), 9);
+    fs::rename(&target, temporary.path().join("original")).unwrap();
+    fs::write(&target, b"foreign").unwrap();
+    assert_ne!(metadata.ino(), fs::metadata(&target).unwrap().ino());
+    file.seek(SeekFrom::Start(0)).unwrap();
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes).unwrap();
+    assert_eq!(bytes, b"synthetic");
+    assert_eq!(fs::read(&target).unwrap(), b"foreign");
+}
+
+#[test]
+fn retained_private_byte_publisher_preserves_original_sync_failure_outcomes() {
+    let _serial = CASES.lock().unwrap();
+    for (phase, after, selected) in [
+        ("file_sync", false, false),
+        ("file_sync", true, false),
+        ("parent_sync", false, true),
+        ("parent_sync", true, true),
+    ] {
+        let temporary = tempfile::tempdir().unwrap();
+        let directory = fs::File::open(temporary.path()).unwrap();
+        let _fault = FaultGuard::new(phase, after);
+        let result =
+            crate::publish_private_file_at_retained(&directory, "selected", b"synthetic", 64);
+        if selected {
+            assert!(matches!(result, Err(Error::PublicationUnknown(_))));
+            assert_eq!(
+                fs::read(temporary.path().join("selected")).unwrap(),
+                b"synthetic"
+            );
+        } else {
+            assert!(matches!(result, Err(Error::Io(_))));
+            assert!(!temporary.path().join("selected").exists());
+            assert_eq!(fs::read_dir(temporary.path()).unwrap().count(), 0);
+        }
+    }
+}
+
 struct FaultGuard;
 impl FaultGuard {
     fn new(phase: &'static str, after: bool) -> Self {

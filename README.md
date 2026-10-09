@@ -112,10 +112,11 @@ the real directory/scope descriptors and supports offline binary put and metadat
 inspection with typed IDs. A [complete bounded inventory and immutable capture](docs/object-inventory.md)
 now verifies all selected object bytes for a future archive and exposes only
 metadata through offline list. HTTP uploads, file policies, signed URLs and
-persistent object backup integration remain pending. A separate
+coordinated root backup integration remain pending. A separate
 [object archive byte format](docs/object-archive-format.md) now encodes verified
-captures and supports complete readonly inspection; durable archive publication
-and verified restore are still separate work.
+captures and supports complete readonly inspection. [Native archive publication](docs/object-backup.md)
+now captures all selected objects and writes a private no-replace archive through
+retained source/destination/file descriptors. Verified restore remains separate work.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

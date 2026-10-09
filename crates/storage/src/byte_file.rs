@@ -19,6 +19,17 @@ pub fn publish_private_file_at(
     bytes: &[u8],
     maximum: usize,
 ) -> Result<()> {
+    publish_private_file_at_retained(directory, name, bytes, maximum).map(drop)
+}
+/// The same publication, retaining the actual selected inode for caller
+/// readback. The handle is positioned at EOF; it is not a namespace lease.
+/// An uncertain result does not return authority to remove or replace a file.
+pub fn publish_private_file_at_retained(
+    directory: &std::fs::File,
+    name: impl AsRef<std::ffi::OsStr>,
+    bytes: &[u8],
+    maximum: usize,
+) -> Result<std::fs::File> {
     if bytes.len() > maximum {
         return Err(Error::FileLength(bytes.len() as u64));
     }
@@ -34,14 +45,14 @@ pub(crate) fn publish_with(
     if bytes.len() > maximum {
         return Err(Error::FileLength(bytes.len() as u64));
     }
-    initialize(Pending::new(path)?, bytes, synced, published)
+    initialize(Pending::new(path)?, bytes, synced, published).map(drop)
 }
 fn initialize(
     mut pending: Pending,
     bytes: &[u8],
     synced: impl FnOnce(),
     published: impl FnOnce(),
-) -> Result<()> {
+) -> Result<std::fs::File> {
     pending.file.write_all(bytes)?;
     sync(&pending.file, "file_sync")?;
     synced();
@@ -57,5 +68,9 @@ fn initialize(
             return Err(Error::PathChanged);
         }
     }
-    pending.publish(published)
+    // Clone before selection so a descriptor-allocation failure is still a
+    // prepublication error with the original owned-stage cleanup contract.
+    let retained = pending.file.try_clone()?;
+    pending.publish(published)?;
+    Ok(retained)
 }

@@ -21,6 +21,8 @@ enum Operation {
     Init,
     /// Fully verify the bounded directory and print complete metadata only.
     List,
+    /// Capture all objects and durably publish one fresh private archive.
+    Backup { destination: PathBuf },
     /// Publish exact bounded binary stdin under a fresh typed object ID.
     Put { object: String },
     /// Verify an existing object and print metadata without payload output.
@@ -56,7 +58,7 @@ pub fn run(arguments: Arguments) -> Result<()> {
         Operation::Put { object } | Operation::Inspect { object } => {
             Some(object.parse::<ObjectId>()?)
         }
-        Operation::Init | Operation::List => None,
+        Operation::Init | Operation::List | Operation::Backup { .. } => None,
     };
     // Buffer the bounded redirected stream before acquiring any namespace lock.
     let bytes = if matches!(arguments.operation, Operation::Put { .. }) {
@@ -68,6 +70,15 @@ pub fn run(arguments: Arguments) -> Result<()> {
         None
     };
     match arguments.operation {
+        Operation::Backup { destination } => {
+            let owner = ProjectDirectory::open(arguments.path, project)?;
+            let value = owner.backup_to(destination)?;
+            super::write_operator_metadata(&serde_json::json!({
+                "format":1,"project":project.to_string(),"objects":value.objects,
+                "bytes":value.payload_bytes,
+                "digest":value.digest.iter().map(|b|format!("{b:02x}")).collect::<String>()
+            }))
+        }
         Operation::List => {
             let owner = ProjectDirectory::open(arguments.path, project)?;
             let inventory = owner.inventory()?;

@@ -50,6 +50,8 @@ pub enum Error {
     ArchiveVersion(u16),
     #[error("object archive checksum mismatch")]
     ArchiveChecksum,
+    #[error("object archive destination must be a fresh name outside the source directory")]
+    Destination,
     #[error("object was published but its final durability or contents require inspection")]
     PublicationUnknown,
     #[error("owned object publication failed")]
