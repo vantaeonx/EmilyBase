@@ -1,0 +1,182 @@
+{
+  "date": "2026-10-10",
+  "timezone": "Europe/Brussels",
+  "runtime_source_commit": "d988a51dca23b2bc9794b6fb6a66950a45479501",
+  "source_manifest": "docs/measurements/2026-10-10-object-stream/verification.json",
+  "source_manifest_sha256": "1072965b3deb3f4a44f468eb6437372c95b5ce690771e329ba428183908b3bf8",
+  "source_file_count": 570,
+  "baseline_runs": [
+    {
+      "source_commit": "b1360917583d8a94729d3d55f2f0439a0024dc15",
+      "rust": "1.89.0",
+      "exit_code": 0,
+      "passed": 1501,
+      "failed": 0,
+      "default_ignored_entries": 31,
+      "scope": "cargo test --locked --workspace; earlier source, not the later streaming increment"
+    },
+    {
+      "source_commit": "479d0a23e1aced85a81bcb0118869f2dcb560904",
+      "rust": "1.99.0",
+      "exit_code": 0,
+      "passed": 1509,
+      "failed": 0,
+      "default_ignored_entries": 31,
+      "scope": "cargo test --locked --workspace; earlier source, not the later streaming increment"
+    }
+  ],
+  "ignored_entry_boundary": {
+    "total": 31,
+    "parent_invoked_fixture_entries": 29,
+    "separate_fuzz_corpus_generators": [
+      "accounts::archive_tests::private_archive_corpus",
+      "account_bundle::tests::bundle_corpus"
+    ],
+    "generators_not_executed_by_default_workspace_run": true,
+    "parent_children_not_added_as_independent_top_level_tests": true
+  },
+  "sdk": {
+    "node": "22.22.1",
+    "install": "npm ci --offline --ignore-scripts",
+    "format": "npm run format:check",
+    "unit_command": "npm test",
+    "unit_passed": 34,
+    "integration_command": "npm run test:integration",
+    "integration_passed": 12,
+    "failed": 0,
+    "all_commands_exit_zero": true,
+    "real_server_and_cli_built_first": true,
+    "sdk_files_unchanged_through_runtime_source": true,
+    "tracked_sdk_file_sha256": {
+      "sdks/typescript/README.md": "a98b40dda52a2f6b07b05dadb0aa1c91ca9ed314a7223e336414a0168ccd1fca",
+      "sdks/typescript/package-lock.json": "b315625b8bf49bb7f24613bce1e04a20595bc9dc429e33509ae3f3c01b9655e3",
+      "sdks/typescript/package.json": "522701c69eb5c79a5114417f67cfa87cd369bdee3ad10f1f4c3b3a55d0974693",
+      "sdks/typescript/src/client.ts": "c8d1f90199da862feea7890d97122e70d47b3ee0c6af1c9d2999d79ab0e16e32",
+      "sdks/typescript/src/decode.ts": "49b5b216721289b1fe9e2fa8cb3030e8deba82a823fff6fc9d401a3e048e6f44",
+      "sdks/typescript/src/index.ts": "f6d0fe61fbcce7fff59114ea1d2b06104c318ae64e2d80d315452036e9496a35",
+      "sdks/typescript/src/migrations.ts": "011073e5731ec3c05e68d1c440849c8ed244d5462ab51c9f3bec723fd46a8faf",
+      "sdks/typescript/src/response.ts": "9c0d482fe097984e17a1abc87a8868dd1b5f50589753c93b76d9c33f713688c6",
+      "sdks/typescript/src/rows.ts": "7f426f47fd832fd9fb367bf866d3aad1b64975c3c2c55f6658e5520900be1b0d",
+      "sdks/typescript/src/types.ts": "88e16f2c45b4ece7136454d1e004ac5f7f597c2c0046dce508aff194bda0543d",
+      "sdks/typescript/src/user-client.ts": "6ef9aa25ddde7aad8495dc5b1ae873d73f643d12e266ba76ce4626282a27df88",
+      "sdks/typescript/src/user-wire.ts": "5a40a441e51e1435f2c6ab2fdb64601f4c85a2e4989e7136032dd59007104efd",
+      "sdks/typescript/tests/client.test.mjs": "0583fcf6a420c713801a1283f970d25d7d82beddedf4f0ab7cf570a1a778e7b9",
+      "sdks/typescript/tests/live.integration.mjs": "2e168c34b945c137e2bb53bf028571b9ef1c4ac9c9118fa79e795b45a13a2970",
+      "sdks/typescript/tests/migrations.test.mjs": "774d818831040e9dfc76e502484685e8c7dc1010ac0ae3f9a8ad0171b3390174",
+      "sdks/typescript/tests/rows.test.mjs": "0fd6086fdf0dff0a5f0a6f3fd02a3de6762cd1cd6f5841266ea6512791053ad9",
+      "sdks/typescript/tests/user.integration.mjs": "5572721e1414bf193391ee91b007bcf18b135eb31de5e59149bb8e5e38db5d92",
+      "sdks/typescript/tests/user.test.mjs": "7e50ada2956484f846c30dc508968cb67f8b51866cece4db1198c4b47c52d92d",
+      "sdks/typescript/tsconfig.json": "b7bd7380a8f3ac4e520cd34df1e5cb43367c61cde81ef2cf8fffcacc5b2c50b7"
+    },
+    "previous_source_commit": "479d0a23e1aced85a81bcb0118869f2dcb560904",
+    "source_commit": "d988a51dca23b2bc9794b6fb6a66950a45479501",
+    "repeated_on_current_unchanged_source": true
+  },
+  "dependency_advisories": {
+    "tool": "cargo-audit 0.22.2",
+    "commands": [
+      "cargo audit --deny warnings",
+      "cargo audit --no-fetch --file fuzz/Cargo.lock --deny warnings"
+    ],
+    "exit_codes": [
+      0,
+      0
+    ],
+    "rustsec_commit": "7eebec69c352c7191b1f13eb95dd510eeca5d1de",
+    "rustsec_advisories": 1296,
+    "workspace_packages": 166,
+    "fuzz_packages": 137,
+    "vulnerabilities": [
+      0,
+      0
+    ],
+    "warning_counts": [
+      0,
+      0
+    ],
+    "lockfiles_unchanged_through_runtime_source": true,
+    "not_an_independent_security_or_complete_license_audit": true
+  },
+  "interrupted_attempts": {
+    "exit_code": 137,
+    "count": 2,
+    "scope": "earlier broad stable baseline attempts",
+    "cause": "local systemd-oomd terminated the cargo scopes under memory pressure",
+    "counted_as_passed": false,
+    "mitigation": "one build job, no debug symbols, no incremental compilation; completed isolated baseline run recorded separately",
+    "global_os_settings_changed": false
+  },
+  "production_acceptance": false,
+  "additional_sanitizer_campaigns": [
+    {
+      "target": "sql_parser",
+      "sanitizer": "address",
+      "rustc": "1.101.0-nightly (c36f14571 2026-10-01)",
+      "runs": 1327634,
+      "seconds": 46,
+      "maximum_input_bytes": 65536,
+      "maximum_observed_rss_mib": 433,
+      "rss_limit_mib": 512,
+      "exit_code": 0,
+      "findings": 0,
+      "scope": "bounded parser bytes with existing synthetic corpus; not power loss, a filesystem campaign or a security audit",
+      "seed_files": 1842
+    },
+    {
+      "target": "wal_records",
+      "sanitizer": "address",
+      "rustc": "1.101.0-nightly (c36f14571 2026-10-01)",
+      "runs": 3186550,
+      "seconds": 46,
+      "maximum_input_bytes": 20000,
+      "maximum_observed_rss_mib": 484,
+      "rss_limit_mib": 512,
+      "exit_code": 0,
+      "findings": 0,
+      "scope": "bounded parser bytes with existing synthetic corpus; not power loss, a filesystem campaign or a security audit",
+      "seed_files": 49
+    }
+  ],
+  "source_hashes_rechecked_for_additional_campaigns": true,
+  "source_equivalent_documentation_commit": "7f696e88dd5c05d2e06e3508e90690fb2454d2ae",
+  "current_full_workspace": {
+    "status": "in_progress",
+    "source_commit": "d988a51dca23b2bc9794b6fb6a66950a45479501",
+    "stable_exit_code": null,
+    "minimum_exit_code": null,
+    "counted_as_completed": false,
+    "planned_sequence": [
+      "stable workspace tests",
+      "stable workspace build",
+      "minimum 1.89 workspace tests",
+      "minimum 1.89 workspace build"
+    ],
+    "environment": {
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "CARGO_BUILD_JOBS": "1"
+    },
+    "final_source_hash_recheck": "pending; no completed current broad matrix claimed at this evidence snapshot"
+  },
+  "hosted_ci": {
+    "479d0a2": {
+      "run_id": 38001211376,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "d988a51": {
+      "run_id": 38003182438,
+      "status": "in_progress",
+      "confirmed_successful_jobs": [
+        "container",
+        "Known dependency advisories",
+        "Synthetic allocation diagnostics"
+      ]
+    },
+    "7f696e8": {
+      "run_id": 38004690958,
+      "status": "in_progress"
+    }
+  }
+}

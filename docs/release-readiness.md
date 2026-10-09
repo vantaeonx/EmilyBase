@@ -33,6 +33,9 @@ The [roadmap](roadmap.md) owns stage acceptance. [Testing](testing.md) records
 executed checks and their exact boundaries. [Security acceptance](security-audit.md)
 and [recovery matrix](recovery-matrix.md) keep broader gates open. Historical ADRs
 describe their own increments; this table reflects later implemented additions.
+The [integration evidence snapshot](measurements/2026-10-10-integration-checks/verification.json)
+separates completed parser/SDK/audit checks, earlier green complete baselines and
+the pending full matrix. It is not a release acceptance certificate.
 
 ## Before publishing an experimental release
 

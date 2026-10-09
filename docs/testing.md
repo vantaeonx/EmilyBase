@@ -4796,3 +4796,33 @@ No new process kill, format or fsync point is claimed. Separate full-workspace
 minimum b136091 passed1501 checks; full stable479d0a2 remains in progress and is
 not presented as complete. See [contract](object-stream-verification.md) and
 [evidence](measurements/2026-10-10-object-stream/verification.json).
+
+## Additional source-bound integration checks
+
+The [integration evidence snapshot](measurements/2026-10-10-integration-checks/verification.json)
+rechecks570 source/config/format hashes at d988a51, unchanged through documentation
+commit7f696e8. The earlier minimum b136091 workspace run passed1501 tests; complete
+stable479d0a2 passed1509 and its build. Both exited0; hosted479d0a2 CI is now fully
+successful. Two earlier stable baseline attempts exited137 after local systemd-oomd
+termination and are not green. The completed isolated baseline used one build job
+without debug symbols/incremental compilation; global OS settings were unchanged.
+
+The default report's31 ignored entries comprise29 parent-invoked subprocess fixtures
+and two separate synthetic fuzz-corpus generators. The latter are not executed by
+the default workspace run. Child helper results are not counted as extra independent
+top-level tests. Allocation diagnostics require their separate feature-enabled run.
+
+Node22.22.1 SDK formatting, strict compilation/unit tests and actual server/CLI
+integration exited0 again on the unchanged current runtime source:34 unit and12 live,
+zero failures. The19 tracked SDK files and both lockfiles match the earlier baseline.
+Refreshed cargo-audit0.22.2 with warnings denied found zero known advisories/warnings
+in166 workspace/137 fuzz packages against the recorded RustSec revision. This is
+not a complete license or independent security audit.
+
+Additional ASAN campaigns both exited0 with no findings: SQL parser1327634 inputs,
+46s/max65536/RSS433 MiB from1842 existing seeds; WAL records3186550 inputs,
+46s/max20000/RSS484 MiB from49 seeds. Each RSS limit was512 MiB. These byte-parser
+campaigns do not prove power-loss recovery, filesystem consistency or exhaustive
+security. The latest full stable/minimum workspace test/build sequence remains
+pending at this snapshot and is not counted as complete. No format, source or
+production gate changes here.
