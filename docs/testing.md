@@ -4345,3 +4345,27 @@ or new sanitizer campaign is claimed. Added839 Rust lines: total100147 Rust
 [verification](measurements/2026-10-09-native-public-user-gateway/verification.json).
 Public HTTP, operator CLI, signup, roles, user SDK/dashboard and production gates
 remain pending.
+
+
+## Explicit offline public admission CLI
+
+ADR0112 tests the actual enable-catalog/status/open/close binary interface with
+current private service-key files and original retained root/native CAS. Explicit
+closed migration, malformed input before owner selection, current/rotated/foreign
+keys, busy owners, original file modes/aliases/FIFOs, readonly exact retries and
+stale ABA refusal preserve unrelated project histories and current users.
+Nonempty verified clone remains closed; CLI reopening requires its new revision
+and fresh login while the source remains active. A real terminal write failure
+after commit requires inspection; exact retry adds no WAL entry.
+
+Complete CLI tests pass97 on Rust1.99 and1.89 across26 summaries per compiler.
+Nine regular cases are new: seven actual binary scenarios and two unit/property
+checks,16 generated actual CLI CAS sequences,32 generated u64 values, and two real
+stdout failures per compiler. Both WALs are exercised. No new process-kill,
+sanitizer or power-loss result is claimed. Strict workspace/fuzz formatting/linting,
+minimum workspace build and all-target fuzz compilation pass on495 frozen hashes.
+
+Added781 Rust lines; total100928 Rust (97080 effective),920 TypeScript,
+1582 JavaScript and1785 Python,105215 overall. See
+[verification](measurements/2026-10-09-offline-public-admission-cli/verification.json).
+User-only HTTP, signup/roles, user SDK/dashboard and production gates remain open.

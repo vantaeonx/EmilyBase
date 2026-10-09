@@ -90,7 +90,10 @@ commit. A synchronous [admitted user gateway](docs/native-public-user-gateway.md
 now performs sign-in/refresh/logout, own-account metadata and policy-enforced rows
 without project service credentials. It checks the current flag under the actual
 private owner and authenticates before public data lookup. User-only network
-admission and roles still require separate implementation.
+admission and roles still require separate implementation. The
+[offline admission CLI](docs/admission-cli.md) explicitly migrates to closed v5,
+inspects status and opens/closes using the current private key file and exact
+revision. It preserves current sessions and refuses stale reopening commands.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

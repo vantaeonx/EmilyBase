@@ -5,6 +5,7 @@ use clap::{Parser, Subcommand};
 use emilybase_catalog::{Key, Row, Schema};
 use emilybase_database::{DATABASE_MARKER, Database};
 use emilybase_storage::{Error, FORMAT_VERSION, PAGE_SIZE, Page, Pager, SlotId};
+mod admission;
 mod policies;
 mod tables;
 mod users;
@@ -22,6 +23,8 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Offline explicit public admission; requires a current private service-key file.
+    AccountAdmission(admission::Arguments),
     /// Offline trusted project metadata; never prints service keys or user data.
     AccountRootProjects { path: PathBuf },
     /// Offline privileged rotation; saves the secret privately before activation.
@@ -261,6 +264,7 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
                 &serde_json::json!({"project":info.id,"key_epoch":info.key_epoch.to_string()}),
             )?;
         }
+        Command::AccountAdmission(arguments) => admission::run(arguments)?,
         Command::AccountPolicy(arguments) => policies::run(arguments)?,
         Command::AccountUser(arguments) => users::run(arguments)?,
         Command::Migrate {

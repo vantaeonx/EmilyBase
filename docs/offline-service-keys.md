@@ -66,5 +66,7 @@ online administrative rotation remains available and continues returning its
 protected response; the offline path adds no network endpoint. See
 [private file loading](master-key-files.md), [offline users](user-cli.md),
 [offline policies](policy-cli.md) and [ADR0109](adr/0109-durable-offline-service-key-file.md).
-Public user admission, roles, encryption of secrets and broader load/security/
+The [offline admission CLI](admission-cli.md) reuses the same private key file
+for explicit closed-catalog migration and current-revision opening/closure.
+Public user-only HTTP, roles, encryption of secrets and broader load/security/
 upgrade/resource/production gates remain open.

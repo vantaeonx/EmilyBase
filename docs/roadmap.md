@@ -998,3 +998,15 @@ reopen can resume a current session; verified clone still requires fresh login.
 Generated owner/admission models, concurrent users and process kills cover the
 native boundary. See [the contract](native-public-user-gateway.md). Public HTTP,
 signup, roles, user SDK/dashboard and production acceptance remain open.
+
+
+## Follow-up: explicit offline public admission
+
+[ADR0112](adr/0112-offline-public-admission-cli.md) adds current-private-key
+enable-catalog/status/open/close commands for a stopped existing root. Migration
+remains explicit and closed, revisions retain exact unsigned decimal strings,
+original CAS prevents stale reopen, and stdout failure requires inspection after
+the original durable operation. Both WALs, current users, independent generated
+histories and nonempty verified clone are covered by actual binary scenarios.
+See [operator contract](admission-cli.md). This does not enable public HTTP,
+signup/roles, user SDK/dashboard or production acceptance.

@@ -61,3 +61,7 @@ consumed locally; it is never returned to a user. Existing service-key APIs pres
 their authority. Public HTTP, signup, roles, client SDK, dashboard, load/upgrade and
 independent security acceptance remain pending. See
 [ADR0111](adr/0111-native-admitted-user-gateway.md).
+
+Operators can use the [offline admission CLI](admission-cli.md) for explicit
+catalog migration, current metadata and CAS opening/closure. The root must be
+stopped; keys remain in private files. This does not add a user-only network route.

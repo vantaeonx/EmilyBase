@@ -90,3 +90,8 @@ methods before time/password/public data work; an intentional reopen can resume 
 current session. Verified copy/reset still revokes its old incarnation. These are
 synchronous native methods; user-only HTTP/signup/roles/client integration remain
 separate pending increments. Existing service-key APIs preserve their authority.
+
+The [offline admission CLI](admission-cli.md) now exposes explicit enable-catalog,
+status, open and close through the original current-key root methods. It preserves
+exact revision strings, never implicitly migrates on open, and reports terminal
+write uncertainty after a completed durable operation. Public HTTP remains pending.
