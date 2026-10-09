@@ -434,6 +434,7 @@ dependencies = [
  "emilybase-storage",
  "emilybase-transactions",
  "emilybase-transfer",
+ "proptest",
  "serde",
  "serde_json",
  "tempfile",

@@ -4232,3 +4232,29 @@ lines, including tests: Rust96,684, SDK2,502 and Python1,785. See
 [source-bound evidence](measurements/2026-10-09-offline-policy-cli/verification.json).
 Roles/public admission/dashboard/objects/realtime/Kotlin and broader production
 gates remain open.
+
+
+## Offline private user CLI, 2026-10-09
+
+Rust1.99/1.89 each pass104 cases: all82 CLI tests across24 binaries,17 original
+password tests and five private user-page tests. Fourteen regular cases are new;
+raw password streams add128 generated cases per toolchain. Ten actual executable
+scenarios cover WAL1/2, private v3/v4 provisioning, exact LF/binary/maximal passwords,
+epoch disable/enable/no-ops, independent sorted pages, current-key changes during
+actual pipe waits, live-owner refusal and verified nonempty clones. A real Linux
+pseudoterminal refuses before password input; Python3 is its test fixture only.
+Two competing-process pairs per toolchain create one durable same-login account
+without replacing its password. Two incomplete-input process kills per toolchain
+occur before root acquisition, preserve both WALs and do not extend kills during
+WAL append. Oversized still-open pipes refuse after1025 bytes without EOF.
+
+Strict workspace/fuzz formatting/Clippy, minimum workspace build and all-target
+fuzz compilation pass on484 frozen source/dependency/protocol files. No fresh
+sanitizer campaign, full workspace/server runtime, SDK, Docker, advisory, allocation
+or independent security audit is claimed. The input is bounded raw password bytes;
+no SQL/JSON/policy or stored-format parser changes. New code adds842 net Rust lines;
+total101,813 physical source lines including tests: Rust97,526, SDK2,502, Python1,785.
+See [ADR0108](adr/0108-offline-private-user-cli.md), [operator contract](user-cli.md)
+and [source-bound evidence](measurements/2026-10-09-offline-user-cli/verification.json).
+Public admission, roles, dashboard, objects, realtime, Kotlin and broader production
+gates remain open.

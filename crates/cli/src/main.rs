@@ -7,6 +7,7 @@ use emilybase_database::{DATABASE_MARKER, Database};
 use emilybase_storage::{Error, FORMAT_VERSION, PAGE_SIZE, Page, Pager, SlotId};
 mod policies;
 mod tables;
+mod users;
 use tables::Tables;
 
 #[derive(Parser)]
@@ -23,6 +24,8 @@ struct Arguments {
 enum Command {
     /// Offline current-service-key administration of the private policy catalog.
     AccountPolicy(policies::Arguments),
+    /// Offline trusted provisioning and metadata; never issues user session tokens.
+    AccountUser(users::Arguments),
     /// Apply the next bounded SQL migration from stdin, or verify an exact no-op.
     Migrate {
         path: PathBuf,
@@ -230,6 +233,7 @@ fn main() -> ExitCode {
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
         Command::AccountPolicy(arguments) => policies::run(arguments)?,
+        Command::AccountUser(arguments) => users::run(arguments)?,
         Command::Migrate {
             path,
             version,

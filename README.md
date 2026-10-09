@@ -79,6 +79,9 @@ remain pending.
 Trusted local operators can also [enable, list and install policies offline](docs/policy-cli.md)
 through the retained original root, with a bounded private key file and exact
 revision/definition semantics. The shared file loader preserves server startup rules.
+The Rust [offline user CLI](docs/user-cli.md) provisions accounts, reads bounded
+metadata pages and changes disabled state through the original private owner.
+Passwords require redirected bounded stdin; no session credentials are printed.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

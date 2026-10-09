@@ -947,3 +947,16 @@ exclusive owners, original commits and exact retry rules stay in the native root
 Input waits hold no data owner; current rotation after a wait refuses the copied
 key. See [operator contract](policy-cli.md). This does not close public admission,
 roles, security/load/upgrade/resources or production gates.
+
+
+## Follow-up: offline private user administration
+
+[ADR0108](adr/0108-offline-private-user-cli.md) adds trusted create/list/disable/
+enable commands to an existing stopped root. Shared private-file service keys and
+bounded redirected password input keep secrets out of arguments/output; a real
+terminal refuses before echo. Original KDF, current-key, exact-login pagination,
+epoch revocation/no-op, exclusive ownership and verified restore semantics apply.
+Concurrent same-login provisioning creates one account and never replaces its
+password. No session is issued and no trusted clock/private version is reset.
+See [operator contract](user-cli.md). Public user admission, roles and production
+security/load/upgrade/resource gates remain open.
