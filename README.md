@@ -122,11 +122,16 @@ without overwriting. Coordinated AccountRoot integration remains separate work.
 An [explicit native bounded write](docs/object-write-limits.md) admits fresh object
 IDs against complete current count/byte limits before staging and checks the full
 result. Limits are per call, not a persisted user/service quota policy.
+[Selected-file identity](docs/object-publication-identity.md) is retained through
+standalone object/marker/native writes and the complete bounded-write receipt;
+identical-byte namespace substitutions require explicit inspection.
 The complete CLI inventory regression also forces a4096-byte stdout pipe and
 drains bounded output during execution, preventing test-harness backpressure
 deadlocks; see [verification](docs/measurements/2026-10-10-cli-pipe/verification.json).
 
 **Early development. Not production-ready. Use synthetic data only.**
+The [release scope and evidence index](docs/release-readiness.md) separates current
+features, open platform work and checks required for an experimental release.
 
 Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is
 tested on Rust 1.89.0 and current stable; CI checks both. Nightly is needed only

@@ -4,6 +4,7 @@ use crate::{
 };
 use rustix::fs::{AtFlags, Mode, OFlags};
 use std::fs::{File, Metadata, TryLockError};
+use std::io::{Seek, SeekFrom};
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
@@ -84,10 +85,24 @@ impl ProjectDirectory {
         Self::initialize_owned(lock_directory(directory.try_clone()?)?, project)
     }
     fn initialize_owned(directory: DirectoryOwner, project: ProjectId) -> Result<Self> {
+        Self::initialize_owned_with(directory, project, || {})
+    }
+    fn initialize_owned_with(
+        directory: DirectoryOwner,
+        project: ProjectId,
+        selected: impl FnOnce(),
+    ) -> Result<Self> {
         let image = encode(project, SCOPE_OBJECT, &[])?;
-        publish_at(&directory, SCOPE_FILE, &image)?;
-        let scope = match read_at(&directory, SCOPE_FILE, project, SCOPE_OBJECT) {
-            Ok((scope, data)) if data.payload().is_empty() => scope,
+        let selected_scope = publish_at(&directory, SCOPE_FILE, &image)?;
+        selected();
+        let scope = match read_selected(
+            &directory,
+            SCOPE_FILE,
+            selected_scope,
+            project,
+            SCOPE_OBJECT,
+        ) {
+            Ok((scope, data)) if data.image == image => scope,
             _ => return Err(Error::PublicationUnknown),
         };
         let result = Self {
@@ -142,18 +157,36 @@ impl ProjectDirectory {
     /// Create a new immutable name; never overwrites, retries or deletes.
     /// A post-selection check failure reports an uncertain published result.
     pub fn put(&mut self, object: ObjectId, payload: &[u8]) -> Result<FileReport> {
+        self.put_with(object, payload, || {})
+    }
+    fn put_with(
+        &mut self,
+        object: ObjectId,
+        payload: &[u8],
+        selected: impl FnOnce(),
+    ) -> Result<FileReport> {
+        self.put_retained_with(object, payload, selected)
+            .map(|(_, report)| report)
+    }
+    fn put_retained_with(
+        &mut self,
+        object: ObjectId,
+        payload: &[u8],
+        selected: impl FnOnce(),
+    ) -> Result<(File, FileReport)> {
         if payload.len() > MAX_PAYLOAD_BYTES {
             return Err(Error::Limit);
         }
         self.check()?;
         let image = encode(self.project, object, payload)?;
         let name = object_name(object);
-        publish_at(&self.directory, &name, &image)?;
-        let checked = read_at(&self.directory, &name, self.project, object);
+        let selected_file = publish_at(&self.directory, &name, &image)?;
+        selected();
+        let checked = read_selected(&self.directory, &name, selected_file, self.project, object);
         match checked {
-            Ok((_, data)) if data.image == image => {
+            Ok((file, data)) if data.image == image => {
                 self.check().map_err(|_| Error::PublicationUnknown)?;
-                Ok(data.report)
+                Ok((file, data.report))
             }
             _ => Err(Error::PublicationUnknown),
         }
@@ -187,14 +220,14 @@ fn lock_directory(directory: File) -> Result<DirectoryOwner> {
         Err(TryLockError::Error(error)) => Err(error.into()),
     }
 }
-fn publish_at(directory: &File, name: &str, image: &[u8]) -> Result<()> {
-    match emilybase_storage::publish_private_file_at(
+fn publish_at(directory: &File, name: &str, image: &[u8]) -> Result<File> {
+    match emilybase_storage::publish_private_file_at_retained(
         directory,
         name,
         image,
         HEADER_BYTES + MAX_PAYLOAD_BYTES,
     ) {
-        Ok(()) => Ok(()),
+        Ok(file) => Ok(file),
         Err(emilybase_storage::Error::PublicationUnknown(_)) => Err(Error::PublicationUnknown),
         Err(error) => Err(Error::Publication(error)),
     }
@@ -212,7 +245,18 @@ fn read_at(
         Mode::empty(),
     )
     .map_err(std::io::Error::from)?;
-    let mut file: File = fd.into();
+    read_selected(directory, name, fd.into(), project, object)
+}
+fn read_selected(
+    directory: &File,
+    name: &str,
+    mut file: File,
+    project: ProjectId,
+    object: ObjectId,
+) -> Result<(File, StoredObject)> {
+    // Retained publishers return EOF. Read the selected inode instead of
+    // reopening a name which could now address an identical replacement.
+    file.seek(SeekFrom::Start(0))?;
     if name == SCOPE_FILE && crate::inspect::private(&file)?.len() != HEADER_BYTES as u64 {
         return Err(Error::Directory);
     }
@@ -241,6 +285,9 @@ fn check_visible(directory: &File, name: &str, owned: &Metadata) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod publication_tests;
 
 #[cfg(test)]
 mod tests {

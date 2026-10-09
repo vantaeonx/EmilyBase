@@ -1,7 +1,7 @@
 use crate::{Error, HEADER_BYTES, MAX_PAYLOAD_BYTES, ObjectId, ProjectId, Result, verify};
 use rustix::fs::{Mode, OFlags};
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
@@ -19,6 +19,15 @@ pub fn publish_file(
     object: ObjectId,
     payload: &[u8],
 ) -> Result<FileReport> {
+    publish_file_with(path.as_ref(), project, object, payload, || {})
+}
+fn publish_file_with(
+    path: &Path,
+    project: ProjectId,
+    object: ObjectId,
+    payload: &[u8],
+    selected: impl FnOnce(),
+) -> Result<FileReport> {
     let image = crate::encode(project, object, payload)?;
     let mut sha256 = [0; 32];
     sha256.copy_from_slice(&image[56..88]);
@@ -26,22 +35,35 @@ pub fn publish_file(
         payload_bytes: payload.len(),
         sha256,
     };
-    match emilybase_storage::publish_private_file(
-        path.as_ref(),
+    let mut file = match emilybase_storage::publish_private_file_retained(
+        path,
         &image,
         HEADER_BYTES + MAX_PAYLOAD_BYTES,
     ) {
-        Ok(()) => (),
+        Ok(file) => file,
         Err(emilybase_storage::Error::PublicationUnknown(_)) => {
             return Err(Error::PublicationUnknown);
         }
         Err(error) => return Err(Error::Publication(error)),
-    }
-    match inspect_file(path, project, object) {
-        Ok(report) if report == expected => Ok(report),
+    };
+    selected();
+    let mut checked = || -> Result<FileReport> {
+        file.seek(SeekFrom::Start(0))?;
+        let (actual, report, metadata) = read_open_file(&mut file, project, object)?;
+        check_visible(path, &metadata)?;
+        if actual != image || report != expected {
+            return Err(Error::File);
+        }
+        Ok(report)
+    };
+    match checked() {
+        Ok(report) => Ok(report),
         _ => Err(Error::PublicationUnknown),
     }
 }
+
+#[cfg(test)]
+mod publication_tests;
 pub(crate) fn private(file: &File) -> Result<std::fs::Metadata> {
     private_limit(file, HEADER_BYTES + MAX_PAYLOAD_BYTES)
 }

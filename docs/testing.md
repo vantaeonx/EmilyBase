@@ -4733,3 +4733,32 @@ that descriptor, and the complete final matrix was rerun. This deterministic loc
 regression is not evidence of a particular hosted failure. Historical container
 setup timed out against Docker Hub before project build; a newer hosted container
 job passed. See [evidence](measurements/2026-10-10-cli-pipe/verification.json).
+
+
+## Retained selected object identities, 2026-10-10 (Europe/Brussels)
+
+Stable1.99/minimum1.89.0 each pass156 checks on568 frozen hashes:88 object,44
+storage and24 actual CLI. Eight new regular cases include four distinct identical-
+content/inode-substitution regressions. Standalone object, native object and marker
+cases first fail together (exit101); the later bounded-receipt boundary separately
+fails (exit101). All pass with actual selected descriptors retained through the
+complete corresponding result. Six additional mutations for each standalone/native
+object/marker require uncertainty and preserve artifacts. The path-retained storage
+API also keeps original bounds and four before/after file/parent-sync fault outcomes.
+
+All20 existing object/storage process-kill scenarios rerun on each toolchain, along
+with existing generated capacity, inventory, backup and restore models. No new kill
+or ASAN campaign is claimed; parser formats and fsync ordering are unchanged.
+Workspace/fuzz formatting, strict workspace/all-fuzz lint, stable CLI/server build,
+minimum workspace build and all-fuzz minimum compilation pass. Sources were frozen
+in a separate candidate checkout while broader baseline tests ran.
+
+Two separate stable full-workspace baseline attempts ended137 before test completion.
+The local user journal confirms systemd-oomd killed their cargo scopes. Neither run
+is counted as green; the baseline minimum full-workspace run was still pending when
+this block was recorded. Final relevant matrices use bounded build concurrency and
+no debug symbols. An initial isolated patch produced three E0308 errors from a
+wrong signature edit; corrected before the successful post-fix tests.
+
+See [contract](object-publication-identity.md), [release scope](release-readiness.md)
+and [evidence](measurements/2026-10-10-object-identity/verification.json).

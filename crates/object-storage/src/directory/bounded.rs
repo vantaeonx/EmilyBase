@@ -99,10 +99,25 @@ impl ProjectDirectory {
         if self.inventory()? != before {
             return Err(Error::InventoryChanged);
         }
-        let report = self.put(object, payload)?;
+        // Retain the actual selected inode across the wider receipt boundary;
+        // a report alone cannot distinguish an identical replacement file.
+        let (selected_file, report) = self.put_retained_with(object, payload, || {})?;
         selected();
         let inventory = self.inventory().map_err(|_| Error::PublicationUnknown)?;
-        if report != expected_report || inventory != expected {
+        let (_, data) = read_selected(
+            &self.directory,
+            &object_name(object),
+            selected_file,
+            self.project,
+            object,
+        )
+        .map_err(|_| Error::PublicationUnknown)?;
+        self.check().map_err(|_| Error::PublicationUnknown)?;
+        if report != expected_report
+            || inventory != expected
+            || data.report != report
+            || data.payload() != payload
+        {
             return Err(Error::PublicationUnknown);
         }
         Ok(WriteReceipt {

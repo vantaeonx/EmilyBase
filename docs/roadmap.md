@@ -1156,3 +1156,13 @@ parent writer, avoiding both pipe-capacity deadlock and missing EOF. The old
 wait-before-read order fails the controlled deadline; the corrected case passes
 20 fresh runs on each supported toolchain. This closes a test-harness defect only;
 no database format, file-service or production milestone changes.
+
+
+## Follow-up: retain selected object identity through final receipts
+
+[ADR0125](adr/0125-retained-object-publication-identity.md) extends the original
+retained-file publisher to trusted paths and uses actual selected descriptors for
+standalone objects, project markers and native put. Bounded put keeps that identity
+through its later inventory/receipt boundary. Four identical-content replacement
+regressions precede their corrections. Observed changes preserve artifacts and
+require inspection. Formats and platform/production acceptance remain unchanged.

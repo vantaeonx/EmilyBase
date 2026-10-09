@@ -11,6 +11,7 @@ mod publication_tests;
 
 pub use byte_file::{
     publish_private_file, publish_private_file_at, publish_private_file_at_retained,
+    publish_private_file_retained,
 };
 pub use directory_creation::{PublishedPrivateDirectory, StagedPrivateDirectory};
 pub use error::{Error, Result};

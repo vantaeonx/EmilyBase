@@ -9,6 +9,16 @@ use std::path::Path;
 /// Native filesystem maintenance only, not database/user authority. Existing
 /// names are never replaced. PublicationUnknown requires explicit inspection.
 pub fn publish_private_file(path: impl AsRef<Path>, bytes: &[u8], maximum: usize) -> Result<()> {
+    publish_private_file_retained(path, bytes, maximum).map(drop)
+}
+/// Publish at a trusted native path and retain the actual selected inode.
+/// The handle is positioned at EOF; callers must verify visible identity before
+/// attributing a later readback to this publication. This is not a namespace lease.
+pub fn publish_private_file_retained(
+    path: impl AsRef<Path>,
+    bytes: &[u8],
+    maximum: usize,
+) -> Result<std::fs::File> {
     publish_with(path.as_ref(), bytes, maximum, || {}, || {})
 }
 /// Publish one component in an already-owned directory; pathname moves cannot
@@ -41,11 +51,11 @@ pub(crate) fn publish_with(
     maximum: usize,
     synced: impl FnOnce(),
     published: impl FnOnce(),
-) -> Result<()> {
+) -> Result<std::fs::File> {
     if bytes.len() > maximum {
         return Err(Error::FileLength(bytes.len() as u64));
     }
-    initialize(Pending::new(path)?, bytes, synced, published).map(drop)
+    initialize(Pending::new(path)?, bytes, synced, published)
 }
 fn initialize(
     mut pending: Pending,

@@ -110,6 +110,61 @@ fn private_byte_directory_handle_uses_original_sync_failure_outcomes() {
 pub(crate) static CASES: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[test]
+fn retained_path_publisher_keeps_exact_selected_bytes_after_identical_name_substitution() {
+    use std::io::{Read, Seek, SeekFrom};
+    use std::os::unix::fs::MetadataExt;
+    let _serial = CASES.lock().unwrap();
+    let temporary = tempfile::tempdir().unwrap();
+    let target = temporary.path().join("selected");
+    let saved = temporary.path().join("original");
+    let mut file = crate::publish_private_file_retained(&target, b"synthetic-private", 17).unwrap();
+    let owned = file.metadata().unwrap();
+    assert_eq!(owned.ino(), fs::metadata(&target).unwrap().ino());
+    assert_eq!(file.stream_position().unwrap(), 17);
+    fs::rename(&target, &saved).unwrap();
+    fs::copy(&saved, &target).unwrap();
+    assert_ne!(owned.ino(), fs::metadata(&target).unwrap().ino());
+    file.seek(SeekFrom::Start(0)).unwrap();
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes).unwrap();
+    assert_eq!(bytes, b"synthetic-private");
+    assert_eq!(fs::read(&target).unwrap(), bytes);
+    assert!(crate::publish_private_file_retained(&target, b"other", 17).is_err());
+    assert_eq!(fs::read(&saved).unwrap(), bytes);
+}
+
+#[test]
+fn retained_path_publisher_preserves_bound_and_before_after_sync_outcomes() {
+    let _serial = CASES.lock().unwrap();
+    for (phase, after, selected) in [
+        ("file_sync", false, false),
+        ("file_sync", true, false),
+        ("parent_sync", false, true),
+        ("parent_sync", true, true),
+    ] {
+        let temporary = tempfile::tempdir().unwrap();
+        let target = temporary.path().join("selected");
+        let _fault = FaultGuard::new(phase, after);
+        let result = crate::publish_private_file_retained(&target, b"synthetic-private", 17);
+        if selected {
+            assert!(matches!(result, Err(Error::PublicationUnknown(_))));
+            assert_eq!(fs::read(&target).unwrap(), b"synthetic-private");
+        } else {
+            assert!(matches!(result, Err(Error::Io(_))));
+            assert!(!target.exists());
+            assert_eq!(fs::read_dir(temporary.path()).unwrap().count(), 0);
+        }
+    }
+    let temporary = tempfile::tempdir().unwrap();
+    let target = temporary.path().join("selected");
+    assert!(matches!(
+        crate::publish_private_file_retained(&target, b"synthetic-private", 16),
+        Err(Error::FileLength(17))
+    ));
+    assert_eq!(fs::read_dir(temporary.path()).unwrap().count(), 0);
+}
+
+#[test]
 fn retained_private_byte_publisher_returns_selected_inode_even_after_name_replacement() {
     use std::io::{Read, Seek, SeekFrom};
     use std::os::unix::fs::MetadataExt;

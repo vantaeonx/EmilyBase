@@ -15,6 +15,31 @@ fn fixture() -> (tempfile::TempDir, PathBuf, ProjectDirectory) {
 }
 
 #[test]
+fn selected_bounded_receipt_rejects_identical_replacement_after_inner_put_returns() {
+    use std::os::unix::fs::PermissionsExt;
+    let (temp, path, mut owner) = fixture();
+    let target = path.join(object_name(OBJECT));
+    let saved = temp.path().join("original");
+    let result = owner.put_bounded_with(
+        OBJECT,
+        b"synthetic-private",
+        WriteLimits::new(1, 17).unwrap(),
+        || {},
+        || {
+            fs::rename(&target, &saved).unwrap();
+            fs::copy(&saved, &target).unwrap();
+            fs::set_permissions(&target, fs::Permissions::from_mode(0o600)).unwrap();
+        },
+    );
+    assert!(matches!(result, Err(Error::PublicationUnknown)));
+    assert_eq!(fs::read(&target).unwrap(), fs::read(&saved).unwrap());
+    assert_ne!(
+        fs::metadata(&target).unwrap().ino(),
+        fs::metadata(&saved).unwrap().ino()
+    );
+}
+
+#[test]
 fn limits_validate_exact_native_bounds_and_metadata_checks_never_reserve_authority() {
     let (_temp, _path, owner) = fixture();
     let inventory = owner.inventory().unwrap();
