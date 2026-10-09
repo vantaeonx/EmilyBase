@@ -11,27 +11,34 @@ promised. Initial operating-system target: Linux with a local filesystem.
 
 ```mermaid
 flowchart TD
-  CLI[CLI] --> Storage[Storage: synchronous pages and files]
-  CLI --> Database[Database: table coordination and event replay]
+  ServiceSDK[TypeScript service client] --> HTTP[Axum and Tokio transport]
+  UserSDK[Explicit TypeScript user client] --> HTTP
+  HTTP --> Workers[Bounded blocking workers]
+  Workers --> ServiceGate[Current project service-key authority]
+  Workers --> UserGate[Current admission and session authority]
+  ServiceGate --> Query[Original bounded SQL and typed service operations]
+  UserGate --> UserRows[Installed-policy typed user rows]
+  UserRows --> Owners[Retained public data and private account owners]
+  Owners --> Transactions[Original serialized transaction coordinator]
+  Owners --> Private[Original private account and session store]
+  Query --> Transactions
+  CLI[Offline operator CLI] --> Query
+  Transactions --> WAL[Synced original full-page WAL]
+  Transactions --> Database[Tables and validated event replay]
   Database --> Catalog[Catalog: schemas and typed records]
-  Database --> Storage
-  HTTP[Axum server: bounded blocking workers] --> Query[Bounded SQL parser / planner / executor]
-  SDK[Optional project TypeScript SDK] --> HTTP
-  CLI --> Query
-  Query --> Transactions[Serialized transaction coordinator]
-  Transactions --> WAL[Synced full-page WAL]
-  Transactions --> Database
-  Database --> Index[B+ tree: primary lookup and integer/text ranges]
-  CLI --> Index
-  Index --> Storage
+  Database --> Index[Original derived B+ primary lookup and ranges]
+  Database --> Storage[Original synchronous pages and owned files]
+  Private --> WAL
   WAL --> Storage
-  HTTP --> Auth[Scoped API keys: user policies pending]
-  HTTP --> Realtime[Future committed-change subscriptions]
-  HTTP --> Objects[Future authenticated object service]
-  CLI --> ObjectFiles[Native scoped object files]
-  ObjectFiles --> Storage
-  CLI --> Backup[Verified backup / restore]
+  CLI --> Root[Retained registry and private account root]
+  Root --> Owners
+  CLI --> Backup[Verified database and root backup or restore]
+  Backup --> Root
   Backup --> Transactions
+  CLI --> ObjectFiles[Separate native scoped immutable object directory]
+  ObjectFiles --> Storage
+  CLI --> ObjectArchive[Standalone verified object archive and restore]
+  ObjectArchive --> ObjectFiles
 ```
 
 Storage, catalog, database, WAL, transactions, backup, CLI, a separate index and
@@ -40,6 +47,20 @@ scoped API-key primitives are implemented. Add other crates when they contain
 working behavior, instead of declaring an implemented platform with empty modules.
 The network layer calls the synchronous engine through bounded workers;
 blocking filesystem work must not run on Tokio reactor threads.
+
+This diagram shows implemented entry points. Service keys authorize trusted SQL
+and service operations; admitted users reach separate typed session/row paths
+through current private state and installed policies. A copied principal is not
+a capability. The original derived tree is not a combined durable table/index
+writer. Standalone physical index prototypes remain outside the runtime commit
+path. See the detailed ownership and index boundaries below.
+
+Native object directories and their archives currently belong to the offline
+operator path. Current AccountRoot manifests and root bundles do not include them.
+Object HTTP, user file policies, persisted quotas, signed URLs, realtime, the web
+dashboard and Kotlin client remain future work. The proposed integration contract
+is [ADR0127](adr/0127-proposed-account-root-object-integration.md); it does not
+enable a route or change an existing format.
 
 ## Storage boundary
 
@@ -186,8 +207,8 @@ Legacy raw files are not SQL write targets. See [SQL subset](sql.md) and
 
 Each project receives a server-controlled directory and catalog. Public IDs must
 never be concatenated into filesystem paths. Authorization must bind every
-operation, subscription and object access to a project. The dashboard uses
-React/TypeScript/Vite; REST uses Axum, Serde and OpenAPI; realtime uses WebSocket.
+operation, subscription and object access to a project. The planned dashboard uses
+React/TypeScript/Vite; current REST uses Axum, Serde and OpenAPI; planned realtime uses WebSocket.
 The TypeScript project SDK uses the documented API; Kotlin and the web dashboard
 remain future work. Docker/Compose packages the compiled Rust server and CLI,
 with no JavaScript/Python runtime dependency. No external paid service is required.

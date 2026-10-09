@@ -25,6 +25,9 @@ for production. A crate version or successful build alone is not a published rel
 Rust implements storage, SQL, server and CLI. TypeScript is a client SDK; it does not
 replace the original engine. Source availability does not publish hosted user data.
 Current root bundles exclude the separate native object directories.
+The [AccountRoot object integration proposal](adr/0127-proposed-account-root-object-integration.md)
+keeps the exact schema, ownership, quota and coordinated-restore gates explicit;
+its proposed status must not be described as a released upload feature.
 
 The [roadmap](roadmap.md) owns stage acceptance. [Testing](testing.md) records
 executed checks and their exact boundaries. [Security acceptance](security-audit.md)

@@ -1176,3 +1176,14 @@ native inspection/inventory stream payload hashing with8192-byte scratch, keepin
 retained inode/private metadata/current scope checks. Owned get/capture/publication
 and archive formats remain unchanged. This is not a network interface, numeric
 whole-process reservation, persistent quota or production acceptance.
+
+## Proposed next boundary: files in the retained account root
+
+[ADR0127](adr/0127-proposed-account-root-object-integration.md) is proposed only.
+It defines a blob-first/private-catalog visibility protocol and requires actual
+selected-file ownership across the catalog commit, orphan quota accounting,
+current file authority and complete coordinated backup/restore before user HTTP.
+The exact schema/version, lock order, quota, idempotency and reclamation contracts
+remain open. Current manifests, bundles and endpoints are unchanged. The current
+[architecture diagram](architecture.md) separates implemented user/service paths
+from standalone operator object tools; no platform stage is marked complete.
