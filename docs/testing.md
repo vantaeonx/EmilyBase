@@ -4651,3 +4651,33 @@ encoding/database behavior changed. Other libtest diagnostics remain separately
 scoped. This is not an RSS/service budget/security audit and new hosted CI is
 verified separately. See
 [evidence](measurements/2026-10-09-token-allocation-isolation/verification.json).
+
+
+## Verified native object restore, 2026-10-09
+
+Stable1.99/minimum1.89.0 each pass132 checks on562 frozen hashes:70 object,42
+storage and20 actual CLI. Twenty-one new regular cases cover complete byte-identical
+independent copies,24 generated binary restore histories, four concurrent restores
+selecting one final directory, full128-object/64 MiB/67,124,352-byte native archive
+file restore and exact reencoding. Invalid complete-input prefixes/byte corruption/
+foreign scope and private aliases/modes/oversize refuse before any stage.
+Populated stage/source/parent mutations refuse before selection; postselection
+parent/name/contents changes report unknown and preserve original/private data.
+A property assertion's borrowed temporary required a local test binding during
+preflight; this was compilation, not a runtime storage failure.
+
+Four new real process kills per toolchain cover populated/unselected private
+stage, selected/synced before native return, and caller-received empty/nonempty
+restore results. Unselected nonempty stages survive for explicit inspection; retry
+to a fresh target does not sweep them. Selected results reopen and reencode exactly;
+retry never overwrites. All twelve original object/storage kills rerun. Four new
+original directory/parent sync injections preserve precise pre/postselection
+outcomes. Actual CLI stdout failure leaves the complete selected directory.
+Process kills do not prove power-loss behavior.
+
+Workspace/fuzz format/strict clippy, stable CLI/server build, minimum workspace
+build and all-fuzz compilation pass. No new parser ASAN run is claimed: pure
+decoders/formats are unchanged; prior archive ASAN2,738,927 inputs/46s does not
+fuzz new filesystem operations. Root backup membership, file HTTP/policies and
+production acceptance remain open. See
+[evidence](measurements/2026-10-09-object-restore/verification.json).

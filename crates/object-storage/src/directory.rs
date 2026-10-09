@@ -76,6 +76,12 @@ impl ProjectDirectory {
     /// Pre-existing unmanaged entries are preserved, not admitted as inventory.
     pub fn initialize(path: impl AsRef<Path>, project: ProjectId) -> Result<Self> {
         let directory = open_directory(path.as_ref())?;
+        Self::initialize_owned(directory, project)
+    }
+    pub(crate) fn initialize_descriptor(directory: &File, project: ProjectId) -> Result<Self> {
+        Self::initialize_owned(lock_directory(directory.try_clone()?)?, project)
+    }
+    fn initialize_owned(directory: DirectoryOwner, project: ProjectId) -> Result<Self> {
         let image = encode(project, SCOPE_OBJECT, &[])?;
         publish_at(&directory, SCOPE_FILE, &image)?;
         let scope = match read_at(&directory, SCOPE_FILE, project, SCOPE_OBJECT) {
@@ -169,7 +175,9 @@ fn open_directory(path: &Path) -> Result<DirectoryOwner> {
         Mode::empty(),
     )
     .map_err(std::io::Error::from)?;
-    let directory: File = fd.into();
+    lock_directory(fd.into())
+}
+fn lock_directory(directory: File) -> Result<DirectoryOwner> {
     private_directory(&directory)?;
     match directory.try_lock() {
         Ok(()) => Ok(DirectoryOwner(directory)),

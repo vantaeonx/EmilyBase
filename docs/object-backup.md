@@ -54,6 +54,6 @@ retained concurrently: logical image storage approaches three complete images
 plus working buffers/metadata. This is not streaming, a global heap reservation,
 an upload quota or an aggregate service resource gate.
 
-Verified restore into a fresh private directory, coordinated root integration,
-HTTP/file policies, signed URLs, deletion, encryption, power-loss qualification
-and production acceptance remain separate work.
+[Verified standalone restore](object-restore.md) now reconstructs a fresh private
+directory. Coordinated root integration, HTTP/file policies, signed URLs, deletion,
+encryption, power-loss qualification and production acceptance remain separate work.

@@ -107,7 +107,7 @@ fn private_byte_directory_handle_uses_original_sync_failure_outcomes() {
     }
 }
 
-static CASES: std::sync::Mutex<()> = std::sync::Mutex::new(());
+pub(crate) static CASES: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[test]
 fn retained_private_byte_publisher_returns_selected_inode_even_after_name_replacement() {
@@ -159,9 +159,9 @@ fn retained_private_byte_publisher_preserves_original_sync_failure_outcomes() {
     }
 }
 
-struct FaultGuard;
+pub(crate) struct FaultGuard;
 impl FaultGuard {
-    fn new(phase: &'static str, after: bool) -> Self {
+    pub(crate) fn new(phase: &'static str, after: bool) -> Self {
         assert!(FAULT.replace(Some((phase, after))).is_none());
         Self
     }

@@ -38,6 +38,16 @@ fn report(value: &FileReport) -> Result<()> {
         "format":1,"bytes":value.payload_bytes,"sha256":sha256
     }))
 }
+pub fn archive_report(
+    project: ProjectId,
+    value: &emilybase_object_storage::ArchiveReport,
+) -> Result<()> {
+    super::write_operator_metadata(&serde_json::json!({
+        "format":1,"project":project.to_string(),"objects":value.objects,
+        "bytes":value.payload_bytes,
+        "digest":value.digest.iter().map(|b|format!("{b:02x}")).collect::<String>()
+    }))
+}
 fn input(reader: impl Read) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
     bytes
@@ -73,11 +83,7 @@ pub fn run(arguments: Arguments) -> Result<()> {
         Operation::Backup { destination } => {
             let owner = ProjectDirectory::open(arguments.path, project)?;
             let value = owner.backup_to(destination)?;
-            super::write_operator_metadata(&serde_json::json!({
-                "format":1,"project":project.to_string(),"objects":value.objects,
-                "bytes":value.payload_bytes,
-                "digest":value.digest.iter().map(|b|format!("{b:02x}")).collect::<String>()
-            }))
+            archive_report(project, &value)
         }
         Operation::List => {
             let owner = ProjectDirectory::open(arguments.path, project)?;

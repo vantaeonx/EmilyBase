@@ -1125,3 +1125,14 @@ measurement into a separate opt-in native process after a hosted allocation
 failure and controlled reproduction of unrelated-process attribution. Exact
 counters and a failing144-byte negative control are preserved. This changes the
 diagnostic boundary, not token encoding/auth semantics or production acceptance.
+
+## Follow-up: verified native object archive restore
+
+[ADR0123](adr/0123-verified-native-object-restore.md) verifies the entire scoped
+archive before staging and reconstructs all canonical files through an original
+storage-level private directory publisher. Complete inventory/input rechecks,
+directory/parent fsync and no-replace selection precede a metadata result. Selected
+identity and complete inventory are checked again. Nonempty unselected private
+stages remain for explicit inspection; there is no recursive janitor or overwrite
+retry. See [contract](object-restore.md). This closes the standalone native copy
+operation only; AccountRoot coordination and platform/production gates remain open.

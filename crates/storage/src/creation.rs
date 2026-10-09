@@ -148,7 +148,11 @@ impl Drop for Pending {
 }
 
 #[cfg(target_os = "linux")]
-fn rename(parent: &File, source: &std::ffi::OsStr, target: &std::ffi::OsStr) -> Result<()> {
+pub(crate) fn rename(
+    parent: &File,
+    source: &std::ffi::OsStr,
+    target: &std::ffi::OsStr,
+) -> Result<()> {
     rustix::fs::renameat_with(
         parent,
         source,
@@ -160,10 +164,14 @@ fn rename(parent: &File, source: &std::ffi::OsStr, target: &std::ffi::OsStr) -> 
     Ok(())
 }
 #[cfg(not(target_os = "linux"))]
-fn rename(_parent: &File, _source: &std::ffi::OsStr, _target: &std::ffi::OsStr) -> Result<()> {
+pub(crate) fn rename(
+    _parent: &File,
+    _source: &std::ffi::OsStr,
+    _target: &std::ffi::OsStr,
+) -> Result<()> {
     Err(std::io::Error::new(
         std::io::ErrorKind::Unsupported,
-        "owned no-replace page-file publication requires Linux",
+        "owned no-replace publication requires Linux",
     )
     .into())
 }

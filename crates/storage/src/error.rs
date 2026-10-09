@@ -36,7 +36,7 @@ pub enum Error {
     PathChanged,
     #[error("operating-system randomness is unavailable")]
     Randomness,
-    #[error("page file was published but its durability or destination requires inspection")]
+    #[error("private path was published but its durability or destination requires inspection")]
     PublicationUnknown(#[source] io::Error),
 }
 

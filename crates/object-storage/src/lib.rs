@@ -3,6 +3,7 @@ mod archive;
 mod directory;
 mod format;
 mod inspect;
+mod restore;
 pub use archive::{
     ARCHIVE_HEADER_BYTES, ArchiveReport, ArchivedObject, MAX_ARCHIVE_BYTES, VerifiedArchive,
     encode_archive, encode_verified_archive, inspect_archive_file, verify_archive,
@@ -15,6 +16,7 @@ pub use format::{
     HEADER_BYTES, MAX_PAYLOAD_BYTES, ObjectId, ProjectId, VerifiedObject, encode, verify,
 };
 pub use inspect::{FileReport, inspect_file, publish_file};
+pub use restore::{restore_archive, restore_archive_file};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -52,6 +54,8 @@ pub enum Error {
     ArchiveChecksum,
     #[error("object archive destination must be a fresh name outside the source directory")]
     Destination,
+    #[error("object restore stage is incomplete; final directory was not selected")]
+    RestoreStage(#[source] Box<Error>),
     #[error("object was published but its final durability or contents require inspection")]
     PublicationUnknown,
     #[error("owned object publication failed")]

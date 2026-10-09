@@ -26,6 +26,12 @@ struct Arguments {
 enum Command {
     /// Readonly full inspection of an experimental scoped object archive.
     ObjectArchiveVerify { path: PathBuf, project: String },
+    /// Restore a complete private object archive into a fresh 0700 directory.
+    ObjectArchiveRestore {
+        path: PathBuf,
+        project: String,
+        destination: PathBuf,
+    },
     /// Offline native project object directory; no HTTP or user authority.
     ObjectDirectory(objects::Arguments),
     /// Bounded readonly inspection of an experimental private object envelope.
@@ -278,14 +284,17 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         Command::ObjectArchiveVerify { path, project } => {
             let project = project.parse::<emilybase_object_storage::ProjectId>()?;
             let report = emilybase_object_storage::inspect_archive_file(path, project)?;
-            let digest = report
-                .digest
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>();
-            write_operator_metadata(
-                &serde_json::json!({"format":1,"project":project.to_string(),"objects":report.objects,"bytes":report.payload_bytes,"digest":digest}),
-            )?;
+            objects::archive_report(project, &report)?;
+        }
+        Command::ObjectArchiveRestore {
+            path,
+            project,
+            destination,
+        } => {
+            let project = project.parse::<emilybase_object_storage::ProjectId>()?;
+            let report =
+                emilybase_object_storage::restore_archive_file(path, project, destination)?;
+            objects::archive_report(project, &report)?;
         }
         Command::ObjectDirectory(arguments) => objects::run(arguments)?,
         Command::ObjectVerify {

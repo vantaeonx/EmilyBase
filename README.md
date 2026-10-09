@@ -116,7 +116,9 @@ coordinated root backup integration remain pending. A separate
 [object archive byte format](docs/object-archive-format.md) now encodes verified
 captures and supports complete readonly inspection. [Native archive publication](docs/object-backup.md)
 now captures all selected objects and writes a private no-replace archive through
-retained source/destination/file descriptors. Verified restore remains separate work.
+retained source/destination/file descriptors. [Standalone verified object restore](docs/object-restore.md)
+reconstructs a fresh private directory, checks every copied object and selects
+without overwriting. Coordinated AccountRoot integration remains separate work.
 
 **Early development. Not production-ready. Use synthetic data only.**
 
