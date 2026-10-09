@@ -4207,3 +4207,28 @@ a661bf8 had all five jobs successful. New hosted checks follow publication.
 record this scope. Net growth865 Rust lines:93,238 physical/89,579 effective,
 SDK2,502/Python1,785,total97,525 source lines. No end-user data route, roles,
 retirement, upgrade/resource/security/load or production gate is closed.
+
+
+## Offline current-key policy CLI, 2026-10-09
+
+Rust1.99/1.89 each pass78 cases: all68 CLI tests across23 binaries, six shared
+key-file tests, one server configuration test and three real server file-startup
+cases. Twelve regular cases are new. Eight CLI scenarios cover both original WALs,
+current rotation during observed stdin waits, exclusive owner refusal, exact/CAS
+retries, recreated identities, private file rejection, maximum exact definitions
+and verified nonempty restore with fresh sessions. Two process kills per toolchain
+interrupt incomplete input before database acquisition; these do not add coverage
+of kills during WAL append. An oversized still-open writer is refused after limit+1
+bytes without waiting for EOF. Six shared file tests include16 generated keys and
+deterministic file replacement/metadata changes. Loaded key Debug formatting is
+verified to omit the value. The server extraction preserves both startup modes.
+
+Strict workspace/fuzz formatting and Clippy, minimum workspace build and all-target
+fuzz compilation pass on481 frozen source/dependency/protocol files. No fresh ASan
+campaign or full workspace runtime/local Docker/SDK/advisory/allocation/security
+audit is claimed. New code adds874 net Rust lines; total100,971 physical source
+lines, including tests: Rust96,684, SDK2,502 and Python1,785. See
+[ADR0107](adr/0107-offline-service-policy-cli.md), [CLI contract](policy-cli.md) and
+[source-bound evidence](measurements/2026-10-09-offline-policy-cli/verification.json).
+Roles/public admission/dashboard/objects/realtime/Kotlin and broader production
+gates remain open.

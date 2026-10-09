@@ -1,6 +1,7 @@
 //! API keys, password verifiers and a separate private original-engine account store.
 //! Native private sessions are integrated by the separately admitted server mode.
 pub mod accounts;
+pub mod key_file;
 pub mod password;
 pub mod row_policy;
 pub mod tokens;

@@ -25,6 +25,7 @@ emilybase-transfer = { path = "../transfer" }
 emilybase-migrations = { path = "../migrations" }
 serde = "1"
 serde_json = "1"
+zeroize = { version = "1.9", features = ["alloc"] }
 
 [dev-dependencies]
 tempfile = "3"

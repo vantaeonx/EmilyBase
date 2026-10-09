@@ -935,3 +935,15 @@ verified root clone, strict stable/minimum checks, OpenAPI and sanitizer fuzzing
 cover the adapter. No legacy route, browser service key, user-only admission,
 public signup, roles or automatic retry is added. See [HTTP contract](user-row-http.md).
 Stage5 and broader security/load/upgrade/resource/production gates remain open.
+
+
+## Follow-up: offline current-key policy CLI
+
+[ADR0107](adr/0107-offline-service-policy-cli.md) adds explicit local enable/list/
+install commands for an existing stopped private root. Current service keys come
+from the original bounded private file loader; definitions use exact bounded stdin
+and receipts preserve full decimal u64 strings. Actual table identity/schema,
+exclusive owners, original commits and exact retry rules stay in the native root.
+Input waits hold no data owner; current rotation after a wait refuses the copied
+key. See [operator contract](policy-cli.md). This does not close public admission,
+roles, security/load/upgrade/resources or production gates.

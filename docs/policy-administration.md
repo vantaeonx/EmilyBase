@@ -76,3 +76,9 @@ It grants no detached private handle or user-only SQL/HTTP authority. See
 Native filtered pages are also available through the trusted gateway. Public
 admission, retirement, security, upgrade, resource and
 production gates remain open.
+
+
+For an existing stopped root, the Rust [offline policy CLI](policy-cli.md) uses
+these same current-key and real-table methods. It reads credentials from a bounded
+private file and the exact definition from stdin; it neither creates a root nor
+grants a public user route.

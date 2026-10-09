@@ -95,3 +95,10 @@ including refresh/password/disable/enable/prune/logout ACK kills and verified
 restore. Local native runs do not prove container/cgroup enforcement; hosted CI
 runs the file variant against an actual image and inspects its environment.
 See [ADR0088](adr/0088-private-master-key-file.md) and [testing](testing.md).
+
+
+The bounded private-file reader is shared with the Rust
+[offline policy CLI](policy-cli.md) through auth::key_file. Server source exclusivity,
+startup-before-data ordering and controlled-restart semantics remain unchanged;
+CLI uses a separately provisioned current project service key, never a master-key
+fallback. [ADR0107](adr/0107-offline-service-policy-cli.md) records the extraction.

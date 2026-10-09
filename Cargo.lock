@@ -379,6 +379,7 @@ dependencies = [
  "emilybase-transactions",
  "getrandom 0.3.4",
  "proptest",
+ "rustix",
  "serde",
  "serde_json",
  "sha2",
@@ -436,6 +437,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "zeroize",
 ]
 
 [[package]]

@@ -5,6 +5,7 @@ use clap::{Parser, Subcommand};
 use emilybase_catalog::{Key, Row, Schema};
 use emilybase_database::{DATABASE_MARKER, Database};
 use emilybase_storage::{Error, FORMAT_VERSION, PAGE_SIZE, Page, Pager, SlotId};
+mod policies;
 mod tables;
 use tables::Tables;
 
@@ -20,6 +21,8 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Offline current-service-key administration of the private policy catalog.
+    AccountPolicy(policies::Arguments),
     /// Apply the next bounded SQL migration from stdin, or verify an exact no-op.
     Migrate {
         path: PathBuf,
@@ -226,6 +229,7 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::AccountPolicy(arguments) => policies::run(arguments)?,
         Command::Migrate {
             path,
             version,

@@ -76,6 +76,9 @@ and continue by the last visible key. A root-only
 [trusted backend HTTP adapter](docs/user-row-http.md) now applies this gateway with
 separate current service and user credentials. Public user-only admission and roles
 remain pending.
+Trusted local operators can also [enable, list and install policies offline](docs/policy-cli.md)
+through the retained original root, with a bounded private key file and exact
+revision/definition semantics. The shared file loader preserves server startup rules.
 
 **Early development. Not production-ready. Use synthetic data only.**
 
