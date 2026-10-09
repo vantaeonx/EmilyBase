@@ -1,7 +1,6 @@
 //! Bounded complete native inventory, not a user capability or enforced quota.
 use super::*;
 use sha2::{Digest, Sha256};
-use std::io::{Seek, SeekFrom};
 
 pub const MAX_INVENTORY_OBJECTS: usize = 128;
 pub const MAX_INVENTORY_BYTES: u64 = 64 * 1024 * 1024;
@@ -174,24 +173,24 @@ impl ProjectDirectory {
             .map_err(|_| Error::Allocation)?;
         let mut payload_bytes = 0u64;
         for object in &names {
-            let (file, data) = read_at(
+            let (file, report, metadata) = report_at(
                 &self.directory,
                 &object_name(*object),
                 self.project,
                 *object,
             )?;
             payload_bytes = payload_bytes
-                .checked_add(data.report.payload_bytes as u64)
+                .checked_add(report.payload_bytes as u64)
                 .ok_or(Error::Limit)?;
             if payload_bytes > MAX_INVENTORY_BYTES {
                 return Err(Error::Limit);
             }
             entries.push(InventoryEntry {
                 object: *object,
-                report: data.report,
+                report,
             });
-            // Retain checked inodes while releasing each bounded payload buffer.
-            receipts.push((file, data.verified_metadata));
+            // Retain checked inodes without owning each complete payload image.
+            receipts.push((file, metadata));
         }
         verified();
         if scan(&self.directory)? != names {
@@ -204,8 +203,7 @@ impl ProjectDirectory {
                 return Err(Error::InventoryChanged);
             }
             check_visible(&self.directory, &object_name(*object), metadata)?;
-            file.seek(SeekFrom::Start(0))?;
-            let (_, report, _) = crate::inspect::read_open_file(file, self.project, *object)?;
+            let (report, _) = crate::inspect::read_open_report(file, self.project, *object)?;
             if report != expected.report {
                 return Err(Error::InventoryChanged);
             }

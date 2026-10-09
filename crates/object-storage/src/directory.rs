@@ -25,7 +25,6 @@ pub struct StoredObject {
     report: FileReport,
     project: ProjectId,
     object: ObjectId,
-    verified_metadata: Metadata,
 }
 impl StoredObject {
     pub(crate) fn encoded(&self) -> &[u8] {
@@ -247,6 +246,24 @@ fn read_at(
     .map_err(std::io::Error::from)?;
     read_selected(directory, name, fd.into(), project, object)
 }
+fn report_at(
+    directory: &File,
+    name: &str,
+    project: ProjectId,
+    object: ObjectId,
+) -> Result<(File, FileReport, Metadata)> {
+    let fd = rustix::fs::openat(
+        directory,
+        name,
+        OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+    )
+    .map_err(std::io::Error::from)?;
+    let mut file: File = fd.into();
+    let (report, metadata) = crate::inspect::read_open_report(&mut file, project, object)?;
+    check_visible(directory, name, &metadata)?;
+    Ok((file, report, metadata))
+}
 fn read_selected(
     directory: &File,
     name: &str,
@@ -269,7 +286,6 @@ fn read_selected(
             report,
             project,
             object,
-            verified_metadata: metadata,
         },
     ))
 }

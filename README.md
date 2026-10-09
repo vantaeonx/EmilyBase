@@ -125,6 +125,9 @@ result. Limits are per call, not a persisted user/service quota policy.
 [Selected-file identity](docs/object-publication-identity.md) is retained through
 standalone object/marker/native writes and the complete bounded-write receipt;
 identical-byte namespace substitutions require explicit inspection.
+[Streaming metadata verification](docs/object-stream-verification.md) hashes every
+object with bounded scratch for readonly inspection/inventory, preserving exact
+header/scope/EOF and retained-file checks without owning complete payload images.
 The complete CLI inventory regression also forces a4096-byte stdout pipe and
 drains bounded output during execution, preventing test-harness backpressure
 deadlocks; see [verification](docs/measurements/2026-10-10-cli-pipe/verification.json).

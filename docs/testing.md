@@ -4762,3 +4762,37 @@ wrong signature edit; corrected before the successful post-fix tests.
 
 See [contract](object-publication-identity.md), [release scope](release-readiness.md)
 and [evidence](measurements/2026-10-10-object-identity/verification.json).
+
+
+## Streamed complete object metadata, 2026-10-10 (Europe/Brussels)
+
+Stable1.99/minimum1.89.0 each pass165 checks on570 frozen hashes:97 object,44
+storage and24 actual CLI. Nine new regular cases cover an independent original v1
+vector, exact empty/8191/8192/8193/maximum8 MiB transitions, bounded byte requests,
+EOF/truncation, short chunks/interruptions, injected header/body/EOF I/O failure,
+every prefix/byte corruption, repaired headers, scopes and64 generated readers.
+Native after-hash mode/link/length/removal and identical-name substitutions refuse
+without cleanup. All20 old kills and existing complete inventory/capacity/archive/
+restore models rerun. Owned get/capture/publication remain complete immutable images.
+
+The implementation uses an8192-byte payload scratch plus96-byte header for metadata;
+this is not measured total heap/RSS admission or a zero-allocation caller guarantee.
+Both original byte verification and the additive reader use the same strict header
+decoder. Readers require exact EOF and provide no timeout; native files stay checked
+regular/private/retained with complete metadata/name/scope rechecks.
+
+The object_format ASAN target now compares both paths, repairs header CRC, re-encodes
+accepted envelopes and constructs a canonical envelope from each input. The final
+campaign executes666631 inputs in46 seconds, observed RSS437 MiB under512, maximum
+input262144 and identity prefix32, with no findings. Initial633180/46s/RSS453 also
+passes; only the unit fixture changed afterward for strict lint. The complete final
+matrix/campaign was repeated after refreezing. Fuzzing does not cover filesystem
+mutation or establish exhaustive/production acceptance.
+
+Formatting, strict workspace/all-fuzz lint, stable CLI/server build, minimum
+workspace build and all-fuzz minimum compilation pass. A temporary property-fixture
+E0716 and an obsolete metadata field/fixture lint were corrected before final runs.
+No new process kill, format or fsync point is claimed. Separate full-workspace
+minimum b136091 passed1501 checks; full stable479d0a2 remains in progress and is
+not presented as complete. See [contract](object-stream-verification.md) and
+[evidence](measurements/2026-10-10-object-stream/verification.json).

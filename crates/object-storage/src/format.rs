@@ -119,6 +119,37 @@ pub fn verify(bytes: &[u8], project: ProjectId, object: ObjectId) -> Result<Veri
     if bytes.len() < HEADER_BYTES {
         return Err(Error::Format);
     }
+    let header = decode_header(&bytes[..HEADER_BYTES], bytes.len() as u64, project, object)?;
+    let payload = &bytes[HEADER_BYTES..];
+    if Sha256::digest(payload).as_slice() != header.hash {
+        return Err(Error::PayloadChecksum);
+    }
+    Ok(VerifiedObject {
+        project,
+        object,
+        hash: header.hash,
+        payload,
+    })
+}
+
+// Header metadata is not a verified object: the complete payload still needs
+// hashing. Both byte and reader decoders use this exact original v1 validation.
+pub(crate) struct DecodedHeader {
+    pub(crate) payload_bytes: usize,
+    pub(crate) hash: [u8; 32],
+}
+pub(crate) fn decode_header(
+    bytes: &[u8],
+    file_bytes: u64,
+    project: ProjectId,
+    object: ObjectId,
+) -> Result<DecodedHeader> {
+    if file_bytes > (HEADER_BYTES + MAX_PAYLOAD_BYTES) as u64 {
+        return Err(Error::Limit);
+    }
+    if bytes.len() != HEADER_BYTES || file_bytes < HEADER_BYTES as u64 {
+        return Err(Error::Format);
+    }
     let read_u16 = |start| u16::from_le_bytes([bytes[start], bytes[start + 1]]);
     let read_u32 = |start| {
         u32::from_le_bytes([
@@ -149,19 +180,13 @@ pub fn verify(bytes: &[u8], project: ProjectId, object: ObjectId) -> Result<Veri
     if length > MAX_PAYLOAD_BYTES as u64 {
         return Err(Error::Limit);
     }
-    if length != (bytes.len() - HEADER_BYTES) as u64 {
+    if length != file_bytes - HEADER_BYTES as u64 {
         return Err(Error::Format);
     }
     let mut hash = [0; 32];
     hash.copy_from_slice(&bytes[56..88]);
-    let payload = &bytes[HEADER_BYTES..];
-    if Sha256::digest(payload).as_slice() != hash {
-        return Err(Error::PayloadChecksum);
-    }
-    Ok(VerifiedObject {
-        project,
-        object,
+    Ok(DecodedHeader {
+        payload_bytes: length as usize,
         hash,
-        payload,
     })
 }

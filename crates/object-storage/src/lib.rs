@@ -4,6 +4,7 @@ mod directory;
 mod format;
 mod inspect;
 mod restore;
+mod stream;
 pub use archive::{
     ARCHIVE_HEADER_BYTES, ArchiveReport, ArchivedObject, MAX_ARCHIVE_BYTES, VerifiedArchive,
     encode_archive, encode_verified_archive, inspect_archive_file, verify_archive,
@@ -17,6 +18,7 @@ pub use format::{
 };
 pub use inspect::{FileReport, inspect_file, publish_file};
 pub use restore::{restore_archive, restore_archive_file};
+pub use stream::verify_stream;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

@@ -92,6 +92,27 @@ pub(crate) fn read_open_file(
     let after = recheck(file, &before, maximum)?;
     Ok((bytes, report, after))
 }
+pub(crate) fn read_open_report(
+    file: &mut File,
+    project: ProjectId,
+    object: ObjectId,
+) -> Result<(FileReport, std::fs::Metadata)> {
+    read_open_report_with(file, project, object, || {})
+}
+fn read_open_report_with(
+    file: &mut File,
+    project: ProjectId,
+    object: ObjectId,
+    verified: impl FnOnce(),
+) -> Result<(FileReport, std::fs::Metadata)> {
+    let maximum = HEADER_BYTES + MAX_PAYLOAD_BYTES;
+    let before = private(file)?;
+    file.seek(SeekFrom::Start(0))?;
+    let report = crate::verify_stream(file, before.len() as usize, project, object)?;
+    verified();
+    let after = recheck(file, &before, maximum)?;
+    Ok((report, after))
+}
 pub(crate) fn read_image(file: &mut File, maximum: usize) -> Result<(Vec<u8>, std::fs::Metadata)> {
     let before = private_limit(file, maximum)?;
     let mut bytes = Vec::new();
@@ -150,9 +171,17 @@ pub fn inspect_file(
     project: ProjectId,
     object: ObjectId,
 ) -> Result<FileReport> {
-    let path = path.as_ref();
+    inspect_file_with(path.as_ref(), project, object, || {})
+}
+fn inspect_file_with(
+    path: &Path,
+    project: ProjectId,
+    object: ObjectId,
+    verified: impl FnOnce(),
+) -> Result<FileReport> {
     let mut file = open_private(path)?;
-    let (_, report, after) = read_open_file(&mut file, project, object)?;
+    let (report, after) = read_open_report(&mut file, project, object)?;
+    verified();
     check_visible(path, &after)?;
     Ok(report)
 }

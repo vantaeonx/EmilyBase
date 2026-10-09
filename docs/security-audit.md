@@ -93,3 +93,15 @@ recovery, backup and security acceptance gates.
 
 See [executed tests](testing.md), [roadmap](roadmap.md) and
 [file-format compatibility](file-format.md). No milestone is closed by this list.
+
+
+## Dependency refresh, 2026-10-10
+
+On source479d0a2, cargo-audit0.22.2 checks both locked graphs with warnings denied
+and no ignored entries. RustSec7eebec69c352c7191b1f13eb95dd510eeca5d1de contains
+1296 advisories, updated2026-10-09T10:12:02+02:00. Workspace166/fuzz137 packages
+report zero known vulnerabilities and no warnings; the second check uses the same
+cached database with no fetch. Current streaming changes leave both lockfiles
+unchanged. All17 own workspace packages declare Apache-2.0/edition2024/minimum1.89.
+An explicit dependency-name inspection finds none of the listed ready engine/SQL
+parser packages; this is not a complete source or transitive-license audit.

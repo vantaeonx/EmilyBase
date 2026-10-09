@@ -1166,3 +1166,13 @@ standalone objects, project markers and native put. Bounded put keeps that ident
 through its later inventory/receipt boundary. Four identical-content replacement
 regressions precede their corrections. Observed changes preserve artifacts and
 require inspection. Formats and platform/production acceptance remain unchanged.
+
+
+## Follow-up: bounded streaming object metadata
+
+[ADR0126](adr/0126-streaming-object-metadata-verification.md) shares exact original
+v1 header admission between whole-byte and bounded-reader verification. Complete
+native inspection/inventory stream payload hashing with8192-byte scratch, keeping
+retained inode/private metadata/current scope checks. Owned get/capture/publication
+and archive formats remain unchanged. This is not a network interface, numeric
+whole-process reservation, persistent quota or production acceptance.
