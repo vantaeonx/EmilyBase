@@ -52,7 +52,7 @@ pub(super) fn validate_snapshot(
     else {
         return Err(Error::Corrupt);
     };
-    if !matches!(*version, 1..=4) || !valid_project_id(stored) {
+    if !matches!(*version, 1..=5) || !valid_project_id(stored) {
         return Err(Error::Corrupt);
     }
     if stored != project {
@@ -63,7 +63,8 @@ pub(super) fn validate_snapshot(
         > MAX_ACCOUNTS
             + MAX_SESSION_FAMILIES
             + 3
-            + if *version == 4 {
+            + usize::from(*version == 5)
+            + if *version >= 4 {
                 MAX_ROW_POLICIES * (crate::row_policy::records::MAX_POLICY_CHUNKS + 1)
             } else {
                 0
@@ -83,8 +84,11 @@ pub(super) fn validate_snapshot(
     }
     let session_scope = session_schema::validate_inventory(snapshot, project, *version)?;
     let session_clock = session_clock::validate_clock(snapshot, *version)?;
-    if *version == 4 {
+    if *version >= 4 {
         policy_catalog::validate(snapshot, project, last_transaction)?;
+    }
+    if *version == 5 {
+        public_admission::validate(snapshot, last_transaction)?;
     }
     let accounts = identities.len();
     let families = if session_scope.is_some() {

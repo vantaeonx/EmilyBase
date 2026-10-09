@@ -22,6 +22,8 @@ emilybase-transactions = { path = "../transactions" }
 emilybase-backup = { path = "../backup" }
 
 [dev-dependencies]
+emilybase-storage = { path = "../storage" }
+emilybase-wal = { path = "../wal" }
 proptest = "1"
 tempfile = "3"
 

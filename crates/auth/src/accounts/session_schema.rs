@@ -166,12 +166,13 @@ pub(super) fn validate_inventory(
             Err(Error::Corrupt)
         };
     }
-    if !matches!(version, 2..=4)
+    if !matches!(version, 2..=5)
         || snapshot.table_count()
             != match version {
                 2 => 4,
                 3 => 5,
-                _ => 7,
+                4 => 7,
+                _ => 8,
             }
         || snapshot.schema(META).map_err(|_| Error::Corrupt)? != &meta_schema()
         || snapshot.schema(FAMILIES).map_err(|_| Error::Corrupt)? != &family_schema()

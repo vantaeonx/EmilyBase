@@ -144,6 +144,40 @@ impl AccountRoot {
     pub fn enable_row_policy_catalog(&mut self, project: &str, key: &str) -> Result<()> {
         Ok(self.account(project, key)?.enable_row_policy_catalog()?)
     }
+    /// Current-key protected internal schema metadata; never upgrades a store.
+    pub fn private_schema_version(&mut self, project: &str, key: &str) -> Result<u16> {
+        Ok(self.account(project, key)?.private_schema_version()?)
+    }
+    /// Explicit closed v5 migration; requires the current project service key.
+    pub fn enable_public_admission_catalog(
+        &mut self,
+        project: &str,
+        key: &str,
+    ) -> Result<emilybase_auth::accounts::PublicAdmissionReceipt> {
+        Ok(self
+            .account(project, key)?
+            .enable_public_admission_catalog()?)
+    }
+    /// Metadata only; this receipt does not authorize a user or a data operation.
+    pub fn public_admission(
+        &mut self,
+        project: &str,
+        key: &str,
+    ) -> Result<emilybase_auth::accounts::PublicAdmissionReceipt> {
+        Ok(self.account(project, key)?.public_admission()?)
+    }
+    /// Explicit current-key CAS; no implicit migration or retry on conflict.
+    pub fn set_public_admission(
+        &mut self,
+        project: &str,
+        key: &str,
+        expected: u64,
+        enabled: bool,
+    ) -> Result<emilybase_auth::accounts::PublicAdmissionReceipt> {
+        Ok(self
+            .account(project, key)?
+            .set_public_admission(expected, enabled)?)
+    }
     /// Complete private policy metadata only; no clock observation or user grant.
     pub fn row_policy_receipts(
         &mut self,

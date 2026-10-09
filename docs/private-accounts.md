@@ -179,3 +179,13 @@ tables to a previously clocked v3 store. It preserves existing users/sessions an
 performs no implicit upgrade. Complete open/export/restore validation includes
 bounded policy groups and actual committed revision bounds. Current borrowed
 policy decisions grant no end-user data route or role permission.
+
+
+Explicit private v5 adds the [closed admission singleton](public-admission-catalog.md)
+to the exact v4 inventory. Original policy groups, private session/clock rules and
+complete archive validation remain required. Verified private/common-root restore
+now closes an enabled v5 flag atomically with session reset before publication;
+closed receipts remain unchanged. Capture preserves source state. Generic engine
+restore still requires explicit private reset before traffic. No bundle/page/WAL
+version or public HTTP route changes. Older readers refuse v5; no implicit migration
+or downgrade is offered.

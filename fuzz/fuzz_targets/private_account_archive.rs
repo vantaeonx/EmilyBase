@@ -69,7 +69,7 @@ fuzz_target!(|bytes: &[u8]| {
             ],
         )),
     );
-    let version = i64::from(bytes[0] % 5);
+    let version = i64::from(bytes[0] % 6);
     let wrong_project = bytes[0] & 8 != 0;
     let bad_dummy = bytes[0] & 16 != 0;
     let mut dummy = verifier();
@@ -93,8 +93,8 @@ fuzz_target!(|bytes: &[u8]| {
             Value::Bytes(dummy),
         ]),
     );
-    let mut valid = matches!(version, 1 | 4) && !wrong_project && !bad_dummy;
-    if version == 4 {
+    let mut valid = matches!(version, 1 | 4 | 5) && !wrong_project && !bad_dummy;
+    if version >= 4 {
         event(
             &mut image,
             3,
@@ -202,6 +202,47 @@ fuzz_target!(|bytes: &[u8]| {
         }
         valid &= defect == 0;
     }
+    if version == 5 {
+        event(
+            &mut image,
+            8,
+            EventKind::Create(schema(
+                "auth_public_admission",
+                &[
+                    ("id", DataType::Integer),
+                    ("version", DataType::Integer),
+                    ("enabled", DataType::Boolean),
+                    ("revision", DataType::Text),
+                    ("previous", DataType::Text),
+                ],
+            )),
+        );
+        let defect = bytes.get(2).copied().unwrap_or(0) % 8;
+        let (enabled, revision, previous) = match defect {
+            0 => (false, "41", "0"),
+            1 => (true, "41", "40"),
+            2 => (false, "0", "0"),
+            3 => (false, "041", "0"),
+            4 => (false, "18446744073709551615", "0"),
+            5 => (false, "41", "41"),
+            6 => (true, "41", "0"),
+            _ => (false, "41", "0"),
+        };
+        if defect != 7 {
+            event(
+                &mut image,
+                8,
+                EventKind::Insert(vec![
+                    Value::Integer(1),
+                    Value::Integer(1),
+                    Value::Boolean(enabled),
+                    Value::Text(revision.into()),
+                    Value::Text(previous.into()),
+                ]),
+            );
+        }
+        valid &= defect <= 1;
+    }
     let mut identities = BTreeSet::new();
     let mut count = 0;
     for (index, command) in bytes[1..].as_chunks::<4>().0.iter().take(8).enumerate() {
@@ -247,7 +288,7 @@ fuzz_target!(|bytes: &[u8]| {
         assert_eq!(report.session_families, 0);
         assert_eq!(
             report.clock_floor,
-            if version == 4 { Some(100) } else { None }
+            if version >= 4 { Some(100) } else { None }
         );
     }
 });

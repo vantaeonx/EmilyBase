@@ -132,7 +132,8 @@ pub(super) async fn enable(
             let _: Empty =
                 serde_json::from_slice(&bytes).map_err(|_| PolicyTransportError::Document)?;
             root.enable_row_policy_catalog(id, key)?;
-            response(&serde_json::json!({"private_version":4}))
+            let version = root.private_schema_version(id, key)?;
+            response(&serde_json::json!({"private_version":version}))
         },
         failure,
     )

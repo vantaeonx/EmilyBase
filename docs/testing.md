@@ -4291,3 +4291,29 @@ Rust98,321, SDK2,502, Python1,785. See
 and [source-bound evidence](measurements/2026-10-09-offline-service-key-file/verification.json).
 Public admission, roles, dashboard, objects, realtime, Kotlin and broader production
 gates remain open.
+
+
+## Explicit closed public admission catalog
+
+ADR0110 adds real native private v5 metadata, closed on explicit v4 migration and
+on verified restore. Current-key CAS, predecessor-only exact retries, ABA refusal,
+original session/policy preservation, current schema-version responses and enabled
+nonempty copies are tested. Fifteen semantically invalid but ordinary-engine-valid
+images refuse before publication. Twenty-four generated flag sequences and16 new
+process kills per toolchain cover staged state and caller-received native results
+on both WALs; kills do not prove machine power-loss durability.
+
+Rust1.99/1.89 pass305 checks each: complete auth147, common-bundle/root94, private
+HTTP40 and user/policy/key CLI24. Eleven regular cases are new. Final ASan private
+archive fuzzing runs40595 inputs in46 seconds, observed RSS130MiB under512,
+max input262144 bytes, no findings. Strict workspace/fuzz formatting/linting and
+minimum build/all-target fuzz compilation pass on490 frozen source/dependency/API
+hashes. A superseded stable bundle run's two self-spawn ENOENT failures were caused
+by executable replacement during overlapping rebuild; an isolated unlink probe
+reproduces this. The final source remains unchanged throughout its suites.
+
+The block adds987 Rust lines: total99308 Rust (95505 effective),920 TypeScript,
+1582 JavaScript and1785 Python,103595 source lines overall. See
+[verification](measurements/2026-10-09-public-admission-catalog/verification.json).
+User-only network admission, roles, dashboard/SDK integration, whole-runtime memory,
+load/upgrade and independent security/production gates remain open.

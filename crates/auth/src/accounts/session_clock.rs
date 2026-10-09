@@ -158,17 +158,32 @@ impl AccountStore {
         self.database.view()?;
         Ok(self.session_clock)
     }
-    /// Trusted operator reset/restore step: replace incarnation and time together.
+    /// Trusted reset/restore: replace incarnation and time, closing v5 admission.
     /// Historical incarnations remain excluded; this is metadata invalidation,
     /// not an implemented logout/authorization API or coordinated platform restore.
     pub fn reset_session_clock(&mut self, now: u64) -> Result<TokenScope> {
+        self.reset_session_clock_with(now, || {})
+    }
+    pub(super) fn reset_session_clock_with(
+        &mut self,
+        now: u64,
+        before_commit: impl FnOnce(),
+    ) -> Result<TokenScope> {
         self.database.view()?;
         let time = timestamp(now)?;
         self.session_clock.ok_or(Error::ClockDisabled)?;
         let (incarnation, scope) = self.fresh_incarnation()?;
+        let admission = super::public_admission::close_for_reset(
+            self.database.view()?,
+            self.database.last_transaction(),
+        )?;
         let mut tx = self.database.begin()?;
         tx.update(META, &Key::Integer(1), meta_row(incarnation))?;
         tx.update(CLOCK, &Key::Integer(1), clock_row(time))?;
+        if let Some(row) = admission {
+            tx.update(super::public_admission::TABLE, &Key::Integer(1), row)?;
+        }
+        before_commit();
         tx.commit()?;
         self.session_scope = Some(scope.clone());
         self.session_clock = Some(now);

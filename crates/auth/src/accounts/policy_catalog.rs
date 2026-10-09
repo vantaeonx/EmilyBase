@@ -67,7 +67,7 @@ impl PolicyPrincipal<'_> {
         PolicyReceipt::from(&self.policy)
     }
 }
-fn version(snapshot: &Snapshot) -> Result<i64> {
+pub(super) fn version(snapshot: &Snapshot) -> Result<i64> {
     let row = snapshot
         .get(SCOPE, &Key::Integer(1))
         .map_err(|_| Error::Corrupt)?
@@ -78,7 +78,7 @@ fn version(snapshot: &Snapshot) -> Result<i64> {
     }
 }
 fn enabled(snapshot: &Snapshot) -> Result<()> {
-    if version(snapshot)? != 4 {
+    if !matches!(version(snapshot)?, 4 | 5) {
         return Err(Error::PolicySchema);
     }
     Ok(())
@@ -115,7 +115,7 @@ pub(super) fn validate(
 ) -> Result<Vec<PolicyReceipt>> {
     let header_schema = records::header_schema();
     let chunk_schema = records::chunk_schema();
-    if snapshot.table_count() != 7
+    if snapshot.table_count() != if version(snapshot)? == 5 { 8 } else { 7 }
         || snapshot
             .schema(&header_schema.name)
             .map_err(|_| Error::Corrupt)?
@@ -187,7 +187,7 @@ impl AccountStore {
             &self.project,
             self.database.last_transaction(),
         )?;
-        if state.version == 4 {
+        if matches!(state.version, 4 | 5) {
             return Ok(());
         }
         if state.version != 3 {

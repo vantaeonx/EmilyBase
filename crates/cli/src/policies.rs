@@ -110,7 +110,8 @@ pub fn run(arguments: Arguments) -> Result<()> {
     match command {
         Operation::Enable => {
             operation(root.enable_row_policy_catalog(&project, &key))?;
-            output(&serde_json::json!({"private_version":4}))
+            let version = operation(root.private_schema_version(&project, &key))?;
+            output(&serde_json::json!({"private_version":version}))
         }
         Operation::List => {
             let policies: Vec<Receipt> = operation(root.row_policy_receipts(&project, &key))?

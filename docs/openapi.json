@@ -6761,7 +6761,10 @@
         ],
         "properties": {
           "private_version": {
-            "const": 4
+            "enum": [
+              4,
+              5
+            ]
           }
         }
       }

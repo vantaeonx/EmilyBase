@@ -121,3 +121,10 @@ alongside the original manifest identity/byte comparison. A regression first
 reproduced replacement of the private container after full inspection. Such a
 substitution now refuses before root selection and retains foreign/detached
 objects. This changes no file format or restore session-reset contract.
+
+Explicit policy v4 remains v4 after reset. Explicit admission v5 remains v5, with
+its exact eight-table inventory. Restore closes an enabled v5 flag in the same
+private commit that replaces incarnation/time; already closed flag receipts remain
+unchanged. The complete root inspector accepts private3..=5 with the same clock,
+identity and exact-inventory checks. Source capture preserves an enabled flag;
+only its verified copy closes. See [admission compatibility](public-admission-catalog.md).

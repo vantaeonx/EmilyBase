@@ -974,3 +974,15 @@ is no cross-filesystem transaction or automatic retry. Native injected failures,
 substitution/process-kill matrices, CLI output-write failure, verified clone,
 existing rotations and private HTTP checks cover the boundary. See
 [operator contract](offline-service-keys.md). No format or production gate closes.
+
+
+## Follow-up: explicit closed public admission metadata
+
+[ADR0110](adr/0110-explicit-closed-public-admission-catalog.md) introduces explicit
+v4-to-v5 migration with a closed singleton, exact current-revision CAS and readonly
+identical retries. Complete private/root validation preserves legacy formats.
+Verified restore closes an enabled copy in the same commit that resets session
+incarnation/time while preserving rows, policies and the unchanged source.
+This is native operator metadata; public user-only gateways/routes, signup, roles,
+SDK/dashboard integration and broader production gates remain open. See
+[the catalog contract](public-admission-catalog.md).

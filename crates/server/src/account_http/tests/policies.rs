@@ -278,3 +278,34 @@ async fn policy_http_private_attempt_limit_applies_before_any_policy_write() {
     );
     assert_eq!(wal(&f), before);
 }
+
+#[tokio::test]
+async fn policy_enable_reports_actual_v5_without_downgrading_or_changing_admission() {
+    let _serial = durability::PROCESS_TESTS.lock().await;
+    for compacted in [false, true] {
+        let f = fixture_with_wal(compacted);
+        let (id, key) = &f.credentials[0];
+        let receipt = {
+            let mut root = f.app.root.lock().await;
+            root.enable_row_policy_catalog(id, key).unwrap();
+            let closed = root.enable_public_admission_catalog(id, key).unwrap();
+            root.set_public_admission(id, key, closed.revision, true)
+                .unwrap()
+        };
+        let before = wal(&f);
+        let router = routes_app(f.app.clone());
+        assert_eq!(
+            operation(&router, id, key, "enable", json!({})).await,
+            (StatusCode::OK, json!({"private_version":5}))
+        );
+        assert_eq!(wal(&f), before);
+        assert_eq!(
+            f.app.root.lock().await.public_admission(id, key).unwrap(),
+            receipt
+        );
+        assert_eq!(
+            list(&router, id, key).await,
+            (StatusCode::OK, json!({"policies":[]}))
+        );
+    }
+}

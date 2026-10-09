@@ -107,6 +107,32 @@ fn account_kill_worker() {
     }
     let mut store =
         AccountStore::open(Path::new(&path), PROJECT, PasswordPool::new(1).unwrap()).unwrap();
+    if mode.starts_with("public-admission-") {
+        let barrier = || {
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        };
+        let before = || {
+            if mode.ends_with("stage") {
+                barrier();
+            }
+        };
+        if mode.contains("-migrate-") {
+            store.enable_public_admission_catalog_with(before).unwrap();
+        } else if mode.contains("-reset-") {
+            store.reset_session_clock_with(50, before).unwrap();
+        } else {
+            let expected = store.public_admission().unwrap().revision;
+            store
+                .set_public_admission_with(expected, mode.contains("-open-"), before)
+                .unwrap();
+        }
+        // Reached only after the actual native method returned to this caller.
+        barrier();
+    }
     if mode.starts_with("policy-catalog-") {
         use super::policy_catalog_tests::{DENY, OWN, context, schema};
         let barrier = || {

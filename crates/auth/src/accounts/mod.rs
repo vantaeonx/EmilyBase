@@ -1,6 +1,10 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod archive;
 mod page;
+mod public_admission;
+pub use public_admission::PublicAdmissionReceipt;
+#[cfg(test)]
+mod public_admission_tests;
 pub use page::{AccountPage, MAX_ACCOUNT_PAGE};
 #[cfg(test)]
 mod archive_tests;
@@ -68,6 +72,12 @@ pub enum Error {
     Exists,
     #[error("row policy catalog is not enabled")]
     PolicySchema,
+    #[error("public admission catalog is not enabled")]
+    AdmissionSchema,
+    #[error("public admission revision does not match")]
+    AdmissionConflict,
+    #[error("public admission revision exhausted")]
+    AdmissionCapacity,
     #[error("row policy revision does not match")]
     PolicyConflict,
     #[error("row policy catalog capacity exhausted")]

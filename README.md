@@ -83,6 +83,11 @@ The Rust [offline user CLI](docs/user-cli.md) provisions accounts, reads bounded
 metadata pages and changes disabled state through the original private owner.
 Passwords require redirected bounded stdin; no session credentials are printed.
 
+An explicit [private v5 admission catalog](docs/public-admission-catalog.md) now
+stores a closed-by-default operator flag with current-key CAS and stale-retry
+protection. Verified restore closes a formerly open copy in the session-reset
+commit. User-only network admission and roles still require separate implementation.
+
 **Early development. Not production-ready. Use synthetic data only.**
 
 Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is
@@ -113,7 +118,7 @@ and a [durable trusted-time watermark](docs/adr/0071-durable-session-time-waterm
 commit-before-token-return behavior, concurrency and process-kill evidence.
 The [token primitive library](docs/session-token-primitives.md) supplies the
 purpose-bound random credentials and strict private verifier formats.
-Private versions1/2/3/4 remain readable; session checks require explicit v3 clock
+Private versions1/2/3/4/5 remain readable; session checks require explicit v3 clock
 activation, and the policy catalog requires a separate explicit v4 migration.
 This library remains separate from server projects and current whole-registry
 archives. Explicit private-root transport is described below; public

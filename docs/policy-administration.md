@@ -82,3 +82,10 @@ For an existing stopped root, the Rust [offline policy CLI](policy-cli.md) uses
 these same current-key and real-table methods. It reads credentials from a bounded
 private file and the exact definition from stdin; it neither creates a root nor
 grants a public user route.
+
+
+With explicit private v5 admission metadata, policy-enable retries report the
+actual private_version4 or5 and preserve the current flag/session/policy state.
+The response no longer assumes every already-enabled store is v4. The new
+[admission catalog](public-admission-catalog.md) remains native operator metadata;
+these commands expose no user-only HTTP or admission-toggle operation.

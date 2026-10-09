@@ -618,3 +618,28 @@ fn oversized_open_stream_refuses_without_waiting_for_eof_or_opening_a_missing_ro
     assert!(!printed(&out).contains(file.to_str().unwrap()));
     assert!(!printed(&out).contains(&"a".repeat(64)));
 }
+
+#[test]
+fn policy_enable_reports_actual_v5_and_preserves_open_admission_and_sessions() {
+    let _serial = CASES.lock().unwrap();
+    for compacted in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let f = Fixture::new(dir.path(), compacted);
+        assert_eq!(ok(&f.run(&["enable"], &[])), json!({"private_version":4}));
+        let mut root = AccountRoot::open(&f.path, pool()).unwrap();
+        let closed = root.enable_public_admission_catalog(&f.id, &f.key).unwrap();
+        let open = root
+            .set_public_admission(&f.id, &f.key, closed.revision, true)
+            .unwrap();
+        drop(root);
+        let before = f.history();
+        let out = f.run(&["enable"], &[]);
+        assert_eq!(ok(&out), json!({"private_version":5}));
+        f.redacted(&out);
+        assert_eq!(f.history(), before);
+        let mut root = AccountRoot::open(&f.path, pool()).unwrap();
+        assert_eq!(root.public_admission(&f.id, &f.key).unwrap(), open);
+        root.with_access(&f.id, &f.key, f.session.access.expose(), 50, |_| ())
+            .unwrap();
+    }
+}

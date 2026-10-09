@@ -82,3 +82,13 @@ Explicit private v4 catalogs are opaque nested original archives in this unchang
 bundle version. Capture/inspection checks their complete header/chunk inventory.
 Root restore preserves policy groups/revisions and resets only private session
 incarnation/time; old user credentials remain revoked. See [catalog compatibility](policy-catalog.md).
+
+
+Explicit private v5 adds the [closed admission singleton](public-admission-catalog.md)
+to the exact v4 inventory. Original policy groups, private session/clock rules and
+complete archive validation remain required. Verified private/common-root restore
+now closes an enabled v5 flag atomically with session reset before publication;
+closed receipts remain unchanged. Capture preserves source state. Generic engine
+restore still requires explicit private reset before traffic. No bundle/page/WAL
+version or public HTTP route changes. Older readers refuse v5; no implicit migration
+or downgrade is offered.
