@@ -284,3 +284,25 @@ python3 tests/account_containers.py --master-file
 The server environment is inspected for the file path and absence of the master
 value variable; private file mode, UID and link count are checked inside the image.
 Use --native --master-file for local Rust-process evidence only.
+
+
+## Optional offline first service key
+
+For an existing stopped private-root volume, trusted operators can obtain project
+metadata and publish a new external service-key file without starting HTTP. Keep
+the selected Compose project/volume and choose a new filename outside the root:
+
+```sh
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --no-deps \
+  --entrypoint emilybase server account-root-projects /var/lib/emilybase/account-root
+docker compose -f compose.accounts.yaml -p emilybase-private run --rm --no-deps \
+  --entrypoint emilybase server account-key-rotate /var/lib/emilybase/account-root \
+  PROJECT_ID --output /var/lib/emilybase/service.key
+```
+
+Use the exact ID from trusted metadata. Existing files refuse; only project/epoch
+metadata is printed. The file is0600 plaintext external configuration, excluded
+from root bundles. [Publication/recovery rules](offline-service-keys.md) apply:
+inspect an uncertain result and never retry into the same filename automatically.
+These command examples share the existing image/volume restrictions; this increment
+verifies native processes and does not claim a fresh local container run.

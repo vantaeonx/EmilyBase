@@ -452,6 +452,22 @@ fn publication_worker() {
             Err(_) => panic!("unexpected root initialization result"),
         }
         durability::checkpoint("account_init_ack");
+    } else if action.starts_with("root-key-file") {
+        let mut root = crate::AccountRoot::open(&source, PasswordPool::new(1).unwrap()).unwrap();
+        match root.rotate_project_key_to_file(&project, &target) {
+            Ok(_) => println!("KEY_FILE_OK"),
+            Err(Error::Io(e))
+                if action.ends_with("race") && e.kind() == std::io::ErrorKind::AlreadyExists =>
+            {
+                println!("KEY_FILE_CONFLICT")
+            }
+            Err(Error::Path) if action.ends_with("race") => println!("KEY_FILE_CONFLICT"),
+            Err(Error::PublicationUnknown(_)) if action.ends_with("race") => {
+                println!("KEY_FILE_UNCERTAIN")
+            }
+            Err(_) => panic!("unexpected key-file rotation result"),
+        }
+        durability::checkpoint("service_key_received");
     } else if action == "root-user-table" {
         let (key, access, row): (String, String, emilybase_catalog::Row) =
             serde_json::from_slice(&fs::read(&target).unwrap()).unwrap();

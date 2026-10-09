@@ -22,6 +22,15 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Offline trusted project metadata; never prints service keys or user data.
+    AccountRootProjects { path: PathBuf },
+    /// Offline privileged rotation; saves the secret privately before activation.
+    AccountKeyRotate {
+        path: PathBuf,
+        project: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Offline current-service-key administration of the private policy catalog.
     AccountPolicy(policies::Arguments),
     /// Offline trusted provisioning and metadata; never issues user session tokens.
@@ -232,6 +241,26 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::AccountRootProjects { path } => {
+            let pool = emilybase_auth::password::PasswordPool::new(1)?;
+            let root = emilybase_server::AccountRoot::open(path, pool)?;
+            let projects: Vec<_> = root.projects()?.into_iter().map(|info| {
+                serde_json::json!({"id":info.id,"name":info.name,"key_epoch":info.key_epoch.to_string()})
+            }).collect();
+            write_operator_metadata(&serde_json::json!({"projects":projects}))?;
+        }
+        Command::AccountKeyRotate {
+            path,
+            project,
+            output,
+        } => {
+            let pool = emilybase_auth::password::PasswordPool::new(1)?;
+            let mut root = emilybase_server::AccountRoot::open(path, pool)?;
+            let info = root.rotate_project_key_to_file(&project, output)?;
+            write_operator_metadata(
+                &serde_json::json!({"project":info.id,"key_epoch":info.key_epoch.to_string()}),
+            )?;
+        }
         Command::AccountPolicy(arguments) => policies::run(arguments)?,
         Command::AccountUser(arguments) => users::run(arguments)?,
         Command::Migrate {
@@ -697,6 +726,21 @@ fn parse_json<T: serde::de::DeserializeOwned>(text: &str) -> Result<T, Box<dyn s
     serde_json::from_str(text).map_err(|_| {
         std::io::Error::new(std::io::ErrorKind::InvalidInput, "invalid typed JSON input").into()
     })
+}
+
+fn write_operator_metadata(
+    value: &impl serde::Serialize,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use std::io::Write;
+    let bytes = serde_json::to_vec(value)?;
+    if bytes.len() > 65_536 {
+        return Err("operator metadata output outcome requires inspection".into());
+    }
+    let mut out = std::io::stdout().lock();
+    out.write_all(&bytes)?;
+    out.write_all(b"\n")?;
+    out.flush()?;
+    Ok(())
 }
 
 fn ensure_raw(pager: &mut Pager) -> Result<(), Box<dyn std::error::Error>> {

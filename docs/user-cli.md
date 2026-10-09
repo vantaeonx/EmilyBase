@@ -74,3 +74,9 @@ fresh sign-in is required. External key/password input files are not bundled.
 See [private roots](account-root-restore.md), [ADR0108](adr/0108-offline-private-user-cli.md)
 and [testing](testing.md). Public admission, roles, dashboard, file/realtime services,
 Kotlin, load/upgrade/security/resource and production gates remain open.
+
+
+The first usable service key can also be obtained through trusted
+[offline key-file publication](offline-service-keys.md), with offline project
+metadata and no secret terminal output. Stop the service and choose a new external
+filename; uncertain files are never overwritten or retried automatically.

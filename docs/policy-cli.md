@@ -67,3 +67,9 @@ and [ADR0107](adr/0107-offline-service-policy-cli.md).
 This interface grants trusted service-operator policy authority. Public user-only
 admission, roles, dashboard, resource/load/security/upgrade and production checks
 remain separate work. Tests use no real user data.
+
+
+The first usable service key can also be obtained through trusted
+[offline key-file publication](offline-service-keys.md), with offline project
+metadata and no secret terminal output. Stop the service and choose a new external
+filename; uncertain files are never overwritten or retried automatically.

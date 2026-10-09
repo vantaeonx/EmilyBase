@@ -156,8 +156,9 @@ one damaged declared private store refuses the whole root at startup. See
 [executable mode](docs/private-http.md#executable-mode).
 The [first-root CLI](docs/private-root-initialization.md) now creates one new empty
 project and private session store without an input archive. It prints counts only;
-obtain the first usable service key through authenticated operator rotation, then
-provision a user through the private HTTP route. Startup still creates no private
+obtain the first usable service key through authenticated online rotation or
+[offline private-file publication](docs/offline-service-keys.md). Offline project
+metadata and user provisioning work without starting HTTP or printing secrets. Startup still creates no private
 store implicitly. A separate [private-root Docker configuration](docs/deployment.md#private-root-container)
 uses its own image target and explicit offline initialization; the default registry
 container keeps its existing data mode. Native lifecycle preflight and actual

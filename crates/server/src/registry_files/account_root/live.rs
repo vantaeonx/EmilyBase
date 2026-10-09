@@ -8,6 +8,7 @@ use emilybase_auth::password::PasswordPool;
 use emilybase_catalog::Value;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+mod key_file;
 
 /// Active private owner count, not a combined model/heap reservation.
 pub const MAX_ACTIVE_PRIVATE_STORES: usize = 4;

@@ -354,14 +354,23 @@ impl ProjectStore {
     }
     /// Privileged operation; HTTP transport requires its administrative credential.
     pub fn rotate(&mut self, id: &str) -> Result<CreatedProject> {
+        let api_key = zeroize::Zeroizing::new(issue_key()?);
+        let project = self.rotate_prepared(id, &api_key)?;
+        Ok(CreatedProject {
+            project,
+            api_key: api_key.to_string(),
+        })
+    }
+    /// A trusted caller retains the generated secret through durable publication.
+    /// This is crate-private; external callers cannot install arbitrary keys.
+    pub(crate) fn rotate_prepared(&mut self, id: &str, api_key: &str) -> Result<ProjectInfo> {
         self.ready()?;
         metadata::owned_directory(&self.root, &self.owner)?;
         let project = self.projects.get(id).ok_or(Error::Denied)?;
         self.check_project_directory(id, project)?;
         let mut changed = project.metadata.clone();
         changed.epoch = changed.epoch.checked_add(1).ok_or(Error::Limit)?;
-        let api_key = issue_key()?;
-        changed.key = KeyDigest::from_token(&api_key)?;
+        changed.key = KeyDigest::from_token(api_key)?;
         let path = self.root.join(id);
         metadata::directory(&path)?;
         metadata::file(&path.join("project.json"))?;
@@ -382,10 +391,7 @@ impl ProjectStore {
         }
         #[cfg(test)]
         crate::durability::checkpoint("rotate_directory_synced");
-        let response = CreatedProject {
-            project: info(&changed),
-            api_key,
-        };
+        let response = info(&changed);
         self.projects.get_mut(id).ok_or(Error::Denied)?.metadata = changed;
         Ok(response)
     }

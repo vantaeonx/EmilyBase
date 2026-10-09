@@ -50,3 +50,9 @@ sessions; [verified root restore](account-root-restore.md) changes clone scope.
 late-substitution regression. The separate [container adapter](deployment.md#private-root-container) uses the same
 explicit CLI lifecycle. Whole-process memory/staging admission, dynamic private
 roster and production acceptance remain open.
+
+
+Trusted filesystem operators can now use
+[offline project metadata and service-key publication](offline-service-keys.md)
+for the first usable key before starting HTTP. Initialization itself still prints
+no credential and changes no implicit startup behavior.

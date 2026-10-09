@@ -5,7 +5,7 @@ const INIT_PREFIX: &str = ".emilybase-account-init-";
 
 /// Create one empty project and its private v3 store in a new owned root.
 /// No user, password or reusable key is returned or printed. Obtain a service
-/// key through authenticated operator rotation after starting this root.
+/// key through authenticated online rotation or trusted offline private-file rotation.
 /// Any failed prepared stage is retained for private operator inspection.
 pub fn initialize_account_root(
     target: impl AsRef<Path>,
@@ -31,7 +31,7 @@ pub fn initialize_account_root(
     let created = registry.create(name)?;
     let id = created.project.id;
     // The generated initial key is deliberately inaccessible to the operator;
-    // only its digest persists. Authenticated rotation supplies the usable key.
+    // only its digest persists. Explicit trusted rotation supplies the usable key.
     drop(zeroize::Zeroizing::new(created.api_key));
     fs::DirBuilder::new()
         .mode(0o700)

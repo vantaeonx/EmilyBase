@@ -138,6 +138,13 @@ impl Pending {
         // Final dot denotes the owned real directory, not the proc descriptor symlink.
         descriptor_path(&self.owner).join(".")
     }
+    /// Resolve the retained parent, after checking its selected identity.
+    pub fn parent_path(&self) -> Result<PathBuf> {
+        self.parent.check()?;
+        Ok(std::fs::canonicalize(
+            descriptor_path(&self.parent.owner).join("."),
+        )?)
+    }
     /// A failed child-identity/integrity check may mean the directory now
     /// contains foreign entries. Preserve the whole stage instead of sweeping it.
     pub fn retain(&mut self) {

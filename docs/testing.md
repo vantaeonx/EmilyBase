@@ -4258,3 +4258,36 @@ See [ADR0108](adr/0108-offline-private-user-cli.md), [operator contract](user-cl
 and [source-bound evidence](measurements/2026-10-09-offline-user-cli/verification.json).
 Public admission, roles, dashboard, objects, realtime, Kotlin and broader production
 gates remain open.
+
+
+## Offline durable service-key files, 2026-10-09
+
+Rust1.99/1.89 each pass135 cases: all87 CLI tests across25 binaries, seven new
+native key-file cases, two original rotation cases and39 private HTTP cases.
+Twelve regular cases are new. An ordered original owned-file workflow syncs and
+publishes a fresh external0600 key before activating its original metadata digest.
+Eight forced-kill boundaries on WAL1/2 yield16 new kills per toolchain, including
+two actual caller-received results. Eight original rotation kills also rerun.
+Five injected sync failures on WAL1 distinguish preparation, inactive published
+file and active uncertain state. Five resumed workers exercise substitutions
+before/after activation. Foreign files are preserved and owned-stage cleanup stays
+bound to its retained descriptor. Public/private/sibling histories remain unchanged
+apart from selected project metadata.
+
+Actual CLI bootstrap discovers project metadata, publishes a key, provisions a user
+without starting HTTP or printing secrets, rejects protected/missing/busy/internal
+targets and verifies nonempty clones. Successive rotation preserves user sessions;
+restore revokes old user sessions while retaining the active digest. Raw external
+keys are absent from bundles. The Linux full device produces a real stdout write
+failure after durable activation; CLI returns failure without panic or key output.
+Strict workspace/fuzz formatting/Clippy, minimum workspace build and all-target fuzz
+compilation pass on487 frozen source/dependency/protocol files. No fresh sanitizer
+campaign/full workspace runtime/SDK/local Docker/advisory/allocation/security audit
+is claimed. Process kills do not prove machine power-loss behavior.
+
+The block adds795 net Rust lines. Total102,608 physical source lines including tests:
+Rust98,321, SDK2,502, Python1,785. See
+[ADR0109](adr/0109-durable-offline-service-key-file.md), [operator contract](offline-service-keys.md)
+and [source-bound evidence](measurements/2026-10-09-offline-service-key-file/verification.json).
+Public admission, roles, dashboard, objects, realtime, Kotlin and broader production
+gates remain open.

@@ -960,3 +960,17 @@ Concurrent same-login provisioning creates one account and never replaces its
 password. No session is issued and no trusted clock/private version is reset.
 See [operator contract](user-cli.md). Public user admission, roles and production
 security/load/upgrade/resource gates remain open.
+
+
+## Follow-up: durable offline service-key publication
+
+[ADR0109](adr/0109-durable-offline-service-key-file.md) adds offline project metadata
+and private key-file rotation. The original owned staging mechanism publishes and
+syncs a fresh external0600 secret before activating its original registry digest;
+existing/internal/aliased targets refuse. The complete bootstrap can provision
+users offline without secret terminal output. Ordered publications explicitly
+permit an inactive file or an already-active uncertain result after a crash; there
+is no cross-filesystem transaction or automatic retry. Native injected failures,
+substitution/process-kill matrices, CLI output-write failure, verified clone,
+existing rotations and private HTTP checks cover the boundary. See
+[operator contract](offline-service-keys.md). No format or production gate closes.
