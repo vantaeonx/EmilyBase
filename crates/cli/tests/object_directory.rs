@@ -1,7 +1,7 @@
 use emilybase_object_storage::{ObjectId, ProjectDirectory, ProjectId};
 use serde_json::Value;
 use std::fs::{self, File};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::os::unix::fs::DirBuilderExt;
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
@@ -22,12 +22,25 @@ fn command(path: &Path, project: &str, operation: &str, object: Option<&str>) ->
     c
 }
 fn run(mut command: Command, input: Vec<u8>) -> Output {
+    let (reader, pipe) = rustix::pipe::pipe_with(rustix::pipe::PipeFlags::CLOEXEC).unwrap();
+    assert_eq!(
+        rustix::pipe::fcntl_setpipe_size(&reader, 4096).unwrap(),
+        4096
+    );
+    let stdout = File::from(reader);
     let mut child = command
         .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
+        .stdout(Stdio::from(File::from(pipe)))
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
+    // Command retains the custom pipe's writer for reuse. Close that parent
+    // descriptor now so the reader sees EOF when the child finishes.
+    drop(command);
+    // Drain while the child runs: waiting first deadlocks when its output is
+    // larger than the pipe capacity. Cap collection independently of the child.
+    let stdout = drain(stdout);
+    let stderr = drain(child.stderr.take().unwrap());
     let mut stdin = child.stdin.take().unwrap();
     let writer = std::thread::spawn(move || {
         let _ = stdin.write_all(&input);
@@ -42,7 +55,19 @@ fn run(mut command: Command, input: Vec<u8>) -> Output {
         std::thread::sleep(Duration::from_millis(5));
     }
     writer.join().unwrap();
-    child.wait_with_output().unwrap()
+    Output {
+        status: child.wait().unwrap(),
+        stdout: stdout.join().unwrap(),
+        stderr: stderr.join().unwrap(),
+    }
+}
+fn drain(reader: impl Read + Send + 'static) -> std::thread::JoinHandle<Vec<u8>> {
+    std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        reader.take(65537).read_to_end(&mut bytes).unwrap();
+        assert!(bytes.len() <= 65536, "object CLI output bound");
+        bytes
+    })
 }
 fn success(out: Output) -> Value {
     assert!(
@@ -226,6 +251,7 @@ fn actual_cli_list_reports_complete_canonical_metadata_without_any_payload_outpu
     let expected = owner.inventory().unwrap();
     drop(owner);
     let out = run(command(&path, PROJECT, "list", None), Vec::new());
+    assert!(out.stdout.len() > 4096);
     assert!(!String::from_utf8_lossy(&out.stdout).contains("synthetic-private"));
     let report = success(out);
     assert_eq!(report.as_object().unwrap().len(), 5);

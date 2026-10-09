@@ -4709,3 +4709,27 @@ object/archive exclusions. Limits remain per-call native admission; existing
 unbounded put, persisted policy, HTTP/upload authorization, global budgets and
 production gates remain distinct/open. See
 [evidence](measurements/2026-10-10-object-write-limits/verification.json).
+
+
+## CLI inventory pipe regression, 2026-10-10 (Europe/Brussels)
+
+The previous test helper waited for child exit before reading stdout. A controlled
+4096-byte pipe and the complete128-object list reproduce its ten-second deadline
+(exit101). The parent custom writer is explicitly closed in this negative control,
+so missing EOF is excluded from that reproduction. The fixed helper closes that
+writer after spawn and drains stdout/stderr concurrently, each capped at65,536
+bytes. The inventory fixture asserts its output exceeds4096 bytes.
+
+Stable1.99/minimum1.89.0 each pass148 checks:82 object,42 storage and24 actual CLI.
+The unchanged large-list case also passes20 fresh process runs on each toolchain.
+All566 frozen source/manifest/workflow hashes match; formatting, strict workspace
+and fuzz lint, server/CLI build, minimum workspace build and all-fuzz minimum
+compilation pass. No new regular case or parser/format/production change is claimed.
+No new ASAN run was needed for this test-harness-only correction.
+
+An initial custom-pipe fixture also retained its parent writer, preventing EOF;
+those incomplete matrices were terminated and excluded. The final source closes
+that descriptor, and the complete final matrix was rerun. This deterministic local
+regression is not evidence of a particular hosted failure. Historical container
+setup timed out against Docker Hub before project build; a newer hosted container
+job passed. See [evidence](measurements/2026-10-10-cli-pipe/verification.json).

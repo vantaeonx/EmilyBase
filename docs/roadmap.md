@@ -1146,3 +1146,13 @@ source/result rechecks preserve uncertain outcomes. The CLI bounds input before
 locking and prints metadata only. See [contract](object-write-limits.md). This is
 not persisted quota policy, authorization, a service resource gate or an HTTP
 upload endpoint; original native put remains explicitly separate.
+
+
+## Follow-up: deterministic CLI inventory output regression
+
+The actual128-object CLI list now runs through a forced4096-byte pipe. Its test
+helper drains bounded stdout/stderr while the child runs and closes the retained
+parent writer, avoiding both pipe-capacity deadlock and missing EOF. The old
+wait-before-read order fails the controlled deadline; the corrected case passes
+20 fresh runs on each supported toolchain. This closes a test-harness defect only;
+no database format, file-service or production milestone changes.

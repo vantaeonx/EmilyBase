@@ -122,6 +122,9 @@ without overwriting. Coordinated AccountRoot integration remains separate work.
 An [explicit native bounded write](docs/object-write-limits.md) admits fresh object
 IDs against complete current count/byte limits before staging and checks the full
 result. Limits are per call, not a persisted user/service quota policy.
+The complete CLI inventory regression also forces a4096-byte stdout pipe and
+drains bounded output during execution, preventing test-harness backpressure
+deadlocks; see [verification](docs/measurements/2026-10-10-cli-pipe/verification.json).
 
 **Early development. Not production-ready. Use synthetic data only.**
 

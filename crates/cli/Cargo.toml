@@ -31,6 +31,7 @@ zeroize = { version = "1.9", features = ["alloc"] }
 [dev-dependencies]
 proptest = "1"
 tempfile = "3"
+rustix = { version = "1", features = ["pipe"] }
 
 [lints]
 workspace = true
