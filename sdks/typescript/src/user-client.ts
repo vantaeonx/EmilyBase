@@ -132,6 +132,23 @@ export class EmilyBaseUserClient {
   me(accessToken: string, options: RequestOptions = {}): Promise<UserInfo> {
     return this.#send("me", accessToken, () => ({}), wire.user, options);
   }
+  changePassword(
+    accessToken: string,
+    currentPassword: string,
+    replacementPassword: string,
+    options: RequestOptions = {},
+  ): Promise<UserInfo> {
+    return this.#send(
+      "password",
+      accessToken,
+      () => ({
+        current_password: wire.password(currentPassword),
+        replacement_password: wire.password(replacementPassword),
+      }),
+      wire.user,
+      options,
+    );
+  }
   rowGet(
     accessToken: string,
     table: string,
@@ -202,7 +219,7 @@ export class EmilyBaseUserClient {
     if (this.#closed) throw new EmilyBaseError("client_closed", "not_started");
     let body: string;
     try {
-      if (route === "me" || route.startsWith("rows/"))
+      if (!["sign-in", "refresh", "logout"].includes(route))
         access = wire.token(access, "access");
       body = wire.payload(data(), maximum);
     } catch {

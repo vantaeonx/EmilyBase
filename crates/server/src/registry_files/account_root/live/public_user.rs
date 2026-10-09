@@ -62,6 +62,23 @@ impl AccountRoot {
         let principal = self.public_account(project)?.verify_access(access, now)?;
         Ok(principal.account().clone())
     }
+    /// Change only the current token owner's password, requiring the old password.
+    /// The original epoch commit revokes every earlier access/refresh family.
+    /// No session is issued and no client-supplied login is accepted.
+    pub fn public_change_password(
+        &mut self,
+        project: &str,
+        access: &str,
+        current: &[u8],
+        replacement: &[u8],
+        now: u64,
+    ) -> Result<AccountInfo> {
+        let account = self.public_account(project)?;
+        // Derive identity under this retained mutable private owner. The borrow
+        // ends before mutation, but no caller can interleave a state transition.
+        let login = account.verify_access(access, now)?.account().login.clone();
+        Ok(account.change_password(&login, current, replacement)?)
+    }
     /// Original typed rows only, under current admission/session/table policy.
     /// No project service key, arbitrary SQL, DDL or unfiltered handle is returned.
     pub fn public_user_table(

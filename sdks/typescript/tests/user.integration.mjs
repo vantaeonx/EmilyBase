@@ -372,6 +372,22 @@ test(
         await denied(client.me(second.access_token));
         const reenabled = await login("synthetic_other");
         assert.equal((await client.me(reenabled.access_token)).disabled, false);
+        const own = await client.changePassword(
+          reenabled.access_token,
+          "synthetic-private-user-password",
+          "synthetic-new-user-password",
+        );
+        await denied(client.me(reenabled.access_token));
+        const changed = await client.signIn(
+          "synthetic_other",
+          "synthetic-new-user-password",
+        );
+        secrets.push(
+          "synthetic-new-user-password",
+          changed.access_token,
+          changed.refresh_token,
+        );
+        assert.deepEqual(await client.me(changed.access_token), own);
         await stop();
         for (const secret of secrets)
           assert(

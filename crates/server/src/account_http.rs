@@ -329,6 +329,12 @@ struct PasswordChange {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+struct UserPasswordChange {
+    current_password: Secret,
+    replacement_password: Secret,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Disabled {
     login: String,
     disabled: bool,

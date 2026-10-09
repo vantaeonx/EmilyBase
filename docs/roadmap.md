@@ -27,13 +27,13 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages and trusted two-credential backend HTTP implemented; public user-only admission remains open |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages and trusted two-credential backend HTTP implemented; admitted user-only sessions/typed rows and explicit user SDK implemented; admitted own-password change verified with original epoch revocation; signup/roles/objects/realtime/dashboard remain open |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
 
 Durable table indexes, background journal rotation and history vacuuming,
-Extended SQL, public signup, user HTTP policy admission,
+Extended SQL, public signup, roles and broader policy orchestration,
 file uploads, realtime, online/schema-diff migrations, incremental/encrypted backups, Kotlin SDK, web dashboard and production deployment.
 No PostgreSQL compatibility guarantee. No production release. No real-data import.
 
@@ -1052,3 +1052,16 @@ cover owned reads/pages, late packet rollback, received-result kills, deliberate
 lost responses, nonempty verified restore and offline revocation. See
 [user contract](user-sdk.md). Signup/roles, browser/device integration, persistent
 session orchestration, dashboard/Kotlin and production acceptance remain open.
+
+
+## Follow-up: admitted own-password change
+
+[ADR0116](adr/0116-admitted-own-password-change.md) adds an access-and-old-password
+operation deriving the exact account inside the retained private owner, then using
+the original durable digest/epoch replacement. All older families are revoked;
+no token pair, identity selector or administrative reset is exposed. HTTP shares
+current admission/body/worker/rate/clock boundaries and the user SDK transports the
+same explicit method. Both WALs, generated raw-password epoch histories, competing
+changes/refreshes, delayed state, actual received/unread TCP kills and verified copy
+are checked separately. See [contract](user-password-change.md). Signup/roles,
+recovery channels, browser/device policy and production acceptance remain open.

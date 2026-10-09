@@ -25,6 +25,7 @@ pub(super) fn routes(app: App) -> Router<App> {
         .route("/v1/projects/{id}/user/refresh", post(refresh))
         .route("/v1/projects/{id}/user/logout", post(logout))
         .route("/v1/projects/{id}/user/me", post(me))
+        .route("/v1/projects/{id}/user/password", post(password))
         .route(
             "/v1/projects/{id}/user/rows/get",
             post(super::public_rows::get),
@@ -80,6 +81,7 @@ async fn authorize(app: &App, request: Request, route: &str) -> ApiResult<Reques
     let access = if matches!(
         route,
         "/v1/projects/{id}/user/me"
+            | "/v1/projects/{id}/user/password"
             | "/v1/projects/{id}/user/rows/get"
             | "/v1/projects/{id}/user/rows/page"
             | "/v1/projects/{id}/user/rows/write"
@@ -208,6 +210,23 @@ async fn me(
         response(&user(root.public_user(
             &scope.project,
             token,
+            (app.clock)()?,
+        )?))
+    })
+    .await
+}
+async fn password(
+    State(app): State<App>,
+    Extension(scope): Extension<UserScope>,
+    request: Request,
+) -> ApiResult<Response> {
+    let body: UserPasswordChange = private_json(request).await?;
+    blocking(scope, move |root, scope| {
+        response(&user(root.public_change_password(
+            scope.project(),
+            scope.access()?,
+            body.current_password.0.as_bytes(),
+            body.replacement_password.0.as_bytes(),
             (app.clock)()?,
         )?))
     })

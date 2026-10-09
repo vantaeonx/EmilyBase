@@ -4459,3 +4459,36 @@ Before fixes, tests reproduced missing access-token dispatch, validation against
 later mutated packet length and untyped invalid-options errors. The final source
 hashes and test/log digests are in
 [verification](measurements/2026-10-09-explicit-user-sdk/verification.json).
+
+
+## Admitted own-password change, 2026-10-09
+
+Executed on frozen source:95 Rust checks each on stable1.99/minimum1.89.0:
+account_http60, native public gateway12, actual account-network/original HTTP22,
+documentation1. Ten new regular Rust cases include six HTTP, three native and one
+TCP scenario. Eight generated native binary-password histories perform four
+changes each and check original epoch/all-family semantics. Existing user-row,
+policy, admission and session checks are rerun. Native preflight first reproduced
+an absent nested fixture parent; the fixture was corrected, with no product
+storage failure claim.
+
+Each toolchain's TCP scenario covers both WALs and four new stops: two after
+caller-received password replies, two with the change reply unread. For unread
+requests, private WAL progress is only a cue because it may be a clock commit;
+a separate received new-password sign-in proves the complete change before kill.
+Recovery preserves the changed password/epoch and invalidates every older family.
+Verified nonempty copy closes admission and changes incarnation; after deliberate
+opening it retains new password state and requires fresh login. Public WAL stays
+unchanged. These outcomes do not prove arbitrary pre-ACK or power-loss behavior.
+
+Node22.22.1 strict compilation/format passes34 unit cases (one new) and12 actual
+native-binary cases each, extending both WAL scenarios with changePassword.
+Workspace/fuzz format and strict clippy, stable/minimum CLI/server builds and
+minimum all-fuzz compilation complete. ASAN session_requests executes10,161,639
+inputs in46 seconds without findings, RSS281MiB under512,
+1494 initial seeds/15 new structured cases, max input8192 and request4096 bytes.
+This exercises the real pure request decoder, not full HTTP/header/KDF/auth flow.
+OpenAPI44 operations/489 resolved local refs. Source hashes and logs are in
+[verification](measurements/2026-10-09-public-password-change/verification.json).
+Current access plus old-password knowledge is required; no reset/recovery channel,
+signup/roles/browser/encryption/audit/production gate is closed.

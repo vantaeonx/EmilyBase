@@ -46,3 +46,11 @@ browser/mobile compatibility. The current server still has no browser CORS/cooki
 contract. Signup/roles, persistent session orchestration, realtime/files, dashboard,
 Kotlin, npm release and production acceptance remain pending. See
 [ADR0115](adr/0115-explicit-user-typescript-client.md).
+
+
+The subsequent [own-password change](user-password-change.md) is also transported
+as changePassword(access, currentPassword, replacementPassword, options). Native
+Rust derives the current account, verifies the old password and commits the new
+digest/epoch; the client only sends the exact bounded fields and validates UserInfo.
+Successful change revokes all old families and requires explicit fresh sign-in.
+No password recovery, administrative reset or automatic retry is added.

@@ -1,5 +1,5 @@
 //! Pure bounded request grammar, never authentication, clock or database authority.
-use super::{Login, PRIVATE_BODY, Refresh};
+use super::{Login, PRIVATE_BODY, Refresh, UserPasswordChange};
 use serde::{Deserialize, de::DeserializeOwned};
 
 #[derive(Debug, Clone, Copy)]
@@ -8,6 +8,7 @@ pub enum SessionRequest {
     Refresh,
     Logout,
     Me,
+    Password,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 #[error("invalid bounded session request")]
@@ -41,5 +42,6 @@ pub fn validate_session_request(
         SessionRequest::SignIn => decode::<Login>(bytes).map(drop),
         SessionRequest::Refresh | SessionRequest::Logout => decode::<Refresh>(bytes).map(drop),
         SessionRequest::Me => decode::<Empty>(bytes).map(drop),
+        SessionRequest::Password => decode::<UserPasswordChange>(bytes).map(drop),
     }
 }

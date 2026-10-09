@@ -112,7 +112,7 @@ async fn closed_legacy_unknown_projects_refuse_before_body_clock_or_rate_map_wor
                 }
             }
             let before = all_history(&f);
-            for operation in ["sign-in", "refresh", "logout", "me"] {
+            for operation in ["sign-in", "refresh", "logout", "me", "password"] {
                 for project in [
                     id.as_str(),
                     "00000000000000000000000000000000",
@@ -132,7 +132,7 @@ async fn closed_legacy_unknown_projects_refuse_before_body_clock_or_rate_map_wor
                         public_request(
                             project,
                             operation,
-                            (operation == "me").then_some(access.as_str()),
+                            matches!(operation, "me" | "password").then_some(access.as_str()),
                             body,
                         ),
                     )

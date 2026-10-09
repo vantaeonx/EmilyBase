@@ -6,6 +6,7 @@ use emilybase_auth::{
 };
 use emilybase_catalog::{Key, Row};
 use std::collections::BTreeMap;
+mod password;
 const OWN:&[u8]=br#"{"version":1,"select":{"kind":"owner","column":"owner"},"insert":{"kind":"owner","column":"owner"},"update_using":{"kind":"owner","column":"owner"},"update_check":{"kind":"owner","column":"owner"},"delete":{"kind":"owner","column":"owner"}}"#;
 const DENY:&[u8]=br#"{"version":1,"select":{"kind":"deny"},"insert":{"kind":"deny"},"update_using":{"kind":"deny"},"update_check":{"kind":"deny"},"delete":{"kind":"deny"}}"#;
 struct Fixture {

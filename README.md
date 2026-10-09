@@ -89,9 +89,12 @@ protection. Verified restore closes a formerly open copy in the session-reset
 commit. A synchronous [admitted user gateway](docs/native-public-user-gateway.md)
 now performs sign-in/refresh/logout, own-account metadata and policy-enforced rows
 without project service credentials. It checks the current flag under the actual
-private owner and authenticates before public data lookup. Four separate
+private owner and authenticates before public data lookup. Separate
 [public session HTTP routes](docs/public-session-http.md) now expose admitted
-sign-in/refresh/logout and own metadata without service credentials. The
+sign-in/refresh/logout and own metadata without service credentials. Admitted
+[own-password change](docs/user-password-change.md) also requires current access
+and old-password knowledge, derives identity inside the same private owner and
+revokes every older family through the original epoch commit. The
 [public row HTTP adapter](docs/public-row-http.md) also exposes owned get/page/write
 using the same current admission/session/policy boundary. Roles still require
 separate implementation. A separate [user TypeScript client](sdks/typescript/README.md#explicit-user-client)

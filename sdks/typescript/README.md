@@ -236,3 +236,12 @@ explicit locally built binaries. An external EMILYBASE_TEST_URL remains the lega
 registry probe and explicitly skips private-root provisioning. No npm release or
 browser/device/CORS/cookie/TLS contract is established here. See the full
 [user contract](../../docs/user-sdk.md).
+
+
+The admitted changePassword(access, currentPassword, replacementPassword, options)
+method changes only the current token owner and returns UserInfo. Both password
+strings preserve exact UTF-8 and the combined4096-byte escaped JSON cap. A successful
+original epoch commit revokes every older family, including the calling access.
+No pair is returned or stored: sign in explicitly using the intended replacement.
+The client accepts no login/user-ID override and never automatically repeats a lost
+change. See [password contract](../../docs/user-password-change.md).

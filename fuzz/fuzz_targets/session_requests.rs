@@ -4,11 +4,12 @@ use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
     if let Some((&kind, bytes)) = data.split_first() {
-        let kind = match kind % 4 {
+        let kind = match kind % 5 {
             0 => SessionRequest::SignIn,
             1 => SessionRequest::Refresh,
             2 => SessionRequest::Logout,
-            _ => SessionRequest::Me,
+            3 => SessionRequest::Me,
+            _ => SessionRequest::Password,
         };
         if validate_session_request(kind, bytes).is_ok() {
             assert!(bytes.len() <= 4096);
@@ -16,6 +17,11 @@ fuzz_target!(|data: &[u8]| {
             let object = value.as_object().unwrap();
             if matches!(kind, SessionRequest::Me) {
                 assert!(object.is_empty());
+            }
+            if matches!(kind, SessionRequest::Password) {
+                assert_eq!(object.len(), 2);
+                assert!(object["current_password"].is_string());
+                assert!(object["replacement_password"].is_string());
             }
         }
     }

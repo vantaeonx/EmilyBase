@@ -39,6 +39,41 @@ const rejects = (promise, code, outcome = "unknown") =>
       error.outcome === outcome,
   );
 
+test("own password SDK sends no identity override and validates both secrets before fetch", async () => {
+  let calls = 0,
+    request;
+  const client = new EmilyBaseUserClient({
+    ...config,
+    fetch: async (_url, r) => {
+      calls++;
+      request = r;
+      return response({ ...user, credential_epoch: "2" });
+    },
+  });
+  assert.deepEqual(
+    await client.changePassword(access, " old\0界 ", "new\u{1f600}\n"),
+    { ...user, credential_epoch: "2" },
+  );
+  assert.deepEqual(JSON.parse(request.body), {
+    current_password: " old\0界 ",
+    replacement_password: "new\u{1f600}\n",
+  });
+  assert.equal(
+    new Headers(request.headers).get("authorization"),
+    `Bearer ${access}`,
+  );
+  for (const work of [
+    () => client.changePassword(undefined, "old", "new"),
+    () => client.changePassword(refresh, "old", "new"),
+    () => client.changePassword(access, "", "new"),
+    () => client.changePassword(access, "old", "\ud800"),
+    () => client.changePassword(access, "old", "界".repeat(342)),
+    () => client.changePassword(access, "\0".repeat(400), "\0".repeat(400)),
+  ])
+    assert.throws(work, invalid);
+  assert.equal(calls, 1);
+});
+
 test("user wire sends explicit purpose tokens with no service or cookie authority", async () => {
   const calls = [];
   let value = session;

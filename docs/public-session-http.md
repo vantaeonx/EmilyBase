@@ -14,6 +14,7 @@ All routes are POST under /v1/projects/PROJECT/user:
 | refresh | absent | refresh_token string field |
 | logout | absent | refresh_token string field |
 | me | exactly one Bearer current access token | empty object {} |
+| password | exactly one Bearer current access token | current_password and replacement_password strings |
 
 Project/master keys do not authenticate these calls. Duplicate Authorization
 headers refuse. A refresh token cannot act as access; user tokens grant no SQL,
@@ -51,7 +52,7 @@ No returned metadata is authority on a later call. All responses are no-store;
 errors and matched-route logs contain static codes/shapes without credentials,
 request bodies, project IDs or raw filesystem paths. See [OpenAPI](openapi.json).
 
-Closing suspends all four calls, including logout, without revoking all families.
+Closing suspends all these calls, including logout, without revoking all families.
 An intentional reopen can resume an unexpired current token. Use explicit trusted
 revocation when required. Service-key rotation is independent of user sessions.
 Verified common-root/private copy closes admission and replaces session
@@ -63,7 +64,7 @@ refresh or infer rollback from a broken connection. Inspect through trusted
 operator/session state and use the original recovery contract. Received-response
 process kills test the HTTP boundary; they do not prove machine power-loss safety.
 
-User-owned row HTTP, browser CORS/cookie policy, signup, roles, user SDK/dashboard,
+Browser CORS/cookie policy, signup, roles, dashboard,
 external deployment/TLS, load/upgrade/resources and independent security acceptance
 remain pending. This is a same-origin/native-client API increment, without a
 cross-origin browser access promise. [ADR0113](adr/0113-admitted-public-session-http.md).
@@ -71,3 +72,7 @@ cross-origin browser access promise. [ADR0113](adr/0113-admitted-public-session-
 The subsequent [public row HTTP adapter](public-row-http.md) now uses current
 access credentials for typed owned get/page/write through the same admitted scope.
 It retains original table-policy/data ownership and adds no service-key fallback.
+The separate [user SDK](user-sdk.md) transports these operations. The subsequent
+[own-password change](user-password-change.md) also requires current access and
+old-password knowledge, derives identity inside the private owner and revokes all
+older families in the original epoch commit. It adds no recovery/reset channel.
