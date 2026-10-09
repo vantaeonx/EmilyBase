@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-09",
+  "base_commit": "7361eea809c0cdec422778b1656517b1246e87b6",
+  "hosted_failure": {
+    "run": 37967197534,
+    "head": "1460cd9",
+    "bytes": 144,
+    "blocks": 2,
+    "exact_hosted_allocation_origin": "not traced"
+  },
+  "regression": {
+    "unchanged_local_run": "passed",
+    "controlled_background_before_fix_total_bytes": 328,
+    "controlled_background_before_fix_total_blocks": 6,
+    "controlled_background_before_fix_live_bytes": 144,
+    "controlled_case_after_isolation": "passes",
+    "counter_tolerance_bytes": 0
+  },
+  "checks": {
+    "profile-stable": 56,
+    "profile-msrv": 56,
+    "default-stable": 18,
+    "default-msrv": 18
+  },
+  "toolchains": [
+    "1.99.0",
+    "1.89.0"
+  ],
+  "fresh_process_observations": {
+    "stable": {
+      "fresh_normal_processes": 100,
+      "normal_sample": {
+        "matching": {
+          "total_bytes": 0,
+          "total_blocks": 0,
+          "peak_bytes": 0,
+          "live_bytes": 0
+        },
+        "issued": {
+          "total_bytes": 102,
+          "total_blocks": 1,
+          "peak_bytes": 102,
+          "live_bytes": 102
+        },
+        "token_bytes": 102,
+        "released_bytes": 0
+      },
+      "negative_exit": 1,
+      "negative_sample": {
+        "matching": {
+          "total_bytes": 144,
+          "total_blocks": 1,
+          "peak_bytes": 144,
+          "live_bytes": 144
+        },
+        "issued": {
+          "total_bytes": 102,
+          "total_blocks": 1,
+          "peak_bytes": 102,
+          "live_bytes": 102
+        },
+        "token_bytes": 102,
+        "released_bytes": 0
+      },
+      "elapsed_seconds": 0.2
+    },
+    "msrv": {
+      "fresh_normal_processes": 100,
+      "normal_sample": {
+        "matching": {
+          "total_bytes": 0,
+          "total_blocks": 0,
+          "peak_bytes": 0,
+          "live_bytes": 0
+        },
+        "issued": {
+          "total_bytes": 102,
+          "total_blocks": 1,
+          "peak_bytes": 102,
+          "live_bytes": 102
+        },
+        "token_bytes": 102,
+        "released_bytes": 0
+      },
+      "negative_exit": 1,
+      "negative_sample": {
+        "matching": {
+          "total_bytes": 144,
+          "total_blocks": 1,
+          "peak_bytes": 144,
+          "live_bytes": 144
+        },
+        "issued": {
+          "total_bytes": 102,
+          "total_blocks": 1,
+          "peak_bytes": 102,
+          "live_bytes": 102
+        },
+        "token_bytes": 102,
+        "released_bytes": 0
+      },
+      "elapsed_seconds": 0.2
+    }
+  },
+  "net_rust_source_lines": 128,
+  "physical_source_lines": {
+    ".rs": 108629,
+    ".ts": 1369,
+    ".mjs": 2472,
+    ".py": 1785,
+    "total": 114255,
+    "effective_rust": 104502
+  },
+  "frozen_source_hash_count": 556,
+  "source_sha256": {
+    ".github/workflows/rust.yml": "fe383e27be7bb03508d5c4fda07c4336b426f22d0188f923be59033884fc5482",
+    "Cargo.lock": "203d6599292c63a1b7af0472f14a0a0278ceccffd975bea747399d4442578c41",
+    "crates/auth/src/tokens/mod.rs": "6bf395f1ae147f322e8a08c0cae75afa9a10c0c004c4121f837eb15c0508be27",
+    "crates/auth/src/tokens/record.rs": "48bd7310d7b3289ef4ae639e156d31e338df01e950f8ef71ab616c8b27d9f0a8",
+    "crates/model-profile/Cargo.toml": "eab8093594f359f9fc2b15516944addb836ffaca5ba1484120dca782406ea4af",
+    "crates/model-profile/src/token_allocation.rs": "08d4ada66a64d7545a28dcdbed150aa9df7dc7eba86ebcf1238b4a6e333a4e6b",
+    "crates/model-profile/tests/session_token.rs": "6c55938f7704ffd849519f630a72fea0bdfc0d972523bd28282c0d0d15a5c3a3",
+    "fuzz/Cargo.lock": "223d8137ebc42d8c6cf2e7f886a0308a0d97df2fab69b492508b6a9e9cb1e69f"
+  },
+  "log_sha256": {
+    "profile-stable": "2971971dccddd1217c2744a401a7605a29c8dc6ee3599c667927e1dec304f6aa",
+    "profile-msrv": "7414a10bf528b21c4a6b685d248ede4c120228638ebd5cdd72604e2667abe23d",
+    "default-stable": "b134c657bb8e7c050ded93995695d2811f7f5f9725a3309bf13db413c9ae0775",
+    "default-msrv": "37d9309d3d83e75707ab895a9439b1a16ccaa5539111936268866b717e0fd662",
+    "fmt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fuzz-fmt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lint": "59639588a6f1826f129cbcd121edc07279dab94786f5fa5bde6b3439b2e845cc",
+    "profile-lint": "99f71393b9903dca098310bb446022a4bdee195ea9996f351a787195555210a6",
+    "profile-msrv-check": "da617cec9cb409cc7d90040e129ad90b46ac0d3bfc0d87a5184fe72f43403805",
+    "fuzz-lint": "59639588a6f1826f129cbcd121edc07279dab94786f5fa5bde6b3439b2e845cc",
+    "fuzz-msrv": "a11a1de8037a032bda7e33f88e31dc898d0129cfe94956add639cd289d2ce985"
+  },
+  "limits": [
+    "Hosted two blocks were not individually traced; controlled reproduction proves the old sample can misattribute unrelated allocator work",
+    "Only schema/token samples are standalone; other diagnostics keep their documented scopes",
+    "Auth/token/database formats and production behavior unchanged",
+    "Operation allocations are not RSS, throughput, timing-safety certification or a completed security audit"
+  ]
+}

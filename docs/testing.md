@@ -4625,3 +4625,29 @@ allocation diagnostic (144 bytes/two blocks in a zero-allocation sample). Local
 targeted checks are not a full hosted-CI success; that diagnostic is separately
 under investigation. Object restore/root integration and production gates remain
 open. See [evidence](measurements/2026-10-09-object-backup/verification.json).
+
+
+## Isolated token allocation observation, 2026-10-09
+
+The prior hosted session_token sample counted144 bytes/two blocks in its
+process-wide libtest allocator. An unchanged local run passed. Controlled unrelated
+background work during the original sample fails with328 bytes/six blocks and144
+live bytes before isolation. The exact hosted allocation origins were not traced;
+the controlled case proves the attribution defect without changing token logic.
+
+The dedicated opt-in native observer excludes the parent's test-harness allocator.
+It retains1000 match/metadata/decode iterations and a separate issuance/drop
+sample. Both stable1.99/minimum1.89.0 pass full release diagnostic suites56 checks
+and default report suites18 each; workspace/opt-in/fuzz strict lint, both format
+checks and minimum all-target diagnostic/fuzz compatibility pass on556 frozen
+hashes. Two new regular test cases cover parent background work and invalid
+options; the original case now also requires a failing negative control.
+
+Each toolchain runs100 fresh normal observer processes: zero matching bytes/
+blocks/peak/live; exactly102 issuance bytes/one block/peak/live; zero after drop.
+An explicit144-byte/one-block measured negative exits1 and is not tolerated.
+Output is bounded count-only JSON after both profiler lifetimes. No auth/token
+encoding/database behavior changed. Other libtest diagnostics remain separately
+scoped. This is not an RSS/service budget/security audit and new hosted CI is
+verified separately. See
+[evidence](measurements/2026-10-09-token-allocation-isolation/verification.json).

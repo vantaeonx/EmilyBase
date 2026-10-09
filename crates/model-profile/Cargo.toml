@@ -8,7 +8,7 @@ repository.workspace = true
 publish = false
 
 [features]
-heap-profile = ["dep:dhat"]
+heap-profile = ["dep:dhat", "dep:emilybase-auth"]
 
 [[bin]]
 name = "emilybase-model-profile"
@@ -24,6 +24,13 @@ required-features = ["heap-profile"]
 test = false
 bench = false
 
+[[bin]]
+name = "emilybase-token-allocation-check"
+path = "src/token_allocation.rs"
+required-features = ["heap-profile"]
+test = false
+bench = false
+
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
@@ -31,6 +38,7 @@ serde_json = "1"
 thiserror = "2"
 sha2 = "0.10"
 dhat = { version = "=0.3.3", optional = true }
+emilybase-auth = { path = "../auth", optional = true }
 emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }
 emilybase-commit-model = { path = "../commit-model" }
@@ -38,7 +46,6 @@ emilybase-commit-format = { path = "../commit-format" }
 emilybase-index = { path = "../index" }
 
 [dev-dependencies]
-emilybase-auth = { path = "../auth" }
 emilybase-query = { path = "../query" }
 proptest = "1"
 

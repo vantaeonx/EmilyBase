@@ -1,53 +1,76 @@
 #![cfg(feature = "heap-profile")]
-use emilybase_auth::tokens::{TokenDigest, TokenKind, TokenScope, issue, metadata};
+use std::process::{Command, Output};
 
-#[global_allocator]
-static ALLOCATOR: dhat::Alloc = dhat::Alloc;
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Heap {
+    total_bytes: u64,
+    total_blocks: u64,
+    peak_bytes: usize,
+    live_bytes: usize,
+}
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Sample {
+    matching: Heap,
+    issued: Heap,
+    token_bytes: usize,
+    released_bytes: usize,
+}
+fn worker(negative: bool) -> Output {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_emilybase-token-allocation-check"));
+    if negative {
+        command.arg("--negative-control");
+    }
+    command.output().unwrap()
+}
+fn sample(output: &Output, matching_bytes: u64, matching_blocks: u64) {
+    assert!(output.stderr.is_empty());
+    assert!(output.stdout.len() < 1024);
+    let value: Sample = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value.matching.total_bytes, matching_bytes);
+    assert_eq!(value.matching.total_blocks, matching_blocks);
+    assert_eq!(value.matching.peak_bytes, matching_bytes as usize);
+    assert_eq!(value.matching.live_bytes, matching_bytes as usize);
+    assert_eq!(value.issued.total_bytes, 102);
+    assert_eq!(value.issued.total_blocks, 1);
+    assert_eq!(value.issued.peak_bytes, 102);
+    assert_eq!(value.issued.live_bytes, 102);
+    assert_eq!(value.token_bytes, 102);
+    assert_eq!(value.released_bytes, 0);
+}
+fn zero(output: &Output) {
+    assert!(output.status.success());
+    sample(output, 0, 0);
+}
 
 #[test]
 fn matching_and_decoding_do_not_allocate_and_issued_text_has_one_bounded_owner() {
-    let scope = TokenScope::new(&"11".repeat(16), [0x22; 16]).unwrap();
-    let foreign = TokenScope::new(&"12".repeat(16), [0x22; 16]).unwrap();
-    let (token, digest) = issue(TokenKind::Access, &scope, [0x33; 16]).unwrap();
-    let encoded = digest.encode();
-    let mut wrong = token.expose().as_bytes().to_vec();
-    wrong[101] = if wrong[101] == b'0' { b'1' } else { b'0' };
-    let wrong = String::from_utf8(wrong).unwrap();
-    let oversized = "a".repeat(1024 * 1024);
-    let profiler = dhat::Profiler::builder().testing().build();
-    for _ in 0..1000 {
-        assert!(digest.matches(token.expose(), &scope).unwrap());
-        assert!(!digest.matches(&wrong, &scope).unwrap());
-        assert!(!digest.matches(token.expose(), &foreign).unwrap());
-        assert!(digest.matches(&oversized, &scope).is_err());
-        assert!(metadata(token.expose()).is_ok());
-        assert!(TokenDigest::decode(&encoded).is_ok());
-        assert!(TokenDigest::decode(&[]).is_err());
+    zero(&worker(false));
+    let negative = worker(true);
+    assert!(!negative.status.success());
+    sample(&negative, 144, 1);
+}
+
+#[test]
+fn token_sample_excludes_parent_background_allocations_without_relaxing_counters() {
+    let unrelated = std::thread::spawn(|| Box::new([7_u8; 144])).join().unwrap();
+    zero(&worker(false));
+    std::hint::black_box(&unrelated);
+}
+
+#[test]
+fn token_diagnostic_refuses_unknown_and_repeated_options_without_sample_output() {
+    for args in [
+        vec!["--unknown"],
+        vec!["--negative-control", "--negative-control"],
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_emilybase-token-allocation-check"))
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert!(output.stdout.is_empty());
+        assert!(!String::from_utf8_lossy(&output.stderr).contains("panicked"));
     }
-    let matching = dhat::HeapStats::get();
-    drop(profiler);
-    assert_eq!(
-        (
-            matching.total_bytes,
-            matching.total_blocks,
-            matching.curr_bytes
-        ),
-        (0, 0, 0)
-    );
-    let profiler = dhat::Profiler::builder().testing().build();
-    let (fresh, _) = issue(TokenKind::Refresh, &scope, [0x44; 16]).unwrap();
-    let live = dhat::HeapStats::get();
-    assert_eq!(fresh.expose().len(), 102);
-    drop(fresh);
-    let released = dhat::HeapStats::get();
-    drop(profiler);
-    assert_eq!(live.total_blocks, 1);
-    assert_eq!(live.total_bytes, 102);
-    assert_eq!(live.curr_bytes, 102);
-    assert_eq!(live.max_bytes, 102);
-    assert_eq!(released.curr_bytes, 0);
-    eprintln!(
-        "session_token match_decode={} issued={} live_after_drop={}",
-        matching.total_bytes, live.total_bytes, released.curr_bytes
-    );
 }

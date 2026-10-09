@@ -9,6 +9,15 @@ This opt-in tool measures the original in-memory prototype. It neither writes a
 database nor enables the proposed durable index writer. Use synthetic data only.
 See [ADR 0040](adr/0040-opt-in-model-allocation-diagnostics.md).
 
+Token allocation samples run in a standalone opt-in
+`emilybase-token-allocation-check` process. This excludes the integration runner's
+allocator activity while preserving strict zero match/decode bytes and one102-byte
+issued owner. `--negative-control` deliberately adds144 measured bytes and must
+fail. The output contains only counts; it does not expose a credential. See
+[ADR0122](adr/0122-isolated-token-allocation-sample.md). Other diagnostics retain
+their documented measurement scopes; this change does not globally isolate every
+existing libtest allocation sample.
+
 ## Reproduce
 
 From the repository root, on Linux with the declared Rust floor or current stable:

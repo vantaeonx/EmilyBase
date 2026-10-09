@@ -1117,3 +1117,11 @@ archive/inode/report verification without reopening a substituted name. The nati
 CLI publishes metadata only; uncertain or lost results require explicit inspection.
 See [contract](object-backup.md). Verified object restore and coordinated AccountRoot
 backup integration remain open; no platform or production milestone is closed.
+
+## Follow-up: isolate token allocation diagnostics
+
+[ADR0122](adr/0122-isolated-token-allocation-sample.md) moves the existing token
+measurement into a separate opt-in native process after a hosted allocation
+failure and controlled reproduction of unrelated-process attribution. Exact
+counters and a failing144-byte negative control are preserved. This changes the
+diagnostic boundary, not token encoding/auth semantics or production acceptance.
