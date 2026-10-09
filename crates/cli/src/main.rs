@@ -23,6 +23,12 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Bounded readonly inspection of an experimental private object envelope.
+    ObjectVerify {
+        path: PathBuf,
+        project: String,
+        object: String,
+    },
     /// Offline explicit public admission; requires a current private service-key file.
     AccountAdmission(admission::Arguments),
     /// Offline trusted project metadata; never prints service keys or user data.
@@ -262,6 +268,22 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
             let info = root.rotate_project_key_to_file(&project, output)?;
             write_operator_metadata(
                 &serde_json::json!({"project":info.id,"key_epoch":info.key_epoch.to_string()}),
+            )?;
+        }
+        Command::ObjectVerify {
+            path,
+            project,
+            object,
+        } => {
+            let report =
+                emilybase_object_storage::inspect_file(path, project.parse()?, object.parse()?)?;
+            let sha256 = report
+                .sha256
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>();
+            write_operator_metadata(
+                &serde_json::json!({"format":1,"bytes":report.payload_bytes,"sha256":sha256}),
             )?;
         }
         Command::AccountAdmission(arguments) => admission::run(arguments)?,

@@ -4492,3 +4492,29 @@ OpenAPI44 operations/489 resolved local refs. Source hashes and logs are in
 [verification](measurements/2026-10-09-public-password-change/verification.json).
 Current access plus old-password knowledge is required; no reset/recovery channel,
 signup/roles/browser/encryption/audit/production gate is closed.
+
+
+## Native scoped object files, 2026-10-09
+
+On539 frozen source/config hashes, stable1.99 and minimum1.89.0 each pass47 Rust
+checks:13 object,31 storage checks (29 unchanged and two new) and3 actual CLI checks. Eighteen new
+regular cases cover exact independent vector bytes, lengths/headers/foreign scope,
+192 generated draws, aliases/FIFO/permissions and no-replace concurrent publication.
+Two harness workers are marked ignored but explicitly executed by parent tests.
+Each toolchain kills two new writers after a received native object publication
+report; reinspection returns the complete exact image and cannot overwrite it.
+The original three raw page-file creation kills rerun separately. Four shared
+pre/post file/parent sync injections distinguish no selection from uncertain
+published results. An altered staging image is refused before selection. Actual
+CLI output failure leaves the inspected source unchanged. A missing Unix metadata
+trait caused preflight test compilation to fail and was fixed before final runs.
+
+Workspace/fuzz format and strict lint, stable CLI/server build, minimum workspace
+build and all-fuzz compilation pass. ASAN object_format executes7,855,935 inputs
+in46 seconds, RSS424MiB under512,468 initial seeds, no findings.
+Input bound262144 includes32 scope bytes and96 header bytes, so maximum fuzz
+payload262016 is smaller than the separately unit-tested8 MiB envelope bound.
+This fuzz run checks the real decoder, not HTTP, filesystem races or future policies.
+Process kills do not prove power-loss safety. Native inspection is a snapshot,
+not a retained lease; trusted operators select paths. Objects are outside current
+root backups. See [evidence](measurements/2026-10-09-object-files/verification.json).

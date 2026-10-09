@@ -29,6 +29,7 @@ emilybase-query = { path = "../crates/query" }
 emilybase-server = { path = "../crates/server" }
 emilybase-transfer = { path = "../crates/transfer" }
 emilybase-migrations = { path = "../crates/migrations" }
+emilybase-object-storage = { path = "../crates/object-storage" }
 
 [[bin]]
 name = "file_format"
@@ -428,6 +429,13 @@ bench = false
 [[bin]]
 name = "session_requests"
 path = "fuzz_targets/session_requests.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "object_format"
+path = "fuzz_targets/object_format.rs"
 test = false
 doc = false
 bench = false

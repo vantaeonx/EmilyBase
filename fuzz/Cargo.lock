@@ -407,6 +407,7 @@ dependencies = [
  "emilybase-index",
  "emilybase-migrations",
  "emilybase-model-profile",
+ "emilybase-object-storage",
  "emilybase-query",
  "emilybase-server",
  "emilybase-storage",
@@ -457,6 +458,17 @@ dependencies = [
  "emilybase-index",
  "serde",
  "serde_json",
+ "sha2",
+ "thiserror",
+]
+
+[[package]]
+name = "emilybase-object-storage"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "emilybase-storage",
+ "rustix",
  "sha2",
  "thiserror",
 ]

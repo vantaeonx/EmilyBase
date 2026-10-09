@@ -27,7 +27,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages and trusted two-credential backend HTTP implemented; admitted user-only sessions/typed rows and explicit user SDK implemented; admitted own-password change verified with original epoch revocation; signup/roles/objects/realtime/dashboard remain open |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages and trusted two-credential backend HTTP implemented; admitted user-only sessions/typed rows and explicit user SDK implemented; admitted own-password change verified with original epoch revocation; native object envelope/publication/inspection implemented; signup/roles/object HTTP/realtime/dashboard remain open |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
@@ -1065,3 +1065,14 @@ same explicit method. Both WALs, generated raw-password epoch histories, competi
 changes/refreshes, delayed state, actual received/unread TCP kills and verified copy
 are checked separately. See [contract](user-password-change.md). Signup/roles,
 recovery channels, browser/device policy and production acceptance remain open.
+
+
+## Follow-up: original native object-file foundation
+
+[ADR0117](adr/0117-scoped-object-files.md) introduces a bounded scoped binary
+image with payload SHA-256/header CRC32 and full expected-identity validation.
+Native no-replace publication reuses the original retained private stage and sync
+contract; readonly offline inspection reports metadata only. Database/WAL and
+root backup formats remain unchanged. See [format](object-format.md).
+HTTP upload/download, authenticated project inventory/policies, quotas, signed
+URLs, cleanup/delete, object backup integration and production gates remain open.

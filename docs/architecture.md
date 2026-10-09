@@ -27,7 +27,9 @@ flowchart TD
   WAL --> Storage
   HTTP --> Auth[Scoped API keys: user policies pending]
   HTTP --> Realtime[Future committed-change subscriptions]
-  HTTP --> Objects[Future private object storage]
+  HTTP --> Objects[Future authenticated object service]
+  CLI --> ObjectFiles[Native scoped object files]
+  ObjectFiles --> Storage
   CLI --> Backup[Verified backup / restore]
   Backup --> Transactions
 ```

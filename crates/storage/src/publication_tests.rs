@@ -1,6 +1,56 @@
 use crate::{Error, Page, Pager};
 use std::fs;
 
+#[test]
+fn bounded_private_bytes_keep_original_sync_failure_and_no_replace_contract() {
+    let _serial = CASES.lock().unwrap();
+    let data = b"synthetic-private-bytes";
+    for (phase, after, published) in [
+        ("file_sync", false, false),
+        ("file_sync", true, false),
+        ("parent_sync", false, true),
+        ("parent_sync", true, true),
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("selected");
+        let _fault = FaultGuard::new(phase, after);
+        let result = crate::publish_private_file(&target, data, 1024);
+        if published {
+            assert!(matches!(result, Err(Error::PublicationUnknown(_))));
+            assert_eq!(fs::read(&target).unwrap(), data);
+        } else {
+            assert!(matches!(result, Err(Error::Io(_))));
+            assert!(!target.exists());
+        }
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let target = dir.path().join("selected");
+    assert!(crate::publish_private_file(&target, data, data.len() - 1).is_err());
+    assert!(!target.exists());
+    crate::publish_private_file(&target, data, data.len()).unwrap();
+    assert!(crate::publish_private_file(&target, b"replacement", 1024).is_err());
+    assert_eq!(fs::read(&target).unwrap(), data);
+}
+
+#[test]
+fn bounded_private_bytes_reject_changed_stage_content_before_selection() {
+    let _serial = CASES.lock().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let target = dir.path().join("selected");
+    let result = crate::byte_file::publish_with(
+        &target,
+        b"synthetic-original",
+        1024,
+        || {
+            let stage = stage_name(dir.path());
+            fs::write(dir.path().join(stage), b"synthetic-replaced").unwrap();
+        },
+        || {},
+    );
+    assert!(matches!(result, Err(Error::PathChanged)));
+    assert!(!target.exists());
+}
+
 static CASES: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 struct FaultGuard;

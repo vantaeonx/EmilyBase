@@ -31,3 +31,4 @@ __pycache__/
 /synthetic-source/
 /synthetic-copy/
 *.table.json
+*.object

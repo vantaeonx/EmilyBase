@@ -104,6 +104,12 @@ bounded validation and no automatic retry or credential persistence. The
 inspects status and opens/closes using the current private key file and exact
 revision. It preserves current sessions and refuses stale reopening commands.
 
+The original synchronous [object-file foundation](docs/object-format.md) provides
+a scoped checksummed binary envelope, bounded private no-replace publication and
+readonly metadata inspection through `object-verify`. It reuses the original owned
+storage stage. HTTP uploads, file policies, signed URLs and object backup
+integration remain pending.
+
 **Early development. Not production-ready. Use synthetic data only.**
 
 Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is
