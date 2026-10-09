@@ -4518,3 +4518,31 @@ This fuzz run checks the real decoder, not HTTP, filesystem races or future poli
 Process kills do not prove power-loss safety. Native inspection is a snapshot,
 not a retained lease; trusted operators select paths. Objects are outside current
 root backups. See [evidence](measurements/2026-10-09-object-files/verification.json).
+
+
+## Retained native object directories, 2026-10-09
+
+Stable1.99/minimum1.89.0 each pass64 checks on544 frozen source/config hashes:
+24 object,33 storage and7 actual CLI. Seventeen new regular cases cover private
+scope/typed names, independent projects, moved namespaces, substituted markers,
+current file/directory permissions, corruption, concurrent ownership and24
+configured generated histories of up to16 operations. Three ignored harness
+workers are explicitly run by parent tests. Each toolchain kills three new native
+writers after received scope/empty/full results and reruns two object-publication
+plus three raw page-file creation kills. Binary stdin preserves NUL/invalid UTF-8;
+two actual stdout failures preserve initialized/published selections for inspection.
+Four new directory-handle sync injections preserve original uncertain outcomes.
+
+A parallel generated-history run first observed Busy after drop; isolated replay
+passed. A deterministic duplicated-open-description regression then fails before
+explicit unlock and passes after the guard fix, including failed-construction
+lifetimes. It models inherited file descriptions without unsafe fork hooks; the
+specific transient fork window was not directly observed. A property fixture's
+temporary-borrow compile error was corrected separately before runtime checks.
+
+Workspace/fuzz format and strict lint, stable CLI/server build, minimum workspace
+build and all-fuzz compilation pass. No new ASAN run: the pure envelope parser is
+unchanged, and existing format fuzz does not cover directory authority. No
+AccountRoot integration, inventory/delete/quota/file policies, signed URLs or
+verified object backup is claimed. Process kills do not prove power-loss safety.
+See [evidence](measurements/2026-10-09-object-directories/verification.json).

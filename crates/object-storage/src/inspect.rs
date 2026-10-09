@@ -42,7 +42,7 @@ pub fn publish_file(
         _ => Err(Error::PublicationUnknown),
     }
 }
-fn private(file: &File) -> Result<std::fs::Metadata> {
+pub(crate) fn private(file: &File) -> Result<std::fs::Metadata> {
     let m = file.metadata()?;
     if !m.is_file() || m.nlink() != 1 || !matches!(m.mode() & 0o777, 0o600 | 0o400) {
         return Err(Error::File);
@@ -51,6 +51,35 @@ fn private(file: &File) -> Result<std::fs::Metadata> {
         return Err(Error::Limit);
     }
     Ok(m)
+}
+pub(crate) fn read_open_file(
+    file: &mut File,
+    project: ProjectId,
+    object: ObjectId,
+) -> Result<(Vec<u8>, FileReport, std::fs::Metadata)> {
+    let before = private(file)?;
+    let mut bytes = Vec::new();
+    bytes
+        .try_reserve_exact(before.len() as usize)
+        .map_err(|_| Error::Allocation)?;
+    (&mut *file)
+        .take((HEADER_BYTES + MAX_PAYLOAD_BYTES + 1) as u64)
+        .read_to_end(&mut bytes)?;
+    let view = verify(&bytes, project, object)?;
+    let report = FileReport {
+        payload_bytes: view.payload().len(),
+        sha256: *view.sha256(),
+    };
+    let after = private(file)?;
+    if before.len() != after.len()
+        || before.mtime() != after.mtime()
+        || before.mtime_nsec() != after.mtime_nsec()
+        || before.ctime() != after.ctime()
+        || before.ctime_nsec() != after.ctime_nsec()
+    {
+        return Err(Error::File);
+    }
+    Ok((bytes, report, after))
 }
 /// Bounded offline inspection only; never creates/repairs/publishes a file.
 /// The supplied path is operator input, not an HTTP object name.
@@ -67,27 +96,9 @@ pub fn inspect_file(
     )
     .map_err(std::io::Error::from)?;
     let mut file: File = fd.into();
-    let before = private(&file)?;
-    let mut bytes = Vec::new();
-    bytes
-        .try_reserve_exact(before.len() as usize)
-        .map_err(|_| Error::Allocation)?;
-    (&mut file)
-        .take((HEADER_BYTES + MAX_PAYLOAD_BYTES + 1) as u64)
-        .read_to_end(&mut bytes)?;
-    let view = verify(&bytes, project, object)?;
-    let report = FileReport {
-        payload_bytes: view.payload().len(),
-        sha256: *view.sha256(),
-    };
-    let after = private(&file)?;
+    let (_, report, after) = read_open_file(&mut file, project, object)?;
     let visible = std::fs::symlink_metadata(path)?;
-    if before.len() != after.len()
-        || before.mtime() != after.mtime()
-        || before.mtime_nsec() != after.mtime_nsec()
-        || before.ctime() != after.ctime()
-        || before.ctime_nsec() != after.ctime_nsec()
-        || !visible.is_file()
+    if !visible.is_file()
         || (visible.dev(), visible.ino()) != (after.dev(), after.ino())
         || !matches!(visible.mode() & 0o777, 0o600 | 0o400)
         || visible.nlink() != 1

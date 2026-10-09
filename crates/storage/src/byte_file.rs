@@ -11,6 +11,19 @@ use std::path::Path;
 pub fn publish_private_file(path: impl AsRef<Path>, bytes: &[u8], maximum: usize) -> Result<()> {
     publish_with(path.as_ref(), bytes, maximum, || {}, || {})
 }
+/// Publish one component in an already-owned directory; pathname moves cannot
+/// redirect the operation. The caller supplies filesystem, not user, authority.
+pub fn publish_private_file_at(
+    directory: &std::fs::File,
+    name: impl AsRef<std::ffi::OsStr>,
+    bytes: &[u8],
+    maximum: usize,
+) -> Result<()> {
+    if bytes.len() > maximum {
+        return Err(Error::FileLength(bytes.len() as u64));
+    }
+    initialize(Pending::at(directory, name.as_ref())?, bytes, || {}, || {})
+}
 pub(crate) fn publish_with(
     path: &Path,
     bytes: &[u8],
@@ -21,7 +34,14 @@ pub(crate) fn publish_with(
     if bytes.len() > maximum {
         return Err(Error::FileLength(bytes.len() as u64));
     }
-    let mut pending = Pending::new(path)?;
+    initialize(Pending::new(path)?, bytes, synced, published)
+}
+fn initialize(
+    mut pending: Pending,
+    bytes: &[u8],
+    synced: impl FnOnce(),
+    published: impl FnOnce(),
+) -> Result<()> {
     pending.file.write_all(bytes)?;
     sync(&pending.file, "file_sync")?;
     synced();

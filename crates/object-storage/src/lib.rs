@@ -1,6 +1,8 @@
 //! Experimental original object envelope, not an HTTP upload or access authority.
+mod directory;
 mod format;
 mod inspect;
+pub use directory::{ProjectDirectory, StoredObject};
 pub use format::{
     HEADER_BYTES, MAX_PAYLOAD_BYTES, ObjectId, ProjectId, VerifiedObject, encode, verify,
 };
@@ -26,6 +28,10 @@ pub enum Error {
     Allocation,
     #[error("object file must be private, regular, singly linked and unchanged")]
     File,
+    #[error("object directory must be private, owned and correctly initialized")]
+    Directory,
+    #[error("object directory already has a cooperating owner")]
+    Busy,
     #[error("object was published but its final durability or contents require inspection")]
     PublicationUnknown,
     #[error("owned object publication failed")]
@@ -42,5 +48,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[cfg(test)]
 mod crash_tests;
+#[cfg(test)]
+mod directory_crash_tests;
+#[cfg(test)]
+mod directory_tests;
 #[cfg(test)]
 mod tests;

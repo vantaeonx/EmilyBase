@@ -51,6 +51,62 @@ fn bounded_private_bytes_reject_changed_stage_content_before_selection() {
     assert!(!target.exists());
 }
 
+#[test]
+fn private_byte_directory_handle_never_follows_moves_or_accepts_path_components() {
+    let _serial = CASES.lock().unwrap();
+    let temporary = tempfile::tempdir().unwrap();
+    let path = temporary.path().join("selected");
+    let moved = temporary.path().join("moved");
+    fs::create_dir(&path).unwrap();
+    let directory = fs::File::open(&path).unwrap();
+    fs::rename(&path, &moved).unwrap();
+    fs::create_dir(&path).unwrap();
+    crate::publish_private_file_at(&directory, "object", b"synthetic-byte-file", 1024).unwrap();
+    assert_eq!(
+        fs::read(moved.join("object")).unwrap(),
+        b"synthetic-byte-file"
+    );
+    assert!(!path.join("object").exists());
+    for name in ["", ".", "..", "a/b", "../escaped", "/absolute"] {
+        assert!(matches!(
+            crate::publish_private_file_at(&directory, name, b"x", 1),
+            Err(Error::Path)
+        ));
+    }
+    assert!(crate::publish_private_file_at(&directory, "object", b"replacement", 1024).is_err());
+    assert!(crate::publish_private_file_at(&directory, "oversize", b"ab", 1).is_err());
+    let regular = fs::File::open(moved.join("object")).unwrap();
+    assert!(crate::publish_private_file_at(&regular, "invalid", b"x", 1).is_err());
+    assert_eq!(fs::read_dir(&moved).unwrap().count(), 1);
+    assert_eq!(fs::read_dir(&path).unwrap().count(), 0);
+}
+
+#[test]
+fn private_byte_directory_handle_uses_original_sync_failure_outcomes() {
+    let _serial = CASES.lock().unwrap();
+    for (phase, after, selected) in [
+        ("file_sync", false, false),
+        ("file_sync", true, false),
+        ("parent_sync", false, true),
+        ("parent_sync", true, true),
+    ] {
+        let temporary = tempfile::tempdir().unwrap();
+        let directory = fs::File::open(temporary.path()).unwrap();
+        let _fault = FaultGuard::new(phase, after);
+        let result = crate::publish_private_file_at(&directory, "selected", b"synthetic", 1024);
+        if selected {
+            assert!(matches!(result, Err(Error::PublicationUnknown(_))));
+            assert_eq!(
+                fs::read(temporary.path().join("selected")).unwrap(),
+                b"synthetic"
+            );
+        } else {
+            assert!(matches!(result, Err(Error::Io(_))));
+            assert!(!temporary.path().join("selected").exists());
+        }
+    }
+}
+
 static CASES: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 struct FaultGuard;

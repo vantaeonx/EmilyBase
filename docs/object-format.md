@@ -75,6 +75,10 @@ kill/reinspection are checked. Process kill is not hardware power loss. The fuzz
 target exercises the real bounded decoder, not HTTP or filesystem adversaries.
 See [ADR0117](adr/0117-scoped-object-files.md).
 
+The [native project-directory owner](object-directories.md) additionally binds
+typed IDs to a held private directory and marker. It provides offline operations,
+without AccountRoot or HTTP authorization.
+
 HTTP upload/download, authenticated project lookup, object policies, quotas,
 inventory/delete, signed URLs, object backup integration, larger streaming objects
 and production acceptance remain open.

@@ -107,8 +107,10 @@ revision. It preserves current sessions and refuses stale reopening commands.
 The original synchronous [object-file foundation](docs/object-format.md) provides
 a scoped checksummed binary envelope, bounded private no-replace publication and
 readonly metadata inspection through `object-verify`. It reuses the original owned
-storage stage. HTTP uploads, file policies, signed URLs and object backup
-integration remain pending.
+storage stage. A [native project directory](docs/object-directories.md) now retains
+the real directory/scope descriptors and supports offline binary put and metadata
+inspection with typed IDs. HTTP uploads, file policies, signed URLs and object
+backup integration remain pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

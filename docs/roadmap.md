@@ -27,7 +27,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages and trusted two-credential backend HTTP implemented; admitted user-only sessions/typed rows and explicit user SDK implemented; admitted own-password change verified with original epoch revocation; native object envelope/publication/inspection implemented; signup/roles/object HTTP/realtime/dashboard remain open |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages and trusted two-credential backend HTTP implemented; admitted user-only sessions/typed rows and explicit user SDK implemented; admitted own-password change verified with original epoch revocation; native object envelope/publication/inspection and retained project directories implemented; signup/roles/object HTTP/realtime/dashboard remain open |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
@@ -1076,3 +1076,15 @@ contract; readonly offline inspection reports metadata only. Database/WAL and
 root backup formats remain unchanged. See [format](object-format.md).
 HTTP upload/download, authenticated project inventory/policies, quotas, signed
 URLs, cleanup/delete, object backup integration and production gates remain open.
+
+
+## Follow-up: retained native project object directories
+
+[ADR0118](adr/0118-retained-project-object-directories.md) binds typed object IDs
+to an exclusively owned private directory and retained exact project marker.
+Descriptor-based read/publication continues in the original inode after namespace
+moves; marker replacement/current admission refuses. Offline CLI supports binary
+put and metadata inspection without secret payload output. A deterministic
+inherited-description regression precedes the explicit lock-release fix. See
+[contract](object-directories.md). This remains outside AccountRoot, public HTTP,
+user file policies, quotas, inventory/delete and verified root backups.
