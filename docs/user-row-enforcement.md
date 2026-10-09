@@ -54,3 +54,12 @@ kills before commit and after received results. See [verification](measurements/
 and [ADR0104](adr/0104-owned-user-row-policy-enforcement.md). Native [filtered continuation](user-row-pages.md) is implemented separately.
 Public user-only admission, roles, wider security/load/upgrade/resource and production
 gates remain open. Only synthetic data is used.
+
+
+The subsequent [native admitted user gateway](native-public-user-gateway.md) now
+checks current v5 admission for sign-in, refresh, logout, own-account metadata and
+typed policy-enforced rows without a project service key. Closing suspends these
+methods before time/password/public data work; an intentional reopen can resume a
+current session. Verified copy/reset still revokes its old incarnation. These are
+synchronous native methods; user-only HTTP/signup/roles/client integration remain
+separate pending increments. Existing service-key APIs preserve their authority.

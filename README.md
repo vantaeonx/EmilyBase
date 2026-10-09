@@ -86,7 +86,11 @@ Passwords require redirected bounded stdin; no session credentials are printed.
 An explicit [private v5 admission catalog](docs/public-admission-catalog.md) now
 stores a closed-by-default operator flag with current-key CAS and stale-retry
 protection. Verified restore closes a formerly open copy in the session-reset
-commit. User-only network admission and roles still require separate implementation.
+commit. A synchronous [admitted user gateway](docs/native-public-user-gateway.md)
+now performs sign-in/refresh/logout, own-account metadata and policy-enforced rows
+without project service credentials. It checks the current flag under the actual
+private owner and authenticates before public data lookup. User-only network
+admission and roles still require separate implementation.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

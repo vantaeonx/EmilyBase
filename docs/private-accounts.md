@@ -189,3 +189,12 @@ closed receipts remain unchanged. Capture preserves source state. Generic engine
 restore still requires explicit private reset before traffic. No bundle/page/WAL
 version or public HTTP route changes. Older readers refuse v5; no implicit migration
 or downgrade is offered.
+
+
+The subsequent [native admitted user gateway](native-public-user-gateway.md) now
+checks current v5 admission for sign-in, refresh, logout, own-account metadata and
+typed policy-enforced rows without a project service key. Closing suspends these
+methods before time/password/public data work; an intentional reopen can resume a
+current session. Verified copy/reset still revokes its old incarnation. These are
+synchronous native methods; user-only HTTP/signup/roles/client integration remain
+separate pending increments. Existing service-key APIs preserve their authority.

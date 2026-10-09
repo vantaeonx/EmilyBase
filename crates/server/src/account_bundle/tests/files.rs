@@ -468,28 +468,31 @@ fn publication_worker() {
             Err(_) => panic!("unexpected key-file rotation result"),
         }
         durability::checkpoint("service_key_received");
-    } else if action == "root-user-table" {
+    } else if matches!(
+        action.as_str(),
+        "root-user-table" | "root-public-user-table"
+    ) {
         let (key, access, row): (String, String, emilybase_catalog::Row) =
             serde_json::from_slice(&fs::read(&target).unwrap()).unwrap();
         let mut updated = row.clone();
         updated[0] = Value::Integer(1);
         updated[2] = Value::Integer(30);
         let mut root = crate::AccountRoot::open(&source, PasswordPool::new(1).unwrap()).unwrap();
-        root.user_table(
-            &project,
-            &key,
-            "owned",
-            &access,
-            50,
-            crate::UserTableOperation::Write(vec![
-                crate::UserWrite::Insert(row),
-                crate::UserWrite::Update {
-                    key: emilybase_catalog::Key::Integer(1),
-                    row: updated,
-                },
-            ]),
-        )
-        .unwrap();
+        let operation = crate::UserTableOperation::Write(vec![
+            crate::UserWrite::Insert(row),
+            crate::UserWrite::Update {
+                key: emilybase_catalog::Key::Integer(1),
+                row: updated,
+            },
+        ]);
+        if action == "root-public-user-table" {
+            assert!(key.is_empty());
+            root.public_user_table(&project, "owned", &access, 50, operation)
+                .unwrap();
+        } else {
+            root.user_table(&project, &key, "owned", &access, 50, operation)
+                .unwrap();
+        }
         durability::checkpoint("user_table_ack");
     } else if action == "root-live" {
         let key: String = serde_json::from_slice(&fs::read(&target).unwrap()).unwrap();

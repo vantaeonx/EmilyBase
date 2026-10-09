@@ -986,3 +986,15 @@ incarnation/time while preserving rows, policies and the unchanged source.
 This is native operator metadata; public user-only gateways/routes, signup, roles,
 SDK/dashboard integration and broader production gates remain open. See
 [the catalog contract](public-admission-catalog.md).
+
+
+## Follow-up: native admitted user gateway
+
+[ADR0111](adr/0111-native-admitted-user-gateway.md) adds synchronous current-user
+auth/session/metadata and owned typed row operations without project service keys.
+Missing/closed v5 denies before password/time/public work. Current private proof,
+policy and real data ownership remain held through original commits. Intentional
+reopen can resume a current session; verified clone still requires fresh login.
+Generated owner/admission models, concurrent users and process kills cover the
+native boundary. See [the contract](native-public-user-gateway.md). Public HTTP,
+signup, roles, user SDK/dashboard and production acceptance remain open.

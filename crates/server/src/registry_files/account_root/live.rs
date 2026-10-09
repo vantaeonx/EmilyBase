@@ -9,6 +9,7 @@ use emilybase_catalog::Value;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 mod key_file;
+mod public_user;
 
 /// Active private owner count, not a combined model/heap reservation.
 pub const MAX_ACTIVE_PRIVATE_STORES: usize = 4;
@@ -236,20 +237,7 @@ impl AccountRoot {
             .ok_or(Error::Denied)?;
         crate::user_rows::validate(table, &operation)?;
         authorized.data_operation(|database| {
-            let snapshot = database.view()?;
-            let table_id = snapshot.table_id(table).map_err(crate::TableError::from)?;
-            let schema = snapshot
-                .schema(table)
-                .map_err(crate::TableError::from)?
-                .clone();
-            let context = emilybase_auth::row_policy::TableContext {
-                project,
-                id: table_id,
-                schema: &schema,
-            };
-            let proof = account.verify_row_policy_access(access, now, table_id)?;
-            super::checkpoint("root_user_table_verified");
-            Ok(crate::user_rows::run(database, &proof, context, operation)?)
+            run_user_table(database, account, project, table, access, now, operation)
         })
     }
     /// Trusted operator metadata, never proof of user authorization.
@@ -387,4 +375,29 @@ impl AccountRoot {
             .authorize(project, key)?
             .execute(sql, parameters)
     }
+}
+
+fn run_user_table(
+    database: &mut emilybase_transactions::Database,
+    account: &mut AccountStore,
+    project: &str,
+    table: &str,
+    access: &str,
+    now: u64,
+    operation: crate::UserTableOperation,
+) -> Result<crate::UserTableResult> {
+    let snapshot = database.view()?;
+    let table_id = snapshot.table_id(table).map_err(crate::TableError::from)?;
+    let schema = snapshot
+        .schema(table)
+        .map_err(crate::TableError::from)?
+        .clone();
+    let context = emilybase_auth::row_policy::TableContext {
+        project,
+        id: table_id,
+        schema: &schema,
+    };
+    let proof = account.verify_row_policy_access(access, now, table_id)?;
+    super::checkpoint("root_user_table_verified");
+    Ok(crate::user_rows::run(database, &proof, context, operation)?)
 }

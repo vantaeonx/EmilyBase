@@ -4317,3 +4317,31 @@ The block adds987 Rust lines: total99308 Rust (95505 effective),920 TypeScript,
 [verification](measurements/2026-10-09-public-admission-catalog/verification.json).
 User-only network admission, roles, dashboard/SDK integration, whole-runtime memory,
 load/upgrade and independent security/production gates remain open.
+
+
+## Native admitted current-user gateway
+
+ADR0111 verifies user login, refresh, logout, own metadata and typed policy-enforced
+rows without a project service credential. Legacy/missing/closed admission refuses
+before password, trusted clock or public data work; invalid access refuses before
+public ownership/table lookup. Current policy/schema, original credential epochs,
+single-use refresh, suspension/resume, independent service-key rotation, own/hidden
+pages, late packet rollback and one concurrent primary-key winner are covered.
+Verified nonempty clone requires explicit reopening and fresh login while source
+sessions/histories remain active and unchanged.
+
+Rust1.99/1.89 pass120 checks each: retained root49, existing private HTTP40,
+actual account network12, original HTTP7, project capabilities9, registry model2
+and server documentation1. Nine cases are new. Twenty-four independent generated
+owner/admission sequences and four new process kills per toolchain cover both WALs;
+two kills happen after the native caller received its result. Kills do not prove
+power-loss durability. Private time observations and public writes remain separate
+original transactions. Source stays frozen throughout the final process tests.
+
+Strict workspace/fuzz formatting and linting, minimum workspace build and all-target
+fuzz compilation pass on492 source/dependency/API hashes. No parser/format change
+or new sanitizer campaign is claimed. Added839 Rust lines: total100147 Rust
+(96324 effective),920 TypeScript,1582 JavaScript,1785 Python,104434 overall. See
+[verification](measurements/2026-10-09-native-public-user-gateway/verification.json).
+Public HTTP, operator CLI, signup, roles, user SDK/dashboard and production gates
+remain pending.

@@ -81,3 +81,12 @@ Existing trusted HTTP/CLI policy-enable commands now report the actual current
 private version,4 or5. A retry on v5 does not downgrade, close an enabled flag,
 replace a policy or revoke a session. The native private_schema_version getter
 returns only metadata; its Root wrapper requires the current project service key.
+
+
+The subsequent [native admitted user gateway](native-public-user-gateway.md) now
+checks current v5 admission for sign-in, refresh, logout, own-account metadata and
+typed policy-enforced rows without a project service key. Closing suspends these
+methods before time/password/public data work; an intentional reopen can resume a
+current session. Verified copy/reset still revokes its old incarnation. These are
+synchronous native methods; user-only HTTP/signup/roles/client integration remain
+separate pending increments. Existing service-key APIs preserve their authority.

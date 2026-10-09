@@ -343,14 +343,27 @@ impl ProjectStore {
         if !project.metadata.key.verifies(token) {
             return Err(Error::Denied);
         }
-        Ok(AuthorizedProject {
+        Ok(self.capability(id, project))
+    }
+    /// Internal retained-root authority. The caller must enforce current user
+    /// admission/session/policy; never expose this unfiltered capability to users.
+    pub(crate) fn owned_project(&self, id: &str) -> Result<AuthorizedProject> {
+        self.ready()?;
+        if !valid_project_id(id) {
+            return Err(Error::Denied);
+        }
+        let project = self.projects.get(id).ok_or(Error::Denied)?;
+        Ok(self.capability(id, project))
+    }
+    fn capability(&self, id: &str, project: &Project) -> AuthorizedProject {
+        AuthorizedProject {
             root: self.root.clone(),
             directory: self.root.join(id),
             gate: Arc::clone(&project.gate),
             _owner: Arc::clone(&self.owner),
             directory_owner: Arc::clone(&project.directory_owner),
             data_owner: Arc::clone(&project.data_owner),
-        })
+        }
     }
     /// Privileged operation; HTTP transport requires its administrative credential.
     pub fn rotate(&mut self, id: &str) -> Result<CreatedProject> {

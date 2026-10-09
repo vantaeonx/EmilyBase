@@ -794,3 +794,5 @@ fn root_policy_install_derives_current_table_context_and_holds_its_owner_through
 mod key_file;
 mod public_admission;
 mod user_rows;
+
+mod public_user;
