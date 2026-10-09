@@ -77,8 +77,11 @@ full object results are killed and reopened; these do not simulate power loss.
 The inherited-description lock regression fails before the explicit-release fix.
 See [ADR0118](adr/0118-retained-project-object-directories.md).
 
+Complete bounded [inventory/capture](object-inventory.md) is now available as
+native verified metadata/bytes; it does not produce a persistent archive.
+
 Project roster/AccountRoot integration, HTTP uploads/downloads, user file policies,
-inventory/delete/staging cleanup, quotas, signed URLs and object backup/restore
+inventory persistence/delete/staging cleanup, quotas, signed URLs and object backup/restore
 remain open. Current root backups do not include these directories. Larger
 streaming files, hostile-filesystem guarantees and production acceptance are
 separate work. Do not attach real application data.

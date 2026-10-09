@@ -19,6 +19,8 @@ pub struct Arguments {
 enum Operation {
     /// Publish the project marker once in an existing directory.
     Init,
+    /// Fully verify the bounded directory and print complete metadata only.
+    List,
     /// Publish exact bounded binary stdin under a fresh typed object ID.
     Put { object: String },
     /// Verify an existing object and print metadata without payload output.
@@ -54,7 +56,7 @@ pub fn run(arguments: Arguments) -> Result<()> {
         Operation::Put { object } | Operation::Inspect { object } => {
             Some(object.parse::<ObjectId>()?)
         }
-        Operation::Init => None,
+        Operation::Init | Operation::List => None,
     };
     // Buffer the bounded redirected stream before acquiring any namespace lock.
     let bytes = if matches!(arguments.operation, Operation::Put { .. }) {
@@ -66,6 +68,19 @@ pub fn run(arguments: Arguments) -> Result<()> {
         None
     };
     match arguments.operation {
+        Operation::List => {
+            let owner = ProjectDirectory::open(arguments.path, project)?;
+            let inventory = owner.inventory()?;
+            let objects = inventory.entries().iter().map(|entry| serde_json::json!({
+                "object":entry.object().to_string(),"bytes":entry.report().payload_bytes,
+                "sha256":entry.report().sha256.iter().map(|b|format!("{b:02x}")).collect::<String>()
+            })).collect::<Vec<_>>();
+            super::write_operator_metadata(&serde_json::json!({
+                "format":1,"project":inventory.project().to_string(),"objects":objects,
+                "bytes":inventory.payload_bytes(),
+                "digest":inventory.digest().iter().map(|b|format!("{b:02x}")).collect::<String>()
+            }))
+        }
         Operation::Init => {
             let owner = ProjectDirectory::initialize(arguments.path, project)?;
             super::write_operator_metadata(

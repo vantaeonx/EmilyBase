@@ -210,3 +210,121 @@ fn malformed_typed_ids_refuse_before_waiting_for_an_unfinished_input_stream() {
         assert_eq!(fs::read_dir(&path).unwrap().count(), 0);
     }
 }
+
+#[test]
+fn actual_cli_list_reports_complete_canonical_metadata_without_any_payload_output() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("objects");
+    directory(&path);
+    let project = PROJECT.parse::<ProjectId>().unwrap();
+    let mut owner = ProjectDirectory::initialize(&path, project).unwrap();
+    for key in (0..128).rev() {
+        owner
+            .put(ObjectId::from_bytes([key; 16]), b"synthetic-private")
+            .unwrap();
+    }
+    let expected = owner.inventory().unwrap();
+    drop(owner);
+    let out = run(command(&path, PROJECT, "list", None), Vec::new());
+    assert!(!String::from_utf8_lossy(&out.stdout).contains("synthetic-private"));
+    let report = success(out);
+    assert_eq!(report.as_object().unwrap().len(), 5);
+    assert_eq!(report["project"], PROJECT);
+    assert_eq!(report["format"], 1);
+    assert_eq!(report["bytes"], 128 * 17);
+    assert_eq!(report["objects"].as_array().unwrap().len(), 128);
+    for (index, entry) in report["objects"].as_array().unwrap().iter().enumerate() {
+        assert_eq!(entry.as_object().unwrap().len(), 3);
+        assert_eq!(
+            entry["object"],
+            ObjectId::from_bytes([index as u8; 16]).to_string()
+        );
+        assert_eq!(entry["bytes"], 17);
+        assert_eq!(entry["sha256"].as_str().unwrap().len(), 64);
+    }
+    assert_eq!(
+        report["digest"],
+        expected
+            .digest()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
+    );
+    assert_eq!(
+        success(run(command(&path, PROJECT, "list", None), Vec::new())),
+        report
+    );
+    assert_eq!(fs::read_dir(&path).unwrap().count(), 129);
+}
+
+#[test]
+fn actual_cli_list_refuses_unknown_corrupt_foreign_and_count_overflow_without_partial_output() {
+    for mutation in 0..4 {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("objects");
+        directory(&path);
+        let project = PROJECT.parse::<ProjectId>().unwrap();
+        let object = OBJECT.parse::<ObjectId>().unwrap();
+        let mut owner = ProjectDirectory::initialize(&path, project).unwrap();
+        owner.put(object, b"synthetic-private").unwrap();
+        match mutation {
+            0 => fs::write(path.join("unmanaged"), b"synthetic-private-unmanaged").unwrap(),
+            1 => fs::write(path.join(format!("{OBJECT}.object")), b"damaged").unwrap(),
+            2 => fs::write(
+                path.join(format!("{OBJECT}.object")),
+                emilybase_object_storage::encode(
+                    FOREIGN.parse().unwrap(),
+                    object,
+                    b"synthetic-private-foreign",
+                )
+                .unwrap(),
+            )
+            .unwrap(),
+            _ => {
+                for key in 0..130u8 {
+                    let id = ObjectId::from_bytes([key; 16]);
+                    if id != object {
+                        owner.put(id, &[]).unwrap();
+                    }
+                }
+            }
+        }
+        let before = fs::read(path.join(format!("{OBJECT}.object"))).unwrap();
+        let count = fs::read_dir(&path).unwrap().count();
+        drop(owner);
+        refused(run(command(&path, PROJECT, "list", None), Vec::new()));
+        assert_eq!(
+            fs::read(path.join(format!("{OBJECT}.object"))).unwrap(),
+            before
+        );
+        assert_eq!(fs::read_dir(&path).unwrap().count(), count);
+    }
+}
+
+#[test]
+fn actual_cli_list_stdout_failure_leaves_complete_source_objects_and_marker_unchanged() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("objects");
+    directory(&path);
+    success(run(command(&path, PROJECT, "init", None), Vec::new()));
+    success(run(
+        command(&path, PROJECT, "put", Some(OBJECT)),
+        b"synthetic-private".to_vec(),
+    ));
+    let marker = fs::read(path.join(".emilybase-objects")).unwrap();
+    let image = fs::read(path.join(format!("{OBJECT}.object"))).unwrap();
+    let full = File::options().write(true).open("/dev/full").unwrap();
+    let result = command(&path, PROJECT, "list", None)
+        .stdout(Stdio::from(full))
+        .stderr(Stdio::piped())
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    assert!(!String::from_utf8_lossy(&result.stderr).contains("synthetic-private"));
+    assert_eq!(fs::read(path.join(".emilybase-objects")).unwrap(), marker);
+    assert_eq!(
+        fs::read(path.join(format!("{OBJECT}.object"))).unwrap(),
+        image
+    );
+    success(run(command(&path, PROJECT, "list", None), Vec::new()));
+}

@@ -4546,3 +4546,27 @@ unchanged, and existing format fuzz does not cover directory authority. No
 AccountRoot integration, inventory/delete/quota/file policies, signed URLs or
 verified object backup is claimed. Process kills do not prove power-loss safety.
 See [evidence](measurements/2026-10-09-object-directories/verification.json).
+
+
+## Complete native object inventory/capture, 2026-10-09
+
+On547 frozen source/config hashes, stable1.99/minimum1.89.0 each pass81 checks:
+38 object,33 storage and10 actual CLI. Seventeen new regular cases include24
+configured inventory/capture histories,24 filename draws and9984 single-byte
+substitutions plus all prefixes. Actual native boundaries accept128 objects and
+64 MiB payload/immutable capture, refusing the next object/byte without partial
+results. Independent Python hashlib/struct digest bytes, sort/order/scope, delayed
+mutations, stale/foreign receipts and retained bytes after source changes pass.
+New CLI cases cover a complete128-object metadata list, unknown/corrupt/foreign/
+count refusal with empty stdout and a real readonly stdout failure. Three harness
+workers are explicitly invoked by parents; all eight existing process kills rerun,
+with no new readonly/durable-backup kill claim.
+
+Workspace/fuzz format/strict lint, stable CLI/server build, minimum workspace build
+and all-fuzz compilation pass. ASAN object_name executes43,816,723 inputs in46s
+without findings, RSS304MiB under512, max input1024/canonical39,
+378 reported seeds. It checks pure filename grammar, not filesystem
+races/snapshot atomicity/HTTP. Capture makes five complete read passes and retains
+bounded logical bytes, not a global heap reservation. There is no persistent object
+archive/restore, root backup integration, put quota or production acceptance.
+See [evidence](measurements/2026-10-09-object-inventory/verification.json).

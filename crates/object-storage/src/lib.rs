@@ -2,7 +2,10 @@
 mod directory;
 mod format;
 mod inspect;
-pub use directory::{ProjectDirectory, StoredObject};
+pub use directory::{
+    Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ObjectSnapshot,
+    ProjectDirectory, StoredObject, object_id_from_name,
+};
 pub use format::{
     HEADER_BYTES, MAX_PAYLOAD_BYTES, ObjectId, ProjectId, VerifiedObject, encode, verify,
 };
@@ -32,6 +35,10 @@ pub enum Error {
     Directory,
     #[error("object directory already has a cooperating owner")]
     Busy,
+    #[error("object inventory contains an unknown or invalid entry")]
+    Inventory,
+    #[error("object inventory changed during verification")]
+    InventoryChanged,
     #[error("object was published but its final durability or contents require inspection")]
     PublicationUnknown,
     #[error("owned object publication failed")]

@@ -1088,3 +1088,13 @@ put and metadata inspection without secret payload output. A deterministic
 inherited-description regression precedes the explicit lock-release fix. See
 [contract](object-directories.md). This remains outside AccountRoot, public HTTP,
 user file policies, quotas, inventory/delete and verified root backups.
+
+
+## Follow-up: complete bounded object inventory and capture
+
+[ADR0119](adr/0119-bounded-object-inventory-capture.md) verifies every object in a
+bounded retained directory, refuses unknown entries and returns sorted metadata
+with a scoped deterministic digest. Immutable capture copies matching bytes and
+rechecks the complete source for a future archive encoder. Offline list prints
+metadata only. See [contract](object-inventory.md). These are work bounds, not put
+quotas. Persistent object archive/restore and root backup integration remain open.

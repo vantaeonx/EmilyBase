@@ -9,6 +9,11 @@ use std::path::Path;
 
 const SCOPE_FILE: &str = ".emilybase-objects";
 const SCOPE_OBJECT: ObjectId = ObjectId::from_bytes([0; 16]);
+mod inventory;
+pub use inventory::{
+    Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ObjectSnapshot,
+    object_id_from_name,
+};
 
 /// An owned, fully verified image. Debug never reveals payload bytes.
 pub struct StoredObject {
@@ -16,6 +21,7 @@ pub struct StoredObject {
     report: FileReport,
     project: ProjectId,
     object: ObjectId,
+    verified_metadata: Metadata,
 }
 impl StoredObject {
     pub fn payload(&self) -> &[u8] {
@@ -205,6 +211,7 @@ fn read_at(
             report,
             project,
             object,
+            verified_metadata: metadata,
         },
     ))
 }

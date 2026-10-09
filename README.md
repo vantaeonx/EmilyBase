@@ -109,8 +109,10 @@ a scoped checksummed binary envelope, bounded private no-replace publication and
 readonly metadata inspection through `object-verify`. It reuses the original owned
 storage stage. A [native project directory](docs/object-directories.md) now retains
 the real directory/scope descriptors and supports offline binary put and metadata
-inspection with typed IDs. HTTP uploads, file policies, signed URLs and object
-backup integration remain pending.
+inspection with typed IDs. A [complete bounded inventory and immutable capture](docs/object-inventory.md)
+now verifies all selected object bytes for a future archive and exposes only
+metadata through offline list. HTTP uploads, file policies, signed URLs and
+persistent object backup integration remain pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 
