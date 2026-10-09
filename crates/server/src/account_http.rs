@@ -19,6 +19,9 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use zeroize::{Zeroize, Zeroizing};
 
+mod public_sessions;
+mod requests;
+pub use requests::{SessionRequest, SessionRequestError, validate_session_request};
 mod user_data;
 pub use user_data::USER_ACCESS_HEADER;
 mod policies;
@@ -151,6 +154,7 @@ fn routes_app(app: App) -> Router {
             get(|| async { Json(serde_json::json!({"status":"experimental"})) }),
         )
         .merge(protected)
+        .merge(public_sessions::routes(app.clone()))
         .with_state(app)
         .layer(middleware::from_fn(no_cache))
 }
@@ -358,7 +362,7 @@ async fn private_json<T: serde::de::DeserializeOwned>(request: Request) -> ApiRe
     // Wipe our owned parsing copy and secret fields. Transport/serde internals
     // can hold other copies; this is not a whole-heap erasure guarantee.
     let bytes = Zeroizing::new(bytes.to_vec());
-    serde_json::from_slice(&bytes).map_err(|_| Failure(StatusCode::BAD_REQUEST, "invalid_json"))
+    requests::decode(&bytes).map_err(|_| Failure(StatusCode::BAD_REQUEST, "invalid_json"))
 }
 #[derive(Serialize)]
 struct User {

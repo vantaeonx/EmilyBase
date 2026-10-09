@@ -5231,6 +5231,1010 @@
           }
         }
       ]
+    },
+    "/v1/projects/{id}/user/sign-in": {
+      "post": {
+        "summary": "Sign in an explicitly admitted existing user",
+        "description": "Only account-root mode, explicit current private v5 admission required. No signup, SQL or administrative authority. Current flag checked before body and again under retained root after body/root waits before server clock; original native filesystem/session checks apply. Strict object-only JSON, 4096-byte/five-second body bound, shared four workers,30 attempts per admitted project/minute and120 per real socket peer/minute, forwarded headers ignored. Current flag closure suspends without family revocation; verified copy closes and requires fresh login after explicit reopen. Responses are no-store. Lost write results require inspection, no automatic retry. See docs/public-session-http.md. Authorization headers must be absent; refresh/logout credentials are only in their strict JSON body.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{32}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Durable success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateSession"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/user/refresh": {
+      "post": {
+        "summary": "Rotate one admitted current refresh session",
+        "description": "Only account-root mode, explicit current private v5 admission required. No signup, SQL or administrative authority. Current flag checked before body and again under retained root after body/root waits before server clock; original native filesystem/session checks apply. Strict object-only JSON, 4096-byte/five-second body bound, shared four workers,30 attempts per admitted project/minute and120 per real socket peer/minute, forwarded headers ignored. Current flag closure suspends without family revocation; verified copy closes and requires fresh login after explicit reopen. Responses are no-store. Lost write results require inspection, no automatic retry. See docs/public-session-http.md. Authorization headers must be absent; refresh/logout credentials are only in their strict JSON body.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{32}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateRefresh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Durable success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateSession"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/user/logout": {
+      "post": {
+        "summary": "Revoke one admitted current refresh family",
+        "description": "Only account-root mode, explicit current private v5 admission required. No signup, SQL or administrative authority. Current flag checked before body and again under retained root after body/root waits before server clock; original native filesystem/session checks apply. Strict object-only JSON, 4096-byte/five-second body bound, shared four workers,30 attempts per admitted project/minute and120 per real socket peer/minute, forwarded headers ignored. Current flag closure suspends without family revocation; verified copy closes and requires fresh login after explicit reopen. Responses are no-store. Lost write results require inspection, no automatic retry. See docs/public-session-http.md. Authorization headers must be absent; refresh/logout credentials are only in their strict JSON body.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{32}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateRefresh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Durable success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateLogout"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/user/me": {
+      "post": {
+        "summary": "Read the admitted current user own metadata",
+        "description": "Only account-root mode, explicit current private v5 admission required. No signup, SQL or administrative authority. Current flag checked before body and again under retained root after body/root waits before server clock; original native filesystem/session checks apply. Strict object-only JSON, 4096-byte/five-second body bound, shared four workers,30 attempts per admitted project/minute and120 per real socket peer/minute, forwarded headers ignored. Current flag closure suspends without family revocation; verified copy closes and requires fresh login after explicit reopen. Responses are no-store. Lost write results require inspection, no automatic retry. See docs/public-session-http.md. Exactly one Authorization: Bearer current access token and exact empty object body.",
+        "security": [
+          {
+            "UserAccess": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{32}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicUserMeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Durable success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateUser"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Static redacted refusal; no automatic retry of uncertain session writes.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5246,6 +6250,12 @@
         "scheme": "bearer",
         "bearerFormat": "64 lowercase hex characters",
         "description": "One persisted project scope; no registry administration."
+      },
+      "UserAccess": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "102 ASCII characters, current access purpose",
+        "description": "Current admitted user session for its exact project/incarnation; never project-service or administrator authority."
       }
     },
     "schemas": {
@@ -6767,6 +7777,11 @@
             ]
           }
         }
+      },
+      "PublicUserMeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
       }
     },
     "responses": {

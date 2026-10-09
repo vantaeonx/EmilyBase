@@ -12,6 +12,8 @@ use std::process::Command;
 use std::sync::Mutex;
 
 static CASES: Mutex<()> = Mutex::new(());
+#[path = "account_network/public_sessions.rs"]
+mod public_sessions;
 const MASTER: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const PASSWORD: &str = "synthetic-password";
 struct Fixture {

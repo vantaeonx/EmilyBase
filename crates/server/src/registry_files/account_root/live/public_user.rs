@@ -1,9 +1,23 @@
-//! Native current-user operations under explicit admission; no network routing.
+//! Native current-user operations under explicit admission.
 use super::{AccountInfo, AccountRoot, AccountStore, IssuedSession, Result};
 use crate::{Error, UserTableOperation, UserTableResult};
 use emilybase_auth::accounts::Error as AccountError;
 
 impl AccountRoot {
+    /// Memory-only transport preadmission, never request authority. Native calls
+    /// recheck selected filesystem identities/current state after all waits.
+    pub(crate) fn admits_public_user(&self, project: &str) -> Result<()> {
+        if !emilybase_auth::valid_project_id(project) {
+            return Err(Error::Denied);
+        }
+        let account = self
+            .contents
+            .accounts
+            .iter()
+            .find(|store| store.project() == project)
+            .ok_or(Error::Denied)?;
+        admission(account)
+    }
     fn public_account(&mut self, project: &str) -> Result<&mut AccountStore> {
         self.ready()?;
         let account = self
@@ -12,11 +26,8 @@ impl AccountRoot {
             .iter_mut()
             .find(|store| store.project() == project)
             .ok_or(Error::Denied)?;
-        match account.public_admission() {
-            Ok(receipt) if receipt.enabled => Ok(account),
-            Ok(_) | Err(AccountError::AdmissionSchema) => Err(Error::Denied),
-            Err(error) => Err(error.into()),
-        }
+        admission(account)?;
+        Ok(account)
     }
     /// Current explicit admission and original bounded password verification.
     /// Trusted service time only; no self-service account creation is offered.
@@ -72,5 +83,13 @@ impl AccountRoot {
         authorized.data_operation(|database| {
             super::run_user_table(database, account, project, table, access, now, operation)
         })
+    }
+}
+
+fn admission(account: &AccountStore) -> Result<()> {
+    match account.public_admission() {
+        Ok(receipt) if receipt.enabled => Ok(()),
+        Ok(_) | Err(AccountError::AdmissionSchema) => Err(Error::Denied),
+        Err(error) => Err(error.into()),
     }
 }

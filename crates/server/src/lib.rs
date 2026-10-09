@@ -2,7 +2,8 @@
 mod account_bundle;
 mod account_http;
 pub use account_http::{
-    PolicyTransportError, USER_ACCESS_HEADER, account_router, validate_policy_install_request,
+    PolicyTransportError, SessionRequest, SessionRequestError, USER_ACCESS_HEADER, account_router,
+    validate_policy_install_request, validate_session_request,
 };
 #[cfg(test)]
 mod durability;

@@ -65,3 +65,7 @@ process-kill or power-loss claim; original native recovery tests remain separate
 Public HTTP, signup, roles, user SDK/dashboard, resource/load/upgrade and independent
 security/production gates remain pending. See
 [ADR0112](adr/0112-offline-public-admission-cli.md).
+
+The subsequent [public session HTTP adapter](public-session-http.md) now consumes
+this explicit flag for admitted user sessions. Public user-only row HTTP remains
+pending; opening a flag does not install or bypass a table policy.

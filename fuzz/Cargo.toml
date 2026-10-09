@@ -424,3 +424,10 @@ path = "fuzz_targets/policy_records.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "session_requests"
+path = "fuzz_targets/session_requests.rs"
+test = false
+doc = false
+bench = false

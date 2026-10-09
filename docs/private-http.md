@@ -1,5 +1,10 @@
 # Experimental private-root HTTP transport
 
+The later [public session adapter](public-session-http.md) has a separate /user
+namespace with explicit v5 admission and no service-key authority. This document
+describes trusted /auth routes. Shared account JSON parsing now rejects positional
+arrays as well as duplicate/unknown fields; only documented objects are accepted.
+
 `account_router(existing_account_root, master_key)` builds an Axum router for the
 explicit retained root. Embed it with the existing `serve` transport, or select
 the executable mode below. In-process middleware and actual TCP process

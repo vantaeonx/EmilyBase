@@ -4369,3 +4369,33 @@ Added781 Rust lines; total100928 Rust (97080 effective),920 TypeScript,
 1582 JavaScript and1785 Python,105215 overall. See
 [verification](measurements/2026-10-09-offline-public-admission-cli/verification.json).
 User-only HTTP, signup/roles, user SDK/dashboard and production gates remain open.
+
+
+## Admitted public user session HTTP
+
+ADR0113 adds separate root-mode user sign-in/refresh/logout/me routes. Closed or
+unknown private admission refuses before body/clock/project-map work. The actual
+root rechecks admission after body/root waits before server time, then the original
+native method checks selected filesystem/session state. Shared worker/project/real-
+peer limits, cancellation/timeout/health, strict duplicate header/object-only JSON,
+current epoch/project/purpose/refresh race and service independence are tested.
+Positional Serde arrays in existing private login and a closed-after-body request
+consulting a failed clock are reproduced before correction.
+
+Rust1.99/1.89 pass79 checks each: account HTTP49, native public9, actual account
+network13, original HTTP7, server documentation1. Ten regular cases are new.
+Six new received-response server kills per compiler cover login/refresh/logout on
+both WALs; a nonempty verified copy stays closed and requires fresh login after
+explicit opening. Existing native24 generated owner/admission models and four
+packet kills also rerun. No kill result proves machine power-loss durability.
+
+Pure session_requests ASan fuzzing runs10418523 inputs in46 seconds, no findings,
+RSS366MiB under512, max input8192/request4096 bytes,56 initial seeds. It exercises
+the real bounded grammar, not full network/header/authentication flow. Reproduce
+with cargo +nightly fuzz run session_requests -- -max_total_time=45 -max_len=8192
+-rss_limit_mb=512. Workspace/fuzz formatting/strict linting, minimum workspace
+build and all-target fuzz compilation pass on500 frozen hashes. OpenAPI40
+operations/442 local references resolve. Added1221 Rust lines; total102149 Rust
+(98271 effective),920 TypeScript,1582 JavaScript,1785 Python,106436 overall. See
+[verification](measurements/2026-10-09-public-session-http/verification.json).
+Public user rows, signup/roles, user SDK/dashboard and production gates remain open.

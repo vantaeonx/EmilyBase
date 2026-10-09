@@ -65,3 +65,7 @@ independent security acceptance remain pending. See
 Operators can use the [offline admission CLI](admission-cli.md) for explicit
 catalog migration, current metadata and CAS opening/closure. The root must be
 stopped; keys remain in private files. This does not add a user-only network route.
+
+The subsequent [public session HTTP adapter](public-session-http.md) exposes only
+the four admitted auth/session/own-metadata operations. Typed user rows are still
+native or trusted service+user HTTP; their user-only network adapter remains pending.

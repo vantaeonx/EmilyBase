@@ -1010,3 +1010,17 @@ the original durable operation. Both WALs, current users, independent generated
 histories and nonempty verified clone are covered by actual binary scenarios.
 See [operator contract](admission-cli.md). This does not enable public HTTP,
 signup/roles, user SDK/dashboard or production acceptance.
+
+
+## Follow-up: admitted public user session HTTP
+
+[ADR0113](adr/0113-admitted-public-session-http.md) adds separate account-root
+user sign-in/refresh/logout/me routes without service credentials. Current closed
+admission refuses before body work and again before the server clock after waits;
+native session/filesystem checks retain actual ownership. Shared original worker,
+project and socket-peer budgets, strict object JSON/header handling and no-store
+static logs preserve the boundary. Positional Serde arrays in original private
+account requests and clock-before-closed-refusal are reproduced before correction.
+Actual TCP received session results, forced stops and nonempty verified copy cover
+the new adapter. See [HTTP contract](public-session-http.md). Public user row HTTP,
+signup/roles, user SDK/dashboard and production acceptance remain open.
