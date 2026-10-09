@@ -86,6 +86,29 @@ pub(crate) fn run(
     proof
         .check_context(context)
         .map_err(UserRowsError::Policy)?;
+    // Separate schema-specific input rejection from physical lookup failures.
+    // Do not turn persisted page/index damage into a client-input error.
+    let key = |key: &Key| {
+        context
+            .schema
+            .validate_key(key)
+            .map_err(|_| UserRowsError::Input)
+    };
+    match &operation {
+        UserTableOperation::Get(value)
+        | UserTableOperation::Page {
+            after: Some(value), ..
+        } => key(value)?,
+        UserTableOperation::Write(writes) => {
+            for write in writes {
+                match write {
+                    UserWrite::Update { key: value, .. } | UserWrite::Delete(value) => key(value)?,
+                    UserWrite::Insert(_) => {}
+                }
+            }
+        }
+        UserTableOperation::Page { after: None, .. } => {}
+    }
     match operation {
         UserTableOperation::Page { after, limit } => {
             page::run(database, proof, context, after.as_ref(), limit)

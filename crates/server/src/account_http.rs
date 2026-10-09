@@ -19,6 +19,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use zeroize::{Zeroize, Zeroizing};
 
+mod user_data;
+pub use user_data::USER_ACCESS_HEADER;
 mod policies;
 pub use policies::{PolicyTransportError, validate_policy_install_request};
 
@@ -118,6 +120,9 @@ fn routes_app(app: App) -> Router {
         .route("/v1/projects/{id}/tables/rows/update", post(row_update))
         .route("/v1/projects/{id}/tables/rows/delete", post(row_delete))
         .route("/v1/projects/{id}/tables/rows/batch", post(row_batch))
+        .route("/v1/projects/{id}/auth/rows/get", post(user_data::get))
+        .route("/v1/projects/{id}/auth/rows/page", post(user_data::page))
+        .route("/v1/projects/{id}/auth/rows/write", post(user_data::write))
         .route("/v1/projects/{id}/auth/policies", get(policies::list))
         .route(
             "/v1/projects/{id}/auth/policies/enable",

@@ -70,7 +70,8 @@ row_policy_receipts and install_row_policy. These keep the current service-key a
 held real-table boundary. A separate synchronous
 [user-row gateway](user-row-enforcement.md) requires both the current service key
 and a current user access token to apply installed rules under the original owners.
-It grants no detached private handle or end-user SQL/HTTP authority. See
+The [backend HTTP adapter](user-row-http.md) uses that same two-credential contract.
+It grants no detached private handle or user-only SQL/HTTP authority. See
 [ADR0103](adr/0103-service-key-policy-administration.md) and [OpenAPI](openapi.json).
 Native filtered pages are also available through the trusted gateway. Public
 admission, retirement, security, upgrade, resource and

@@ -51,7 +51,21 @@ recovery, backup and security acceptance gates.
 - [x] Tracked artifact names inspected on 2026-10-03: no .env, database/cache,
   signing-key or private-key filenames. This is not an exhaustive secret scan.
 
+- [x] Current installed-policy CRUD and filtered pages under simultaneous public/
+  private ownership, with strict two-credential trusted backend HTTP, current key/
+  policy/session body-wait checks, duplicate/size/typed rejection, bounded complete
+  responses and static secret-free logs. Source-bound stable/minimum, generated,
+  real TCP received/unread-result recovery, verified clone and sanitizer evidence
+  are recorded in [ADR0106](adr/0106-trusted-backend-user-row-http.md).
+
 ## Required before real deployment
+
+- [ ] Independent review of public user-only admission, role grants/revocation,
+  policy timing/constraint side channels and whole-process/connection/output
+  admission. Service operators retain trusted SQL/row authority; the backend
+  adapter is not a sandbox against them. No production audit is declared complete.
+
+
 
 - [ ] Independent review of authentication, project boundaries, logs, parsers
   and publication protocols, with documented findings and repaired regressions.
@@ -65,18 +79,15 @@ recovery, backup and security acceptance gates.
   request limits do not claim a complete connection admission controller.
 - [ ] Supported TLS/reverse-proxy deployment, protected master-secret handling,
   encrypted-secret design and incident/rotation procedures.
-- [ ] Integrated account authentication, user sessions/refresh rotation, roles and row policies
-  before presenting these as available platform features.
-  A separately tested [bounded Argon2id helper](password-verifiers.md) exists;
-  integrated account storage/routes, throttling, enumeration resistance and independent
-  security review remain required.
-  Local private account storage is implemented separately under
-  [ADR0068](adr/0068-private-project-account-store.md); authorized server paths,
-  explicit coordinated account/data backups and reset-before-root-publication are
-  tested under [ADR0078](adr/0078-atomic-account-bundle-root-restore.md). Synchronous
-  retained owners and current-key lifecycle admission are tested under
-  [ADR0080](adr/0080-retained-private-root-service.md); HTTP admission and the
-  authoritative dynamic service roster remain open.
+- [ ] Public account policy, role grants/revocation, enumeration/load controls and
+  independent integrated security review before public user-only admission.
+  Private account storage/session rotation, retained owners, current-key HTTP
+  admission, owned policy CRUD/filtered pages and coordinated root restore have
+  separate executed evidence in [ADR0068](adr/0068-private-project-account-store.md),
+  [ADR0078](adr/0078-atomic-account-bundle-root-restore.md),
+  [ADR0080](adr/0080-retained-private-root-service.md) and
+  [ADR0106](adr/0106-trusted-backend-user-row-http.md). Dynamic private roster and
+  the broader production gates remain open.
 - [ ] Private object storage, signed URL validation and realtime authorization
   before enabling those future interfaces.
 

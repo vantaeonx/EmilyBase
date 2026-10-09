@@ -1,10 +1,13 @@
 //! Bounded service row operations on the original synchronous catalog and WAL.
+mod user;
 mod wire;
 use crate::table_api::{Result, TableError};
 use emilybase_catalog::{Key, MAX_COLUMNS, Row, encode_row};
 use emilybase_transactions::Database;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::io::Write;
+pub use user::{UserRowTransportError, validate_user_row_request};
+pub(crate) use user::{decode_user, user_response};
 use wire::{Input, InputKey, OutputKey, OutputRow};
 
 #[derive(Clone, Copy)]

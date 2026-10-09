@@ -4847,6 +4847,390 @@
           }
         }
       ]
+    },
+    "/v1/projects/{id}/auth/rows/get": {
+      "post": {
+        "operationId": "user_rows_get",
+        "summary": "Trusted backend policy-enforced user get",
+        "description": "Retained account-root mode only. Current project service Bearer key AND exactly one X-EmilyBase-Access header with current user access token are required. Service keys belong only in trusted backend code. Rechecks current key/private roster after five-second body wait before decode; derives actual held table ID/schema and verifies current session/policy/time under both original owners. Same strict lossless row grammar, 65536-byte complete request/response limits, four shared workers and private 30-attempt/minute project limit. Get masks missing and SELECT-denied rows as row:null. Page returns only SELECT-permitted rows and visible continuation keys, observing current state separately per call. Write accepts 1..256 typed operations in one original atomic commit with staged USING/CHECK; any denial discards all changes. Forward private time observation is a separate commit. No SQL, DDL, automatic retry, idempotency receipt, user-only/browser authority or legacy route. Lost/uncertain writes require inspection.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowFound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid strict request, typed key/row or actual table: user_row_rejected or table_rejected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "description": "Response/storage uncertainty: user_row_outcome_requires_inspection; current binding/catalog/clock/worker failures also refuse with static codes. Never infer rollback.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Policy or typed packet refused: user_row_rejected. No partial public commit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Private v4 policy catalog has not been explicitly enabled: policy_catalog_disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowPointRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-EmilyBase-Access",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 102,
+              "maxLength": 102
+            },
+            "description": "Exactly one current access token, separate from the service Bearer key; refresh tokens refuse. Header duplication refuses."
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
+    },
+    "/v1/projects/{id}/auth/rows/page": {
+      "post": {
+        "operationId": "user_rows_page",
+        "summary": "Trusted backend policy-enforced user page",
+        "description": "Retained account-root mode only. Current project service Bearer key AND exactly one X-EmilyBase-Access header with current user access token are required. Service keys belong only in trusted backend code. Rechecks current key/private roster after five-second body wait before decode; derives actual held table ID/schema and verifies current session/policy/time under both original owners. Same strict lossless row grammar, 65536-byte complete request/response limits, four shared workers and private 30-attempt/minute project limit. Get masks missing and SELECT-denied rows as row:null. Page returns only SELECT-permitted rows and visible continuation keys, observing current state separately per call. Write accepts 1..256 typed operations in one original atomic commit with staged USING/CHECK; any denial discards all changes. Forward private time observation is a separate commit. No SQL, DDL, automatic retry, idempotency receipt, user-only/browser authority or legacy route. Lost/uncertain writes require inspection.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid strict request, typed key/row or actual table: user_row_rejected or table_rejected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "description": "Response/storage uncertainty: user_row_outcome_requires_inspection; current binding/catalog/clock/worker failures also refuse with static codes. Never infer rollback.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Policy or typed packet refused: user_row_rejected. No partial public commit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Private v4 policy catalog has not been explicitly enabled: policy_catalog_disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowPageRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-EmilyBase-Access",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 102,
+              "maxLength": 102
+            },
+            "description": "Exactly one current access token, separate from the service Bearer key; refresh tokens refuse. Header duplication refuses."
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
+    },
+    "/v1/projects/{id}/auth/rows/write": {
+      "post": {
+        "operationId": "user_rows_write",
+        "summary": "Trusted backend policy-enforced user write",
+        "description": "Retained account-root mode only. Current project service Bearer key AND exactly one X-EmilyBase-Access header with current user access token are required. Service keys belong only in trusted backend code. Rechecks current key/private roster after five-second body wait before decode; derives actual held table ID/schema and verifies current session/policy/time under both original owners. Same strict lossless row grammar, 65536-byte complete request/response limits, four shared workers and private 30-attempt/minute project limit. Get masks missing and SELECT-denied rows as row:null. Page returns only SELECT-permitted rows and visible continuation keys, observing current state separately per call. Write accepts 1..256 typed operations in one original atomic commit with staged USING/CHECK; any denial discards all changes. Forward private time observation is a separate commit. No SQL, DDL, automatic retry, idempotency receipt, user-only/browser authority or legacy route. Lost/uncertain writes require inspection.",
+        "security": [
+          {
+            "ProjectKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowBatchChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid strict request, typed key/row or actual table: user_row_rejected or table_rejected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "description": "Response/storage uncertainty: user_row_outcome_requires_inspection; current binding/catalog/clock/worker failures also refuse with static codes. Never infer rollback.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Policy or typed packet refused: user_row_rejected. No partial public commit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Private v4 policy catalog has not been explicitly enabled: policy_catalog_disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowBatchRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-EmilyBase-Access",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 102,
+              "maxLength": 102
+            },
+            "description": "Exactly one current access token, separate from the service Bearer key; refresh tokens refuse. Header duplication refuses."
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      ]
     }
   },
   "components": {

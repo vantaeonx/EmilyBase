@@ -20,5 +20,6 @@ fuzz_target!(|data: &[u8]| {
             _ => RowOperation::Batch,
         };
         let _ = validate_row_request(operation, bytes);
+        let _ = emilybase_server::validate_user_row_request(operation, bytes);
     }
 });

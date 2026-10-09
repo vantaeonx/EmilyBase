@@ -72,7 +72,10 @@ A synchronous [owned user-row gateway](docs/user-row-enforcement.md) now verifie
 current sessions and installed policies while holding both original owners through
 exact-key reads or an atomic packet of typed writes. Native
 [filtered keyset pages](docs/user-row-pages.md) retain only SELECT-permitted rows
-and continue by the last visible key. User HTTP routes and roles remain pending.
+and continue by the last visible key. A root-only
+[trusted backend HTTP adapter](docs/user-row-http.md) now applies this gateway with
+separate current service and user credentials. Public user-only admission and roles
+remain pending.
 
 **Early development. Not production-ready. Use synthetic data only.**
 
@@ -92,7 +95,7 @@ strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
 process-kill, checkpoint-crash and competing-writer checks execute. The WAL is
 capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
-The full stage-2 acceptance gate remains open. Persistent table indexes, public user data authorization, dashboard and Kotlin SDK are future work.
+The full stage-2 acceptance gate remains open. Persistent table indexes, public user-only admission, dashboard and Kotlin SDK are future work.
 The Rust [password helper](docs/password-verifiers.md) supplies tested Argon2id
 verifiers and bounded workspaces. The separate [private account library](docs/private-accounts.md)
 stores scoped users, password replacements and disable/epoch state on our original WAL engine.

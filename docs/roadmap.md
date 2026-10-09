@@ -27,7 +27,7 @@ open; a table engine is not a completed transaction engine or backend platform.
 | 2 | WAL, commit/rollback, checkpoint, locks | acknowledged commits survive kill; uncommitted writes absent; corruption matrix | in progress; process-kill, byte-cut, checkpoint and competing-writer checks pass; wider fault matrix open |
 | 3 | original SQL lexer/parser/planner/executor, indexes | documented SQL subset and semantic tests | SQL subset/CLI, derived B+ primary lookup and standalone publisher tested; durable index/secondary DDL and wider query gates pending |
 | 4 | isolated projects, Axum REST, keys, limits | cross-project denial tests and graceful shutdown | registry/key rotation, scoped Axum routes, bounds and graceful shutdown tested; wider isolation/crash/load gates open |
-| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages implemented; end-user HTTP remains open |
+| 5 | auth, policies, objects, realtime, dashboard, SDKs, backups | access tests, token rotation, verified restore | backup foundation, TypeScript SDK, password helper and local private account store implemented; local durable sessions and coordinated offline root backup/restore implemented; explicit native account/session mode tested on real TCP with WAL1/2; private v4 policy persistence/current borrowed decisions and synchronous owned typed CRUD implemented; native filtered pages and trusted two-credential backend HTTP implemented; public user-only admission remains open |
 | 6 | deployment, upgrades, load/security audit, converter | recovery/backup/upgrade matrix passes | experimental Docker/Compose tested; format upgrade/load/security gates open |
 
 ## Not supported
@@ -919,3 +919,19 @@ hidden scans, large row payloads, reopen and verified restore cover this boundar
 No user HTTP, multi-request snapshot, signed capability, roles or new parser is
 introduced. See [page semantics](user-row-pages.md). Broader stage-5 and production
 gates remain open.
+
+
+## Follow-up: trusted backend policy-enforced row HTTP
+
+[ADR0106](adr/0106-trusted-backend-user-row-http.md) adds root-only get/page/write
+routes requiring the current service Bearer key and a separate current user access
+header. The original strict lossless row decoder maps to the owned policy gateway;
+current key/private roster are rechecked after body waits before decoding. Current
+policy/session changes during those waits apply before public work. Complete output
+remains bounded, and ambiguous responses require inspection. Typed key validation
+now distinguishes bad client input from physical lookup failure.
+Router/transport/owned-core regression, actual TCP received/unread-result kills,
+verified root clone, strict stable/minimum checks, OpenAPI and sanitizer fuzzing
+cover the adapter. No legacy route, browser service key, user-only admission,
+public signup, roles or automatic retry is added. See [HTTP contract](user-row-http.md).
+Stage5 and broader security/load/upgrade/resource/production gates remain open.

@@ -1350,3 +1350,199 @@ fn policy_http_received_ack_kills_recover_catalog_replacements_exact_retry_and_v
         copied.stop();
     }
 }
+
+#[test]
+fn user_data_http_received_and_unread_packet_results_recover_filter_and_restore_on_both_wals() {
+    use std::io::Write;
+    let _case = CASES.lock().unwrap();
+    let own = br#"{"version":1,"select":{"kind":"owner","column":"owner"},"insert":{"kind":"owner","column":"owner"},"update_using":{"kind":"owner","column":"owner"},"update_check":{"kind":"owner","column":"owner"},"delete":{"kind":"owner","column":"owner"}}"#;
+    for compact in [false, true] {
+        let f = fixture(compact);
+        let mut root = emilybase_server::AccountRoot::open(&f.root, pool()).unwrap();
+        root.execute(
+            &f.id,
+            &f.key,
+            "CREATE TABLE owned(id INT PRIMARY KEY,owner BYTES,amount INT)",
+            &[],
+        )
+        .unwrap();
+        root.enable_row_policy_catalog(&f.id, &f.key).unwrap();
+        root.install_row_policy(&f.id, &f.key, "owned", 0, own)
+            .unwrap();
+        drop(root);
+        let server = support::Server::start_account(&f.root, MASTER);
+        let pair = sign(&server, &f.id, &f.key);
+        let (status, metadata) = auth(
+            &server,
+            &f.id,
+            &f.key,
+            "me",
+            json!({"access_token":pair["access_token"]}),
+        );
+        assert_eq!(status, 200);
+        let text = metadata["id"].as_str().unwrap();
+        let owner = (0..16)
+            .map(|n| u8::from_str_radix(&text[n * 2..n * 2 + 2], 16).unwrap())
+            .collect::<Vec<_>>();
+        let integer = |n: i64| json!({"type":"integer","value":n.to_string()});
+        let row = |pk: i64, amount: i64| json!([integer(pk),{"type":"bytes","value":owner},integer(amount)]);
+        let call = |server: &support::Server, access: &str, op: &str, input: Json| {
+            let bytes = serde_json::to_vec(&input).unwrap();
+            let headers = support::headers(
+                "POST",
+                &format!("/v1/projects/{}/auth/rows/{op}", f.id),
+                &f.key,
+                bytes.len(),
+            )
+            .replace(
+                "\r\n\r\n",
+                &format!(
+                    "\r\n{}: {access}\r\n\r\n",
+                    emilybase_server::USER_ACCESS_HEADER
+                ),
+            );
+            let mut socket = support::socket(server.address).unwrap();
+            socket.write_all(headers.as_bytes()).unwrap();
+            socket.write_all(&bytes).unwrap();
+            support::read(socket).unwrap()
+        };
+        let access = pair["access_token"].as_str().unwrap();
+        let packet = json!({"table":"owned","operations":[{"op":"insert","row":row(1,10)},{"op":"update","key":integer(1),"row":row(1,20)}]});
+        let (status, first) = call(&server, access, "write", packet);
+        assert_eq!(status, 200);
+        assert_eq!(first["changed"], 2);
+        let previous = first["transaction"]
+            .as_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+        let secrets = [
+            MASTER,
+            f.key.as_str(),
+            PASSWORD,
+            access,
+            pair["refresh_token"].as_str().unwrap(),
+        ];
+        clean_log(&server.kill(), &secrets);
+        let server = support::Server::start_account(&f.root, MASTER);
+        assert_eq!(
+            call(
+                &server,
+                access,
+                "get",
+                json!({"table":"owned","key":integer(1)})
+            ),
+            (200, json!({"row":row(1,20)}))
+        );
+        let unread_packet = json!({"table":"owned","operations":[{"op":"insert","row":row(2,20)},{"op":"update","key":integer(1),"row":row(1,30)}]});
+        let bytes = serde_json::to_vec(&unread_packet).unwrap();
+        let headers = support::headers(
+            "POST",
+            &format!("/v1/projects/{}/auth/rows/write", f.id),
+            &f.key,
+            bytes.len(),
+        )
+        .replace(
+            "\r\n\r\n",
+            &format!(
+                "\r\n{}: {access}\r\n\r\n",
+                emilybase_server::USER_ACCESS_HEADER
+            ),
+        );
+        let mut unread = support::socket(server.address).unwrap();
+        unread.write_all(headers.as_bytes()).unwrap();
+        unread.write_all(&bytes).unwrap();
+        let public = f.root.join("registry").join(&f.id).join("data/redo.wal");
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            let wal = fs::read(&public).unwrap();
+            let report = emilybase_backup::encode(&wal)
+                .ok()
+                .and_then(|image| emilybase_backup::inspect_bytes(&image).ok());
+            if report.is_some_and(|r| r.last_transaction > previous) {
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "unread user packet did not complete"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        assert_eq!(
+            call(
+                &server,
+                access,
+                "get",
+                json!({"table":"owned","key":integer(1)})
+            ),
+            (200, json!({"row":row(1,30)}))
+        );
+        assert_eq!(
+            call(
+                &server,
+                access,
+                "get",
+                json!({"table":"owned","key":integer(2)})
+            ),
+            (200, json!({"row":row(2,20)}))
+        );
+        drop(unread);
+        clean_log(&server.kill(), &secrets);
+        let image = capture_account_bundle_root(&f.root, pool()).unwrap();
+        let copied = f._dir.path().join("user-data-copy");
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        restore_account_bundle_bytes(&image, &copied, pool(), now).unwrap();
+        let copy = support::Server::start_account(&copied, MASTER);
+        assert_eq!(
+            call(
+                &copy,
+                access,
+                "get",
+                json!({"table":"owned","key":integer(1)})
+            )
+            .0,
+            401
+        );
+        let fresh = sign(&copy, &f.id, &f.key);
+        let copied_access = fresh["access_token"].as_str().unwrap();
+        assert_eq!(
+            call(
+                &copy,
+                copied_access,
+                "page",
+                json!({"table":"owned","after":null,"limit":1})
+            ),
+            (200, json!({"rows":[row(1,30)],"next":integer(1)}))
+        );
+        clean_log(
+            &copy.stop(),
+            &[MASTER, &f.key, PASSWORD, access, copied_access],
+        );
+        let server = support::Server::start_account(&f.root, MASTER);
+        let before = fs::read(&public).unwrap();
+        assert_eq!(
+            call(&server, access, "write", unread_packet),
+            (403, json!({"code":"user_row_rejected"}))
+        );
+        assert_eq!(fs::read(&public).unwrap(), before);
+        let deletion = json!({"table":"owned","operations":[{"op":"delete","key":integer(1)},{"op":"delete","key":integer(2)}]});
+        let (status, receipt) = call(&server, access, "write", deletion);
+        assert_eq!(status, 200);
+        assert_eq!(receipt["changed"], 2);
+        clean_log(&server.kill(), &secrets);
+        let server = support::Server::start_account(&f.root, MASTER);
+        assert_eq!(
+            call(
+                &server,
+                access,
+                "page",
+                json!({"table":"owned","after":null,"limit":128})
+            ),
+            (200, json!({"rows":[],"next":null}))
+        );
+        clean_log(&server.stop(), &secrets);
+    }
+}

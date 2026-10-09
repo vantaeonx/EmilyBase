@@ -14,10 +14,10 @@ can ignore them. Hardware power-loss guarantees are not assumed from unit tests.
 | Accidental overwrite on creation | atomic no-clobber file/directory publication | wider publication I/O failures |
 | Malicious local file replacement | private file mode on Unix | trusted directory ownership |
 | Project escape / path traversal | server-issued fixed IDs, private directories, scoped capabilities, negative HTTP/path tests | malicious local-owner races, broader audits |
-| Injection / privilege escalation | original bounded parser, separate parameters, separate administrator/project scopes | user roles and row policies |
+| Injection / privilege escalation | original bounded parser, separate parameters, separate administrator/project scopes, current installed policies in the owned backend gateway | user roles, public user-only admission and independent policy audit |
 | Secret disclosure | random scoped keys and purpose-bound session tokens, timing-safe digests, bounded zeroizing password owners, static/redacted HTTP logs | environment/transport copies remain, secret encryption and independent audit |
 | Offline password guessing | salted fixed-policy Argon2id, admitted zeroizing block workspace, private own-WAL stores and archives | deployment cost/policy calibration, public account policy and independent audit |
-| Private account scope confusion | explicit retained root/roster, current service-key recheck, separate project-bound own-WAL stores, epochs and scoped sessions | public account policy, user roles/row policies and whole-process admission |
+| Private account scope confusion | explicit retained root/roster, current service-key recheck, separate project-bound own-WAL stores, epochs and scoped sessions | public account policy, roles, public user-only admission and whole-process admission |
 | Session replay / stale account authority | purpose-bound random access/refresh tokens, single-winner refresh, current epoch/disabled checks, durable logout | external policy, broader load and independent security audit |
 | Clock rollback / client deadline injection | trusted system time, durable per-store floor, strict JSON rejects client time, backward time fails closed | trusted OS clock operation and operator recovery procedures |
 | Restore revives source user sessions | explicit common-root restore resets each private scope before selection; normal restart preserves scope | service keys remain valid until explicitly rotated; plaintext archive protection |
@@ -112,3 +112,20 @@ never copy raw peer content. Only status-matched fixed refusals prove no commit;
 unknown responses/disconnects retain unknown outcome and never auto-retry. SQL's
 older safe-number contract and64 MiB response cap remain separate. The SDK grants
 no browser/public-user data authority and does not encrypt process memory.
+
+
+The [trusted backend user-row adapter](user-row-http.md) requires both a current
+service key and a separate current user access header. It rechecks current service
+key/private roster after body waits, then current session/policy and exact actual
+table context under both owners. Later key/policy/session changes cannot leave an
+old body-wait proof usable. SELECT filtering retains only permitted rows and visible
+continuation keys; write USING/CHECK uses staged actual rows and one original commit.
+This is not a sandbox against the trusted service operator, who retains service
+SQL/row authority. Public user-only admission remains disabled.
+
+Exact-key/filtered results mask hidden content/existence in shape, not all timing,
+constraint or key-change side channels. Native page counts/record sizes and HTTP
+byte/worker/rate bounds are not whole-process memory admission. Forward private
+time observation is separately durable from public work. A lost reply never proves
+rollback; native TCP received/unread-result recovery and verified clone tests cover
+the implemented boundary, not a completed independent security or production audit.

@@ -3,7 +3,8 @@
 `AccountRoot::user_table(project, service_key, table, access, trusted_now, operation)`
 is a synchronous trusted gateway to one actual public table. Both a current project
 service key and a current user access token are required. Never put a service key
-in a browser/mobile client. No HTTP route or SQL authority is granted by this API.
+in a browser/mobile client. A separate [trusted backend HTTP adapter](user-row-http.md)
+requires both credentials; user tokens alone grant no SQL or data route.
 
 The root derives the table identity and complete schema under the original public
 data gate/database owner. It then verifies the currently installed policy and
@@ -51,5 +52,5 @@ late rollback, current policy/session/project/schema boundaries, simultaneous
 public/private owner retention, competing same-key writers and controlled process
 kills before commit and after received results. See [verification](measurements/2026-10-09-owned-user-row-enforcement/verification.json)
 and [ADR0104](adr/0104-owned-user-row-policy-enforcement.md). Native [filtered continuation](user-row-pages.md) is implemented separately.
-End-user HTTP admission, roles, wider security/load/upgrade/resource and production
+Public user-only admission, roles, wider security/load/upgrade/resource and production
 gates remain open. Only synthetic data is used.

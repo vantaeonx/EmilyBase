@@ -4,7 +4,8 @@ The synchronous owned root gateway accepts `UserTableOperation::Page { after,
 limit }` and returns `UserTableResult::Page { rows, next }`. It requires the same
 current project service key, current access token and trusted time as
 [owned CRUD](user-row-enforcement.md). A service key belongs only in trusted code.
-There is no end-user HTTP route, browser credential contract or SQL permission.
+The [trusted backend HTTP adapter](user-row-http.md) uses both credentials.
+There is no user-only/browser credential contract or SQL permission.
 
 Limits are 1..128 rows, checked before private verification/clock observation.
 The root derives the actual table identity and complete schema and holds both
@@ -31,7 +32,9 @@ limits each rule as documented; no unbounded user expression is executed.
 Each selected row obeys the existing 4,000-byte encoded-record cap. This bounds
 retained physical result payload at 512,000 bytes, not Rust allocator overhead,
 scratch, derived indexes or total process memory. A future HTTP adapter must
-independently admit and bound transport/worker output. No such adapter is claimed.
+independently admit and bound transport/worker output. The current backend adapter
+caps complete JSON responses at 65,536 bytes and can therefore refuse a native page
+that fits the native row count; request a smaller page explicitly.
 
 Pages observe current state on each call. Deleting a cursor key does not break
 continuation. Inserts before an already used cursor are not revisited; later
@@ -49,6 +52,6 @@ payloads and verified common-root restore with fresh sessions. See
 [verification](measurements/2026-10-09-current-policy-user-pages/verification.json)
 and [ADR0105](adr/0105-current-policy-filtered-keyset-pages.md).
 
-Custom ordering, roles, public user HTTP, timing/other side-channel protection,
+Custom ordering, roles, public user-only HTTP, timing/other side-channel protection,
 complete resource/load/upgrade/security and production gates remain open. Use
 synthetic data only.
