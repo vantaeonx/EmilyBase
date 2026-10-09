@@ -39,6 +39,40 @@ pub struct Inventory {
     digest: [u8; 32],
 }
 impl Inventory {
+    pub(crate) fn with_insert(&self, object: ObjectId, report: FileReport) -> Result<Self> {
+        let position = match self
+            .entries
+            .binary_search_by_key(object.as_bytes(), |entry| *entry.object.as_bytes())
+        {
+            Ok(_) => return Err(Error::Exists),
+            Err(position) => position,
+        };
+        let count = self.entries.len().checked_add(1).ok_or(Error::Limit)?;
+        let payload_bytes = self
+            .payload_bytes
+            .checked_add(report.payload_bytes as u64)
+            .ok_or(Error::Limit)?;
+        if count > MAX_INVENTORY_OBJECTS
+            || report.payload_bytes > MAX_PAYLOAD_BYTES
+            || payload_bytes > MAX_INVENTORY_BYTES
+        {
+            return Err(Error::Limit);
+        }
+        let mut entries = Vec::new();
+        entries
+            .try_reserve_exact(count)
+            .map_err(|_| Error::Allocation)?;
+        entries.extend_from_slice(&self.entries[..position]);
+        entries.push(InventoryEntry { object, report });
+        entries.extend_from_slice(&self.entries[position..]);
+        let digest = digest(self.project, &entries, payload_bytes);
+        Ok(Self {
+            project: self.project,
+            entries,
+            payload_bytes,
+            digest,
+        })
+    }
     pub const fn project(&self) -> ProjectId {
         self.project
     }

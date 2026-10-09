@@ -119,6 +119,9 @@ now captures all selected objects and writes a private no-replace archive throug
 retained source/destination/file descriptors. [Standalone verified object restore](docs/object-restore.md)
 reconstructs a fresh private directory, checks every copied object and selects
 without overwriting. Coordinated AccountRoot integration remains separate work.
+An [explicit native bounded write](docs/object-write-limits.md) admits fresh object
+IDs against complete current count/byte limits before staging and checks the full
+result. Limits are per call, not a persisted user/service quota policy.
 
 **Early development. Not production-ready. Use synthetic data only.**
 

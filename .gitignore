@@ -33,3 +33,6 @@ __pycache__/
 *.table.json
 *.object
 *.object-archive
+.emilybase-objects
+.emilybase-create-*
+.emilybase-directory-*

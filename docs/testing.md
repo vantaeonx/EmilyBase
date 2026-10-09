@@ -4681,3 +4681,31 @@ decoders/formats are unchanged; prior archive ASAN2,738,927 inputs/46s does not
 fuzz new filesystem operations. Root backup membership, file HTTP/policies and
 production acceptance remain open. See
 [evidence](measurements/2026-10-09-object-restore/verification.json).
+
+
+## Explicit native object write limits, 2026-10-10 (Europe/Brussels)
+
+Stable1.99/minimum1.89.0 each pass148 checks on566 frozen hashes:82 object,42
+storage and24 actual CLI. Sixteen new regular cases include24 independent map/
+byte-sum histories, each up to24 operations; exact physical128 empty objects and
+64 MiB payload; empty objects consuming names; lower per-call limits preserving
+existing data; duplicate/invalid source refusal; pre/postselection mutations and
+retained namespace/project isolation. Eight competing serialized native callers
+admit exactly two objects/bytes, with capacity recomputed after reopen.
+
+Four new real process kills each distinguish admitted expected metadata before
+publication, selected object before complete receipt, and received empty/nonempty
+receipts. On reopen, complete files determine current capacity; no volatile
+counter or missing-result assumption permits an extra name. All sixteen prior
+object/storage kills rerun. Actual CLI stops overflow with stdin still open,
+refuses invalid configuration/IDs before reading, emits complete metadata only
+and preserves a selected file after stdout failure. These are process-kill
+observations, not power-loss qualification.
+
+Workspace/fuzz format/strict lint, stable CLI/server build, minimum workspace build
+and all-fuzz compilation pass. No new byte parser or format changed and no new
+ASAN execution is claimed. Ignore probes confirm native marker/staging children/
+object/archive exclusions. Limits remain per-call native admission; existing
+unbounded put, persisted policy, HTTP/upload authorization, global budgets and
+production gates remain distinct/open. See
+[evidence](measurements/2026-10-10-object-write-limits/verification.json).

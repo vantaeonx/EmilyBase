@@ -1,7 +1,7 @@
 //! Native operator-selected object namespaces; not service/user authorization.
 use clap::{Args, Subcommand};
 use emilybase_object_storage::{
-    FileReport, MAX_PAYLOAD_BYTES, ObjectId, ProjectDirectory, ProjectId,
+    FileReport, MAX_PAYLOAD_BYTES, ObjectId, ProjectDirectory, ProjectId, WriteLimits,
 };
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
@@ -25,6 +25,14 @@ enum Operation {
     Backup { destination: PathBuf },
     /// Publish exact bounded binary stdin under a fresh typed object ID.
     Put { object: String },
+    /// Publish after complete capacity admission under explicit native limits.
+    PutBounded {
+        object: String,
+        #[arg(long)]
+        max_objects: usize,
+        #[arg(long)]
+        max_bytes: u64,
+    },
     /// Verify an existing object and print metadata without payload output.
     Inspect { object: String },
 }
@@ -48,38 +56,73 @@ pub fn archive_report(
         "digest":value.digest.iter().map(|b|format!("{b:02x}")).collect::<String>()
     }))
 }
-fn input(reader: impl Read) -> Result<Vec<u8>> {
+fn input(reader: impl Read, maximum: usize) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
     bytes
-        .try_reserve_exact(MAX_PAYLOAD_BYTES + 1)
+        .try_reserve_exact(maximum + 1)
         .map_err(|_| "object input allocation failed")?;
     reader
-        .take((MAX_PAYLOAD_BYTES + 1) as u64)
+        .take((maximum + 1) as u64)
         .read_to_end(&mut bytes)
         .map_err(|_| "object input unavailable")?;
-    if bytes.len() > MAX_PAYLOAD_BYTES {
-        return Err("object input exceeds 8 MiB".into());
+    if bytes.len() > maximum {
+        return Err("object input exceeds permitted bytes".into());
     }
     Ok(bytes)
 }
 pub fn run(arguments: Arguments) -> Result<()> {
     let project = arguments.project.parse::<ProjectId>()?;
     let object = match &arguments.operation {
-        Operation::Put { object } | Operation::Inspect { object } => {
-            Some(object.parse::<ObjectId>()?)
-        }
+        Operation::Put { object }
+        | Operation::PutBounded { object, .. }
+        | Operation::Inspect { object } => Some(object.parse::<ObjectId>()?),
         Operation::Init | Operation::List | Operation::Backup { .. } => None,
     };
+    let limits = match &arguments.operation {
+        Operation::PutBounded {
+            max_objects,
+            max_bytes,
+            ..
+        } => {
+            let limits = WriteLimits::new(*max_objects, *max_bytes)?;
+            if limits.objects() == 0 {
+                return Err("object count limit forbids writes".into());
+            }
+            Some(limits)
+        }
+        _ => None,
+    };
     // Buffer the bounded redirected stream before acquiring any namespace lock.
-    let bytes = if matches!(arguments.operation, Operation::Put { .. }) {
+    let bytes = if matches!(
+        arguments.operation,
+        Operation::Put { .. } | Operation::PutBounded { .. }
+    ) {
         if std::io::stdin().is_terminal() {
             return Err("object input requires redirected stdin".into());
         }
-        Some(input(std::io::stdin().lock())?)
+        let maximum = limits.map_or(MAX_PAYLOAD_BYTES, |value| {
+            value.payload_bytes().min(MAX_PAYLOAD_BYTES as u64) as usize
+        });
+        Some(input(std::io::stdin().lock(), maximum)?)
     } else {
         None
     };
     match arguments.operation {
+        Operation::PutBounded { .. } => {
+            let mut owner = ProjectDirectory::open(arguments.path, project)?;
+            let value = owner.put_bounded(
+                object.ok_or("object identity unavailable")?,
+                &bytes.ok_or("object input unavailable")?,
+                limits.ok_or("object write limits unavailable")?,
+            )?;
+            super::write_operator_metadata(&serde_json::json!({
+                "format":1,"project":project.to_string(),"object":value.object().to_string(),
+                "bytes":value.report().payload_bytes,
+                "sha256":value.report().sha256.iter().map(|b|format!("{b:02x}")).collect::<String>(),
+                "objects":value.inventory().entries().len(),"total_bytes":value.inventory().payload_bytes(),
+                "digest":value.inventory().digest().iter().map(|b|format!("{b:02x}")).collect::<String>()
+            }))
+        }
         Operation::Backup { destination } => {
             let owner = ProjectDirectory::open(arguments.path, project)?;
             let value = owner.backup_to(destination)?;

@@ -10,7 +10,7 @@ pub use archive::{
 };
 pub use directory::{
     Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ObjectSnapshot,
-    ProjectDirectory, StoredObject, object_id_from_name,
+    ProjectDirectory, StoredObject, WriteLimits, WriteReceipt, object_id_from_name,
 };
 pub use format::{
     HEADER_BYTES, MAX_PAYLOAD_BYTES, ObjectId, ProjectId, VerifiedObject, encode, verify,
@@ -54,6 +54,10 @@ pub enum Error {
     ArchiveChecksum,
     #[error("object archive destination must be a fresh name outside the source directory")]
     Destination,
+    #[error("invalid native object write limits")]
+    WriteLimits,
+    #[error("object identity already exists")]
+    Exists,
     #[error("object restore stage is incomplete; final directory was not selected")]
     RestoreStage(#[source] Box<Error>),
     #[error("object was published but its final durability or contents require inspection")]

@@ -1136,3 +1136,13 @@ identity and complete inventory are checked again. Nonempty unselected private
 stages remain for explicit inspection; there is no recursive janitor or overwrite
 retry. See [contract](object-restore.md). This closes the standalone native copy
 operation only; AccountRoot coordination and platform/production gates remain open.
+
+## Follow-up: explicit native object write limits
+
+[ADR0124](adr/0124-explicit-native-object-write-limits.md) admits an immutable fresh
+object against a complete current inventory and explicit per-call count/byte
+limits. Expected final sorted metadata/digest is prepared before staging; complete
+source/result rechecks preserve uncertain outcomes. The CLI bounds input before
+locking and prints metadata only. See [contract](object-write-limits.md). This is
+not persisted quota policy, authorization, a service resource gate or an HTTP
+upload endpoint; original native put remains explicitly separate.
