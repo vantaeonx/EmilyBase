@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test tests/*.test.mjs",
-    "test:integration": "npm run build && node --test tests/live.integration.mjs",
+    "test:integration": "npm run build && node --test tests/*.integration.mjs",
     "format": "prettier --write \"src/**/*.ts\" \"tests/*.mjs\" \"*.json\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"tests/*.mjs\" \"*.json\""
   },

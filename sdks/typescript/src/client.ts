@@ -1,6 +1,7 @@
 import * as migrations from "./migrations.js";
 import * as rows from "./rows.js";
 import * as decode from "./decode.js";
+import { readBody } from "./response.js";
 import { EmilyBaseError } from "./types.js";
 import type {
   MigrationApplied,
@@ -73,41 +74,6 @@ function payload(sql: string, parameters: readonly Value[]): string {
   const body = JSON.stringify({ sql, parameters: values });
   if (encoder.encode(body).length > 65536) return input();
   return body;
-}
-async function body(
-  response: Response,
-  maximum = MAX_RESPONSE_BYTES,
-): Promise<unknown> {
-  const length = response.headers.get("content-length");
-  if (length !== null && /^\d+$/.test(length) && Number(length) > maximum) {
-    await response.body?.cancel().catch(() => undefined);
-    throw new EmilyBaseError("response_limit", "unknown", response.status);
-  }
-  if (response.body === null)
-    throw new EmilyBaseError("protocol_error", "unknown", response.status);
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder("utf-8", { fatal: true });
-  let size = 0;
-  let text = "";
-  try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      size += value.length;
-      if (size > maximum)
-        throw new EmilyBaseError("response_limit", "unknown", response.status);
-      text += decoder.decode(value, { stream: true });
-    }
-    text += decoder.decode();
-    try {
-      return JSON.parse(text) as unknown;
-    } catch {
-      throw new EmilyBaseError("protocol_error", "unknown", response.status);
-    }
-  } finally {
-    await reader.cancel().catch(() => undefined);
-    reader.releaseLock();
-  }
 }
 /** Project scope only. No implicit retries, credential persistence or administrator APIs. */
 export class EmilyBaseClient {
@@ -364,7 +330,7 @@ export class EmilyBaseClient {
         `${this.#url}/v1/projects/${this.#project}/${route}`,
         request,
       );
-      const json = await body(response, maximum);
+      const json = await readBody(response, maximum);
       if (!response.ok) {
         const code =
           json !== null &&

@@ -74,8 +74,8 @@ exact-key reads or an atomic packet of typed writes. Native
 [filtered keyset pages](docs/user-row-pages.md) retain only SELECT-permitted rows
 and continue by the last visible key. A root-only
 [trusted backend HTTP adapter](docs/user-row-http.md) now applies this gateway with
-separate current service and user credentials. Public user-only row HTTP and roles
-remain pending.
+separate current service and user credentials. The admitted public adapter below
+also supports user-only rows; roles remain pending.
 Trusted local operators can also [enable, list and install policies offline](docs/policy-cli.md)
 through the retained original root, with a bounded private key file and exact
 revision/definition semantics. The shared file loader preserves server startup rules.
@@ -94,7 +94,9 @@ private owner and authenticates before public data lookup. Four separate
 sign-in/refresh/logout and own metadata without service credentials. The
 [public row HTTP adapter](docs/public-row-http.md) also exposes owned get/page/write
 using the same current admission/session/policy boundary. Roles still require
-separate implementation. The
+separate implementation. A separate [user TypeScript client](sdks/typescript/README.md#explicit-user-client)
+transports these session and row operations with explicit caller-owned tokens,
+bounded validation and no automatic retry or credential persistence. The
 [offline admission CLI](docs/admission-cli.md) explicitly migrates to closed v5,
 inspects status and opens/closes using the current private key file and exact
 revision. It preserves current sessions and refuses stale reopening commands.

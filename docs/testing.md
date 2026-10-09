@@ -4429,3 +4429,33 @@ resolve. Added891 Rust lines; total103040 Rust (99148 effective),920 TypeScript,
 1582 JavaScript and1785 Python,107327 overall. See
 [verification](measurements/2026-10-09-public-row-http/verification.json).
 Signup/roles, user client/browser integration and production gates remain open.
+
+
+## Explicit user TypeScript SDK, 2026-10-09
+
+Run npm test and npm run format:check in sdks/typescript, then npm run
+test:integration after building both emilybase-cli/emilybase-server. The actual
+executed Node22.22.1 run passed33 unit tests; real-server integration passed12
+checks each with stable1.99 and minimum1.89.0 binaries, with no skipped cases.
+The new unit contribution is10 tests including128 generated Unicode byte cases.
+Two new independent private-root WAL scenarios plus their parent exercise existing
+CLI provisioning, current policies, hidden pages, exact i64 keys, late CHECK packet
+rollback, received writes/refresh/logout across six new SIGKILLs per binary run,
+nonempty verified copy closure/fresh login and offline disable/enable revocation.
+
+Two observed-lost writes and two observed-lost single-use refreshes per binary run
+use a test Fetch adapter that consumes actual200 replies then throws before the
+SDK receives them. Dispatch remains exactly once. The fixture explicitly retains
+its observed refresh pair to continue; the SDK has no automatic recovery or retry.
+This does not measure arbitrary pre-confirmation outcomes or power loss. Original
+23 privileged-client unit checks and9 live checks were rerun with the extracted
+unchanged bounded response reader. Strict SDK compilation/format, Rust format and
+both CLI/server builds pass; Rust source is unchanged, and no new ASAN/fuzz test
+is claimed. In external legacy-container mode the private-root SDK case explicitly
+skips because that probe supplies no private provisioning authority. Browser/mobile,
+CORS/cookies/TLS, npm release and production gates remain separate.
+
+Before fixes, tests reproduced missing access-token dispatch, validation against
+later mutated packet length and untyped invalid-options errors. The final source
+hashes and test/log digests are in
+[verification](measurements/2026-10-09-explicit-user-sdk/verification.json).

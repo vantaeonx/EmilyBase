@@ -1,4 +1,5 @@
 export { EmilyBaseClient } from "./client.js";
+export { EmilyBaseUserClient } from "./user-client.js";
 export { EmilyBaseError } from "./types.js";
 export type {
   MigrationApplied,
@@ -11,6 +12,9 @@ export type {
   RowValue,
   RowWrite,
   ClientOptions,
+  UserClientOptions,
+  UserSession,
+  UserInfo,
   RequestOptions,
   Outcome,
   Value,

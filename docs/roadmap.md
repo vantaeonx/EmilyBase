@@ -1038,3 +1038,17 @@ nonempty copy. A positional-array defect is reproduced in both original row
 grammar validators before adding the shared object-only guard. See
 [HTTP contract](public-row-http.md). Signup/roles, user SDK/dashboard, browser
 integration and production acceptance remain open.
+
+
+## Follow-up: explicit user TypeScript client
+
+[ADR0115](adr/0115-explicit-user-typescript-client.md) separates admitted user
+session/row transport from privileged service-key SQL/migration authority. The
+client takes caller-owned purpose tokens, snapshots bounded typed packets and
+preserves exact integer metadata without credential storage or automatic retries.
+Unit regressions cover missing-token dispatch, mutable receipt-count input and
+invalid options. Actual Node Fetch/Rust binary checks on both toolchains and WALs
+cover owned reads/pages, late packet rollback, received-result kills, deliberate
+lost responses, nonempty verified restore and offline revocation. See
+[user contract](user-sdk.md). Signup/roles, browser/device integration, persistent
+session orchestration, dashboard/Kotlin and production acceptance remain open.

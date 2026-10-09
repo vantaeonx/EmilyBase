@@ -44,6 +44,25 @@ export interface ClientOptions {
   apiKey: string;
   fetch?: typeof globalThis.fetch;
 }
+/** User authority only; never supply a project service key here. */
+export interface UserClientOptions {
+  url: string;
+  project: string;
+  fetch?: typeof globalThis.fetch;
+}
+export interface UserSession {
+  access_token: string;
+  refresh_token: string;
+  token_type: "Bearer";
+  /** Exact canonical Unix seconds, through the signed64 server clock range. */
+  expires_at: string;
+}
+export interface UserInfo {
+  id: string;
+  login: string;
+  credential_epoch: string;
+  disabled: boolean;
+}
 export type Outcome = "not_started" | "not_committed" | "unknown";
 export class EmilyBaseError extends Error {
   readonly code: string;

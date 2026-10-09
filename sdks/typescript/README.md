@@ -7,7 +7,7 @@ the tested environment. Build from the repository root:
 ```sh
 npm ci --ignore-scripts --prefix sdks/typescript
 npm test --prefix sdks/typescript
-cargo build --locked -p emilybase-server
+cargo build --locked -p emilybase-cli -p emilybase-server
 npm run test:integration --prefix sdks/typescript
 ```
 
@@ -32,7 +32,8 @@ client.close();
 
 Project creation/rotation are administrator operations through the documented
 [HTTP API](../../docs/server.md). The SDK exposes project SQL, explain, status, typed row operations and bounded migrations. Project keys currently grant full access to one project;
-user/row policies do not exist. Use synthetic data and keep credentials private.
+this privileged client bypasses user-row policies. Keep service keys on a trusted
+backend. A separate user client is described below. Use synthetic data and keep credentials private.
 No default credentials, persistence, logging, retries or administrator client.
 
 ## Behavior and limits
@@ -71,7 +72,7 @@ Private fields and safe serialization omit keys; this is not memory encryption.
 
 The browser build uses standard Fetch APIs, but the current server has no CORS
 configuration. Browser access requires a same-origin development reverse proxy.
-Browser runtime/device checks, realtime/uploads/sessions and Kotlin remain pending.
+Browser runtime/device checks, realtime/uploads and Kotlin remain pending.
 
 ## Executed verification
 
@@ -91,7 +92,8 @@ checks, not a production or browser-security audit.
 
 These methods call the existing Rust row API; they do not implement storage or
 transactions in JavaScript. Use a trusted server-side project service key. The
-current API does not grant browser/mobile user-token access to public tables.
+service client has full project authority. The separate user client below applies
+the current Rust user admission/session/row policies.
 
 ```ts
 const primary: RowKey = { type: "integer", value: "9223372036854775807" };
@@ -181,3 +183,56 @@ a timeout or lost reply. Reopen/inspect and explicitly retry the exact definitio
 the client never retries automatically or changes versions/SQL to hide an error.
 There is no migration file loader, secret persistence, dashboard, ALTER/schema diff,
 down/large/online orchestration or npm release in this increment.
+
+
+## Explicit user client
+
+Use EmilyBaseUserClient for admitted user HTTP. The project must have existing
+users, policies and an explicitly opened v5 admission flag. Never ship a project
+service key to end users. This separate client accepts only origin/project/fetch;
+it has no SQL, schema, migration or administrator methods.
+
+```ts
+import { EmilyBaseUserClient } from "./dist/index.js";
+const users = new EmilyBaseUserClient({ url: "http://127.0.0.1:7000", project: projectId });
+let pair = await users.signIn(loginFromForm, exactPasswordFromForm);
+const me = await users.me(pair.access_token);
+const page = await users.rowPage(pair.access_token, "owned", 10);
+await users.rowWrite(pair.access_token, "owned", [
+  { op: "delete", key: { type: "integer", value: "7" } },
+]);
+pair = await users.refresh(pair.refresh_token); // deliberate single-use refresh
+await users.logout(pair.refresh_token);
+users.close();
+```
+
+rowGet(access, table, key), rowPage(access, table, limit, after) and
+rowWrite(access, table, operations) reuse exact RowKey/RowValue/RowWrite types.
+All methods accept RequestOptions last. Import UserClientOptions, UserSession and
+UserInfo as types. Session expiry and credential epoch remain exact decimal strings.
+Rows follow server schema column order; use trusted metadata for an owner ID.
+
+No credentials are stored by the client, no automatic retry/refresh occurs, and
+returned plaintext pairs belong to the caller. Do not log/serialize them. The
+client itself serializes only project/closed metadata; it cannot wipe application
+copies or immutable JavaScript strings. Token parsing checks purpose/shape only;
+the original Rust private owner decides current authority on every operation.
+
+Passwords preserve exact Unicode UTF-8 without trimming, with1..1024-byte and4096
+escaped JSON limits; invalid UTF-16 refuses locally. Session replies cap at4096,
+row requests/replies at65536 bytes. Row writes bind receipt count to the copied
+packet, preserving i64/u64 digits and float bits through existing row validators.
+
+This client uses not_started for local rejection, and conservative unknown for
+remote errors, disconnects, malformed replies or cancellation after dispatch.
+The private clock may commit separately even when a row packet refuses. A lost
+single-use refresh result can require signing in again. Never infer rollback or
+retry automatically; inspect the application's durable state after a lost write.
+The original privileged client retains its existing refusal classification.
+
+The expanded integration script includes private-root user scenarios using actual
+Rust CLI/server binaries. EMILYBASE_CLI_BIN and EMILYBASE_SERVER_BIN can select
+explicit locally built binaries. An external EMILYBASE_TEST_URL remains the legacy
+registry probe and explicitly skips private-root provisioning. No npm release or
+browser/device/CORS/cookie/TLS contract is established here. See the full
+[user contract](../../docs/user-sdk.md).
