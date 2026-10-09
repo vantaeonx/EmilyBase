@@ -236,15 +236,34 @@ fn scan(directory: &File) -> Result<Vec<ObjectId>> {
     Ok(objects)
 }
 fn digest(project: ProjectId, entries: &[InventoryEntry], payload_bytes: u64) -> [u8; 32] {
+    digest_components(
+        project,
+        entries.len() as u32,
+        payload_bytes,
+        entries.iter().map(|entry| {
+            (
+                entry.object,
+                entry.report.payload_bytes as u64,
+                entry.report.sha256,
+            )
+        }),
+    )
+}
+pub(crate) fn digest_components(
+    project: ProjectId,
+    count: u32,
+    payload_bytes: u64,
+    entries: impl Iterator<Item = (ObjectId, u64, [u8; 32])>,
+) -> [u8; 32] {
     let mut hash = Sha256::new();
     hash.update(DIGEST_DOMAIN);
     hash.update(project.as_bytes());
-    hash.update((entries.len() as u32).to_le_bytes());
+    hash.update(count.to_le_bytes());
     hash.update(payload_bytes.to_le_bytes());
-    for entry in entries {
-        hash.update(entry.object.as_bytes());
-        hash.update((entry.report.payload_bytes as u64).to_le_bytes());
-        hash.update(entry.report.sha256);
+    for (object, bytes, checksum) in entries {
+        hash.update(object.as_bytes());
+        hash.update(bytes.to_le_bytes());
+        hash.update(checksum);
     }
     hash.finalize().into()
 }

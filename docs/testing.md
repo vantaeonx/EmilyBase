@@ -4570,3 +4570,26 @@ races/snapshot atomicity/HTTP. Capture makes five complete read passes and retai
 bounded logical bytes, not a global heap reservation. There is no persistent object
 archive/restore, root backup integration, put quota or production acceptance.
 See [evidence](measurements/2026-10-09-object-inventory/verification.json).
+
+
+## Checked object archive bytes, 2026-10-09
+
+Stable1.99/minimum1.89.0 each pass92 checks on551 frozen hashes:46 object,
+33 storage and13 actual CLI cases. Eleven new regular cases cover independent
+Python struct/hashlib/zlib bytes, all prefixes/single-byte damage, outer-resealed
+structural failures, nested project/ID mismatch, duplicate/out-of-order sets and
+24 configured generated archives/24 arbitrary-input draws. The exact maximum
+archive67,124,352 bytes includes128 objects/64 MiB payload and passes native file
+inspection as well as borrowed decoding/canonical re-encoding. Actual CLI cases
+cover bounded private admission, no partial output and readonly stdout failure.
+Three harness workers run explicitly from parents; all eight existing kills rerun.
+No new readonly kill, durable archive ACK, power-loss or restore proof is claimed.
+
+Workspace/fuzz format/strict lint, stable CLI/server build, minimum workspace build
+and all-fuzz compilation pass. ASAN object_archive executes2,083,712 inputs in
+46s, RSS404MiB under512,max262144 including16 expected-project
+bytes,776 seeds. Both raw and outer-checksum-resealed inputs reach the
+real decoder. Fuzz is smaller than the independently tested maximum archive; it
+does not cover filesystem consistency, publication/restore or user authorization.
+Current root backups still exclude objects; encoding a Vec is not a durable backup.
+See [evidence](measurements/2026-10-09-object-archive/verification.json).

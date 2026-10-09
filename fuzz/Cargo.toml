@@ -446,3 +446,10 @@ path = "fuzz_targets/object_name.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "object_archive"
+path = "fuzz_targets/object_archive.rs"
+test = false
+doc = false
+bench = false

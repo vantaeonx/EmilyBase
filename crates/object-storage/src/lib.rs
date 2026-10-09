@@ -1,7 +1,12 @@
 //! Experimental original object envelope, not an HTTP upload or access authority.
+mod archive;
 mod directory;
 mod format;
 mod inspect;
+pub use archive::{
+    ARCHIVE_HEADER_BYTES, ArchiveReport, ArchivedObject, MAX_ARCHIVE_BYTES, VerifiedArchive,
+    encode_archive, encode_verified_archive, inspect_archive_file, verify_archive,
+};
 pub use directory::{
     Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ObjectSnapshot,
     ProjectDirectory, StoredObject, object_id_from_name,
@@ -39,6 +44,12 @@ pub enum Error {
     Inventory,
     #[error("object inventory changed during verification")]
     InventoryChanged,
+    #[error("invalid object archive")]
+    Archive,
+    #[error("unsupported object archive version {0}")]
+    ArchiveVersion(u16),
+    #[error("object archive checksum mismatch")]
+    ArchiveChecksum,
     #[error("object was published but its final durability or contents require inspection")]
     PublicationUnknown,
     #[error("owned object publication failed")]

@@ -24,6 +24,8 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Readonly full inspection of an experimental scoped object archive.
+    ObjectArchiveVerify { path: PathBuf, project: String },
     /// Offline native project object directory; no HTTP or user authority.
     ObjectDirectory(objects::Arguments),
     /// Bounded readonly inspection of an experimental private object envelope.
@@ -271,6 +273,18 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
             let info = root.rotate_project_key_to_file(&project, output)?;
             write_operator_metadata(
                 &serde_json::json!({"project":info.id,"key_epoch":info.key_epoch.to_string()}),
+            )?;
+        }
+        Command::ObjectArchiveVerify { path, project } => {
+            let project = project.parse::<emilybase_object_storage::ProjectId>()?;
+            let report = emilybase_object_storage::inspect_archive_file(path, project)?;
+            let digest = report
+                .digest
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>();
+            write_operator_metadata(
+                &serde_json::json!({"format":1,"project":project.to_string(),"objects":report.objects,"bytes":report.payload_bytes,"digest":digest}),
             )?;
         }
         Command::ObjectDirectory(arguments) => objects::run(arguments)?,

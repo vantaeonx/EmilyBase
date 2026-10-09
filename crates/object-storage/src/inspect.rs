@@ -43,11 +43,14 @@ pub fn publish_file(
     }
 }
 pub(crate) fn private(file: &File) -> Result<std::fs::Metadata> {
+    private_limit(file, HEADER_BYTES + MAX_PAYLOAD_BYTES)
+}
+fn private_limit(file: &File, maximum: usize) -> Result<std::fs::Metadata> {
     let m = file.metadata()?;
     if !m.is_file() || m.nlink() != 1 || !matches!(m.mode() & 0o777, 0o600 | 0o400) {
         return Err(Error::File);
     }
-    if m.len() > (HEADER_BYTES + MAX_PAYLOAD_BYTES) as u64 {
+    if m.len() > maximum as u64 {
         return Err(Error::Limit);
     }
     Ok(m)
@@ -57,20 +60,37 @@ pub(crate) fn read_open_file(
     project: ProjectId,
     object: ObjectId,
 ) -> Result<(Vec<u8>, FileReport, std::fs::Metadata)> {
-    let before = private(file)?;
-    let mut bytes = Vec::new();
-    bytes
-        .try_reserve_exact(before.len() as usize)
-        .map_err(|_| Error::Allocation)?;
-    (&mut *file)
-        .take((HEADER_BYTES + MAX_PAYLOAD_BYTES + 1) as u64)
-        .read_to_end(&mut bytes)?;
+    let maximum = HEADER_BYTES + MAX_PAYLOAD_BYTES;
+    let (bytes, before) = read_image(file, maximum)?;
     let view = verify(&bytes, project, object)?;
     let report = FileReport {
         payload_bytes: view.payload().len(),
         sha256: *view.sha256(),
     };
-    let after = private(file)?;
+    let after = recheck(file, &before, maximum)?;
+    Ok((bytes, report, after))
+}
+pub(crate) fn read_image(file: &mut File, maximum: usize) -> Result<(Vec<u8>, std::fs::Metadata)> {
+    let before = private_limit(file, maximum)?;
+    let mut bytes = Vec::new();
+    bytes
+        .try_reserve_exact(before.len() as usize)
+        .map_err(|_| Error::Allocation)?;
+    (&mut *file)
+        .take(maximum.checked_add(1).ok_or(Error::Limit)? as u64)
+        .read_to_end(&mut bytes)?;
+    if bytes.len() > maximum {
+        return Err(Error::Limit);
+    }
+    let after = recheck(file, &before, maximum)?;
+    Ok((bytes, after))
+}
+pub(crate) fn recheck(
+    file: &File,
+    before: &std::fs::Metadata,
+    maximum: usize,
+) -> Result<std::fs::Metadata> {
+    let after = private_limit(file, maximum)?;
     if before.len() != after.len()
         || before.mtime() != after.mtime()
         || before.mtime_nsec() != after.mtime_nsec()
@@ -79,7 +99,27 @@ pub(crate) fn read_open_file(
     {
         return Err(Error::File);
     }
-    Ok((bytes, report, after))
+    Ok(after)
+}
+pub(crate) fn open_private(path: &Path) -> Result<File> {
+    let fd = rustix::fs::open(
+        path,
+        OFlags::RDONLY | OFlags::CLOEXEC | OFlags::NOFOLLOW | OFlags::NONBLOCK,
+        Mode::empty(),
+    )
+    .map_err(std::io::Error::from)?;
+    Ok(fd.into())
+}
+pub(crate) fn check_visible(path: &Path, after: &std::fs::Metadata) -> Result<()> {
+    let visible = std::fs::symlink_metadata(path)?;
+    if !visible.is_file()
+        || (visible.dev(), visible.ino()) != (after.dev(), after.ino())
+        || !matches!(visible.mode() & 0o777, 0o600 | 0o400)
+        || visible.nlink() != 1
+    {
+        return Err(Error::File);
+    }
+    Ok(())
 }
 /// Bounded offline inspection only; never creates/repairs/publishes a file.
 /// The supplied path is operator input, not an HTTP object name.
@@ -89,21 +129,8 @@ pub fn inspect_file(
     object: ObjectId,
 ) -> Result<FileReport> {
     let path = path.as_ref();
-    let fd = rustix::fs::open(
-        path,
-        OFlags::RDONLY | OFlags::CLOEXEC | OFlags::NOFOLLOW | OFlags::NONBLOCK,
-        Mode::empty(),
-    )
-    .map_err(std::io::Error::from)?;
-    let mut file: File = fd.into();
+    let mut file = open_private(path)?;
     let (_, report, after) = read_open_file(&mut file, project, object)?;
-    let visible = std::fs::symlink_metadata(path)?;
-    if !visible.is_file()
-        || (visible.dev(), visible.ino()) != (after.dev(), after.ino())
-        || !matches!(visible.mode() & 0o777, 0o600 | 0o400)
-        || visible.nlink() != 1
-    {
-        return Err(Error::File);
-    }
+    check_visible(path, &after)?;
     Ok(report)
 }

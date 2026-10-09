@@ -1098,3 +1098,12 @@ with a scoped deterministic digest. Immutable capture copies matching bytes and
 rechecks the complete source for a future archive encoder. Offline list prints
 metadata only. See [contract](object-inventory.md). These are work bounds, not put
 quotas. Persistent object archive/restore and root backup integration remain open.
+
+
+## Follow-up: complete checked object archive byte format
+
+[ADR0120](adr/0120-checked-object-archive-format.md) frames immutable captured
+objects with complete scoped count/length/digest validation and nested envelope
+checks. It supports canonical encoding/borrowed verification and a bounded readonly
+metadata CLI. See [format](object-archive-format.md). Encoding bytes is not durable
+backup publication or restore. Those gates and AccountRoot integration remain open.

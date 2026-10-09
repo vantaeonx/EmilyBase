@@ -32,3 +32,4 @@ __pycache__/
 /synthetic-copy/
 *.table.json
 *.object
+*.object-archive
