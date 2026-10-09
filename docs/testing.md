@@ -4399,3 +4399,33 @@ operations/442 local references resolve. Added1221 Rust lines; total102149 Rust
 (98271 effective),920 TypeScript,1582 JavaScript,1785 Python,106436 overall. See
 [verification](measurements/2026-10-09-public-session-http/verification.json).
 Public user rows, signup/roles, user SDK/dashboard and production gates remain open.
+
+
+## Admitted public typed row HTTP
+
+ADR0114 tests access-only get/page/write through the original current private
+session/table-policy/data owners. Owned CRUD, hidden reads/visible pages, whole
+late packet rollback, actual reserved ledger/current policies, invalid credentials
+before public metadata, delayed flag/epoch/policy, exact signed wire and one
+concurrent primary winner are covered. Outer positional get/page/batch arrays are
+reproduced through both original grammar validators before their shared correction;
+inner typed row/value arrays remain valid.
+
+Rust1.99/1.89 pass101 checks each: account HTTP54, original row grammar16,
+native public9, actual account network14, original HTTP7 and documentation1.
+One original process helper is intentionally ignored. Seven regular cases are new.
+Six new process kills per compiler cover four received write responses and two
+unread write results after independent complete-commit observation, both WALs.
+Nonempty verified copy requires explicit reopen/fresh login while source remains
+active. Existing native24 generated models/four packet kills rerun. No new result
+proves power-loss durability or arbitrary interrupted-unconfirmed outcomes.
+
+Actual pure row_requests ASan runs3516827 inputs in46 seconds, no findings,
+RSS351MiB under512, max input65538/request65536 bytes,6309 initial seeds with15 new
+object/boundary examples. It does not fuzz the complete network/auth/policy flow.
+Strict workspace/fuzz formatting/linting, minimum workspace build and all-target
+fuzz compilation pass on504 frozen hashes. OpenAPI43 operations/478 local refs
+resolve. Added891 Rust lines; total103040 Rust (99148 effective),920 TypeScript,
+1582 JavaScript and1785 Python,107327 overall. See
+[verification](measurements/2026-10-09-public-row-http/verification.json).
+Signup/roles, user client/browser integration and production gates remain open.

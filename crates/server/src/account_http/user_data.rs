@@ -15,7 +15,7 @@ fn access(request: &Request) -> ApiResult<Zeroizing<String>> {
     }
     Ok(Zeroizing::new(token.to_owned()))
 }
-fn failure(error: Error) -> Failure {
+pub(super) fn failure(error: Error) -> Failure {
     match error {
         Error::UserTransport(UserRowTransportError::Request)
         | Error::UserRows(UserRowsError::Input) => {

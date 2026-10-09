@@ -6235,6 +6235,321 @@
           }
         }
       }
+    },
+    "/v1/projects/{id}/user/rows/get": {
+      "post": {
+        "operationId": "user_rows_get",
+        "summary": "Read one admitted current-user policy-visible row",
+        "description": "Only explicit account-root mode with current enabled private v5 admission. Exactly one Authorization: Bearer current user access token; no project-service key or X-EmilyBase-Access fallback. Shared original workers, project and actual socket-peer budgets. Strict object-only JSON,64KiB/five-second body bound, original lossless tagged row grammar. Current flag rechecked after body/root waits before decoding/clock; original native access authentication precedes public data/table metadata lookup. Current actual table/schema and USING/CHECK proof remain held through the original commit. Missing policies deny; hidden and absent rows are indistinguishable. No SQL/DDL/admin/migration ledger authority or automatic lost-result retry. Verified copy requires explicit reopen/fresh login. See docs/public-row-http.md.",
+        "security": [
+          {
+            "UserAccess": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowFound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid strict request, typed key/row or actual table: user_row_rejected or table_rejected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "description": "Response/storage uncertainty: user_row_outcome_requires_inspection; current binding/catalog/clock/worker failures also refuse with static codes. Never infer rollback.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Policy or typed packet refused: user_row_rejected. No partial public commit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Private v4 policy catalog has not been explicitly enabled: policy_catalog_disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowPointRequest"
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/v1/projects/{id}/user/rows/page": {
+      "post": {
+        "operationId": "user_rows_page",
+        "summary": "Read a bounded admitted current-user visible keyset page",
+        "description": "Only explicit account-root mode with current enabled private v5 admission. Exactly one Authorization: Bearer current user access token; no project-service key or X-EmilyBase-Access fallback. Shared original workers, project and actual socket-peer budgets. Strict object-only JSON,64KiB/five-second body bound, original lossless tagged row grammar. Current flag rechecked after body/root waits before decoding/clock; original native access authentication precedes public data/table metadata lookup. Current actual table/schema and USING/CHECK proof remain held through the original commit. Missing policies deny; hidden and absent rows are indistinguishable. No SQL/DDL/admin/migration ledger authority or automatic lost-result retry. Verified copy requires explicit reopen/fresh login. See docs/public-row-http.md.",
+        "security": [
+          {
+            "UserAccess": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid strict request, typed key/row or actual table: user_row_rejected or table_rejected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "description": "Response/storage uncertainty: user_row_outcome_requires_inspection; current binding/catalog/clock/worker failures also refuse with static codes. Never infer rollback.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Policy or typed packet refused: user_row_rejected. No partial public commit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Private v4 policy catalog has not been explicitly enabled: policy_catalog_disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowPageRequest"
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/v1/projects/{id}/user/rows/write": {
+      "post": {
+        "operationId": "user_rows_write",
+        "summary": "Commit one admitted current-user policy-enforced write packet",
+        "description": "Only explicit account-root mode with current enabled private v5 admission. Exactly one Authorization: Bearer current user access token; no project-service key or X-EmilyBase-Access fallback. Shared original workers, project and actual socket-peer budgets. Strict object-only JSON,64KiB/five-second body bound, original lossless tagged row grammar. Current flag rechecked after body/root waits before decoding/clock; original native access authentication precedes public data/table metadata lookup. Current actual table/schema and USING/CHECK proof remain held through the original commit. Missing policies deny; hidden and absent rows are indistinguishable. No SQL/DDL/admin/migration ledger authority or automatic lost-result retry. Verified copy requires explicit reopen/fresh login. See docs/public-row-http.md.",
+        "security": [
+          {
+            "UserAccess": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete bounded result; mutation transaction is acknowledged",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowBatchChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid strict request, typed key/row or actual table: user_row_rejected or table_rejected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "413": {
+            "$ref": "#/components/responses/TransferError413"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          },
+          "503": {
+            "description": "Response/storage uncertainty: user_row_outcome_requires_inspection; current binding/catalog/clock/worker failures also refuse with static codes. Never infer rollback.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Policy or typed packet refused: user_row_rejected. No partial public commit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Private v4 policy catalog has not been explicitly enabled: policy_catalog_disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowBatchRequest"
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
     }
   },
   "components": {

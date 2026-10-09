@@ -2,11 +2,22 @@
 use super::*;
 
 #[derive(Clone)]
-struct UserScope {
+pub(super) struct UserScope {
     project: Arc<str>,
     access: Option<Arc<Zeroizing<String>>>,
     root: Arc<tokio::sync::Mutex<AccountRoot>>,
     _permit: Arc<OwnedSemaphorePermit>,
+}
+impl UserScope {
+    pub(super) fn project(&self) -> &str {
+        &self.project
+    }
+    pub(super) fn access(&self) -> crate::Result<&str> {
+        self.access
+            .as_ref()
+            .map(|token| token.as_str())
+            .ok_or(Error::Denied)
+    }
 }
 pub(super) fn routes(app: App) -> Router<App> {
     Router::new()
@@ -14,6 +25,18 @@ pub(super) fn routes(app: App) -> Router<App> {
         .route("/v1/projects/{id}/user/refresh", post(refresh))
         .route("/v1/projects/{id}/user/logout", post(logout))
         .route("/v1/projects/{id}/user/me", post(me))
+        .route(
+            "/v1/projects/{id}/user/rows/get",
+            post(super::public_rows::get),
+        )
+        .route(
+            "/v1/projects/{id}/user/rows/page",
+            post(super::public_rows::page),
+        )
+        .route(
+            "/v1/projects/{id}/user/rows/write",
+            post(super::public_rows::write),
+        )
         .route_layer(middleware::from_fn_with_state(app, guard))
 }
 async fn guard(State(app): State<App>, request: Request, next: Next) -> Response {
@@ -54,11 +77,19 @@ async fn authorize(app: &App, request: Request, route: &str) -> ApiResult<Reques
     if headers.next().is_some() {
         return Err(denied());
     }
-    let access = if route == "/v1/projects/{id}/user/me" {
+    let access = if matches!(
+        route,
+        "/v1/projects/{id}/user/me"
+            | "/v1/projects/{id}/user/rows/get"
+            | "/v1/projects/{id}/user/rows/page"
+            | "/v1/projects/{id}/user/rows/write"
+    ) {
         let token = first
             .and_then(|value| value.to_str().ok())
             .and_then(|value| value.strip_prefix("Bearer "))
-            .filter(|token| token.len() == 102 && token.is_ascii())
+            .filter(|token| {
+                token.len() == emilybase_auth::tokens::TOKEN_TEXT_BYTES && token.is_ascii()
+            })
             .ok_or_else(denied)?;
         Some(Arc::new(Zeroizing::new(token.to_owned())))
     } else {
@@ -104,6 +135,13 @@ async fn blocking<T: Send + 'static>(
     scope: UserScope,
     work: impl FnOnce(&mut AccountRoot, &UserScope) -> crate::Result<T> + Send + 'static,
 ) -> ApiResult<T> {
+    blocking_mapped(scope, work, account_failure).await
+}
+pub(super) async fn blocking_mapped<T: Send + 'static>(
+    scope: UserScope,
+    work: impl FnOnce(&mut AccountRoot, &UserScope) -> crate::Result<T> + Send + 'static,
+    failure: fn(Error) -> Failure,
+) -> ApiResult<T> {
     tokio::task::spawn_blocking(move || {
         let owner = scope.root.clone();
         let mut root = owner.blocking_lock();
@@ -114,7 +152,7 @@ async fn blocking<T: Send + 'static>(
     })
     .await
     .map_err(|_| Failure(StatusCode::INTERNAL_SERVER_ERROR, "worker_failed"))?
-    .map_err(account_failure)
+    .map_err(failure)
 }
 async fn sign_in(
     State(app): State<App>,

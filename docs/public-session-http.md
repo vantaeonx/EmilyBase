@@ -67,3 +67,7 @@ User-owned row HTTP, browser CORS/cookie policy, signup, roles, user SDK/dashboa
 external deployment/TLS, load/upgrade/resources and independent security acceptance
 remain pending. This is a same-origin/native-client API increment, without a
 cross-origin browser access promise. [ADR0113](adr/0113-admitted-public-session-http.md).
+
+The subsequent [public row HTTP adapter](public-row-http.md) now uses current
+access credentials for typed owned get/page/write through the same admitted scope.
+It retains original table-policy/data ownership and adds no service-key fallback.

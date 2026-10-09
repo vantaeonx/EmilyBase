@@ -19,7 +19,12 @@ fuzz_target!(|data: &[u8]| {
             4 => RowOperation::Delete,
             _ => RowOperation::Batch,
         };
-        let _ = validate_row_request(operation, bytes);
-        let _ = emilybase_server::validate_user_row_request(operation, bytes);
+        let service = validate_row_request(operation, bytes);
+        let user = emilybase_server::validate_user_row_request(operation, bytes);
+        if service.is_ok() || user.is_ok() {
+            assert!(bytes.len() <= 65_536);
+            let value: serde_json::Value = serde_json::from_slice(bytes).unwrap();
+            assert!(value.is_object());
+        }
     }
 });

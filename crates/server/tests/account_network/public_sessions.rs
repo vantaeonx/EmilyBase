@@ -1,7 +1,7 @@
 use super::*;
 use std::io::Write;
 
-fn user(
+pub(super) fn user(
     server: &support::Server,
     id: &str,
     action: &str,
@@ -17,7 +17,7 @@ fn user(
     socket.write_all(&bytes).unwrap();
     support::read(socket).unwrap()
 }
-fn login(server: &support::Server, id: &str) -> Json {
+pub(super) fn login(server: &support::Server, id: &str) -> Json {
     let (status, pair) = user(
         server,
         id,

@@ -1024,3 +1024,17 @@ account requests and clock-before-closed-refusal are reproduced before correctio
 Actual TCP received session results, forced stops and nonempty verified copy cover
 the new adapter. See [HTTP contract](public-session-http.md). Public user row HTTP,
 signup/roles, user SDK/dashboard and production acceptance remain open.
+
+
+## Follow-up: admitted public typed row HTTP
+
+[ADR0114](adr/0114-admitted-public-user-row-http.md) adds user-only get/page/write
+routes under the original current admission/session/table-policy owners. Original
+bounded lossless requests and complete packet commits are reused; service keys,
+user SQL/admin and migration-ledger access remain excluded. New router/native TCP
+checks cover hidden reads/pages, late policy rollback, delayed current state,
+signed wire/bounds, concurrent uniqueness, received/unread results and verified
+nonempty copy. A positional-array defect is reproduced in both original row
+grammar validators before adding the shared object-only guard. See
+[HTTP contract](public-row-http.md). Signup/roles, user SDK/dashboard, browser
+integration and production acceptance remain open.

@@ -19,6 +19,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use zeroize::{Zeroize, Zeroizing};
 
+mod public_rows;
 mod public_sessions;
 mod requests;
 pub use requests::{SessionRequest, SessionRequestError, validate_session_request};

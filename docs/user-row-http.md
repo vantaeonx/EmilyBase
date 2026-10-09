@@ -74,3 +74,9 @@ sessions. See [OpenAPI](openapi.json),
 [verification](measurements/2026-10-09-trusted-user-row-http/verification.json).
 Public user-only admission, roles, SDK adapters and broader security/load/upgrade/
 resource/production gates remain open. Use synthetic data only.
+
+
+The subsequent [public row HTTP adapter](public-row-http.md) consumes the same
+typed grammar and executor using only current admitted user access. Existing
+trusted service+user routes retain their credentials; no service-key fallback
+is introduced into the public namespace.

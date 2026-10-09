@@ -1,7 +1,7 @@
 use super::*;
 use axum::http::HeaderValue;
 
-async fn enable(f: &Fixture, index: usize) {
+pub(super) async fn enable(f: &Fixture, index: usize) {
     let (id, key) = &f.credentials[index];
     let mut root = f.app.root.lock().await;
     root.enable_row_policy_catalog(id, key).unwrap();
@@ -9,7 +9,12 @@ async fn enable(f: &Fixture, index: usize) {
     root.set_public_admission(id, key, closed.revision, true)
         .unwrap();
 }
-fn public_request(id: &str, operation: &str, access: Option<&str>, body: Body) -> Request {
+pub(super) fn public_request(
+    id: &str,
+    operation: &str,
+    access: Option<&str>,
+    body: Body,
+) -> Request {
     let mut request = Request::builder()
         .method("POST")
         .uri(format!("/v1/projects/{id}/user/{operation}"))
@@ -63,7 +68,7 @@ fn all_history(f: &Fixture) -> Vec<Vec<u8>> {
     }
     result
 }
-async fn delayed(
+pub(super) async fn delayed(
     router: &Router,
     id: &str,
     operation: &str,

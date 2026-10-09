@@ -1396,5 +1396,6 @@ mod migrations;
 
 mod policies;
 
+mod public_rows;
 mod public_sessions;
 mod user_data;

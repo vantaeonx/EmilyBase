@@ -91,8 +91,10 @@ now performs sign-in/refresh/logout, own-account metadata and policy-enforced ro
 without project service credentials. It checks the current flag under the actual
 private owner and authenticates before public data lookup. Four separate
 [public session HTTP routes](docs/public-session-http.md) now expose admitted
-sign-in/refresh/logout and own metadata without service credentials. Public row
-HTTP and roles still require separate implementation. The
+sign-in/refresh/logout and own metadata without service credentials. The
+[public row HTTP adapter](docs/public-row-http.md) also exposes owned get/page/write
+using the same current admission/session/policy boundary. Roles still require
+separate implementation. The
 [offline admission CLI](docs/admission-cli.md) explicitly migrates to closed v5,
 inspects status and opens/closes using the current private key file and exact
 revision. It preserves current sessions and refuses stale reopening commands.
@@ -115,7 +117,7 @@ strict recovery, atomic checkpoint materialization and a CLI. Byte-cut,
 process-kill, checkpoint-crash and competing-writer checks execute. The WAL is
 capped at 64 MiB. Explicit compaction removes repeated page images into a
 self-contained version-2 baseline; checkpoint remains a disposable cache.
-The full stage-2 acceptance gate remains open. Persistent table indexes, public user-only row HTTP, dashboard and Kotlin SDK are future work.
+The full stage-2 acceptance gate remains open. Persistent table indexes, roles, dashboard and Kotlin SDK are future work.
 The Rust [password helper](docs/password-verifiers.md) supplies tested Argon2id
 verifiers and bounded workspaces. The separate [private account library](docs/private-accounts.md)
 stores scoped users, password replacements and disable/epoch state on our original WAL engine.

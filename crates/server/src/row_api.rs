@@ -1,4 +1,6 @@
 //! Bounded service row operations on the original synchronous catalog and WAL.
+#[cfg(test)]
+mod outer_object_tests;
 mod user;
 mod wire;
 use crate::table_api::{Result, TableError};
@@ -48,6 +50,14 @@ struct Update {
 fn parse<T: DeserializeOwned>(bytes: &[u8]) -> Result<T> {
     if bytes.len() > crate::http::MAX_BODY {
         return Err(TableError::Limit);
+    }
+    if bytes
+        .iter()
+        .copied()
+        .find(|b| !matches!(b, b' ' | b'\r' | b'\n' | b'\t'))
+        != Some(b'{')
+    {
+        return Err(TableError::Document);
     }
     serde_json::from_slice(bytes).map_err(|_| TableError::Document)
 }

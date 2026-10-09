@@ -69,3 +69,7 @@ stopped; keys remain in private files. This does not add a user-only network rou
 The subsequent [public session HTTP adapter](public-session-http.md) exposes only
 the four admitted auth/session/own-metadata operations. Typed user rows are still
 native or trusted service+user HTTP; their user-only network adapter remains pending.
+
+The subsequent [public row HTTP adapter](public-row-http.md) now exposes native
+typed owned get/page/write to current admitted user credentials. It preserves
+the original full policy/actual-table ownership boundary and lossless wire limits.

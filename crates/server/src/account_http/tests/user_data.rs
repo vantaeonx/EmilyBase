@@ -1,13 +1,13 @@
 use super::*;
 use emilybase_auth::accounts::IssuedSession;
-const OWN: &[u8] = br#"{"version":1,"select":{"kind":"owner","column":"owner"},"insert":{"kind":"owner","column":"owner"},"update_using":{"kind":"owner","column":"owner"},"update_check":{"kind":"owner","column":"owner"},"delete":{"kind":"owner","column":"owner"}}"#;
-fn integer(n: i64) -> Value {
+pub(super) const OWN: &[u8] = br#"{"version":1,"select":{"kind":"owner","column":"owner"},"insert":{"kind":"owner","column":"owner"},"update_using":{"kind":"owner","column":"owner"},"update_check":{"kind":"owner","column":"owner"},"delete":{"kind":"owner","column":"owner"}}"#;
+pub(super) fn integer(n: i64) -> Value {
     json!({"type":"integer","value":n.to_string()})
 }
-fn row(pk: i64, owner: &[u8], amount: i64) -> Value {
+pub(super) fn row(pk: i64, owner: &[u8], amount: i64) -> Value {
     json!([integer(pk),{"type":"bytes","value":owner},integer(amount)])
 }
-async fn prepare(f: &Fixture) -> [IssuedSession; 2] {
+pub(super) async fn prepare(f: &Fixture) -> [IssuedSession; 2] {
     let (id, key) = &f.credentials[0];
     let mut root = f.app.root.lock().await;
     root.execute(
@@ -28,7 +28,7 @@ async fn prepare(f: &Fixture) -> [IssuedSession; 2] {
             .unwrap(),
     ]
 }
-fn public(f: &Fixture) -> Vec<u8> {
+pub(super) fn public(f: &Fixture) -> Vec<u8> {
     fs::read(
         f.path
             .join("registry")
