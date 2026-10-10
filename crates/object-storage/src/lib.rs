@@ -8,6 +8,7 @@ mod stream;
 pub use archive::{
     ARCHIVE_HEADER_BYTES, ArchiveReport, ArchivedObject, MAX_ARCHIVE_BYTES, VerifiedArchive,
     encode_archive, encode_verified_archive, inspect_archive_file, verify_archive,
+    verify_archive_reader,
 };
 pub use directory::{
     Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ObjectSnapshot,

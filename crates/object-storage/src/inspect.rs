@@ -67,7 +67,7 @@ mod publication_tests;
 pub(crate) fn private(file: &File) -> Result<std::fs::Metadata> {
     private_limit(file, HEADER_BYTES + MAX_PAYLOAD_BYTES)
 }
-fn private_limit(file: &File, maximum: usize) -> Result<std::fs::Metadata> {
+pub(crate) fn private_limit(file: &File, maximum: usize) -> Result<std::fs::Metadata> {
     let m = file.metadata()?;
     if !m.is_file() || m.nlink() != 1 || !matches!(m.mode() & 0o777, 0o600 | 0o400) {
         return Err(Error::File);

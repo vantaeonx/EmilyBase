@@ -7,6 +7,9 @@ use crate::{
 use sha2::{Digest, Sha256};
 
 const MAGIC: &[u8; 8] = b"EMILYOBK";
+mod header;
+mod reader;
+pub use reader::verify_archive_reader;
 pub const ARCHIVE_HEADER_BYTES: usize = 128;
 pub const MAX_ARCHIVE_BYTES: usize = ARCHIVE_HEADER_BYTES
     + MAX_INVENTORY_BYTES as usize
@@ -23,9 +26,15 @@ pub fn inspect_archive_file(
     path: impl AsRef<std::path::Path>,
     project: ProjectId,
 ) -> Result<ArchiveReport> {
-    let path = path.as_ref();
+    inspect_archive_file_with(path.as_ref(), project, || {})
+}
+fn inspect_archive_file_with(
+    path: &std::path::Path,
+    project: ProjectId,
+    verified_body: impl FnOnce(),
+) -> Result<ArchiveReport> {
     let mut file = crate::inspect::open_private(path)?;
-    let (report, after) = inspect_open_archive(&mut file, project)?;
+    let (report, after) = inspect_open_archive_with(&mut file, project, verified_body)?;
     crate::inspect::check_visible(path, &after)?;
     Ok(report)
 }
@@ -33,13 +42,15 @@ pub(crate) fn inspect_open_archive(
     file: &mut std::fs::File,
     project: ProjectId,
 ) -> Result<(ArchiveReport, std::fs::Metadata)> {
-    let (bytes, before) = crate::inspect::read_image(file, MAX_ARCHIVE_BYTES)?;
-    let view = verify_archive(&bytes, project)?;
-    let report = ArchiveReport {
-        objects: view.objects.len(),
-        payload_bytes: view.payload_bytes,
-        digest: view.digest,
-    };
+    inspect_open_archive_with(file, project, || {})
+}
+fn inspect_open_archive_with(
+    file: &mut std::fs::File,
+    project: ProjectId,
+    verified_body: impl FnOnce(),
+) -> Result<(ArchiveReport, std::fs::Metadata)> {
+    let before = crate::inspect::private_limit(file, MAX_ARCHIVE_BYTES)?;
+    let report = reader::verify_with(file, before.len() as usize, project, verified_body)?;
     let after = crate::inspect::recheck(file, &before, MAX_ARCHIVE_BYTES)?;
     Ok((report, after))
 }
@@ -158,66 +169,18 @@ fn encode_checked<'a>(
 }
 
 pub fn verify_archive(bytes: &[u8], project: ProjectId) -> Result<VerifiedArchive<'_>> {
-    if bytes.len() > MAX_ARCHIVE_BYTES {
-        return Err(Error::Limit);
-    }
-    if bytes.len() < ARCHIVE_HEADER_BYTES {
-        return Err(Error::Archive);
-    }
-    let u32_at = |start| {
-        u32::from_le_bytes([
-            bytes[start],
-            bytes[start + 1],
-            bytes[start + 2],
-            bytes[start + 3],
-        ])
-    };
-    let u64_at = |start| {
-        u64::from_le_bytes([
-            bytes[start],
-            bytes[start + 1],
-            bytes[start + 2],
-            bytes[start + 3],
-            bytes[start + 4],
-            bytes[start + 5],
-            bytes[start + 6],
-            bytes[start + 7],
-        ])
-    };
-    if crc32fast::hash(&bytes[..124]) != u32_at(124) {
-        return Err(Error::ArchiveChecksum);
-    }
-    if &bytes[..8] != MAGIC {
-        return Err(Error::Archive);
-    }
-    let version = u16::from_le_bytes([bytes[8], bytes[9]]);
-    if version != 1 {
-        return Err(Error::ArchiveVersion(version));
-    }
-    if bytes[10..12] != [0; 2]
-        || u32_at(12) != ARCHIVE_HEADER_BYTES as u32
-        || bytes[36..40] != [0; 4]
-        || bytes[120..124] != [0; 4]
-    {
-        return Err(Error::Archive);
-    }
-    if &bytes[16..32] != project.as_bytes() {
-        return Err(Error::Scope);
-    }
-    let count = u32_at(32) as usize;
-    let payload_bytes = u64_at(40);
-    let body_bytes = u64_at(48);
-    if count > MAX_INVENTORY_OBJECTS
-        || payload_bytes > MAX_INVENTORY_BYTES
-        || body_bytes > (MAX_ARCHIVE_BYTES - ARCHIVE_HEADER_BYTES) as u64
-    {
-        return Err(Error::Limit);
-    }
-    if body_bytes != (bytes.len() - ARCHIVE_HEADER_BYTES) as u64 {
-        return Err(Error::Archive);
-    }
+    header::check_total(bytes.len())?;
+    let decoded = header::decode(
+        bytes[..ARCHIVE_HEADER_BYTES]
+            .try_into()
+            .map_err(|_| Error::Archive)?,
+        bytes.len(),
+        project,
+    )?;
+    let count = decoded.count;
+    let payload_bytes = decoded.payload_bytes;
     let body = &bytes[ARCHIVE_HEADER_BYTES..];
-    if Sha256::digest(body).as_slice() != &bytes[88..120] {
+    if Sha256::digest(body).as_slice() != decoded.body_sha256 {
         return Err(Error::ArchiveChecksum);
     }
     let mut objects = Vec::new();
@@ -263,8 +226,7 @@ pub fn verify_archive(bytes: &[u8], project: ProjectId) -> Result<VerifiedArchiv
     if cursor != body.len() || total != payload_bytes {
         return Err(Error::Archive);
     }
-    let mut digest = [0; 32];
-    digest.copy_from_slice(&bytes[56..88]);
+    let digest = decoded.digest;
     let expected = digest_components(
         project,
         count as u32,

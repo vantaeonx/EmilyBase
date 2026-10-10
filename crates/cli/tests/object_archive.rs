@@ -3,8 +3,8 @@ use emilybase_object_storage::{
 };
 use serde_json::Value;
 use std::fs::{self, File};
-use std::io::Write;
-use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt, symlink};
+use std::io::{Read, Seek, SeekFrom, Write};
+use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsExt, symlink};
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
 use std::time::{Duration, Instant};
@@ -14,13 +14,16 @@ fn command(path: &Path, project: &str) -> Command {
     c.arg("object-archive-verify").arg(path).arg(project);
     c
 }
-fn run(mut c: Command) -> Output {
+fn run(c: Command) -> Output {
+    run_with_timeout(c, Duration::from_secs(5))
+}
+fn run_with_timeout(mut c: Command, timeout: Duration) -> Output {
     let mut child = c
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    let deadline = Instant::now() + Duration::from_secs(5);
+    let deadline = Instant::now() + timeout;
     while child.try_wait().unwrap().is_none() {
         if Instant::now() >= deadline {
             child.kill().unwrap();
@@ -80,6 +83,75 @@ fn actual_cli_verifies_complete_archive_and_prints_only_checked_metadata() {
     assert_eq!(fs::read(&path).unwrap(), bytes);
     refused(run(command(&path, "09090909090909090909090909090909")));
     assert_eq!(fs::read(path).unwrap(), bytes);
+}
+
+#[test]
+fn actual_cli_checks_readonly_maximum_archive_and_refuses_final_byte_corruption() {
+    let temp = tempfile::tempdir().unwrap();
+    let source = temp.path().join("objects");
+    fs::DirBuilder::new().mode(0o700).create(&source).unwrap();
+    let mut owner = ProjectDirectory::initialize(&source, PROJECT.parse().unwrap()).unwrap();
+    let payload = vec![0xa5; 8 * 1024 * 1024];
+    for key in 0..128 {
+        owner
+            .put(
+                ObjectId::from_bytes([key; 16]),
+                if key < 8 { &payload } else { &[] },
+            )
+            .unwrap();
+    }
+    let bytes = encode_archive(&owner.capture().unwrap()).unwrap();
+    assert_eq!(bytes.len(), MAX_ARCHIVE_BYTES);
+    drop(owner);
+    let path = temp.path().join("maximum.object-archive");
+    let mut file = File::options()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(&path)
+        .unwrap();
+    file.write_all(&bytes).unwrap();
+    file.sync_all().unwrap();
+    drop(file);
+    drop(bytes);
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o400)).unwrap();
+    let before = fs::metadata(&path).unwrap();
+    let output = run_with_timeout(command(&path, PROJECT), Duration::from_secs(20));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(output.stderr.is_empty());
+    assert!(output.stdout.len() < 512);
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["objects"], 128);
+    assert_eq!(report["bytes"], 64 * 1024 * 1024);
+    let after = fs::metadata(&path).unwrap();
+    assert_eq!(
+        (
+            before.ino(),
+            before.len(),
+            before.mtime(),
+            before.mtime_nsec()
+        ),
+        (after.ino(), after.len(), after.mtime(), after.mtime_nsec())
+    );
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+    let mut file = File::options().read(true).write(true).open(&path).unwrap();
+    file.seek(SeekFrom::End(-1)).unwrap();
+    let mut last = [0; 1];
+    file.read_exact(&mut last).unwrap();
+    last[0] ^= 1;
+    file.seek(SeekFrom::End(-1)).unwrap();
+    file.write_all(&last).unwrap();
+    file.sync_all().unwrap();
+    drop(file);
+    refused(run_with_timeout(
+        command(&path, PROJECT),
+        Duration::from_secs(20),
+    ));
+    assert_eq!(fs::metadata(&path).unwrap().len(), MAX_ARCHIVE_BYTES as u64);
 }
 
 #[test]

@@ -131,6 +131,9 @@ header/scope/EOF and retained-file checks without owning complete payload images
 [Native directory inspection](docs/native-object-inspection.md) also exposes this
 report-only path for one typed object and the offline CLI, keeping its checked file
 open across the final marker/metadata/inode verification. Owned get remains separate.
+[Seekable archive inspection](docs/seekable-object-archive-inspection.md) likewise
+verifies the complete outer archive and every nested object through bounded reads,
+preserving checksum priority and native inode checks without a complete image copy.
 The next [AccountRoot integration proposal](docs/adr/0127-proposed-account-root-object-integration.md)
 defines file/catalog failure boundaries, current authority, orphan accounting and
 coordinated backup gates. It is a proposal, not an implemented file service.

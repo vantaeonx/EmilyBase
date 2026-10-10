@@ -4850,3 +4850,22 @@ native API. Local before/after five-process peak-RSS samples preserve reports;
 the small shape has no improvement. See
 [evidence](measurements/2026-10-10-native-object-inspection/verification.json).
 The complete1518-test broad baseline above belongs to d988a51, not this later code.
+
+## Seekable archive metadata verification
+
+The [next archive increment](seekable-object-archive-inspection.md) passes181 relevant
+checks per stable1.99/minimum1.89:111 object,44 storage,26CLI on575 frozen hashes.
+Nine new regular cases include64 generated binary archives, six native between-pass
+mutations, typed read/seek/EOF failures, bounded interrupted reads, independent
+known bytes, complete repaired-header/nested-format differential checks and actual
+maximum128-object/64 MiB CLI admission/corruption. Existing20 kills rerun; no new
+kill, format, fsync or publication protocol is selected. Formatting/strict stable
+workspace/fuzz lint, builds and minimum all-fuzz compilation pass.
+
+Expanded object_archive ASAN comparison completed756330 inputs/46s/max262144/
+prefix16/RSS391 under512, no findings. This compares pure byte/seekable Cursor
+decoders and does not fuzz native filesystem state. Five fresh CLI samples per
+source/shape preserve reports; large peak RSS decreases while the small shape has
+no improvement. The [report](measurements/2026-10-10-archive-reader/verification.json)
+records raw samples and exact boundaries. No new full-workspace, hardware power-loss
+or production result is claimed by this targeted increment.

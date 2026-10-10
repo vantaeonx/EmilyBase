@@ -1197,3 +1197,13 @@ Actual readonly maximum/late-corruption CLI and native mutation/model tests pass
 on both toolchains. See [contract and local memory observations](native-object-inspection.md).
 This exact-object operation does not certify complete inventory or add file HTTP,
 persisted quotas, root integration, stored versions or production acceptance.
+
+## Follow-up: bounded seekable object archive metadata
+
+[ADR0129](adr/0129-bounded-seekable-object-archive-inspection.md) preserves original
+outer-checksum priority with a complete body hash/EOF pass followed by bounded
+nested-object/frame/inventory validation. Native inspection and selected backup
+readback retain file checks without owning a full archive image. Capture/encoding/
+restore, format versions and durability points remain unchanged. See
+[contract](seekable-object-archive-inspection.md). This is not a network upload,
+whole-process resource quota or coordinated AccountRoot/file service.

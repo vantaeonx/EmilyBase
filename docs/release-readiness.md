@@ -39,6 +39,9 @@ and successful source CI, while preserving earlier snapshot boundaries. It is no
 a release acceptance certificate.
 The later [native inspection increment](native-object-inspection.md) has its own
 172-check targeted matrices; it does not claim a new complete broad result.
+The following [seekable archive increment](seekable-object-archive-inspection.md)
+has181-check targeted matrices and its own parser comparison; the same broad-result
+boundary applies until a new full source run completes.
 
 ## Before publishing an experimental release
 
