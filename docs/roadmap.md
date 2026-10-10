@@ -1187,3 +1187,13 @@ The exact schema/version, lock order, quota, idempotency and reclamation contrac
 remain open. Current manifests, bundles and endpoints are unchanged. The current
 [architecture diagram](architecture.md) separates implemented user/service paths
 from standalone operator object tools; no platform stage is marked complete.
+
+## Follow-up: native streamed single-object inspection
+
+[ADR0128](adr/0128-native-streamed-object-inspection.md) adds report-only native
+inspection and routes the existing CLI through complete bounded streamed hashing.
+Selected descriptor ownership survives the final marker/metadata/inode checks.
+Actual readonly maximum/late-corruption CLI and native mutation/model tests pass
+on both toolchains. See [contract and local memory observations](native-object-inspection.md).
+This exact-object operation does not certify complete inventory or add file HTTP,
+persisted quotas, root integration, stored versions or production acceptance.

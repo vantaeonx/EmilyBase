@@ -33,10 +33,12 @@ The [roadmap](roadmap.md) owns stage acceptance. [Testing](testing.md) records
 executed checks and their exact boundaries. [Security acceptance](security-audit.md)
 and [recovery matrix](recovery-matrix.md) keep broader gates open. Historical ADRs
 describe their own increments; this table reflects later implemented additions.
-The [integration evidence snapshot](measurements/2026-10-10-integration-checks/verification.json)
+The complete [d988a51 integration snapshot](measurements/2026-10-10-integration-checks/verification.json)
 records complete1518-test stable/minimum matrices, builds, parser/SDK/audit checks
 and successful source CI, while preserving earlier snapshot boundaries. It is not
 a release acceptance certificate.
+The later [native inspection increment](native-object-inspection.md) has its own
+172-check targeted matrices; it does not claim a new complete broad result.
 
 ## Before publishing an experimental release
 

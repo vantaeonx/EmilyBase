@@ -1,8 +1,8 @@
 use emilybase_object_storage::{ObjectId, ProjectDirectory, ProjectId};
 use serde_json::Value;
 use std::fs::{self, File};
-use std::io::{Read, Write};
-use std::os::unix::fs::DirBuilderExt;
+use std::io::{Read, Seek, SeekFrom, Write};
+use std::os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt};
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
 use std::time::{Duration, Instant};
@@ -122,6 +122,55 @@ fn actual_cli_initializes_imports_exact_binary_and_inspects_without_payload_outp
             .payload(),
         payload
     );
+}
+
+#[test]
+fn actual_cli_checks_maximum_readonly_payload_and_refuses_late_corruption_without_output() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("objects");
+    directory(&path);
+    let mut owner = ProjectDirectory::initialize(&path, PROJECT.parse().unwrap()).unwrap();
+    let expected = owner
+        .put(OBJECT.parse().unwrap(), &vec![0xa5; 8 * 1024 * 1024])
+        .unwrap();
+    drop(owner);
+    let object = path.join(format!("{OBJECT}.object"));
+    fs::set_permissions(&object, fs::Permissions::from_mode(0o400)).unwrap();
+    let before = fs::metadata(&object).unwrap();
+    let output = run(command(&path, PROJECT, "inspect", Some(OBJECT)), Vec::new());
+    assert!(output.stdout.len() < 512);
+    let checked = success(output);
+    assert_eq!(checked["bytes"], expected.payload_bytes);
+    assert_eq!(
+        checked["sha256"],
+        expected
+            .sha256
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    );
+    let after = fs::metadata(&object).unwrap();
+    assert_eq!(
+        (
+            before.ino(),
+            before.len(),
+            before.mtime(),
+            before.mtime_nsec()
+        ),
+        (after.ino(), after.len(), after.mtime(), after.mtime_nsec())
+    );
+    fs::set_permissions(&object, fs::Permissions::from_mode(0o600)).unwrap();
+    let mut file = File::options().write(true).open(&object).unwrap();
+    file.seek(SeekFrom::End(-1)).unwrap();
+    file.write_all(&[0]).unwrap();
+    file.sync_all().unwrap();
+    drop(file);
+    refused(run(
+        command(&path, PROJECT, "inspect", Some(OBJECT)),
+        Vec::new(),
+    ));
+    assert_eq!(fs::metadata(&object).unwrap().len(), before.len());
+    assert_eq!(fs::read_dir(&path).unwrap().count(), 2);
 }
 
 #[test]

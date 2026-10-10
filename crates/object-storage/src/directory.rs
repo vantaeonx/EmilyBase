@@ -12,6 +12,7 @@ const SCOPE_FILE: &str = ".emilybase-objects";
 const SCOPE_OBJECT: ObjectId = ObjectId::from_bytes([0; 16]);
 mod backup;
 mod bounded;
+mod inspection;
 pub use bounded::{WriteLimits, WriteReceipt};
 pub(crate) mod inventory;
 pub use inventory::{

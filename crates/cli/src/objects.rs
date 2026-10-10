@@ -156,11 +156,7 @@ pub fn run(arguments: Arguments) -> Result<()> {
         }
         Operation::Inspect { .. } => {
             let owner = ProjectDirectory::open(arguments.path, project)?;
-            report(
-                owner
-                    .get(object.ok_or("object identity unavailable")?)?
-                    .report(),
-            )
+            report(&owner.inspect(object.ok_or("object identity unavailable")?)?)
         }
     }
 }

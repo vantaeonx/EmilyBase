@@ -4835,3 +4835,18 @@ above. Source-equivalent documentation commits do not add test cases. Hosted
 d988a51 and7f696e8 CI also completed successfully. The evidence now records these
 completed results while retaining the earlier pending-snapshot boundary. These
 checks do not close hardware power-loss, resource admission or production gates.
+
+## Native report-only directory inspection
+
+The subsequent [native inspection increment](native-object-inspection.md) passes
+172 relevant checks per stable1.99/minimum1.89 on572 frozen hashes:103 object,
+44 storage and25 CLI. Seven new regular cases include64 generated native images,
+nine controlled post-verification mutations and actual readonly8 MiB/late-corruption
+CLI checks. Existing20 kills rerun; no new kill, format or synchronization point
+is added. Formatting, strict stable workspace/fuzz lint, builds and minimum all-fuzz
+compilation exit0. The original unchanged byte/reader ASAN target completed937259
+inputs/46s/max262144/RSS468 under512 without findings; it does not call the new
+native API. Local before/after five-process peak-RSS samples preserve reports;
+the small shape has no improvement. See
+[evidence](measurements/2026-10-10-native-object-inspection/verification.json).
+The complete1518-test broad baseline above belongs to d988a51, not this later code.
