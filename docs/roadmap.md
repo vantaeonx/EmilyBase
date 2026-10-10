@@ -1227,3 +1227,13 @@ original no-replace/fsync/uncertain outcomes. Native backup avoids a second full
 encoded payload image while preserving source/destination/final archive checks.
 Owned live capture and standalone restore remain. See
 [contract](reader-file-publication.md); AccountRoot/files and production gates stay open.
+
+## Follow-up: selected native object retention
+
+[ADR0132](adr/0132-selected-native-object-owner-retention.md) adds opaque selected
+objects/bounded receipts borrowing their original native directory owner and keeping
+the actual published descriptor across later caller work. Full streamed revalidation
+refuses byte/scope/marker/private-metadata and identical-byte inode substitutions.
+Original write/durability paths remain. This supplies one native prerequisite for
+the still-proposed AccountRoot protocol, not current user authority, catalog commit,
+persisted quota or coordinated backup. See [contract](selected-object-retention.md).

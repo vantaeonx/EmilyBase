@@ -67,6 +67,12 @@ owned prepared/selected blob handle that cannot be forged, detached from scope o
 accidentally used after authority ends. No such cross-catalog handle is added by
 this ADR.
 
+Later [ADR0132](0132-selected-native-object-owner-retention.md) implements one
+native prerequisite: opaque selected-descriptor guards borrowing the original
+directory owner through later caller work. It does not retain AccountRoot/current
+user authority or integrate any catalog commit, schema, persisted quota or common
+backup. This proposal remains open; its other acceptance requirements still apply.
+
 A crash before the metadata commit may leave a valid private orphan. It must not
 be user-visible through list/download, and must not disappear from quota accounting
 or be automatically deleted. A committed reference must never authorize a missing,

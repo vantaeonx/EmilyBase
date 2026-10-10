@@ -85,6 +85,17 @@ impl ProjectDirectory {
         prepared: impl FnOnce(),
         selected: impl FnOnce(),
     ) -> Result<WriteReceipt> {
+        self.put_bounded_retained_with(object, payload, limits, prepared, selected)
+            .map(|(_, receipt)| receipt)
+    }
+    pub(super) fn put_bounded_retained_with(
+        &mut self,
+        object: ObjectId,
+        payload: &[u8],
+        limits: WriteLimits,
+        prepared: impl FnOnce(),
+        selected: impl FnOnce(),
+    ) -> Result<(File, WriteReceipt)> {
         if payload.len() > MAX_PAYLOAD_BYTES {
             return Err(Error::Limit);
         }
@@ -104,7 +115,7 @@ impl ProjectDirectory {
         let (selected_file, report) = self.put_retained_with(object, payload, || {})?;
         selected();
         let inventory = self.inventory().map_err(|_| Error::PublicationUnknown)?;
-        let (_, data) = read_selected(
+        let (selected_file, data) = read_selected(
             &self.directory,
             &object_name(object),
             selected_file,
@@ -120,11 +131,14 @@ impl ProjectDirectory {
         {
             return Err(Error::PublicationUnknown);
         }
-        Ok(WriteReceipt {
-            object,
-            report,
-            inventory,
-        })
+        Ok((
+            selected_file,
+            WriteReceipt {
+                object,
+                report,
+                inventory,
+            },
+        ))
     }
 }
 

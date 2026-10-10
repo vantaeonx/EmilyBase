@@ -139,6 +139,9 @@ same archive bytes through Read+Seek over immutable verified images, avoiding a
 second payload image. [Native backup publication](docs/reader-file-publication.md)
 now uses that immutable reader through exact bounded copy/full byte readback,
 preserving owned staging, no-replace/fsync and selected-descriptor verification.
+[Selected native objects](docs/selected-object-retention.md) can now keep the actual
+published descriptor and original owner across later caller work, with explicit
+full revalidation. Their metadata grants no user authority or catalog transaction.
 The next [AccountRoot integration proposal](docs/adr/0127-proposed-account-root-object-integration.md)
 defines file/catalog failure boundaries, current authority, orphan accounting and
 coordinated backup gates. It is a proposal, not an implemented file service.

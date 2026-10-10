@@ -4909,3 +4909,16 @@ Five fresh actual CLI samples per source/shape preserve full archive hashes and
 source bytes: large median peak RSS138304 to73396 KiB, small8236 to8716 KiB with
 no improvement. The [source-bound report](measurements/2026-10-10-reader-publication/verification.json)
 records raw total-process samples and excluded failed attempts.
+
+## Owner-bound selected native objects
+
+[Native selected retention](selected-object-retention.md) passes209 relevant checks
+per stable1.99/minimum1.89:126 object, two owner-lifetime compile-fail doctests,
+54 storage,27 CLI, on582 frozen hashes. Eight new regular cases include64 generated
+binary selections, retained descriptor/owner lock, same-byte replacements despite
+equal reports, moved directory scope, receipt boundaries, empty/8 MiB/readonly files
+and13 pre-check plus13 post-body native mutations. Foreign/selected entries remain.
+Formatting, strict workspace/fuzz lint, builds and minimum all-fuzz checks exit0.
+Existing25 kills rerun; no new parser sanitizer, durability boundary or full-source
+result is claimed. See
+[evidence](measurements/2026-10-10-selected-objects/verification.json).

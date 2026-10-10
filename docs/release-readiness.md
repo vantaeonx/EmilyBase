@@ -49,6 +49,9 @@ The subsequent [reader publisher](reader-file-publication.md) connects native ba
 with199-check targeted matrices, five new process-kill boundaries and actual maximum
 independent restore. Its evidence records the reproduced/fixed test interference;
 it does not close the broad resource, power-loss or production gates.
+The [selected native retention increment](selected-object-retention.md) has209-check
+targeted matrices, explicit descriptor/native mutation coverage and two owner-lifetime
+compile-fail checks. It supplies no catalog transaction or current user authority.
 
 ## Before publishing an experimental release
 

@@ -41,3 +41,8 @@ AccountRoot layout, parser or persisted quota changes. No new sanitizer campaign
 claimed for these descriptor/result changes. Process kills are not power-loss tests.
 
 See [ADR0125](adr/0125-retained-object-publication-identity.md).
+
+The later [owner-bound selection API](selected-object-retention.md) also retains
+that exact descriptor beyond the native write return for subsequent caller work.
+Existing report-returning APIs keep their boundaries. Opaque native guards do not
+provide current user authority, catalog atomicity or a complete inventory lease.

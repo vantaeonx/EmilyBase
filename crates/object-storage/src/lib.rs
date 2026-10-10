@@ -12,7 +12,8 @@ pub use archive::{
 };
 pub use directory::{
     Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ObjectSnapshot,
-    ProjectDirectory, StoredObject, WriteLimits, WriteReceipt, object_id_from_name,
+    ProjectDirectory, SelectedObject, SelectedWrite, StoredObject, WriteLimits, WriteReceipt,
+    object_id_from_name,
 };
 pub use format::{
     HEADER_BYTES, MAX_PAYLOAD_BYTES, ObjectId, ProjectId, VerifiedObject, encode, verify,
