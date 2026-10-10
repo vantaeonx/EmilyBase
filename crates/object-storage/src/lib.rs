@@ -19,7 +19,7 @@ pub use format::{
     HEADER_BYTES, MAX_PAYLOAD_BYTES, ObjectId, ProjectId, VerifiedObject, encode, verify,
 };
 pub use inspect::{FileReport, inspect_file, publish_file};
-pub use restore::{restore_archive, restore_archive_file};
+pub use restore::{restore_archive, restore_archive_at, restore_archive_file};
 pub use stream::verify_stream;
 
 #[derive(Debug, thiserror::Error)]

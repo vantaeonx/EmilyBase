@@ -166,6 +166,9 @@ Byte verification alone does not publish or atomically restore a destination.
 Native [paired archive publication](docs/native-file-archive-publication.md) now
 writes one fresh checked archive through retained no-replace staging and readback.
 Common restore and AccountRoot/user integration remain open.
+Native [common paired restore](docs/native-file-archive-restore.md) now reconstructs
+both components under one private root and retains their actual owners through
+no-replace selection and final graph checks. AccountRoot/user integration remains.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

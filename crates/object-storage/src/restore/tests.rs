@@ -7,6 +7,47 @@ use std::path::PathBuf;
 
 const PROJECT: ProjectId = ProjectId::from_bytes([1; 16]);
 const OBJECT: ObjectId = ObjectId::from_bytes([2; 16]);
+
+#[test]
+fn descriptor_restore_uses_original_moved_parent_and_refuses_nonleaf_names_or_overwrite() {
+    use std::os::unix::ffi::OsStrExt;
+    let temp = tempfile::tempdir().unwrap();
+    let bytes = image(&[(OBJECT, b"synthetic")]);
+    let parent = temp.path().join("parent");
+    fs::create_dir(&parent).unwrap();
+    let owner = std::fs::File::open(&parent).unwrap();
+    let moved = temp.path().join("moved");
+    fs::rename(&parent, &moved).unwrap();
+    fs::create_dir(&parent).unwrap();
+    for name in [
+        b"".as_slice(),
+        b".",
+        b"..",
+        b"../escape",
+        b"a/b",
+        b"nul\0leaf",
+    ] {
+        assert!(
+            restore_archive_at(&bytes, PROJECT, &owner, std::ffi::OsStr::from_bytes(name)).is_err()
+        );
+        assert_eq!(fs::read_dir(&moved).unwrap().count(), 0);
+    }
+    let report = restore_archive_at(&bytes, PROJECT, &owner, "restored").unwrap();
+    assert_eq!(report.objects, 1);
+    let restored = ProjectDirectory::open(moved.join("restored"), PROJECT).unwrap();
+    assert_eq!(restored.get(OBJECT).unwrap().payload(), b"synthetic");
+    drop(restored);
+    assert!(restore_archive_at(&bytes, PROJECT, &owner, "restored").is_err());
+    assert_eq!(fs::read_dir(&parent).unwrap().count(), 0);
+    assert_eq!(
+        ProjectDirectory::open(moved.join("restored"), PROJECT)
+            .unwrap()
+            .inventory()
+            .unwrap()
+            .digest(),
+        &report.digest
+    );
+}
 fn image(values: &[(ObjectId, &[u8])]) -> Vec<u8> {
     let temp = tempfile::tempdir().unwrap();
     let source = temp.path().join("source");

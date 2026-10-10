@@ -15,7 +15,8 @@ mod restore;
 pub use archive::{VerifiedBackup, decode_verified, encode, inspect_bytes};
 pub use files::{create, inspect};
 pub use restore::{
-    PreparedRestoreError, restore, restore_bytes, restore_prepared, restore_prepared_bytes,
+    PreparedRestoreError, restore, restore_bytes, restore_bytes_at, restore_prepared,
+    restore_prepared_bytes,
 };
 
 pub const BACKUP_VERSION: u16 = 1;

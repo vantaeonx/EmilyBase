@@ -10,7 +10,9 @@ pub use archive::{
     FILE_ARCHIVE_HEADER_BYTES, FILE_ARCHIVE_VERSION, FileArchiveReader, MAX_FILE_ARCHIVE_BYTES,
     VerifiedFileArchive, verify_file_archive,
 };
-pub use archive::{FileArchiveReport, inspect_file_archive, publish_file_archive};
+pub use archive::{
+    FileArchiveReport, inspect_file_archive, publish_file_archive, restore_file_archive,
+};
 use emilybase_object_storage::{FileReport, ObjectId, WriteLimits};
 pub use mutation::FileRemoval;
 pub use snapshot::FileSnapshot;

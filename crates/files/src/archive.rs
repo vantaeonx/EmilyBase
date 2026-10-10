@@ -5,8 +5,10 @@ use sha2::{Digest, Sha256};
 mod header;
 mod publication;
 mod reader;
+mod restore;
 pub use publication::{FileArchiveReport, inspect_file_archive, publish_file_archive};
 pub use reader::FileArchiveReader;
+pub use restore::restore_file_archive;
 
 pub const FILE_ARCHIVE_VERSION: u16 = 1;
 pub const FILE_ARCHIVE_HEADER_BYTES: usize = 192;
@@ -19,6 +21,7 @@ pub const MAX_FILE_ARCHIVE_BYTES: usize = FILE_ARCHIVE_HEADER_BYTES
 pub struct VerifiedFileArchive<'a> {
     project: ProjectId,
     metadata: &'a [u8],
+    object_bytes: &'a [u8],
     report: emilybase_backup::Report,
     quota: FileQuota,
     files: Vec<FileInfo>,
@@ -103,6 +106,7 @@ pub fn verify_file_archive(bytes: &[u8], project: ProjectId) -> Result<VerifiedF
     Ok(VerifiedFileArchive {
         project,
         metadata,
+        object_bytes,
         report,
         quota,
         files,

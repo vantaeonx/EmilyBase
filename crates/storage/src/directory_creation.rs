@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 pub struct StagedPrivateDirectory {
     directory: File,
     parent: File,
-    parent_path: PathBuf,
+    parent_path: Option<PathBuf>,
     stage: OsString,
     target: OsString,
     published: bool,
@@ -26,7 +26,7 @@ pub struct StagedPrivateDirectory {
 pub struct PublishedPrivateDirectory {
     directory: File,
     parent: File,
-    parent_path: PathBuf,
+    parent_path: Option<PathBuf>,
     target: OsString,
 }
 impl PublishedPrivateDirectory {
@@ -34,14 +34,17 @@ impl PublishedPrivateDirectory {
         &self.directory
     }
     pub fn check(&self) -> Result<()> {
-        let visible =
-            std::fs::symlink_metadata(&self.parent_path).map_err(|_| Error::PathChanged)?;
         let parent = self.parent.metadata()?;
+        if let Some(path) = &self.parent_path {
+            let visible = std::fs::symlink_metadata(path).map_err(|_| Error::PathChanged)?;
+            if !visible.is_dir() || (visible.dev(), visible.ino()) != (parent.dev(), parent.ino()) {
+                return Err(Error::PathChanged);
+            }
+        }
         let owned = self.directory.metadata()?;
         let selected = rustix::fs::statat(&self.parent, &self.target, AtFlags::SYMLINK_NOFOLLOW)
             .map_err(std::io::Error::from)?;
-        if !visible.is_dir()
-            || (visible.dev(), visible.ino()) != (parent.dev(), parent.ino())
+        if !parent.is_dir()
             || !owned.is_dir()
             || owned.mode() & 0o777 != 0o700
             || selected.st_mode & 0o170000 != 0o040000
@@ -76,6 +79,24 @@ impl StagedPrivateDirectory {
         )
         .map_err(std::io::Error::from)?;
         let parent: File = fd.into();
+        Self::create(parent, target, Some(parent_path))
+    }
+    /// Explicit native descriptor authority. One leaf only; moving the original
+    /// parent never adopts a replacement at its old pathname. No path lease.
+    pub fn at(parent: &File, target: impl AsRef<std::ffi::OsStr>) -> Result<Self> {
+        let target = target.as_ref();
+        let bytes = target.as_bytes();
+        if bytes.is_empty()
+            || matches!(bytes, b"." | b"..")
+            || bytes.contains(&0)
+            || bytes.contains(&b'/')
+            || !parent.metadata()?.is_dir()
+        {
+            return Err(Error::Path);
+        }
+        Self::create(parent.try_clone()?, target.to_os_string(), None)
+    }
+    fn create(parent: File, target: OsString, parent_path: Option<PathBuf>) -> Result<Self> {
         for _ in 0..32 {
             let mut nonce = [0; 16];
             getrandom::fill(&mut nonce).map_err(|_| Error::Randomness)?;
@@ -116,11 +137,17 @@ impl StagedPrivateDirectory {
         &self.directory
     }
     fn parent_valid(&self) -> Result<()> {
-        let visible =
-            std::fs::symlink_metadata(&self.parent_path).map_err(|_| Error::PathChanged)?;
         let retained = self.parent.metadata()?;
-        if !visible.is_dir() || (visible.dev(), visible.ino()) != (retained.dev(), retained.ino()) {
+        if !retained.is_dir() {
             return Err(Error::PathChanged);
+        }
+        if let Some(path) = &self.parent_path {
+            let visible = std::fs::symlink_metadata(path).map_err(|_| Error::PathChanged)?;
+            if !visible.is_dir()
+                || (visible.dev(), visible.ino()) != (retained.dev(), retained.ino())
+            {
+                return Err(Error::PathChanged);
+            }
         }
         Ok(())
     }

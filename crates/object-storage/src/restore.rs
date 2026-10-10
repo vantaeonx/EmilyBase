@@ -16,6 +16,19 @@ pub fn restore_archive(
     let view = verify_archive(bytes, project)?;
     restore_checked(&view, destination.as_ref(), || {}, || Ok(()), || {})
 }
+/// Explicit native directory descriptor and one fresh leaf, without resolving a
+/// parent pathname. Original component readback/fsync/no-replace rules remain.
+pub fn restore_archive_at(
+    bytes: &[u8],
+    project: ProjectId,
+    parent: &std::fs::File,
+    name: impl AsRef<std::ffi::OsStr>,
+) -> Result<ArchiveReport> {
+    let view = verify_archive(bytes, project)?;
+    let stage =
+        emilybase_storage::StagedPrivateDirectory::at(parent, name).map_err(Error::Publication)?;
+    restore_staged(&view, stage, || {}, || Ok(()), || {})
+}
 /// Bounded private source inspection, complete reconstruction/readback and
 /// no-replace directory publication. Partial private stages are preserved on
 /// failure; a selected uncertain result requires explicit directory inspection.
@@ -74,9 +87,18 @@ fn restore_checked(
     check_input: impl FnOnce() -> Result<()>,
     selected: impl FnOnce(),
 ) -> Result<ArchiveReport> {
-    let expected = report(view);
     let stage =
         emilybase_storage::StagedPrivateDirectory::new(destination).map_err(Error::Publication)?;
+    restore_staged(view, stage, populated, check_input, selected)
+}
+fn restore_staged(
+    view: &VerifiedArchive<'_>,
+    stage: emilybase_storage::StagedPrivateDirectory,
+    populated: impl FnOnce(),
+    check_input: impl FnOnce() -> Result<()>,
+    selected: impl FnOnce(),
+) -> Result<ArchiveReport> {
+    let expected = report(view);
     let prepare = || -> Result<ProjectDirectory> {
         let mut owner = ProjectDirectory::initialize_descriptor(stage.directory(), view.project())?;
         for object in view.objects() {

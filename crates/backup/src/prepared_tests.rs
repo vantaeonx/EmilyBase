@@ -31,6 +31,57 @@ fn add(path: &Path) {
 struct Refusal;
 
 #[test]
+fn descriptor_restore_binds_original_moved_parent_and_refuses_nonleaf_or_replacement() {
+    use std::fs::{self, File};
+    use std::os::unix::ffi::OsStrExt;
+    let _io = publication_tests::PROCESS_TESTS.lock().unwrap();
+    for compacted in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut source = original(&temp.path().join("source"));
+        if compacted {
+            source.compact().unwrap();
+        }
+        let wal = source.committed_wal().unwrap();
+        let bytes = encode(&wal).unwrap();
+        let expected = inspect_bytes(&bytes).unwrap();
+        let parent = temp.path().join("parent");
+        fs::create_dir(&parent).unwrap();
+        let owner = File::open(&parent).unwrap();
+        let moved = temp.path().join("moved");
+        fs::rename(&parent, &moved).unwrap();
+        fs::create_dir(&parent).unwrap();
+        for name in [
+            b"".as_slice(),
+            b".",
+            b"..",
+            b"../escape",
+            b"a/b",
+            b"nul\0leaf",
+        ] {
+            assert!(restore_bytes_at(&bytes, &owner, std::ffi::OsStr::from_bytes(name)).is_err());
+            assert_eq!(fs::read_dir(&moved).unwrap().count(), 0);
+        }
+        assert_eq!(
+            restore_bytes_at(&bytes, &owner, "restored").unwrap(),
+            expected
+        );
+        let mut restored = Database::open(moved.join("restored")).unwrap();
+        assert_eq!(restored.committed_wal().unwrap(), wal);
+        drop(restored);
+        assert!(restore_bytes_at(&bytes, &owner, "restored").is_err());
+        assert_eq!(fs::read_dir(&parent).unwrap().count(), 0);
+        assert_eq!(
+            Database::open(moved.join("restored"))
+                .unwrap()
+                .view()
+                .unwrap()
+                .row_count(),
+            1
+        );
+    }
+}
+
+#[test]
 fn preparation_commits_privately_and_returns_the_installed_report_on_both_wals() {
     let _io = publication_tests::PROCESS_TESTS.lock().unwrap();
     for compacted in [false, true] {

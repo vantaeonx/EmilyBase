@@ -12,7 +12,7 @@ use crate::{Error, Result};
 pub(crate) struct Destination {
     pub parent: File,
     pub name: OsString,
-    path: PathBuf,
+    path: Option<PathBuf>,
 }
 
 impl Destination {
@@ -29,18 +29,47 @@ impl Destination {
             std::env::current_dir()?.join(parent)
         };
         let parent = open_directory(&path)?;
-        let destination = Self { parent, name, path };
+        let destination = Self {
+            parent,
+            name,
+            path: Some(path),
+        };
         destination.check()?;
         Ok(destination)
     }
 
     pub fn check(&self) -> Result<()> {
-        let actual = std::fs::symlink_metadata(&self.path).map_err(|_| Error::PathChanged)?;
         let expected = self.parent.metadata()?;
-        if !actual.is_dir() || actual.dev() != expected.dev() || actual.ino() != expected.ino() {
+        if !expected.is_dir() {
             return Err(Error::PathChanged);
         }
+        if let Some(path) = &self.path {
+            let actual = std::fs::symlink_metadata(path).map_err(|_| Error::PathChanged)?;
+            if !actual.is_dir() || actual.dev() != expected.dev() || actual.ino() != expected.ino()
+            {
+                return Err(Error::PathChanged);
+            }
+        }
         Ok(())
+    }
+    pub fn at(parent: &File, name: &std::ffi::OsStr) -> Result<Self> {
+        use std::os::unix::ffi::OsStrExt;
+        let bytes = name.as_bytes();
+        if bytes.is_empty()
+            || matches!(bytes, b"." | b"..")
+            || bytes.contains(&0)
+            || bytes.contains(&b'/')
+            || !parent.metadata()?.is_dir()
+        {
+            return Err(Error::Path);
+        }
+        let result = Self {
+            parent: parent.try_clone()?,
+            name: name.to_os_string(),
+            path: None,
+        };
+        result.check()?;
+        Ok(result)
     }
 
     pub fn owns(&self, name: &std::ffi::OsStr, file: &File) -> bool {

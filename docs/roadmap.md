@@ -1318,3 +1318,14 @@ selected inode/parent retention spans complete graph and canonical source checks
 late errors are uncertain, preserved and never retried. See
 [contract](native-file-archive-publication.md). Common restore, AccountRoot/current
 user authority and production acceptance remain open.
+
+## Follow-up: native common paired restore
+
+[ADR0141](adr/0141-owned-common-native-file-restore.md) adds common private staging
+and root selection for verified metadata/object pairs. Explicit parent-descriptor
+component entry points preserve original no-follow/fsync/no-replace rules. Actual
+child directories, original restored owners, WAL and all physical object descriptors
+span root selection and final complete checks. Source substitution, native resource
+bounds, generated round trips and common-restore process kills are exercised. See
+[contract](native-file-archive-restore.md). AccountRoot/current user policy, physical
+power-loss and production acceptance remain open.

@@ -24,6 +24,18 @@ pub fn restore_bytes(bytes: &[u8], target: impl AsRef<Path>) -> Result<Report> {
     }
 }
 
+/// Native owned-parent restore of one checked backup to a single fresh leaf.
+/// Does not resolve/rebind a pathname for the supplied directory descriptor.
+pub fn restore_bytes_at(
+    bytes: &[u8],
+    parent: &File,
+    name: impl AsRef<std::ffi::OsStr>,
+) -> Result<Report> {
+    let report = inspect_bytes(bytes)?;
+    let (mut pending, source) = stage_to(bytes, Destination::at(parent, name.as_ref())?, report)?;
+    finish(&mut pending, &source, || {}, || {})
+}
+
 /// Trusted application preparation runs against a private, descriptor-anchored
 /// directory before publication. Returned counts describe the prepared journal.
 /// The callback must close all database owners before returning. It must not
@@ -101,7 +113,14 @@ pub(crate) fn restore_prepared_bytes_with<E>(
 
 fn stage(bytes: &[u8], target: &Path) -> Result<(PendingDirectory, Report)> {
     let report = inspect_bytes(bytes)?;
-    let pending = PendingDirectory::new(target)?;
+    stage_to(bytes, Destination::open(target)?, report)
+}
+fn stage_to(
+    bytes: &[u8],
+    destination: Destination,
+    report: Report,
+) -> Result<(PendingDirectory, Report)> {
+    let pending = PendingDirectory::from_destination(destination)?;
     let fd = rustix::fs::openat(
         &pending.owner,
         "redo.wal",
@@ -157,8 +176,7 @@ struct PendingDirectory {
 }
 
 impl PendingDirectory {
-    fn new(target: &Path) -> Result<Self> {
-        let destination = Destination::open(target)?;
+    fn from_destination(destination: Destination) -> Result<Self> {
         for _ in 0..32 {
             let name = publish::temporary_name()?;
             match rustix::fs::mkdirat(&destination.parent, &name, Mode::RWXU) {

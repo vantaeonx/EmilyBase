@@ -33,7 +33,7 @@ impl FileArchiveReport {
     pub const fn objects(&self) -> &ArchiveReport {
         &self.objects
     }
-    fn from_verified(view: &VerifiedFileArchive<'_>) -> Self {
+    pub(super) fn from_verified(view: &VerifiedFileArchive<'_>) -> Self {
         Self {
             project: view.project(),
             metadata: view.metadata_report().clone(),
@@ -56,13 +56,13 @@ impl std::fmt::Debug for FileArchiveReport {
             .finish_non_exhaustive()
     }
 }
-struct Target {
+pub(super) struct Target {
     parent: File,
     path: PathBuf,
     name: OsString,
 }
 impl Target {
-    fn new(path: &Path) -> Result<Self> {
+    pub(super) fn new(path: &Path) -> Result<Self> {
         let name = path.file_name().ok_or(Error::Destination)?.to_os_string();
         if name.as_bytes().contains(&0) {
             return Err(Error::Destination);
@@ -90,7 +90,7 @@ impl Target {
         target.check()?;
         Ok(target)
     }
-    fn check(&self) -> Result<()> {
+    pub(super) fn check(&self) -> Result<()> {
         let visible = std::fs::symlink_metadata(&self.path)?;
         let owned = self.parent.metadata()?;
         if !visible.is_dir() || (visible.dev(), visible.ino()) != (owned.dev(), owned.ino()) {
@@ -98,7 +98,7 @@ impl Target {
         }
         Ok(())
     }
-    fn visible(&self, expected: &Metadata) -> Result<()> {
+    pub(super) fn visible(&self, expected: &Metadata) -> Result<()> {
         let visible = rustix::fs::statat(&self.parent, &self.name, AtFlags::SYMLINK_NOFOLLOW)
             .map_err(std::io::Error::from)?;
         if (visible.st_dev, visible.st_ino) != (expected.dev(), expected.ino())
@@ -110,8 +110,18 @@ impl Target {
         }
         self.check()
     }
+    pub(super) fn open_readonly(&self) -> Result<File> {
+        let fd = rustix::fs::openat(
+            &self.parent,
+            &self.name,
+            OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+            Mode::empty(),
+        )
+        .map_err(std::io::Error::from)?;
+        Ok(fd.into())
+    }
 }
-fn private(file: &File) -> Result<Metadata> {
+pub(super) fn private(file: &File) -> Result<Metadata> {
     let m = file.metadata()?;
     if !m.is_file()
         || !matches!(m.mode() & 0o777, 0o600 | 0o400)
@@ -122,7 +132,7 @@ fn private(file: &File) -> Result<Metadata> {
     }
     Ok(m)
 }
-fn unchanged(file: &File, before: &Metadata) -> Result<()> {
+pub(super) fn unchanged(file: &File, before: &Metadata) -> Result<()> {
     let after = private(file)?;
     if (
         before.dev(),
@@ -254,14 +264,7 @@ pub fn inspect_file_archive(
     project: ProjectId,
 ) -> Result<FileArchiveReport> {
     let target = Target::new(path.as_ref())?;
-    let fd = rustix::fs::openat(
-        &target.parent,
-        &target.name,
-        OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
-        Mode::empty(),
-    )
-    .map_err(std::io::Error::from)?;
-    inspect(&target, &mut File::from(fd), project, None)
+    inspect(&target, &mut target.open_readonly()?, project, None)
 }
 
 #[cfg(test)]

@@ -7,6 +7,55 @@ fn child(stage: &StagedPrivateDirectory) {
 }
 
 #[test]
+fn explicit_parent_descriptor_keeps_moved_original_and_does_not_adopt_old_path() {
+    let temp = tempfile::tempdir().unwrap();
+    let parent = temp.path().join("parent");
+    fs::create_dir(&parent).unwrap();
+    let owner = File::open(&parent).unwrap();
+    let stage = StagedPrivateDirectory::at(&owner, "selected").unwrap();
+    child(&stage);
+    drop(owner);
+    let original = temp.path().join("original");
+    fs::rename(&parent, &original).unwrap();
+    fs::create_dir(&parent).unwrap();
+    let selected = stage.publish().unwrap();
+    selected.check().unwrap();
+    assert_eq!(
+        fs::read(original.join("selected/child")).unwrap(),
+        b"synthetic-private"
+    );
+    assert_eq!(fs::read_dir(&parent).unwrap().count(), 0);
+    let owner = File::open(&original).unwrap();
+    assert!(
+        StagedPrivateDirectory::at(&owner, "selected")
+            .unwrap()
+            .publish()
+            .is_err()
+    );
+    assert_eq!(fs::read_dir(&original).unwrap().count(), 1);
+}
+
+#[test]
+fn descriptor_staging_accepts_only_single_leaf_and_actual_directory_before_creating_stage() {
+    use std::os::unix::ffi::OsStrExt;
+    let temp = tempfile::tempdir().unwrap();
+    let owner = File::open(temp.path()).unwrap();
+    for name in [
+        b"".as_slice(),
+        b".",
+        b"..",
+        b"../escape",
+        b"a/b",
+        b"nul\0leaf",
+    ] {
+        assert!(StagedPrivateDirectory::at(&owner, std::ffi::OsStr::from_bytes(name)).is_err());
+        assert_eq!(fs::read_dir(temp.path()).unwrap().count(), 0);
+    }
+    let regular = File::create(temp.path().join("regular")).unwrap();
+    assert!(StagedPrivateDirectory::at(&regular, "child").is_err());
+}
+
+#[test]
 fn private_directory_selection_retains_exact_handles_and_never_replaces_existing_names() {
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("selected");
