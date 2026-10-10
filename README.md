@@ -151,6 +151,9 @@ original-WAL metadata and scoped objects, with persisted physical quotas and log
 references. Actual selected-inode retention spans the reference commit; unreferenced
 blobs remain invisible through catalog reads and charged against capacity. This
 operator library is outside current server/CLI and coordinated root backup paths.
+Native [reference rename/removal](docs/native-file-mutations.md) uses exact current
+revision CAS and original source retention. Removal hides the reference while the
+surviving immutable blob stays charged; no physical cleanup is inferred.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

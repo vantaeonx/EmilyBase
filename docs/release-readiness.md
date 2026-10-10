@@ -37,6 +37,12 @@ The complete [d988a51 integration snapshot](measurements/2026-10-10-integration-
 records complete1518-test stable/minimum matrices, builds, parser/SDK/audit checks
 and successful source CI, while preserving earlier snapshot boundaries. It is not
 a release acceptance certificate.
+The later immutable [24444bc full integration snapshot](measurements/2026-10-10-complete-reader-publication/verification.json)
+passed1552 workspace tests and full builds on stable1.99 and minimum1.89. All580
+frozen hashes match;32 default ignored entries comprise30 parent-invoked fixtures
+and two separate opt-in corpus generators. The interrupted minimum attempt is
+excluded; the resumed complete command exited0. Its hosted source run also passed.
+This completed snapshot does not certify later selected readers or file catalogs.
 The later [native inspection increment](native-object-inspection.md) has its own
 172-check targeted matrices; it does not claim a new complete broad result.
 The following [seekable archive increment](seekable-object-archive-inspection.md)
@@ -63,6 +69,9 @@ The [standalone native file catalog](native-file-catalog.md) adds actual own-WAL
 references and persisted physical quotas with invisible charged orphans. Its native
 process-kill/reopen/semantic-corruption evidence does not implement coordinated
 Root backup, current file policies or user endpoints.
+Native [metadata mutations](native-file-mutations.md) add reference-revision CAS,
+logical removal and native WAL1/2 kill/reopen evidence. Physical blobs remain charged
+after removal; user authorization and common restore are still pending.
 
 ## Before publishing an experimental release
 

@@ -87,7 +87,9 @@ matching object directories may have fresh inodes after a legitimate restore;
 there is no persistent unique object-directory UUID in the older native marker.
 Project/complete graph matching must not be described as proof of unique ancestry.
 
-Logical metadata edits/deletion, quota administration, idempotent request identity,
+Native [metadata rename/logical deletion](native-file-mutations.md) now use exact
+reference CAS and retain the source through the own-WAL commit. Deleted references
+leave charged physical blobs; quota administration, idempotent request identity,
 orphan reclamation and catalog growth/upgrade policy remain follow-up work. This
 library does not add a current account policy, user HTTP, signed URL, Root manifest,
 coordinated backup/restore, dashboard, network admission or production acceptance.

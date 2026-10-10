@@ -1267,3 +1267,13 @@ through the own-WAL commit and final complete receipt checks. Valid unreferenced
 objects stay invisible but charged; uncertain outcomes require reopen/inspection.
 See [contract](native-file-catalog.md). Metadata mutations/deletion and coordinated
 backup remain pending; no user file route, Root version or platform stage closes.
+
+## Follow-up: native file metadata CAS and logical removal
+
+[ADR0136](adr/0136-native-file-metadata-cas-and-logical-removal.md) adds exact current
+reference-revision rename/remove. Actual source retention spans staging, own-WAL
+commit and final checks. No-op/stale and reused-ID rules are explicit. Removal hides
+the reference and leaves physical charge; staged changes never recover, while lost
+responses may have committed. Native WAL1/2 kills and independent revision/usage
+models cover these boundaries. See [contract](native-file-mutations.md). Physical
+reclamation, quota administration, common backup and user policy stay open.

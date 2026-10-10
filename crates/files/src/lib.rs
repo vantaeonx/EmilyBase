@@ -1,7 +1,9 @@
 //! Standalone native file references in the original engine; no user authority.
+mod mutation;
 mod records;
 mod store;
 use emilybase_object_storage::{FileReport, ObjectId, WriteLimits};
+pub use mutation::FileRemoval;
 pub use store::{FileStore, FileUsage};
 
 pub const MAX_FILE_NAME_BYTES: usize = 256;
@@ -117,6 +119,8 @@ pub enum Error {
     NotEmpty,
     #[error("logical file identity already exists")]
     Exists,
+    #[error("logical file revision does not match")]
+    Conflict,
     #[error("logical file identity does not exist")]
     Missing,
     #[error("native file revision exhausted")]

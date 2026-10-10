@@ -15,9 +15,9 @@ pub struct FileUsage {
 /// metadata Database first, then ProjectDirectory, before passing ownership here.
 /// No underlying owner/SQL handle is exported. This grants no user/file policy.
 pub struct FileStore {
-    database: Database,
-    objects: ProjectDirectory,
-    poisoned: bool,
+    pub(crate) database: Database,
+    pub(crate) objects: ProjectDirectory,
+    pub(crate) poisoned: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -205,7 +205,7 @@ impl FileStore {
         result.map_err(|e| Error::OutcomeUnknown(Box::new(e)))
     }
 
-    fn validated(&self) -> Result<(FileQuota, Vec<FileInfo>, Inventory)> {
+    pub(crate) fn validated(&self) -> Result<(FileQuota, Vec<FileInfo>, Inventory)> {
         if self.poisoned {
             return Err(Error::Poisoned);
         }
