@@ -174,23 +174,7 @@ fn inspect_with(
     target.check()?;
     let before = private(file)?;
     target.visible(&before)?;
-    let length = before.len() as usize;
-    let mut bytes = Vec::new();
-    bytes
-        .try_reserve_exact(length)
-        .map_err(|_| Error::Allocation)?;
-    bytes.resize(length, 0);
-    file.seek(SeekFrom::Start(0))?;
-    file.read_exact(&mut bytes)?;
-    let mut probe = [0; 1];
-    loop {
-        match file.read(&mut probe) {
-            Ok(0) => break,
-            Ok(_) => return Err(Error::Archive),
-            Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
-            Err(e) => return Err(e.into()),
-        }
-    }
+    let bytes = read_image(file, before.len() as usize)?;
     read();
     unchanged(file, &before)?;
     target.visible(&before)?;
@@ -216,6 +200,28 @@ fn inspect_with(
     unchanged(file, &before)?;
     target.visible(&before)?;
     Ok(report)
+}
+pub(super) fn read_image(file: &mut File, length: usize) -> Result<Vec<u8>> {
+    if length > MAX_FILE_ARCHIVE_BYTES {
+        return Err(Error::Archive);
+    }
+    let mut bytes = Vec::new();
+    bytes
+        .try_reserve_exact(length)
+        .map_err(|_| Error::Allocation)?;
+    bytes.resize(length, 0);
+    file.seek(SeekFrom::Start(0))?;
+    file.read_exact(&mut bytes)?;
+    let mut probe = [0; 1];
+    loop {
+        match file.read(&mut probe) {
+            Ok(0) => break,
+            Ok(_) => return Err(Error::Archive),
+            Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(e) => return Err(e.into()),
+        }
+    }
+    Ok(bytes)
 }
 
 /// Native operator publication through original private no-replace staging,

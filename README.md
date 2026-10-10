@@ -165,10 +165,13 @@ and object components together, with a borrowed encoder and strict graph validat
 Byte verification alone does not publish or atomically restore a destination.
 Native [paired archive publication](docs/native-file-archive-publication.md) now
 writes one fresh checked archive through retained no-replace staging and readback.
-Common restore and AccountRoot/user integration remain open.
+AccountRoot/user integration remains open.
 Native [common paired restore](docs/native-file-archive-restore.md) now reconstructs
 both components under one private root and retains their actual owners through
 no-replace selection and final graph checks. AccountRoot/user integration remains.
+The [native archive CLI](docs/native-file-archive-cli.md) verifies and restores a
+private paired file while retaining its original input through common selection.
+Result output contains counts and identities; existing targets are never replaced.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

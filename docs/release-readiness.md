@@ -83,12 +83,15 @@ both components, exact scope, physical quota and reference hashes together. Its
 borrowed encoder/byte decoder do not close common publication or restore gates.
 Native [paired archive publication](native-file-archive-publication.md) adds
 standalone no-replace common backup files and readonly inspection with actual
-descriptor retention. Common restore and coordinated AccountRoot inclusion remain
-open, separately from process-kill publication checks.
+descriptor retention. Coordinated AccountRoot inclusion remains open, separately
+from process-kill publication checks.
 Native [common paired restore](native-file-archive-restore.md) verifies and stages
 both components under one selected root, retaining actual child/WAL/object owners
 through final checks. AccountRoot coordinated inclusion, current user policy,
 power-loss evidence and production gates remain open.
+The [native paired archive CLI](native-file-archive-cli.md) binds file restoration
+to the original readonly input/parent through selection and handles failed report
+delivery without overwriting the selected root. It grants no user authority.
 
 ## Before publishing an experimental release
 

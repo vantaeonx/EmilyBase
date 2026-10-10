@@ -429,6 +429,7 @@ dependencies = [
  "emilybase-backup",
  "emilybase-catalog",
  "emilybase-database",
+ "emilybase-files",
  "emilybase-index",
  "emilybase-migrations",
  "emilybase-object-storage",

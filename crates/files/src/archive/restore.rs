@@ -199,8 +199,18 @@ fn restore_with(
     destination: &Path,
     mut boundary: impl FnMut(RestoreBoundary),
 ) -> Result<FileArchiveReport> {
+    restore_checked(bytes, project, destination, &mut boundary, || Ok(()))
+}
+pub(super) fn restore_checked(
+    bytes: &[u8],
+    project: ProjectId,
+    destination: &Path,
+    mut boundary: impl FnMut(RestoreBoundary),
+    mut check_input: impl FnMut() -> Result<()>,
+) -> Result<FileArchiveReport> {
     let view = verify_file_archive(bytes, project)?;
     let expected = FileArchiveReport::from_verified(&view);
+    check_input()?;
     let stage = StagedPrivateDirectory::new(destination)?;
     let root = stage.directory().try_clone()?;
     let path = descriptor_path(&root);
@@ -241,6 +251,7 @@ fn restore_with(
         readers.push(reader);
     }
     boundary(RestoreBoundary::Owned);
+    check_input()?;
     stage.check()?;
     verify_pair(
         &mut guard,
@@ -259,6 +270,7 @@ fn restore_with(
     };
     boundary(RestoreBoundary::Selected);
     let mut finish = || -> Result<()> {
+        check_input()?;
         selected.check()?;
         verify_pair(
             &mut guard,
@@ -268,6 +280,7 @@ fn restore_with(
             &inventory,
             &view,
         )?;
+        check_input()?;
         selected.check()?;
         Ok(())
     };

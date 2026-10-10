@@ -6,6 +6,7 @@ use emilybase_catalog::{Key, Row, Schema};
 use emilybase_database::{DATABASE_MARKER, Database};
 use emilybase_storage::{Error, FORMAT_VERSION, PAGE_SIZE, Page, Pager, SlotId};
 mod admission;
+mod files;
 mod objects;
 mod policies;
 mod tables;
@@ -24,6 +25,14 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Readonly full verification of a private paired metadata/object archive.
+    FileArchiveVerify { path: PathBuf, project: String },
+    /// Restore a paired archive into one fresh private common root.
+    FileArchiveRestore {
+        path: PathBuf,
+        project: String,
+        destination: PathBuf,
+    },
     /// Readonly full inspection of an experimental scoped object archive.
     ObjectArchiveVerify { path: PathBuf, project: String },
     /// Restore a complete private object archive into a fresh 0700 directory.
@@ -261,6 +270,19 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::FileArchiveVerify { path, project } => {
+            let project = project.parse::<emilybase_object_storage::ProjectId>()?;
+            files::report(&emilybase_files::inspect_file_archive(path, project)?)?;
+        }
+        Command::FileArchiveRestore {
+            path,
+            project,
+            destination,
+        } => {
+            let project = project.parse::<emilybase_object_storage::ProjectId>()?;
+            let report = emilybase_files::restore_file_archive_file(path, project, destination)?;
+            files::report(&report)?;
+        }
         Command::AccountRootProjects { path } => {
             let pool = emilybase_auth::password::PasswordPool::new(1)?;
             let root = emilybase_server::AccountRoot::open(path, pool)?;

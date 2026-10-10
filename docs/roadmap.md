@@ -1329,3 +1329,13 @@ span root selection and final complete checks. Source substitution, native resou
 bounds, generated round trips and common-restore process kills are exercised. See
 [contract](native-file-archive-restore.md). AccountRoot/current user policy, physical
 power-loss and production acceptance remain open.
+
+## Follow-up: retained input and native paired archive CLI
+
+[ADR0142](adr/0142-retained-native-file-archive-input.md) binds common restoration
+to the original private input file/parent and exact bytes across root selection.
+The actual CLI verifies and restores complete paired archives, with count-only
+reports, explicit expected project and no-replace behavior. Report delivery failure
+preserves selected data. Native input substitutions, process kills and actual CLI
+behavior are exercised; see [contract](native-file-archive-cli.md). AccountRoot/user
+files, global resource admission and production acceptance remain open.

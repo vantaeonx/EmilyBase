@@ -6,9 +6,11 @@ mod header;
 mod publication;
 mod reader;
 mod restore;
+mod source;
 pub use publication::{FileArchiveReport, inspect_file_archive, publish_file_archive};
 pub use reader::FileArchiveReader;
 pub use restore::restore_file_archive;
+pub use source::restore_file_archive_file;
 
 pub const FILE_ARCHIVE_VERSION: u16 = 1;
 pub const FILE_ARCHIVE_HEADER_BYTES: usize = 192;
