@@ -75,6 +75,9 @@ after removal; user authorization and common restore are still pending.
 Native [quota administration](native-file-quota-administration.md) adds scoped
 global-revision changes under retained complete physical inventory. Its bounded
 native descriptors are not global server FD admission or current user authority.
+Native [coordinated immutable capture](native-file-snapshot.md) pairs verified
+metadata backup and complete object images under their original owners. Component
+round trips preserve the graph; common durable publication/restore remains pending.
 
 ## Before publishing an experimental release
 

@@ -157,6 +157,9 @@ surviving immutable blob stays charged; no physical cleanup is inferred.
 Native [quota administration](docs/native-file-quota-administration.md) uses scoped
 global metadata CAS and retains every actual physical object through the limit
 commit. Orphans must fit proposed limits; equal current limits preserve WAL bytes.
+Native [coordinated snapshot capture](docs/native-file-snapshot.md) retains both
+original owners and every actual object through metadata export and object copying.
+It includes charged orphans; common durable backup/restore remains a separate gate.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

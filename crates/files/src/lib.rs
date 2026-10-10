@@ -3,9 +3,11 @@ mod mutation;
 mod quota;
 pub use quota::QuotaState;
 mod records;
+mod snapshot;
 mod store;
 use emilybase_object_storage::{FileReport, ObjectId, WriteLimits};
 pub use mutation::FileRemoval;
+pub use snapshot::FileSnapshot;
 pub use store::{FileStore, FileUsage};
 
 pub const MAX_FILE_NAME_BYTES: usize = 256;
@@ -137,6 +139,8 @@ pub enum Error {
     Engine(#[from] emilybase_transactions::Error),
     #[error("native file object operation failed")]
     Objects(#[from] emilybase_object_storage::Error),
+    #[error("native file metadata backup failed")]
+    Backup(#[from] emilybase_backup::Error),
 }
 impl std::fmt::Debug for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

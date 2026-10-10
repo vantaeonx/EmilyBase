@@ -1,6 +1,7 @@
 use super::*;
 use crate::TEST_IO;
 use crate::mutation::MetadataBoundary;
+use crate::snapshot::CaptureBoundary;
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::fs::DirBuilderExt;
@@ -54,6 +55,22 @@ fn worker() {
         })
         .unwrap();
     if let Some((operation, point)) = phase.split_once('-') {
+        if operation == "capture" {
+            let snapshot = store
+                .capture_with(|at| {
+                    if (point == "admitted" && at == CaptureBoundary::Admitted)
+                        || (point == "metadata" && at == CaptureBoundary::Metadata)
+                        || (point == "objects" && at == CaptureBoundary::Objects)
+                    {
+                        signal_and_wait();
+                    }
+                })
+                .unwrap();
+            assert_eq!(point, "ack");
+            assert_eq!(snapshot.files(), std::slice::from_ref(&initial));
+            assert_eq!(snapshot.objects().objects()[0].payload(), payload);
+            signal_and_wait();
+        }
         assert!(matches!(operation, "rename" | "remove" | "quota"));
         let checked = |at| {
             if (point == "staged" && at == MetadataBoundary::Staged)
@@ -273,6 +290,59 @@ fn mutation_kills_recover_only_committed_metadata_and_retain_physical_charge_on_
                     assert_eq!(store.usage().unwrap().physical_objects, 2);
                     assert_eq!(store.usage().unwrap().orphans, usize::from(removed));
                 }
+            }
+        }
+    }
+}
+
+#[test]
+fn capture_process_kills_preserve_exact_acknowledged_source_pair_and_allow_next_write() {
+    let _serial = TEST_IO.lock().unwrap();
+    for compacted in [false, true] {
+        for empty in [false, true] {
+            for point in ["admitted", "metadata", "objects", "ack"] {
+                let temp = tempfile::tempdir().unwrap();
+                kill_at(temp.path(), &format!("capture-{point}"), empty, compacted);
+                let mut db = Database::open(temp.path().join("metadata")).unwrap();
+                let before = db.committed_wal().unwrap();
+                let recovered =
+                    emilybase_transactions::recover_image(&before, Some(db.database_id())).unwrap();
+                assert_eq!(recovered.last_transaction, 3);
+                assert_eq!(recovered.wal_version, if compacted { 2 } else { 1 });
+                let objects = ProjectDirectory::open(temp.path().join("objects"), PROJECT).unwrap();
+                let mut store = FileStore::open(db, objects).unwrap();
+                assert_eq!(
+                    store.usage().unwrap(),
+                    FileUsage {
+                        physical_objects: 1,
+                        payload_bytes: if empty { 0 } else { 8193 },
+                        references: 1,
+                        orphans: 0
+                    }
+                );
+                let snapshot = store.capture().unwrap();
+                assert_eq!(
+                    &snapshot.metadata_bytes()[emilybase_backup::HEADER_SIZE..],
+                    before
+                );
+                assert_eq!(snapshot.files()[0].revision(), 3);
+                let payload: Vec<_> = if empty {
+                    vec![]
+                } else {
+                    (0..8193).map(|index| (index % 251) as u8).collect()
+                };
+                assert_eq!(snapshot.objects().objects()[0].payload(), payload);
+                store
+                    .publish(
+                        FileId::from_bytes([5; 16]),
+                        ObjectId::from_bytes([6; 16]),
+                        [7; 16],
+                        "after-recovery",
+                        b"next",
+                    )
+                    .unwrap();
+                assert_eq!(store.database.last_transaction(), 4);
+                assert_eq!(store.usage().unwrap().references, 2);
             }
         }
     }

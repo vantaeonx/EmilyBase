@@ -7,6 +7,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+emilybase-backup = { path = "../backup" }
 emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }
 emilybase-transactions = { path = "../transactions" }

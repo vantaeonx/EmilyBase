@@ -1287,3 +1287,14 @@ through the scope-row commit and final full graph checks. Existing schema1/bytes
 remain; no-op/stale, before/after commit uncertainty and resource bounds are explicit.
 See [contract](native-file-quota-administration.md). Common backup/restore, current
 user authority, Root/server admission and production gates stay open.
+
+## Follow-up: coordinated native immutable file capture
+
+[ADR0138](adr/0138-coordinated-native-file-snapshot.md) adds one checked immutable
+metadata/object snapshot under the original owners and all actual physical object
+descriptors. Exact replayed metadata, original WAL, scope, inventory and graph must
+match before return. Charged orphans remain included. Moved owners keep original
+descriptor sources rather than adopting old-path replacements. Source rewriting,
+same-byte inode substitution and process-kill cases are exercised. See
+[contract](native-file-snapshot.md). No combined wire format, common atomic backup
+or restore is inferred; Root/current user policy and production gates stay open.

@@ -115,7 +115,21 @@ pub(crate) fn metadata(
     database: &Database,
     project: ProjectId,
 ) -> Result<(FileQuota, Vec<FileInfo>)> {
-    let view = database.view()?;
+    metadata_image(
+        database.view()?,
+        database.database_id(),
+        database.last_transaction(),
+        project,
+    )
+}
+/// Shared exact schema/scope validation for a live owner and a replayed immutable
+/// backup. A decoded image grants no filesystem or current user authority.
+pub(crate) fn metadata_image(
+    view: &Snapshot,
+    database_id: [u8; 16],
+    last_transaction: u64,
+    project: ProjectId,
+) -> Result<(FileQuota, Vec<FileInfo>)> {
     let invalid = || Error::Corrupt;
     if view.table_count() != 2
         || view.schema(SCOPE).map_err(|_| invalid())? != &scope_schema()
@@ -139,8 +153,7 @@ pub(crate) fn metadata(
     else {
         return Err(Error::Corrupt);
     };
-    if stored_project.as_slice() != project.as_bytes()
-        || stored_database.as_slice() != database.database_id()
+    if stored_project.as_slice() != project.as_bytes() || stored_database.as_slice() != database_id
     {
         return Err(Error::Scope);
     }
@@ -160,7 +173,7 @@ pub(crate) fn metadata(
     }
     let infos = rows
         .iter()
-        .map(|r| decode(r, database.last_transaction()))
+        .map(|r| decode(r, last_transaction))
         .collect::<Result<Vec<_>>>()?;
     let mut objects = BTreeSet::new();
     if infos
