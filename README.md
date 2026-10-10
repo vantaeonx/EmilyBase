@@ -160,6 +160,9 @@ commit. Orphans must fit proposed limits; equal current limits preserve WAL byte
 Native [coordinated snapshot capture](docs/native-file-snapshot.md) retains both
 original owners and every actual object through metadata export and object copying.
 It includes charged orphans; common durable backup/restore remains a separate gate.
+The [paired archive byte format](docs/native-file-archive-format.md) checks metadata
+and object components together, with a borrowed encoder and strict graph validation.
+Byte verification alone does not publish or atomically restore a destination.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

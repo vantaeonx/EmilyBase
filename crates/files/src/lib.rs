@@ -1,10 +1,15 @@
 //! Standalone native file references in the original engine; no user authority.
+mod archive;
 mod mutation;
 mod quota;
 pub use quota::QuotaState;
 mod records;
 mod snapshot;
 mod store;
+pub use archive::{
+    FILE_ARCHIVE_HEADER_BYTES, FILE_ARCHIVE_VERSION, FileArchiveReader, MAX_FILE_ARCHIVE_BYTES,
+    VerifiedFileArchive, verify_file_archive,
+};
 use emilybase_object_storage::{FileReport, ObjectId, WriteLimits};
 pub use mutation::FileRemoval;
 pub use snapshot::FileSnapshot;
@@ -117,6 +122,12 @@ pub enum Error {
     Quota,
     #[error("bounded native file allocation failed")]
     Allocation,
+    #[error("invalid native file archive")]
+    Archive,
+    #[error("unsupported native file archive version: {0}")]
+    ArchiveVersion(u16),
+    #[error("native file archive checksum mismatch")]
+    ArchiveChecksum,
     #[error("invalid native file catalog or object graph")]
     Corrupt,
     #[error("native file project or metadata database identity differs")]

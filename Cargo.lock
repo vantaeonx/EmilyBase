@@ -491,12 +491,14 @@ dependencies = [
 name = "emilybase-files"
 version = "0.1.0"
 dependencies = [
+ "crc32fast",
  "emilybase-backup",
  "emilybase-catalog",
  "emilybase-database",
  "emilybase-object-storage",
  "emilybase-transactions",
  "proptest",
+ "sha2",
  "tempfile",
  "thiserror",
 ]

@@ -7,6 +7,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+crc32fast = "1.5"
+sha2 = "0.10"
 emilybase-backup = { path = "../backup" }
 emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }

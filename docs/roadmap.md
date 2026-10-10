@@ -1298,3 +1298,13 @@ descriptor sources rather than adopting old-path replacements. Source rewriting,
 same-byte inode substitution and process-kill cases are exercised. See
 [contract](native-file-snapshot.md). No combined wire format, common atomic backup
 or restore is inferred; Root/current user policy and production gates stay open.
+
+## Follow-up: paired native file archive bytes
+
+[ADR0139](adr/0139-paired-native-file-archive-format.md) adds an experimental version1
+container for exact existing metadata backup and complete object archive bytes.
+Strict fixed bounds/CRC/outer digests precede nested replay and whole-pair semantic
+validation. Individually valid mismatched components fail. A borrowed canonical
+Read/Seek encoder avoids a second complete payload copy. See
+[format and checks](native-file-archive-format.md). Common durable publication and
+restore, Root/current user policy and production acceptance remain open.

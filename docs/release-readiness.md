@@ -78,6 +78,9 @@ native descriptors are not global server FD admission or current user authority.
 Native [coordinated immutable capture](native-file-snapshot.md) pairs verified
 metadata backup and complete object images under their original owners. Component
 round trips preserve the graph; common durable publication/restore remains pending.
+The [experimental paired archive format](native-file-archive-format.md) validates
+both components, exact scope, physical quota and reference hashes together. Its
+borrowed encoder/byte decoder do not close common publication or restore gates.
 
 ## Before publishing an experimental release
 
