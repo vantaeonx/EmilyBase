@@ -1246,3 +1246,13 @@ acquisition through constructor errors or the returned Pager. Active exclusion,
 successor ownership, byte formats, fsync/unknown outcomes and poisoned-write refusal
 remain. See [contract](pager-owner-lock-lifetime.md). This does not alter other owner
 implementations or close broad concurrency/recovery/production acceptance.
+
+## Follow-up: retained bounded native payload reads
+
+[ADR0134](adr/0134-retained-bounded-object-payload-reader.md) adds an opaque fully
+admitted object cursor borrowing its original directory owner and retaining the
+actual readonly inode. Reads copy at most8192 payload-only bytes with before/after
+scope/metadata/identity checks; failed checks clear the attempted prefix and poison
+the handle. Checked payload seeks, full revalidation and consuming finish preserve
+the original scope/report. See [contract](object-payload-reader.md). This adds no
+HTTP authority, persistent file catalog/quota or coordinated root restore gate.

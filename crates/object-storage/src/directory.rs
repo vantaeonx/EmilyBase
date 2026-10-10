@@ -13,8 +13,10 @@ const SCOPE_OBJECT: ObjectId = ObjectId::from_bytes([0; 16]);
 mod backup;
 mod bounded;
 mod inspection;
+mod reader;
 mod selected;
 pub use bounded::{WriteLimits, WriteReceipt};
+pub use reader::{MAX_OBJECT_READ_BYTES, ObjectReader};
 pub use selected::{SelectedObject, SelectedWrite};
 pub(crate) mod inventory;
 pub use inventory::{

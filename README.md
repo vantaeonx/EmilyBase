@@ -142,6 +142,10 @@ preserving owned staging, no-replace/fsync and selected-descriptor verification.
 [Selected native objects](docs/selected-object-retention.md) can now keep the actual
 published descriptor and original owner across later caller work, with explicit
 full revalidation. Their metadata grants no user authority or catalog transaction.
+[Retained payload readers](docs/object-payload-reader.md) fully admit an existing
+object and copy at most8192 payload-only bytes per call under its original owner.
+Detected scope/inode/metadata changes clear the attempted chunk and poison the
+reader; complete final hashing and payload-relative seeks keep explicit boundaries.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

@@ -11,9 +11,9 @@ pub use archive::{
     verify_archive_reader,
 };
 pub use directory::{
-    Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ObjectSnapshot,
-    ProjectDirectory, SelectedObject, SelectedWrite, StoredObject, WriteLimits, WriteReceipt,
-    object_id_from_name,
+    Inventory, InventoryEntry, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, MAX_OBJECT_READ_BYTES,
+    ObjectReader, ObjectSnapshot, ProjectDirectory, SelectedObject, SelectedWrite, StoredObject,
+    WriteLimits, WriteReceipt, object_id_from_name,
 };
 pub use format::{
     HEADER_BYTES, MAX_PAYLOAD_BYTES, ObjectId, ProjectId, VerifiedObject, encode, verify,
@@ -46,6 +46,10 @@ pub enum Error {
     Directory,
     #[error("object directory already has a cooperating owner")]
     Busy,
+    #[error("native object reader refused further operations after a failed check")]
+    ReaderPoisoned,
+    #[error("invalid payload seek position")]
+    InvalidSeek,
     #[error("object inventory contains an unknown or invalid entry")]
     Inventory,
     #[error("object inventory changed during verification")]

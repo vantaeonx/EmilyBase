@@ -62,6 +62,12 @@ dashboard and Kotlin client remain future work. The proposed integration contrac
 is [ADR0127](adr/0127-proposed-account-root-object-integration.md); it does not
 enable a route or change an existing format.
 
+The [native object reader](object-payload-reader.md) retains one fully admitted
+readonly descriptor under its original borrowed directory owner. Payload-only
+positional reads are capped at8192 bytes with before/after scope/identity checks;
+filesystem failures poison that handle. Complete hash verification is explicit.
+This synchronous native cursor grants no current account/session/file policy.
+
 ## Storage boundary
 
 File page 0 is an immutable format header. Data pages start at 1. Each page

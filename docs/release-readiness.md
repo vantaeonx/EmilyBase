@@ -55,6 +55,10 @@ compile-fail checks. It supplies no catalog transaction or current user authorit
 The [Pager owner correction](pager-owner-lock-lifetime.md) follows with a reproduced
 Busy regression and534-check affected matrices on both toolchains. Its separate
 WAL ownership contract remains unchanged; this is not a complete current workspace run.
+The [native payload reader](object-payload-reader.md) adds bounded payload-only
+reads retaining the original owner/inode, irreversible refusal after detected
+change, checked seeks and final complete hashing. Its targeted evidence is separate
+from the complete older source and grants no user file service or release approval.
 
 ## Before publishing an experimental release
 
