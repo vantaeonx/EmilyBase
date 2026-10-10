@@ -169,3 +169,23 @@ on a replaced root, preserved old/replacement bytes and healthy sibling access.
 Stopping/reopening intentionally moved directories works. Digest authorization
 remains filesystem-free; synchronous checks run on blocking workers. This does
 not sandbox a malicious privileged administrator or close the wider audit gate.
+
+## Immutable reader file publication
+
+| Boundary | Observed result | Check |
+| --- | --- | --- |
+| Partial copy, killed | no final name; exact private stage prefix retained, never adopted | actual process kill |
+| Complete file synced, killed | no final name; exact unselected stage retained | actual process kill |
+| Name selected before parent sync, killed | complete selected bytes; no received success inferred | actual process kill |
+| Full/empty success received, killed | exact selected bytes retained | two actual process kills |
+| Before/after file fsync failure | preselection error; owned stage cleanup, no final name | two injected failures |
+| Before/after parent fsync failure | explicitly unknown selected bytes preserved | two injected failures |
+| Source length/read/seek/byte or stage mutation | refusal before selection | fault/model cases |
+| Foreign stage/selected inode | preserved; no foreign cleanup or successful attribution | substitution cases |
+| Actual maximum native CLI backup | independent fresh restore and original inventories equal |128-object/64 MiB integration |
+
+The [reader publisher](reader-file-publication.md) keeps original no-replace/fsync
+ownership. Its new subprocess fixture shares existing lock-test serialization;
+initial failing attempts and20 subsequent full-library repetitions are recorded.
+This is native object backup, not coordinated AccountRoot files, WAL transactions
+or hardware power-loss qualification. Parser fuzzing does not exercise these kills.

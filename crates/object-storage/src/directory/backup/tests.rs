@@ -1,4 +1,5 @@
 use super::*;
+use crate::encode_archive;
 use proptest::prelude::*;
 use std::fs;
 use std::os::unix::fs::{DirBuilderExt, PermissionsExt, symlink};

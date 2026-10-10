@@ -24,10 +24,10 @@ Debug exposes counts, encoded length and position, never payload data.
 The original owned encode_archive/encode_verified_archive APIs remain available
 and preserve their bytes. The [format contract](object-archive-format.md), native
 capture admission, versions, fsync points and publication uncertainty are unchanged.
-At this increment native backup still builds its owned encoded image. Connecting
-the reader to durable publication requires a separately tested publisher with
-complete stage readback, retained selected inode and original no-replace/fsync
-outcomes. This library API adds no HTTP route, file authority or release acceptance.
+The initial reader increment kept native backup publication unchanged. The later
+[reader publisher](reader-file-publication.md) now connects it with complete stage
+readback, retained selected inode and original no-replace/fsync outcomes. This
+library API adds no HTTP route, file authority or release acceptance.
 
 See [ADR0130](adr/0130-borrowed-canonical-object-archive-reader.md) and the
 [seekable metadata verifier](seekable-object-archive-inspection.md).

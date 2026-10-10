@@ -136,8 +136,9 @@ verifies the complete outer archive and every nested object through bounded read
 preserving checksum priority and native inode checks without a complete image copy.
 [Borrowed canonical encoding](docs/borrowed-object-archive-encoding.md) exposes the
 same archive bytes through Read+Seek over immutable verified images, avoiding a
-second payload image in that API. Native backup publication still uses its owned
-encoder until the durable reader publisher is separately verified.
+second payload image. [Native backup publication](docs/reader-file-publication.md)
+now uses that immutable reader through exact bounded copy/full byte readback,
+preserving owned staging, no-replace/fsync and selected-descriptor verification.
 The next [AccountRoot integration proposal](docs/adr/0127-proposed-account-root-object-integration.md)
 defines file/catalog failure boundaries, current authority, orphan accounting and
 coordinated backup gates. It is a proposal, not an implemented file service.

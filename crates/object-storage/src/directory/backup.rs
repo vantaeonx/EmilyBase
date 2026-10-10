@@ -1,6 +1,6 @@
 //! Complete immutable capture followed by original owned archive publication.
 use super::*;
-use crate::{ArchiveReport, MAX_ARCHIVE_BYTES, encode_archive};
+use crate::{ArchiveReader, ArchiveReport, MAX_ARCHIVE_BYTES};
 use std::ffi::OsString;
 use std::io::{Seek, SeekFrom};
 use std::os::unix::ffi::OsStrExt;
@@ -90,7 +90,7 @@ impl ProjectDirectory {
     ) -> Result<ArchiveReport> {
         let target = Target::new(path, &self.directory)?;
         let snapshot = self.capture()?;
-        let image = encode_archive(&snapshot)?;
+        let mut image = ArchiveReader::from_snapshot(&snapshot)?;
         let inventory = snapshot.inventory();
         let expected = ArchiveReport {
             objects: inventory.entries().len(),
@@ -102,10 +102,12 @@ impl ProjectDirectory {
             return Err(Error::InventoryChanged);
         }
         target.check()?;
-        let mut selected_file = match emilybase_storage::publish_private_file_at_retained(
+        let exact_bytes = image.encoded_bytes();
+        let mut selected_file = match emilybase_storage::publish_private_reader_at_retained(
             &target.parent,
             &target.name,
-            &image,
+            &mut image,
+            exact_bytes,
             MAX_ARCHIVE_BYTES,
         ) {
             Ok(file) => file,

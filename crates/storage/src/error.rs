@@ -6,6 +6,10 @@ pub enum Error {
     Io(#[from] io::Error),
     #[error("invalid file length: {0}")]
     FileLength(u64),
+    #[error("publication source does not match its declared length")]
+    SourceLength,
+    #[error("private publication byte readback mismatch")]
+    Readback,
     #[error("invalid magic bytes")]
     Magic,
     #[error("unsupported format version: {0}")]

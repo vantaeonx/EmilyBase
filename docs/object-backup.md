@@ -16,10 +16,11 @@ Publication proceeds as follows:
 
 1. Verify and capture the complete bounded source, including every nested object
    envelope and the original scoped inventory digest.
-2. Encode the canonical archive; recheck the complete current source inventory
+2. Prepare a canonical immutable archive reader; recheck the complete source inventory
    and the visible destination parent before creating any stage.
-3. Use the original storage publisher: exclusive random private0600 stage, exact
-   write, file fsync, full byte readback, no-replace rename and parent fsync.
+3. Use the [bounded reader publisher](reader-file-publication.md): original exclusive
+   random private0600 stage, exact chunked write/EOF, file fsync, complete byte
+   readback against the immutable reader, no-replace rename and parent fsync.
 4. Retain the selected file descriptor from that publisher. Allocate the duplicate
    descriptor before rename so descriptor exhaustion remains prepublication.
 5. Rewind and fully verify that exact file; require the complete report to match
@@ -49,10 +50,11 @@ The header/body/nested checksums detect accidental corruption; they neither
 authenticate a writer nor encrypt data.
 
 Bounds remain128 objects,64 MiB aggregate payload and67,124,352 complete archive
-bytes, with8 MiB per object. Capture, encoded archive and final readback can be
-retained concurrently: logical image storage approaches three complete images
-plus working buffers/metadata. This is not streaming, a global heap reservation,
-an upload quota or an aggregate service resource gate.
+bytes, with8 MiB per object. The complete capture remains owned; canonical encoding
+borrows those verified images with bounded frames, storage publication compares
+every byte using bounded scratch, and selected readback verifies without a full
+archive copy. Live capture and standalone restore still retain owned images.
+This is not a global heap reservation, upload quota or aggregate service gate.
 
 [Verified standalone restore](object-restore.md) now reconstructs a fresh private
 directory. Coordinated root integration, HTTP/file policies, signed URLs, deletion,

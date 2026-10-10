@@ -1,4 +1,5 @@
 use super::*;
+use crate::encode_archive;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::os::unix::fs::DirBuilderExt;
 use std::process::{Child, Command, Stdio};

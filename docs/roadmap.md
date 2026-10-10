@@ -1217,3 +1217,13 @@ this API; caller buffers receive exact original bytes. Owned encoding and native
 backup publication retain their existing behavior until a separate durable reader
 publisher passes complete readback/selection/fault tests. See
 [contract](borrowed-object-archive-encoding.md). No platform stage closes here.
+
+## Follow-up: bounded immutable-reader publication
+
+[ADR0131](adr/0131-bounded-reader-publication-and-object-backup.md) connects the
+immutable archive reader to a separate synchronous bounded publisher with exact
+EOF, full byte readback, stable private staging, retained selected descriptor and
+original no-replace/fsync/uncertain outcomes. Native backup avoids a second full
+encoded payload image while preserving source/destination/final archive checks.
+Owned live capture and standalone restore remain. See
+[contract](reader-file-publication.md); AccountRoot/files and production gates stay open.

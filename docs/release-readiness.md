@@ -45,6 +45,10 @@ boundary applies until a new full source run completes.
 The [borrowed encoder](borrowed-object-archive-encoding.md) follows with188-check
 targeted matrices and an expanded actual encoded-reader sanitizer comparison.
 Native backup publication is unchanged in that increment; it closes no release gate.
+The subsequent [reader publisher](reader-file-publication.md) connects native backup
+with199-check targeted matrices, five new process-kill boundaries and actual maximum
+independent restore. Its evidence records the reproduced/fixed test interference;
+it does not close the broad resource, power-loss or production gates.
 
 ## Before publishing an experimental release
 

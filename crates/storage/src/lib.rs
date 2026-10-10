@@ -8,6 +8,7 @@ mod page;
 mod pager;
 #[cfg(all(test, target_os = "linux"))]
 mod publication_tests;
+mod stream_file;
 
 pub use byte_file::{
     publish_private_file, publish_private_file_at, publish_private_file_at_retained,
@@ -17,6 +18,7 @@ pub use directory_creation::{PublishedPrivateDirectory, StagedPrivateDirectory};
 pub use error::{Error, Result};
 pub use page::{MAX_RECORD_SIZE, Page, SlotId};
 pub use pager::{MAX_PAGES, Pager};
+pub use stream_file::publish_private_reader_at_retained;
 
 pub const PAGE_SIZE: usize = 4096;
 pub const FORMAT_VERSION: u16 = 1;

@@ -72,6 +72,56 @@ fn actual_cli_creates_complete_binary_archive_and_independent_verifier_reports_e
 }
 
 #[test]
+fn actual_cli_publishes_maximum_archive_and_retains_source_for_independent_restore() {
+    let temp = tempfile::tempdir().unwrap();
+    let source = temp.path().join("source");
+    fs::DirBuilder::new().mode(0o700).create(&source).unwrap();
+    let project = PROJECT.parse().unwrap();
+    let mut owner = ProjectDirectory::initialize(&source, project).unwrap();
+    let payload = vec![0xa7; 8 * 1024 * 1024];
+    for key in 0..128 {
+        owner
+            .put(
+                ObjectId::from_bytes([key; 16]),
+                if key < 8 { &payload } else { &[] },
+            )
+            .unwrap();
+    }
+    let inventory = owner.inventory().unwrap();
+    drop(owner);
+    let archive = temp.path().join("copy.object-archive");
+    let mut child = command(&source, &archive)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+    while child.try_wait().unwrap().is_none() {
+        if std::time::Instant::now() >= deadline {
+            child.kill().unwrap();
+            child.wait().unwrap();
+            panic!("maximum backup deadline");
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    let report = success(child.wait_with_output().unwrap());
+    assert_eq!(report["objects"], 128);
+    assert_eq!(report["bytes"], 64 * 1024 * 1024);
+    assert_eq!(
+        fs::metadata(&archive).unwrap().len(),
+        emilybase_object_storage::MAX_ARCHIVE_BYTES as u64
+    );
+    let verified = emilybase_object_storage::inspect_archive_file(&archive, project).unwrap();
+    assert_eq!(verified.digest, *inventory.digest());
+    let restored = temp.path().join("restored");
+    emilybase_object_storage::restore_archive_file(&archive, project, &restored).unwrap();
+    let reopened = ProjectDirectory::open(&source, project).unwrap();
+    let copy = ProjectDirectory::open(&restored, project).unwrap();
+    assert_eq!(reopened.inventory().unwrap(), inventory);
+    assert_eq!(copy.inventory().unwrap(), inventory);
+}
+
+#[test]
 fn actual_cli_handles_relative_paths_and_refuses_source_alias_and_existing_destination() {
     let (temp, source) = fixture();
     let report = success(
