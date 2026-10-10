@@ -1237,3 +1237,12 @@ refuses byte/scope/marker/private-metadata and identical-byte inode substitution
 Original write/durability paths remain. This supplies one native prerequisite for
 the still-proposed AccountRoot protocol, not current user authority, catalog commit,
 persisted quota or coordinated backup. See [contract](selected-object-retention.md).
+
+## Follow-up: explicit Pager lock owner lifetime
+
+[ADR0133](adr/0133-explicit-pager-file-lock-owner.md) fixes a deterministic inherited-
+description lifetime regression with a private guard retained from successful lock
+acquisition through constructor errors or the returned Pager. Active exclusion,
+successor ownership, byte formats, fsync/unknown outcomes and poisoned-write refusal
+remain. See [contract](pager-owner-lock-lifetime.md). This does not alter other owner
+implementations or close broad concurrency/recovery/production acceptance.

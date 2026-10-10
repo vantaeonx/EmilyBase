@@ -52,6 +52,9 @@ it does not close the broad resource, power-loss or production gates.
 The [selected native retention increment](selected-object-retention.md) has209-check
 targeted matrices, explicit descriptor/native mutation coverage and two owner-lifetime
 compile-fail checks. It supplies no catalog transaction or current user authority.
+The [Pager owner correction](pager-owner-lock-lifetime.md) follows with a reproduced
+Busy regression and534-check affected matrices on both toolchains. Its separate
+WAL ownership contract remains unchanged; this is not a complete current workspace run.
 
 ## Before publishing an experimental release
 

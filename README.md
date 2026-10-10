@@ -142,6 +142,9 @@ preserving owned staging, no-replace/fsync and selected-descriptor verification.
 [Selected native objects](docs/selected-object-retention.md) can now keep the actual
 published descriptor and original owner across later caller work, with explicit
 full revalidation. Their metadata grants no user authority or catalog transaction.
+The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
+lock lifetime across success/error paths, so unexposed duplicate descriptions do
+not keep a completed owner busy or release a later independently opened owner.
 The next [AccountRoot integration proposal](docs/adr/0127-proposed-account-root-object-integration.md)
 defines file/catalog failure boundaries, current authority, orphan accounting and
 coordinated backup gates. It is a proposal, not an implemented file service.

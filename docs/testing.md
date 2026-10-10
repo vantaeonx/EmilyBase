@@ -4922,3 +4922,18 @@ Formatting, strict workspace/fuzz lint, builds and minimum all-fuzz checks exit0
 Existing25 kills rerun; no new parser sanitizer, durability boundary or full-source
 result is claimed. See
 [evidence](measurements/2026-10-10-selected-objects/verification.json).
+
+## Pager owner lock lifetime
+
+[Pager ownership](pager-owner-lock-lifetime.md) first reproduces Busy after the
+owner ends with a safe internal duplicate model:0 passed/1 failed, exit101. The
+private explicit unlock guard then passes534 affected checks on each stable1.99/
+minimum1.89:213 storage/native/CLI and321 database/WAL/transactions/backup,583
+unchanged hashes. Four new cases cover create/open/successor ownership, failed
+length/header admission, original synchronization outcomes and poisoned-write
+refusal with later exact page writes. The WAL last-caller-clone contract remains.
+Nine core fixtures run through parent tests, not additional top-level counts.
+Existing native25 kill boundaries rerun; no new kill/parser/format is claimed.
+Formatting, strict workspace/fuzz lint, CLI/server builds and minimum all-fuzz
+compilation exit0. See [evidence](measurements/2026-10-10-pager-owner/verification.json).
+The separate older24444bc complete workspace run remains pending.

@@ -9,7 +9,7 @@ pub const MAX_PAGES: u64 = 65536;
 
 /// Exclusive synchronous access to a page file. Not a transaction manager.
 pub struct Pager {
-    file: File,
+    file: LockedFile,
     pages: u64,
     poisoned: bool,
 }
@@ -55,7 +55,9 @@ impl Pager {
         synced: impl FnOnce(),
         published: impl FnOnce(),
     ) -> Result<Self> {
-        lock(&pending.file)?;
+        // Duplicate before locking: the guard owns the authorization lifetime
+        // from first acquisition, including every failed construction path.
+        let file = lock(pending.file.try_clone()?)?;
         pending.file.write_all(&header::encode())?;
         for page in pages {
             pending.file.write_all(&page.encode())?;
@@ -64,8 +66,6 @@ impl Pager {
         synced();
         pending.check()?;
         verify_initial(&mut pending.file, pages)?;
-        // Any descriptor-duplication failure occurs before the irreversible rename.
-        let file = pending.file.try_clone()?;
         pending.publish(published)?;
         Ok(Self {
             file,
@@ -75,8 +75,12 @@ impl Pager {
     }
 
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
+        Self::open_with(path.as_ref(), |_| {})
+    }
+
+    fn open_with(path: &Path, locked: impl FnOnce(&File)) -> Result<Self> {
         let fd = rustix::fs::open(
-            path.as_ref(),
+            path,
             rustix::fs::OFlags::RDWR
                 | rustix::fs::OFlags::NOFOLLOW
                 | rustix::fs::OFlags::NONBLOCK
@@ -84,12 +88,13 @@ impl Pager {
             rustix::fs::Mode::empty(),
         )
         .map_err(std::io::Error::from)?;
-        let mut file: File = fd.into();
+        let file: File = fd.into();
         let metadata = file.metadata()?;
         if !metadata.is_file() || metadata.nlink() != 1 {
             return Err(Error::Path);
         }
-        lock(&file)?;
+        let mut file = lock(file)?;
+        locked(&file);
         let length = file.metadata()?.len();
         if length < PAGE_SIZE as u64
             || length % PAGE_SIZE as u64 != 0
@@ -171,9 +176,30 @@ impl Pager {
     }
 }
 
-fn lock(file: &File) -> Result<()> {
+struct LockedFile(File);
+impl std::ops::Deref for LockedFile {
+    type Target = File;
+    fn deref(&self) -> &File {
+        &self.0
+    }
+}
+impl std::ops::DerefMut for LockedFile {
+    fn deref_mut(&mut self) -> &mut File {
+        &mut self.0
+    }
+}
+impl Drop for LockedFile {
+    fn drop(&mut self) {
+        // End this Pager owner's authorization explicitly. Unexposed duplicate
+        // descriptions (for example a transient fork) must not prolong it.
+        // Unlock affects this description, not a separately opened successor.
+        let _ = self.0.unlock();
+    }
+}
+
+fn lock(file: File) -> Result<LockedFile> {
     match file.try_lock() {
-        Ok(()) => Ok(()),
+        Ok(()) => Ok(LockedFile(file)),
         Err(TryLockError::WouldBlock) => Err(Error::Busy),
         Err(TryLockError::Error(error)) => Err(Error::Io(error)),
     }
@@ -212,3 +238,6 @@ fn verify_initial(file: &mut File, pages: &[Page]) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(all(test, target_os = "linux"))]
+mod ownership_tests;
