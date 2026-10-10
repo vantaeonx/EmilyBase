@@ -172,6 +172,9 @@ no-replace selection and final graph checks. AccountRoot/user integration remain
 The [native archive CLI](docs/native-file-archive-cli.md) verifies and restores a
 private paired file while retaining its original input through common selection.
 Result output contains counts and identities; existing targets are never replaced.
+The [native file-root initializer](docs/native-file-root-initialization.md) creates
+a fresh complete pair from the original engine, with explicit persisted quota and
+one common no-replace selection. It grants no server/user file authority.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

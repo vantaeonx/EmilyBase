@@ -11,15 +11,15 @@ use std::os::fd::AsRawFd;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
-fn descriptor_path(file: &File) -> PathBuf {
+pub(super) fn descriptor_path(file: &File) -> PathBuf {
     PathBuf::from(format!("/proc/self/fd/{}", file.as_raw_fd())).join(".")
 }
-struct Child {
-    directory: File,
+pub(super) struct Child {
+    pub(super) directory: File,
     name: &'static str,
 }
 impl Child {
-    fn open(root: &File, name: &'static str) -> Result<Self> {
+    pub(super) fn open(root: &File, name: &'static str) -> Result<Self> {
         let fd = rustix::fs::openat(
             root,
             name,
@@ -34,7 +34,7 @@ impl Child {
         child.check(root)?;
         Ok(child)
     }
-    fn check(&self, root: &File) -> Result<()> {
+    pub(super) fn check(&self, root: &File) -> Result<()> {
         let owned = self.directory.metadata()?;
         let visible = rustix::fs::statat(root, self.name, AtFlags::SYMLINK_NOFOLLOW)
             .map_err(std::io::Error::from)?;
@@ -49,7 +49,7 @@ impl Child {
         Ok(())
     }
 }
-struct PairGuard<'a> {
+pub(super) struct PairGuard<'a> {
     root: File,
     metadata: Child,
     objects: Child,
@@ -58,7 +58,7 @@ struct PairGuard<'a> {
     expected_wal: &'a [u8],
 }
 impl<'a> PairGuard<'a> {
-    fn new(root: File, expected_wal: &'a [u8]) -> Result<Self> {
+    pub(super) fn new(root: File, expected_wal: &'a [u8]) -> Result<Self> {
         let metadata = Child::open(&root, "metadata")?;
         let objects = Child::open(&root, "objects")?;
         let fd = rustix::fs::openat(
@@ -84,7 +84,7 @@ impl<'a> PairGuard<'a> {
         guard.check()?;
         Ok(guard)
     }
-    fn check(&mut self) -> Result<()> {
+    pub(super) fn check(&mut self) -> Result<()> {
         let root = self.root.metadata()?;
         if !root.is_dir() || root.mode() & 0o777 != 0o700 {
             return Err(Error::Destination);

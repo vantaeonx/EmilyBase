@@ -18,6 +18,19 @@ pub struct FileArchiveReport {
     objects: ArchiveReport,
 }
 impl FileArchiveReport {
+    pub(super) fn from_snapshot(snapshot: &FileSnapshot) -> Self {
+        Self {
+            project: snapshot.project(),
+            metadata: snapshot.metadata_report().clone(),
+            quota: snapshot.quota(),
+            references: snapshot.files().len(),
+            objects: ArchiveReport {
+                objects: snapshot.objects().objects().len(),
+                payload_bytes: snapshot.objects().inventory().payload_bytes(),
+                digest: *snapshot.objects().inventory().digest(),
+            },
+        }
+    }
     pub const fn project(&self) -> ProjectId {
         self.project
     }

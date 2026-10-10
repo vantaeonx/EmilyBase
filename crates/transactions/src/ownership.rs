@@ -1,7 +1,7 @@
 use rustix::fs::{AtFlags, Mode, OFlags};
 use std::ffi::OsString;
 use std::fs::{File, TryLockError};
-use std::os::unix::fs::MetadataExt;
+use std::os::unix::{ffi::OsStrExt, fs::MetadataExt};
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -44,6 +44,33 @@ pub(crate) fn verify_path(path: &Path, file: &File) -> Result<()> {
     Ok(())
 }
 
+fn leaf(name: &std::ffi::OsStr) -> Result<()> {
+    let bytes = name.as_bytes();
+    if bytes.is_empty()
+        || matches!(bytes, b"." | b"..")
+        || bytes.contains(&0)
+        || bytes.contains(&b'/')
+    {
+        return Err(Error::DirectoryChanged);
+    }
+    Ok(())
+}
+pub(crate) fn verify_at(owner: &File, parent: &File, name: &std::ffi::OsStr) -> Result<()> {
+    leaf(name)?;
+    let visible = rustix::fs::statat(parent, name, AtFlags::SYMLINK_NOFOLLOW)
+        .map_err(|_| Error::DirectoryChanged)?;
+    let owned = owner.metadata()?;
+    if (visible.st_dev, visible.st_ino) != (owned.dev(), owned.ino())
+        || !owned.is_dir()
+        || visible.st_mode & 0o170000 != 0o040000
+        || visible.st_mode & 0o777 != 0o700
+        || owned.mode() & 0o777 != 0o700
+    {
+        return Err(Error::DirectoryChanged);
+    }
+    Ok(())
+}
+
 pub(crate) fn wal_file(directory: &File, create: bool) -> Result<File> {
     let flags = OFlags::RDWR | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC;
     let flags = if create {
@@ -59,9 +86,9 @@ pub(crate) fn wal_file(directory: &File, create: bool) -> Result<File> {
 pub(crate) struct Created {
     pub owner: File,
     parent: File,
-    parent_path: PathBuf,
+    parent_path: Option<PathBuf>,
     name: OsString,
-    path: PathBuf,
+    path: Option<PathBuf>,
 }
 
 impl Created {
@@ -78,6 +105,23 @@ impl Created {
         )
         .map_err(std::io::Error::from)?;
         let parent: File = fd.into();
+        Self::create(parent, name, Some(parent_path), Some(path.to_path_buf()))
+    }
+
+    pub fn at(parent: &File, name: &std::ffi::OsStr) -> Result<Self> {
+        leaf(name)?;
+        if !parent.metadata()?.is_dir() {
+            return Err(Error::DirectoryChanged);
+        }
+        Self::create(parent.try_clone()?, name.to_os_string(), None, None)
+    }
+
+    fn create(
+        parent: File,
+        name: OsString,
+        parent_path: Option<PathBuf>,
+        path: Option<PathBuf>,
+    ) -> Result<Self> {
         rustix::fs::mkdirat(&parent, &name, Mode::RWXU).map_err(std::io::Error::from)?;
         let fd = rustix::fs::openat(
             &parent,
@@ -92,24 +136,20 @@ impl Created {
             parent,
             parent_path,
             name,
-            path: path.to_path_buf(),
+            path,
         };
         created.verify()?;
         Ok(created)
     }
 
     pub fn verify(&self) -> Result<()> {
-        verify_path(&self.parent_path, &self.parent)?;
-        verify_path(&self.path, &self.owner)?;
-        let visible = rustix::fs::statat(&self.parent, &self.name, AtFlags::SYMLINK_NOFOLLOW)
-            .map_err(|_| Error::DirectoryChanged)?;
-        let owned = self.owner.metadata()?;
-        if (visible.st_dev, visible.st_ino) != (owned.dev(), owned.ino())
-            || owned.mode() & 0o777 != 0o700
-        {
-            return Err(Error::DirectoryChanged);
+        if let Some(path) = &self.parent_path {
+            verify_path(path, &self.parent)?;
         }
-        Ok(())
+        if let Some(path) = &self.path {
+            verify_path(path, &self.owner)?;
+        }
+        verify_at(&self.owner, &self.parent, &self.name)
     }
 
     pub fn finish(&self, wal: &emilybase_wal::Wal, probe: &File) -> Result<()> {

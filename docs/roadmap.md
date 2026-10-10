@@ -1339,3 +1339,14 @@ reports, explicit expected project and no-replace behavior. Report delivery fail
 preserves selected data. Native input substitutions, process kills and actual CLI
 behavior are exercised; see [contract](native-file-archive-cli.md). AccountRoot/user
 files, global resource admission and production acceptance remain open.
+
+## Follow-up: fresh original-engine native file root
+
+[ADR0143](adr/0143-original-engine-common-file-root-initialization.md) adds one fresh
+private common root, original-engine metadata initialization, object marker and
+committed native catalog/quota. Explicit parent-descriptor engine creation shares
+bootstrap/fsync rules and anchors internal caches to its own retained owner. Exact
+child/WAL/graph checks span common no-replace publication. Native parent/child
+substitution, sync failure, killed initialization, generated quota models and actual
+CLI result delivery are exercised; see [contract](native-file-root-initialization.md).
+AccountRoot/current user file policy and production acceptance remain open.

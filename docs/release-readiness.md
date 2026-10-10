@@ -92,6 +92,9 @@ power-loss evidence and production gates remain open.
 The [native paired archive CLI](native-file-archive-cli.md) binds file restoration
 to the original readonly input/parent through selection and handles failed report
 delivery without overwriting the selected root. It grants no user authority.
+Native [fresh file-root creation](native-file-root-initialization.md) now uses the
+original engine and marker publisher, retained actual children and common selection
+with explicit physical quotas. It does not add current user/AccountRoot file routes.
 
 ## Before publishing an experimental release
 

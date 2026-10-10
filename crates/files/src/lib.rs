@@ -11,8 +11,8 @@ pub use archive::{
     VerifiedFileArchive, verify_file_archive,
 };
 pub use archive::{
-    FileArchiveReport, inspect_file_archive, publish_file_archive, restore_file_archive,
-    restore_file_archive_file,
+    FileArchiveReport, initialize_file_root, inspect_file_archive, publish_file_archive,
+    restore_file_archive, restore_file_archive_file,
 };
 use emilybase_object_storage::{FileReport, ObjectId, WriteLimits};
 pub use mutation::FileRemoval;

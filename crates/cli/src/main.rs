@@ -25,6 +25,15 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Create a fresh standalone private native metadata/object root.
+    FileRootInit {
+        destination: PathBuf,
+        project: String,
+        #[arg(long)]
+        max_objects: usize,
+        #[arg(long)]
+        max_bytes: u64,
+    },
     /// Readonly full verification of a private paired metadata/object archive.
     FileArchiveVerify { path: PathBuf, project: String },
     /// Restore a paired archive into one fresh private common root.
@@ -270,6 +279,20 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::FileRootInit {
+            destination,
+            project,
+            max_objects,
+            max_bytes,
+        } => {
+            let project = project.parse::<emilybase_object_storage::ProjectId>()?;
+            let quota = emilybase_files::FileQuota::new(max_objects, max_bytes)?;
+            files::report(&emilybase_files::initialize_file_root(
+                destination,
+                project,
+                quota,
+            )?)?;
+        }
         Command::FileArchiveVerify { path, project } => {
             let project = project.parse::<emilybase_object_storage::ProjectId>()?;
             files::report(&emilybase_files::inspect_file_archive(path, project)?)?;

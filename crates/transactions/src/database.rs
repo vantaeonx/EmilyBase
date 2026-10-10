@@ -1,6 +1,7 @@
 #[cfg(test)]
 use std::fs;
 use std::fs::File;
+use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 
 use emilybase_database::Snapshot;
@@ -24,16 +25,58 @@ impl Database {
         Self::create_with(path.as_ref(), || {}, || {})
     }
 
+    /// Explicit native Linux parent descriptor and one fresh leaf. The original
+    /// parent/child remain authoritative across moves; no old path is adopted.
+    /// The returned owner's internal cache path is anchored to its own retained
+    /// descriptor, not the caller's parent handle. No user authority is granted.
+    pub fn create_at(parent: &File, name: impl AsRef<std::ffi::OsStr>) -> Result<Self> {
+        Self::create_at_with(parent, name.as_ref(), || {}, || {})
+    }
+
+    /// Observe that one native parent/leaf still selects this exact original
+    /// directory and WAL. Readonly, with no owner descriptor exported or lease.
+    pub fn check_directory_at(
+        &self,
+        parent: &File,
+        name: impl AsRef<std::ffi::OsStr>,
+    ) -> Result<()> {
+        self.ready()?;
+        crate::ownership::verify_at(&self.ownership, parent, name.as_ref())?;
+        crate::journal_replacement::source_selected(&self.ownership, &self.wal)
+    }
+
+    pub(crate) fn create_at_with(
+        parent: &File,
+        name: &std::ffi::OsStr,
+        owned: impl FnOnce(),
+        initialized: impl FnOnce(),
+    ) -> Result<Self> {
+        let mut id = [0; 16];
+        getrandom::fill(&mut id).map_err(|_| Error::Randomness)?;
+        let created = crate::ownership::Created::at(parent, name)?;
+        let path = PathBuf::from(format!("/proc/self/fd/{}", created.owner.as_raw_fd())).join(".");
+        Self::create_owned(created, path, id, owned, initialized)
+    }
+
     pub(crate) fn create_with(
         path: &Path,
         owned: impl FnOnce(),
         initialized: impl FnOnce(),
     ) -> Result<Self> {
         let path = crate::ownership::absolute(path)?;
-        let path = path.as_path();
         let mut id = [0; 16];
         getrandom::fill(&mut id).map_err(|_| Error::Randomness)?;
-        let created = crate::ownership::Created::new(path)?;
+        let created = crate::ownership::Created::new(&path)?;
+        Self::create_owned(created, path, id, owned, initialized)
+    }
+
+    fn create_owned(
+        created: crate::ownership::Created,
+        path: PathBuf,
+        id: DatabaseId,
+        owned: impl FnOnce(),
+        initialized: impl FnOnce(),
+    ) -> Result<Self> {
         owned();
         created.verify()?;
         let file = crate::ownership::wal_file(&created.owner, true)?;
@@ -49,7 +92,7 @@ impl Database {
             wal,
             snapshot,
             poisoned: false,
-            path: path.to_path_buf(),
+            path,
             ownership,
             cache_startup: crate::PrimaryCacheWarmup::default(),
         })

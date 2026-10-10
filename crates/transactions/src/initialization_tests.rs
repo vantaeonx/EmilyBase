@@ -34,6 +34,149 @@ fn foreign(path: &Path) -> Vec<u8> {
 }
 
 #[test]
+fn descriptor_creation_owns_cache_path_after_parent_moves_and_caller_handle_closes() {
+    use emilybase_catalog::{Column, DataType, Schema, Value};
+    let _serial = crate::PROCESS_TESTS.lock().unwrap();
+    for phase in 0..3 {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("parent");
+        let moved = temp.path().join("moved");
+        fs::create_dir(&path).unwrap();
+        let parent = File::open(&path).unwrap();
+        let move_parent = || {
+            fs::rename(&path, &moved).unwrap();
+            fs::create_dir(&path).unwrap();
+            fs::write(path.join("protected"), b"foreign parent").unwrap();
+        };
+        if phase == 0 {
+            move_parent();
+        }
+        let mut db = Database::create_at_with(
+            &parent,
+            std::ffi::OsStr::new("metadata"),
+            || {
+                if phase == 1 {
+                    move_parent();
+                }
+            },
+            || {
+                if phase == 2 {
+                    move_parent();
+                }
+            },
+        )
+        .unwrap();
+        db.check_directory_at(&parent, "metadata").unwrap();
+        assert!(matches!(
+            Database::open(moved.join("metadata")),
+            Err(Error::Wal(emilybase_wal::Error::Busy))
+        ));
+        drop(parent);
+        let schema = Schema {
+            name: "t".into(),
+            columns: vec![Column {
+                name: "id".into(),
+                data_type: DataType::Integer,
+                nullable: false,
+            }],
+            primary_key: 0,
+        };
+        let mut tx = db.begin().unwrap();
+        tx.create_table(schema).unwrap();
+        tx.insert("t", vec![Value::Integer(1)]).unwrap();
+        tx.commit().unwrap();
+        db.checkpoint().unwrap();
+        db.compact().unwrap();
+        assert_eq!(db.save_primary_index_cache("t").unwrap().entries, 1);
+        assert_eq!(
+            db.load_primary_index_cache("t").unwrap().unwrap().entries,
+            1
+        );
+        let original = db.committed_wal().unwrap();
+        drop(db);
+        assert_eq!(fs::read(path.join("protected")).unwrap(), b"foreign parent");
+        assert!(!path.join("metadata").exists());
+        let mut reopened = Database::open(moved.join("metadata")).unwrap();
+        assert_eq!(reopened.committed_wal().unwrap(), original);
+        assert_eq!(reopened.view().unwrap().row_count(), 1);
+    }
+}
+
+#[test]
+fn descriptor_creation_rejects_nonleaf_nondirectory_and_existing_names_without_changes() {
+    use std::os::unix::ffi::OsStrExt;
+    let _serial = crate::PROCESS_TESTS.lock().unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let parent = File::open(temp.path()).unwrap();
+    for name in [b"".as_slice(), b".", b"..", b"../escape", b"a/b", b"a\0b"] {
+        assert!(Database::create_at(&parent, std::ffi::OsStr::from_bytes(name)).is_err());
+        assert_eq!(fs::read_dir(temp.path()).unwrap().count(), 0);
+    }
+    fs::write(temp.path().join("file"), b"protected").unwrap();
+    let file = File::open(temp.path().join("file")).unwrap();
+    assert!(Database::create_at(&file, "metadata").is_err());
+    assert!(Database::create_at(&parent, "file").is_err());
+    assert_eq!(fs::read(temp.path().join("file")).unwrap(), b"protected");
+    let mut db = Database::create_at(&parent, "metadata").unwrap();
+    let original = db.committed_wal().unwrap();
+    assert!(Database::create_at(&parent, "metadata").is_err());
+    assert_eq!(db.committed_wal().unwrap(), original);
+}
+
+#[test]
+fn descriptor_child_substitution_and_sync_failure_never_return_a_successful_owner() {
+    let _serial = crate::PROCESS_TESTS.lock().unwrap();
+    for initialized in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let parent = File::open(temp.path()).unwrap();
+        let change = || {
+            fs::rename(temp.path().join("metadata"), temp.path().join("original")).unwrap();
+            fs::create_dir(temp.path().join("metadata")).unwrap();
+            fs::write(temp.path().join("metadata/protected"), b"foreign child").unwrap();
+        };
+        let result = Database::create_at_with(
+            &parent,
+            std::ffi::OsStr::new("metadata"),
+            || {
+                if !initialized {
+                    change();
+                }
+            },
+            || {
+                if initialized {
+                    change();
+                }
+            },
+        );
+        assert!(result.is_err());
+        assert_eq!(
+            fs::read(temp.path().join("metadata/protected")).unwrap(),
+            b"foreign child"
+        );
+        assert!(!temp.path().join("metadata/redo.wal").exists());
+        assert_eq!(temp.path().join("original/redo.wal").exists(), initialized);
+    }
+    for phase in ["directory_sync", "parent_sync"] {
+        for after in [false, true] {
+            let temp = tempfile::tempdir().unwrap();
+            let parent = File::open(temp.path()).unwrap();
+            let fault = FaultGuard::new(phase, after);
+            assert!(matches!(
+                Database::create_at(&parent, "metadata"),
+                Err(Error::InitializationUnknown(_))
+            ));
+            drop(fault);
+            assert_eq!(
+                Database::open(temp.path().join("metadata"))
+                    .unwrap()
+                    .last_transaction(),
+                1
+            );
+        }
+    }
+}
+
+#[test]
 fn creation_cannot_follow_a_replacement_after_acquiring_directory_ownership() {
     let _serial = crate::PROCESS_TESTS.lock().unwrap();
     let temporary = tempfile::tempdir().unwrap();
