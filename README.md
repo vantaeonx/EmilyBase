@@ -154,6 +154,9 @@ operator library is outside current server/CLI and coordinated root backup paths
 Native [reference rename/removal](docs/native-file-mutations.md) uses exact current
 revision CAS and original source retention. Removal hides the reference while the
 surviving immutable blob stays charged; no physical cleanup is inferred.
+Native [quota administration](docs/native-file-quota-administration.md) uses scoped
+global metadata CAS and retains every actual physical object through the limit
+commit. Orphans must fit proposed limits; equal current limits preserve WAL bytes.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

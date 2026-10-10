@@ -15,7 +15,7 @@ for production. A crate version or successful build alone is not a published rel
 | Server | Axum/Tokio adapter over synchronous owned engine, isolated projects, service keys and typed APIs | Broader load/connection/output admission and deployment acceptance |
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
-| Files | Native scoped objects and verified archives; standalone own-WAL references and persisted physical quotas | AccountRoot coordination, user file HTTP/policies, quota administration, common backup and signed URLs |
+| Files | Native objects/archives; standalone own-WAL references, logical CAS mutations and persisted quota administration | AccountRoot coordination, user file HTTP/policies, common backup, reclamation and signed URLs |
 | Backup | Verified native database/registry/private-root copies; standalone object archives | Coordinated inclusion of objects, encrypted/incremental backup and upgrade drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
@@ -72,6 +72,9 @@ Root backup, current file policies or user endpoints.
 Native [metadata mutations](native-file-mutations.md) add reference-revision CAS,
 logical removal and native WAL1/2 kill/reopen evidence. Physical blobs remain charged
 after removal; user authorization and common restore are still pending.
+Native [quota administration](native-file-quota-administration.md) adds scoped
+global-revision changes under retained complete physical inventory. Its bounded
+native descriptors are not global server FD admission or current user authority.
 
 ## Before publishing an experimental release
 

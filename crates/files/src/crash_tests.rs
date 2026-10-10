@@ -54,25 +54,33 @@ fn worker() {
         })
         .unwrap();
     if let Some((operation, point)) = phase.split_once('-') {
-        assert!(matches!(operation, "rename" | "remove"));
-        store
-            .mutate_with(
-                FILE,
-                initial.revision(),
-                if operation == "remove" {
-                    None
-                } else {
-                    Some("renamed-synthetic")
-                },
-                |at| {
-                    if (point == "staged" && at == MetadataBoundary::Staged)
-                        || (point == "committed" && at == MetadataBoundary::Committed)
-                    {
-                        signal_and_wait();
-                    }
-                },
-            )
-            .unwrap();
+        assert!(matches!(operation, "rename" | "remove" | "quota"));
+        let checked = |at| {
+            if (point == "staged" && at == MetadataBoundary::Staged)
+                || (point == "committed" && at == MetadataBoundary::Committed)
+            {
+                signal_and_wait();
+            }
+        };
+        if operation == "quota" {
+            let state = store.quota_state().unwrap();
+            store
+                .set_quota_with(state, FileQuota::new(2, 16_384).unwrap(), checked)
+                .unwrap();
+        } else {
+            store
+                .mutate_with(
+                    FILE,
+                    initial.revision(),
+                    if operation == "remove" {
+                        None
+                    } else {
+                        Some("renamed-synthetic")
+                    },
+                    checked,
+                )
+                .unwrap();
+        }
         assert_eq!(point, "ack");
         signal_and_wait();
     }
@@ -179,7 +187,7 @@ fn process_kills_preserve_acknowledged_references_and_keep_precommit_blobs_invis
 fn mutation_kills_recover_only_committed_metadata_and_retain_physical_charge_on_both_wals() {
     let _serial = TEST_IO.lock().unwrap();
     for compacted in [false, true] {
-        for operation in ["rename", "remove"] {
+        for operation in ["rename", "remove", "quota"] {
             for point in ["staged", "committed", "ack"] {
                 for empty in [false, true] {
                     let temp = tempfile::tempdir().unwrap();
@@ -204,6 +212,14 @@ fn mutation_kills_recover_only_committed_metadata_and_retain_physical_charge_on_
                     let objects =
                         ProjectDirectory::open(temp.path().join("objects"), PROJECT).unwrap();
                     let mut store = FileStore::open(database, objects).unwrap();
+                    assert_eq!(
+                        store.quota().unwrap(),
+                        if operation == "quota" && point != "staged" {
+                            FileQuota::new(2, 16_384).unwrap()
+                        } else {
+                            FileQuota::new(4, 32_768).unwrap()
+                        }
+                    );
                     let removed = operation == "remove" && point != "staged";
                     let info = store.info(FILE).unwrap();
                     if removed {
@@ -213,13 +229,20 @@ fn mutation_kills_recover_only_committed_metadata_and_retain_physical_charge_on_
                         let info = info.unwrap();
                         assert_eq!(
                             info.name(),
-                            if point == "staged" {
+                            if point == "staged" || operation == "quota" {
                                 "synthetic"
                             } else {
                                 "renamed-synthetic"
                             }
                         );
-                        assert_eq!(info.revision(), if point == "staged" { 3 } else { 4 });
+                        assert_eq!(
+                            info.revision(),
+                            if point == "staged" || operation == "quota" {
+                                3
+                            } else {
+                                4
+                            }
+                        );
                         store.reader(FILE).unwrap().finish().unwrap();
                     }
                     assert_eq!(

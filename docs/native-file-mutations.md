@@ -34,7 +34,8 @@ isolation against arbitrary same-user filesystem writes. Response loss may leave
 a committed rename/removal. Staged uncommitted changes remain absent on recovery.
 Private schema version1, original WAL/object bytes and fsync rules remain.
 A reader borrow prevents mutable FileStore operations while that reader is used.
-Quota administration, content replacement, orphan reclamation, request idempotency,
+Native [quota administration](native-file-quota-administration.md) now uses scoped
+global metadata CAS; content replacement, orphan reclamation, request idempotency,
 common backup, Root/current-account integration and production gates remain open.
 See [ADR0136](adr/0136-native-file-metadata-cas-and-logical-removal.md).
 

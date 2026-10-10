@@ -1,5 +1,7 @@
 //! Standalone native file references in the original engine; no user authority.
 mod mutation;
+mod quota;
+pub use quota::QuotaState;
 mod records;
 mod store;
 use emilybase_object_storage::{FileReport, ObjectId, WriteLimits};
@@ -111,6 +113,8 @@ pub enum Error {
     Name,
     #[error("invalid persisted file quota")]
     Quota,
+    #[error("bounded native file allocation failed")]
+    Allocation,
     #[error("invalid native file catalog or object graph")]
     Corrupt,
     #[error("native file project or metadata database identity differs")]

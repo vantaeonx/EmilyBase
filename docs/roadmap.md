@@ -1277,3 +1277,13 @@ the reference and leaves physical charge; staged changes never recover, while lo
 responses may have committed. Native WAL1/2 kills and independent revision/usage
 models cover these boundaries. See [contract](native-file-mutations.md). Physical
 reclamation, quota administration, common backup and user policy stay open.
+
+## Follow-up: scoped native quota administration
+
+[ADR0137](adr/0137-scoped-native-quota-cas-and-retained-inventory.md) adds operator
+quota changes with project/database/global-revision CAS. All physical objects,
+including orphans, must fit. Their actual readonly descriptors remain retained
+through the scope-row commit and final full graph checks. Existing schema1/bytes
+remain; no-op/stale, before/after commit uncertainty and resource bounds are explicit.
+See [contract](native-file-quota-administration.md). Common backup/restore, current
+user authority, Root/server admission and production gates stay open.

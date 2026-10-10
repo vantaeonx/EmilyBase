@@ -89,7 +89,8 @@ Project/complete graph matching must not be described as proof of unique ancestr
 
 Native [metadata rename/logical deletion](native-file-mutations.md) now use exact
 reference CAS and retain the source through the own-WAL commit. Deleted references
-leave charged physical blobs; quota administration, idempotent request identity,
+leave charged physical blobs. Native [quota administration](native-file-quota-administration.md)
+now applies scoped global metadata CAS under retained complete inventory. Idempotent request identity,
 orphan reclamation and catalog growth/upgrade policy remain follow-up work. This
 library does not add a current account policy, user HTTP, signed URL, Root manifest,
 coordinated backup/restore, dashboard, network admission or production acceptance.
