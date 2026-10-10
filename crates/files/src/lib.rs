@@ -10,6 +10,7 @@ pub use archive::{
     FILE_ARCHIVE_HEADER_BYTES, FILE_ARCHIVE_VERSION, FileArchiveReader, MAX_FILE_ARCHIVE_BYTES,
     VerifiedFileArchive, verify_file_archive,
 };
+pub use archive::{FileArchiveReport, inspect_file_archive, publish_file_archive};
 use emilybase_object_storage::{FileReport, ObjectId, WriteLimits};
 pub use mutation::FileRemoval;
 pub use snapshot::FileSnapshot;
@@ -128,6 +129,12 @@ pub enum Error {
     ArchiveVersion(u16),
     #[error("native file archive checksum mismatch")]
     ArchiveChecksum,
+    #[error("invalid native file archive destination or private file")]
+    Destination,
+    #[error("native file archive filesystem operation failed")]
+    Io(#[from] std::io::Error),
+    #[error("native file archive publication failed")]
+    Publication(#[from] emilybase_storage::Error),
     #[error("invalid native file catalog or object graph")]
     Corrupt,
     #[error("native file project or metadata database identity differs")]

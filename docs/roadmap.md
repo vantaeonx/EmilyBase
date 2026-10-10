@@ -1308,3 +1308,13 @@ validation. Individually valid mismatched components fail. A borrowed canonical
 Read/Seek encoder avoids a second complete payload copy. See
 [format and checks](native-file-archive-format.md). Common durable publication and
 restore, Root/current user policy and production acceptance remain open.
+
+## Follow-up: native paired archive publication
+
+[ADR0140](adr/0140-owned-paired-file-archive-publication.md) adds standalone operator
+publication/inspection of the common paired archive. Original private staging,
+fsync, exact readback, no-replace selection and parent fsync are preserved. Actual
+selected inode/parent retention spans complete graph and canonical source checks;
+late errors are uncertain, preserved and never retried. See
+[contract](native-file-archive-publication.md). Common restore, AccountRoot/current
+user authority and production acceptance remain open.

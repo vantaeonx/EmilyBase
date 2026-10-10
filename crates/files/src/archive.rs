@@ -1,9 +1,11 @@
-//! Experimental paired archive bytes. No destination publication or authority.
+//! Experimental paired archive bytes and native publication, never user authority.
 use crate::{Error, FileInfo, FileQuota, Result, records};
 use emilybase_object_storage::{ProjectId, VerifiedArchive};
 use sha2::{Digest, Sha256};
 mod header;
+mod publication;
 mod reader;
+pub use publication::{FileArchiveReport, inspect_file_archive, publish_file_archive};
 pub use reader::FileArchiveReader;
 
 pub const FILE_ARCHIVE_VERSION: u16 = 1;

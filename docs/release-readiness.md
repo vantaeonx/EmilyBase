@@ -81,6 +81,10 @@ round trips preserve the graph; common durable publication/restore remains pendi
 The [experimental paired archive format](native-file-archive-format.md) validates
 both components, exact scope, physical quota and reference hashes together. Its
 borrowed encoder/byte decoder do not close common publication or restore gates.
+Native [paired archive publication](native-file-archive-publication.md) adds
+standalone no-replace common backup files and readonly inspection with actual
+descriptor retention. Common restore and coordinated AccountRoot inclusion remain
+open, separately from process-kill publication checks.
 
 ## Before publishing an experimental release
 
