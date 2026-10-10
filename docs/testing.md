@@ -4869,3 +4869,21 @@ source/shape preserve reports; large peak RSS decreases while the small shape ha
 no improvement. The [report](measurements/2026-10-10-archive-reader/verification.json)
 records raw samples and exact boundaries. No new full-workspace, hardware power-loss
 or production result is claimed by this targeted increment.
+
+## Borrowed canonical archive reader
+
+[Immutable archive encoding](borrowed-object-archive-encoding.md) passes188 relevant
+checks per stable1.99/minimum1.89:118 object,44 storage,26 CLI. Seven new cases
+include64 generated archive/seek sequences, independent exact bytes, both verified
+input constructors, retained borrowed slices, removed original namespace, complete
+segment/EOF/empty behavior, checked seeking and maximum128-object/64 MiB shape.
+All577 frozen hashes match; formatting, strict workspace/fuzz lint, builds and
+minimum all-fuzz compilation exit0. Existing20 process kills reran, no new kill.
+
+Expanded ASAN object_archive comparison executed761600 inputs/46s/max262144/
+prefix16/RSS392 under512, no findings. It now reads/seeks the actual immutable
+encoded view; it does not fuzz native file operations. A missing-corpus setup
+attempt executed no inputs and is excluded. See
+[evidence](measurements/2026-10-10-archive-encoding/verification.json).
+Owned backup publication, stored versions and durability are unchanged; the
+complete1518-test d988a51 baseline is not claimed for this later source.

@@ -42,6 +42,9 @@ The later [native inspection increment](native-object-inspection.md) has its own
 The following [seekable archive increment](seekable-object-archive-inspection.md)
 has181-check targeted matrices and its own parser comparison; the same broad-result
 boundary applies until a new full source run completes.
+The [borrowed encoder](borrowed-object-archive-encoding.md) follows with188-check
+targeted matrices and an expanded actual encoded-reader sanitizer comparison.
+Native backup publication is unchanged in that increment; it closes no release gate.
 
 ## Before publishing an experimental release
 

@@ -9,6 +9,22 @@ pub(super) struct Header {
     pub body_sha256: [u8; 32],
 }
 
+pub(super) fn encode(project: ProjectId, header: &Header) -> [u8; ARCHIVE_HEADER_BYTES] {
+    let mut bytes = [0; ARCHIVE_HEADER_BYTES];
+    bytes[..8].copy_from_slice(MAGIC);
+    bytes[8..10].copy_from_slice(&1u16.to_le_bytes());
+    bytes[12..16].copy_from_slice(&(ARCHIVE_HEADER_BYTES as u32).to_le_bytes());
+    bytes[16..32].copy_from_slice(project.as_bytes());
+    bytes[32..36].copy_from_slice(&(header.count as u32).to_le_bytes());
+    bytes[40..48].copy_from_slice(&header.payload_bytes.to_le_bytes());
+    bytes[48..56].copy_from_slice(&(header.body_bytes as u64).to_le_bytes());
+    bytes[56..88].copy_from_slice(&header.digest);
+    bytes[88..120].copy_from_slice(&header.body_sha256);
+    let crc = crc32fast::hash(&bytes[..124]);
+    bytes[124..128].copy_from_slice(&crc.to_le_bytes());
+    bytes
+}
+
 pub(super) fn check_total(total: usize) -> Result<()> {
     if total > MAX_ARCHIVE_BYTES {
         return Err(Error::Limit);

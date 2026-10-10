@@ -1,12 +1,12 @@
 #![no_main]
 #![forbid(unsafe_code)]
 use emilybase_object_storage::{
-    Error, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ProjectId, encode_verified_archive,
-    verify_archive, verify_archive_reader,
+    ArchiveReader, Error, MAX_INVENTORY_BYTES, MAX_INVENTORY_OBJECTS, ProjectId,
+    encode_verified_archive, verify_archive, verify_archive_reader,
 };
 use libfuzzer_sys::fuzz_target;
 use sha2::{Digest, Sha256};
-use std::io::Cursor;
+use std::io::{Cursor, Read, Seek, SeekFrom};
 
 fn check(bytes: &[u8], project: ProjectId) {
     match (
@@ -21,6 +21,35 @@ fn check(bytes: &[u8], project: ProjectId) {
             assert_eq!(view.payload_bytes(), report.payload_bytes);
             assert_eq!(view.digest(), &report.digest);
             assert_eq!(encode_verified_archive(&view).unwrap(), bytes);
+            let mut encoded = ArchiveReader::from_verified(&view).unwrap();
+            assert_eq!(encoded.encoded_bytes(), bytes.len());
+            assert_eq!(encoded.report(), &report);
+            let mut scratch = [0; 8192];
+            let mut offset = 0;
+            loop {
+                let count = encoded.read(&mut scratch).unwrap();
+                if count == 0 {
+                    break;
+                }
+                assert_eq!(&scratch[..count], &bytes[offset..offset + count]);
+                offset += count;
+            }
+            assert_eq!(offset, bytes.len());
+            for position in [
+                0,
+                127,
+                128,
+                bytes.len() / 2,
+                bytes.len() - 1,
+                bytes.len(),
+                bytes.len() + 1,
+            ] {
+                encoded.seek(SeekFrom::Start(position as u64)).unwrap();
+                let count = encoded.read(&mut scratch).unwrap();
+                let start = position.min(bytes.len());
+                assert_eq!(count, (bytes.len() - start).min(scratch.len()));
+                assert_eq!(&scratch[..count], &bytes[start..start + count]);
+            }
         }
         (Err(Error::ArchiveVersion(a)), Err(Error::ArchiveVersion(b))) => assert_eq!(a, b),
         (Err(Error::Version(a)), Err(Error::Version(b))) => assert_eq!(a, b),

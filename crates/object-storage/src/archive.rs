@@ -7,8 +7,10 @@ use crate::{
 use sha2::{Digest, Sha256};
 
 const MAGIC: &[u8; 8] = b"EMILYOBK";
+mod encoded;
 mod header;
 mod reader;
+pub use encoded::ArchiveReader;
 pub use reader::verify_archive_reader;
 pub const ARCHIVE_HEADER_BYTES: usize = 128;
 pub const MAX_ARCHIVE_BYTES: usize = ARCHIVE_HEADER_BYTES
@@ -145,14 +147,6 @@ fn encode_checked<'a>(
         .try_reserve_exact(ARCHIVE_HEADER_BYTES + body_bytes)
         .map_err(|_| Error::Allocation)?;
     bytes.resize(ARCHIVE_HEADER_BYTES, 0);
-    bytes[..8].copy_from_slice(MAGIC);
-    bytes[8..10].copy_from_slice(&1u16.to_le_bytes());
-    bytes[12..16].copy_from_slice(&(ARCHIVE_HEADER_BYTES as u32).to_le_bytes());
-    bytes[16..32].copy_from_slice(project.as_bytes());
-    bytes[32..36].copy_from_slice(&(count as u32).to_le_bytes());
-    bytes[40..48].copy_from_slice(&payload_bytes.to_le_bytes());
-    bytes[48..56].copy_from_slice(&(body_bytes as u64).to_le_bytes());
-    bytes[56..88].copy_from_slice(&digest);
     for (object, image) in objects {
         bytes.extend_from_slice(object.as_bytes());
         bytes.extend_from_slice(&(image.len() as u64).to_le_bytes());
@@ -161,10 +155,17 @@ fn encode_checked<'a>(
     if bytes.len() != ARCHIVE_HEADER_BYTES + body_bytes {
         return Err(Error::Archive);
     }
-    let body_hash = Sha256::digest(&bytes[ARCHIVE_HEADER_BYTES..]);
-    bytes[88..120].copy_from_slice(&body_hash);
-    let crc = crc32fast::hash(&bytes[..124]);
-    bytes[124..128].copy_from_slice(&crc.to_le_bytes());
+    let header = header::encode(
+        project,
+        &header::Header {
+            count,
+            payload_bytes,
+            body_bytes,
+            digest,
+            body_sha256: Sha256::digest(&bytes[ARCHIVE_HEADER_BYTES..]).into(),
+        },
+    );
+    bytes[..ARCHIVE_HEADER_BYTES].copy_from_slice(&header);
     Ok(bytes)
 }
 

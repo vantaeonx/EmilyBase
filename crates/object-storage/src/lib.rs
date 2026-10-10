@@ -6,8 +6,8 @@ mod inspect;
 mod restore;
 mod stream;
 pub use archive::{
-    ARCHIVE_HEADER_BYTES, ArchiveReport, ArchivedObject, MAX_ARCHIVE_BYTES, VerifiedArchive,
-    encode_archive, encode_verified_archive, inspect_archive_file, verify_archive,
+    ARCHIVE_HEADER_BYTES, ArchiveReader, ArchiveReport, ArchivedObject, MAX_ARCHIVE_BYTES,
+    VerifiedArchive, encode_archive, encode_verified_archive, inspect_archive_file, verify_archive,
     verify_archive_reader,
 };
 pub use directory::{

@@ -134,6 +134,10 @@ open across the final marker/metadata/inode verification. Owned get remains sepa
 [Seekable archive inspection](docs/seekable-object-archive-inspection.md) likewise
 verifies the complete outer archive and every nested object through bounded reads,
 preserving checksum priority and native inode checks without a complete image copy.
+[Borrowed canonical encoding](docs/borrowed-object-archive-encoding.md) exposes the
+same archive bytes through Read+Seek over immutable verified images, avoiding a
+second payload image in that API. Native backup publication still uses its owned
+encoder until the durable reader publisher is separately verified.
 The next [AccountRoot integration proposal](docs/adr/0127-proposed-account-root-object-integration.md)
 defines file/catalog failure boundaries, current authority, orphan accounting and
 coordinated backup gates. It is a proposal, not an implemented file service.

@@ -1207,3 +1207,13 @@ readback retain file checks without owning a full archive image. Capture/encodin
 restore, format versions and durability points remain unchanged. See
 [contract](seekable-object-archive-inspection.md). This is not a network upload,
 whole-process resource quota or coordinated AccountRoot/file service.
+
+## Follow-up: borrowed canonical object archive encoding
+
+[ADR0130](adr/0130-borrowed-canonical-object-archive-reader.md) adds a synchronous
+Read+Seek view over immutable verified snapshot/archive images. Small bounded
+frames and a shared canonical header replace a second complete payload image in
+this API; caller buffers receive exact original bytes. Owned encoding and native
+backup publication retain their existing behavior until a separate durable reader
+publisher passes complete readback/selection/fault tests. See
+[contract](borrowed-object-archive-encoding.md). No platform stage closes here.
