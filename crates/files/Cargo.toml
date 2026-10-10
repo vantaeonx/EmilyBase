@@ -1,0 +1,21 @@
+[package]
+name = "emilybase-files"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+emilybase-catalog = { path = "../catalog" }
+emilybase-database = { path = "../database" }
+emilybase-transactions = { path = "../transactions" }
+emilybase-object-storage = { path = "../object-storage" }
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"
+proptest = "1"
+
+[lints]
+workspace = true

@@ -15,7 +15,7 @@ for production. A crate version or successful build alone is not a published rel
 | Server | Axum/Tokio adapter over synchronous owned engine, isolated projects, service keys and typed APIs | Broader load/connection/output admission and deployment acceptance |
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
-| Files | Native scoped immutable objects, streamed inventory/inspection, bounded writes, standalone backup and verified restore | AccountRoot coordination, user file HTTP/policies, persisted quotas and signed URLs |
+| Files | Native scoped objects and verified archives; standalone own-WAL references and persisted physical quotas | AccountRoot coordination, user file HTTP/policies, quota administration, common backup and signed URLs |
 | Backup | Verified native database/registry/private-root copies; standalone object archives | Coordinated inclusion of objects, encrypted/incremental backup and upgrade drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
@@ -59,6 +59,10 @@ The [native payload reader](object-payload-reader.md) adds bounded payload-only
 reads retaining the original owner/inode, irreversible refusal after detected
 change, checked seeks and final complete hashing. Its targeted evidence is separate
 from the complete older source and grants no user file service or release approval.
+The [standalone native file catalog](native-file-catalog.md) adds actual own-WAL
+references and persisted physical quotas with invisible charged orphans. Its native
+process-kill/reopen/semantic-corruption evidence does not implement coordinated
+Root backup, current file policies or user endpoints.
 
 ## Before publishing an experimental release
 

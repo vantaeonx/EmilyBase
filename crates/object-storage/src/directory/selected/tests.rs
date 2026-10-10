@@ -83,6 +83,65 @@ fn bounded_selection_retains_original_complete_receipt_without_granting_a_later_
     ));
 }
 
+#[test]
+fn complete_receipt_revalidation_refuses_sibling_changes_without_refreshing_or_releasing_selection()
+{
+    for last_boundary in [false, true] {
+        for shape in 0..6 {
+            let temp = tempfile::tempdir().unwrap();
+            let mut directory = owner(temp.path());
+            let sibling = ObjectId::from_bytes([3; 16]);
+            directory.put(sibling, b"older").unwrap();
+            let mut selected = directory
+                .put_bounded_selected(OBJECT, b"synthetic", WriteLimits::new(2, 14).unwrap())
+                .unwrap();
+            selected.verify_complete().unwrap();
+            let expected = selected.inventory().clone();
+            let inode = selected.selected.file.metadata().unwrap().ino();
+            let mut changed = false;
+            let result = selected.verify_complete_with(|last| {
+                if last != last_boundary {
+                    return;
+                }
+                changed = true;
+                let sibling_path = temp.path().join("objects").join(object_name(sibling));
+                match shape {
+                    0 => fs::write(sibling_path, b"broken").unwrap(),
+                    1 => fs::write(sibling_path, encode(PROJECT, sibling, b"other").unwrap())
+                        .unwrap(),
+                    2 => fs::remove_file(sibling_path).unwrap(),
+                    3 => fs::write(temp.path().join("objects/foreign"), b"unmanaged").unwrap(),
+                    4 => {
+                        let saved = temp.path().join("saved-selected");
+                        let path = temp.path().join("objects").join(object_name(OBJECT));
+                        fs::rename(&path, &saved).unwrap();
+                        fs::copy(saved, path).unwrap();
+                    }
+                    _ => mutate(temp.path(), 10),
+                }
+            });
+            assert!(changed);
+            // A sibling change after the last inventory pass is a later native
+            // observation, outside that pass's lease. A selected/scope change
+            // is always checked again before return.
+            if last_boundary && shape < 4 {
+                assert!(result.is_ok());
+                assert!(selected.verify_complete().is_err());
+            } else {
+                assert!(matches!(result, Err(Error::PublicationUnknown)));
+            }
+            assert_eq!(selected.inventory(), &expected);
+            assert_eq!(selected.selected.file.metadata().unwrap().ino(), inode);
+            assert!(
+                temp.path()
+                    .join("objects")
+                    .join(object_name(OBJECT))
+                    .exists()
+            );
+        }
+    }
+}
+
 fn mutate(parent: &Path, shape: u8) {
     let directory = parent.join("objects");
     let path = directory.join(object_name(OBJECT));

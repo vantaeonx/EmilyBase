@@ -394,6 +394,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "emilybase-files"
+version = "0.1.0"
+dependencies = [
+ "emilybase-catalog",
+ "emilybase-database",
+ "emilybase-object-storage",
+ "emilybase-transactions",
+ "thiserror",
+]
+
+[[package]]
 name = "emilybase-format-fuzz"
 version = "0.0.0"
 dependencies = [
@@ -404,6 +415,7 @@ dependencies = [
  "emilybase-commit-format",
  "emilybase-commit-model",
  "emilybase-database",
+ "emilybase-files",
  "emilybase-index",
  "emilybase-migrations",
  "emilybase-model-profile",

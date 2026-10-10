@@ -73,6 +73,12 @@ directory owner through later caller work. It does not retain AccountRoot/curren
 user authority or integrate any catalog commit, schema, persisted quota or common
 backup. This proposal remains open; its other acceptance requirements still apply.
 
+Later [ADR0135](0135-original-wal-native-file-reference-catalog.md) implements a
+standalone native original-WAL reference/physical-quota pair under retained object
+selection. It remains outside AccountRoot/server/CLI and adds no current user file
+authority, root schema/roster, common backup/restore or accepted root lock order.
+Those integration requirements are still open.
+
 A crash before the metadata commit may leave a valid private orphan. It must not
 be user-visible through list/download, and must not disappear from quota accounting
 or be automatically deleted. A committed reference must never authorize a missing,

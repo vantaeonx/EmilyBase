@@ -30,6 +30,14 @@ emilybase-server = { path = "../crates/server" }
 emilybase-transfer = { path = "../crates/transfer" }
 emilybase-migrations = { path = "../crates/migrations" }
 emilybase-object-storage = { path = "../crates/object-storage" }
+emilybase-files = { path = "../crates/files" }
+
+[[bin]]
+name = "file_reference"
+path = "fuzz_targets/file_reference.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "file_format"

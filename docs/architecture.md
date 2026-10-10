@@ -39,6 +39,9 @@ flowchart TD
   ObjectFiles --> Storage
   CLI --> ObjectArchive[Standalone verified object archive and restore]
   ObjectArchive --> ObjectFiles
+  NativeFiles[Standalone native file catalog] --> ObjectFiles
+  NativeFiles --> FileMetadata[Separate original-WAL metadata and physical quota]
+  FileMetadata --> Transactions
 ```
 
 Storage, catalog, database, WAL, transactions, backup, CLI, a separate index and
@@ -67,6 +70,13 @@ readonly descriptor under its original borrowed directory owner. Payload-only
 positional reads are capped at8192 bytes with before/after scope/identity checks;
 filesystem failures poison that handle. Complete hash verification is explicit.
 This synchronous native cursor grants no current account/session/file policy.
+
+The separate [native file catalog](native-file-catalog.md) owns metadata first and
+object scope second. Its original-WAL schema persists bounded logical references
+and physical quotas, counting invisible unreferenced blobs. Blob-first publication
+retains the actual selected descriptor through the reference commit and complete
+native receipt checks. It is outside current server/CLI/AccountRoot dependencies;
+root authority, common backup and user file policy remain distinct pending gates.
 
 ## Storage boundary
 

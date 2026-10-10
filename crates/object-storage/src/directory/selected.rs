@@ -104,6 +104,28 @@ impl SelectedWrite<'_> {
     pub fn verify(&mut self) -> Result<()> {
         self.selected.verify()
     }
+
+    /// Revalidate the original complete receipt and actual selected descriptor.
+    /// This is a fresh native observation, not current user authority or a lease
+    /// protecting later filesystem state. Expected inventory is never refreshed.
+    pub fn verify_complete(&mut self) -> Result<()> {
+        self.verify_complete_with(|_| {})
+    }
+    fn verify_complete_with(&mut self, mut checked: impl FnMut(bool)) -> Result<()> {
+        let result = (|| {
+            self.selected.verify()?;
+            for last in [false, true] {
+                let current = self.selected.owner.inventory()?;
+                checked(last);
+                if &current != self.receipt.inventory() {
+                    return Err(Error::InventoryChanged);
+                }
+                self.selected.verify()?;
+            }
+            Ok(())
+        })();
+        result.map_err(|_| Error::PublicationUnknown)
+    }
 }
 impl std::fmt::Debug for SelectedWrite<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

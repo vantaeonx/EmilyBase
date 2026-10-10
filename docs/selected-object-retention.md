@@ -23,6 +23,14 @@ publication. Later verify checks the exact object and scope only. It does not
 refresh that inventory or certify the complete directory against a later unmanaged
 sibling. Per-call limits are still not authoritative persisted storage quotas.
 
+The later [native catalog increment](native-file-catalog.md) adds explicit
+SelectedWrite::verify_complete for callers needing the original complete receipt
+under the retained selected descriptor. It hashes full inventory twice and verifies
+the actual selection before, between and after; expected inventory is not refreshed.
+The old verify contract remains exact-object-only. A last inventory observation is
+not a lease against a subsequent sibling change. The standalone catalog uses its
+own persisted quotas; this lower-level guard still supplies no account authority.
+
 Moving the native directory does not redirect its retained handle into a replacement
 path. A visible namespace can still change after the last observation, and native
 operator/ancestor trust remains necessary. These guards neither sandbox a hostile

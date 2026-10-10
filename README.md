@@ -146,6 +146,11 @@ full revalidation. Their metadata grants no user authority or catalog transactio
 object and copy at most8192 payload-only bytes per call under its original owner.
 Detected scope/inode/metadata changes clear the attempted chunk and poison the
 reader; complete final hashing and payload-relative seeks keep explicit boundaries.
+A standalone [native file catalog](docs/native-file-catalog.md) now owns separate
+original-WAL metadata and scoped objects, with persisted physical quotas and logical
+references. Actual selected-inode retention spans the reference commit; unreferenced
+blobs remain invisible through catalog reads and charged against capacity. This
+operator library is outside current server/CLI and coordinated root backup paths.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

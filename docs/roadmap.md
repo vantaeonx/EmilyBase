@@ -1256,3 +1256,14 @@ scope/metadata/identity checks; failed checks clear the attempted prefix and poi
 the handle. Checked payload seeks, full revalidation and consuming finish preserve
 the original scope/report. See [contract](object-payload-reader.md). This adds no
 HTTP authority, persistent file catalog/quota or coordinated root restore gate.
+
+## Follow-up: standalone original-WAL file references
+
+[ADR0135](adr/0135-original-wal-native-file-reference-catalog.md) adds a native
+operator FileStore owning separate original-engine metadata and scoped objects.
+Its exact private schema persists physical quotas and logical references with
+scope/hash/commit revision. Blob-first publication retains the actual selected inode
+through the own-WAL commit and final complete receipt checks. Valid unreferenced
+objects stay invisible but charged; uncertain outcomes require reopen/inspection.
+See [contract](native-file-catalog.md). Metadata mutations/deletion and coordinated
+backup remain pending; no user file route, Root version or platform stage closes.

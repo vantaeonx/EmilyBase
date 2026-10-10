@@ -488,6 +488,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "emilybase-files"
+version = "0.1.0"
+dependencies = [
+ "emilybase-catalog",
+ "emilybase-database",
+ "emilybase-object-storage",
+ "emilybase-transactions",
+ "proptest",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "emilybase-index"
 version = "0.1.0"
 dependencies = [
