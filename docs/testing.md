@@ -4826,3 +4826,12 @@ campaigns do not prove power-loss recovery, filesystem consistency or exhaustive
 security. The latest full stable/minimum workspace test/build sequence remains
 pending at this snapshot and is not counted as complete. No format, source or
 production gate changes here.
+
+The subsequent complete d988a51 matrix finished successfully: stable1.99 and
+minimum1.89 each passed1518 workspace tests and the complete workspace build.
+All four commands exited0; all570 frozen source/config/format hashes match before
+and after. The31 default ignored fixture/generator entries have the classification
+above. Source-equivalent documentation commits do not add test cases. Hosted
+d988a51 and7f696e8 CI also completed successfully. The evidence now records these
+completed results while retaining the earlier pending-snapshot boundary. These
+checks do not close hardware power-loss, resource admission or production gates.

@@ -140,24 +140,76 @@
   "source_hashes_rechecked_for_additional_campaigns": true,
   "source_equivalent_documentation_commit": "7f696e88dd5c05d2e06e3508e90690fb2454d2ae",
   "current_full_workspace": {
-    "status": "in_progress",
+    "status": "completed",
     "source_commit": "d988a51dca23b2bc9794b6fb6a66950a45479501",
-    "stable_exit_code": null,
-    "minimum_exit_code": null,
-    "counted_as_completed": false,
-    "planned_sequence": [
-      "stable workspace tests",
-      "stable workspace build",
-      "minimum 1.89 workspace tests",
-      "minimum 1.89 workspace build"
-    ],
+    "source_files": 570,
+    "source_hashes_verified_before": true,
+    "source_hashes_verified_after": true,
     "environment": {
       "CARGO_INCREMENTAL": "0",
       "CARGO_PROFILE_DEV_DEBUG": "0",
       "CARGO_PROFILE_TEST_DEBUG": "0",
       "CARGO_BUILD_JOBS": "1"
     },
-    "final_source_hash_recheck": "pending; no completed current broad matrix claimed at this evidence snapshot"
+    "runs": {
+      "stable-test": {
+        "command": [
+          "cargo",
+          "+stable",
+          "test",
+          "--locked",
+          "--workspace"
+        ],
+        "exit_code": 0,
+        "seconds": 1403.675,
+        "passed": 1518,
+        "failed": 0,
+        "default_ignored_entries": 31
+      },
+      "stable-build": {
+        "command": [
+          "cargo",
+          "+stable",
+          "build",
+          "--locked",
+          "--workspace"
+        ],
+        "exit_code": 0,
+        "seconds": 0.893,
+        "passed": 0,
+        "failed": 0,
+        "default_ignored_entries": 0
+      },
+      "minimum-test": {
+        "command": [
+          "cargo",
+          "+1.89.0",
+          "test",
+          "--locked",
+          "--workspace"
+        ],
+        "exit_code": 0,
+        "seconds": 1360.288,
+        "passed": 1518,
+        "failed": 0,
+        "default_ignored_entries": 31
+      },
+      "minimum-build": {
+        "command": [
+          "cargo",
+          "+1.89.0",
+          "build",
+          "--locked",
+          "--workspace"
+        ],
+        "exit_code": 0,
+        "seconds": 0.282,
+        "passed": 0,
+        "failed": 0,
+        "default_ignored_entries": 0
+      }
+    },
+    "ignored_entry_classification": "29 parent-invoked fixture entries and two separate opt-in corpus generators; no extra independent test counts"
   },
   "hosted_ci": {
     "479d0a2": {
@@ -167,16 +219,21 @@
     },
     "d988a51": {
       "run_id": 38003182438,
-      "status": "in_progress",
+      "status": "completed",
       "confirmed_successful_jobs": [
         "container",
         "Known dependency advisories",
-        "Synthetic allocation diagnostics"
-      ]
+        "Synthetic allocation diagnostics",
+        "check",
+        "Minimum Rust 1.89"
+      ],
+      "conclusion": "success"
     },
     "7f696e8": {
       "run_id": 38004690958,
-      "status": "in_progress"
+      "status": "completed",
+      "conclusion": "success"
     }
-  }
+  },
+  "previous_snapshot_boundary": "The first publication recorded this exact source full matrix as pending; this update records its completed results."
 }
