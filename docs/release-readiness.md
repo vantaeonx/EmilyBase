@@ -117,6 +117,9 @@ verification does not imply atomic delivery or current user download authority.
 The [future v2 file-root roster codec](account-file-root-manifest.md) is pure metadata
 inspection with explicit compatibility refusal. Ordinary account-root operation and
 combined backup/restore have not adopted it; those runtime gates stay open.
+Native [parent-relative account opening](parent-relative-account-root.md) preserves
+existing v1 owner/selection lifetimes for future common ownership. It does not adopt
+the new manifest or certify coordinated files/users backup or permission.
 
 ## Before publishing an experimental release
 

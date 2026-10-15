@@ -7,6 +7,7 @@ use emilybase_transactions::Database;
 use std::collections::BTreeMap;
 use std::fs::{File, TryLockError};
 use std::io::Write;
+use std::os::fd::AsRawFd;
 use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -58,15 +59,25 @@ impl ProjectStore {
     }
     pub fn open(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref();
-        match std::fs::DirBuilder::new().mode(0o700).create(root) {
-            Ok(()) => File::open(
-                root.parent()
-                    .filter(|p| !p.as_os_str().is_empty())
-                    .unwrap_or(Path::new(".")),
-            )?
-            .sync_all()?,
-            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => (),
-            Err(error) => return Err(error.into()),
+        Self::open_selected(root, true, false)
+    }
+    // Internal account-root component. The caller retains the descriptor used
+    // in this path and checks containing-root selection; no capability escapes it.
+    pub(crate) fn open_existing_relative(root: &Path) -> Result<Self> {
+        Self::open_selected(root, false, true)
+    }
+    fn open_selected(root: &Path, create: bool, relative_path: bool) -> Result<Self> {
+        if create {
+            match std::fs::DirBuilder::new().mode(0o700).create(root) {
+                Ok(()) => File::open(
+                    root.parent()
+                        .filter(|p| !p.as_os_str().is_empty())
+                        .unwrap_or(Path::new(".")),
+                )?
+                .sync_all()?,
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => (),
+                Err(error) => return Err(error.into()),
+            }
         }
         metadata::directory(root)?;
         let owner = metadata::open_directory(root)?;
@@ -75,7 +86,11 @@ impl ProjectStore {
             Err(TryLockError::WouldBlock) => return Err(Error::Busy),
             Err(TryLockError::Error(e)) => return Err(e.into()),
         }
-        let root = root.canonicalize()?;
+        let root = if relative_path {
+            root.to_path_buf()
+        } else {
+            root.canonicalize()?
+        };
         metadata::owned_directory(&root, &owner)?;
         let mut projects = BTreeMap::new();
         for entry in std::fs::read_dir(&root)? {
@@ -118,6 +133,10 @@ impl ProjectStore {
         } else {
             Ok(())
         }
+    }
+    pub(crate) fn check_registry_at(&self, parent: &File) -> Result<()> {
+        let selected = PathBuf::from(format!("/proc/self/fd/{}/registry", parent.as_raw_fd()));
+        metadata::owned_directory(&selected, &self.owner)
     }
     pub fn list(&self) -> Result<Vec<ProjectInfo>> {
         self.ready()?;
@@ -179,7 +198,7 @@ impl ProjectStore {
     ) -> Result<crate::AccountBundleReport> {
         if crate::registry_files::parent(target.as_ref())
             .canonicalize()?
-            .starts_with(&self.root)
+            .starts_with(self.root.canonicalize()?)
         {
             return Err(Error::Path);
         }
@@ -239,7 +258,7 @@ impl ProjectStore {
     pub fn backup(&mut self, target: impl AsRef<Path>) -> Result<crate::RegistryBackupReport> {
         if crate::registry_files::parent(target.as_ref())
             .canonicalize()?
-            .starts_with(&self.root)
+            .starts_with(self.root.canonicalize()?)
         {
             return Err(Error::Path);
         }
@@ -460,6 +479,8 @@ impl AuthorizedProject {
         })
     }
     fn check_directory(&self) -> Result<()> {
+        #[cfg(test)]
+        crate::durability::checkpoint("owned_project_directory_check");
         metadata::owned_directory(&self.root, &self._owner)?;
         metadata::owned_directory(&self.directory, &self.directory_owner)?;
         metadata::owned_directory(&self.directory.join("data"), &self.data_owner)

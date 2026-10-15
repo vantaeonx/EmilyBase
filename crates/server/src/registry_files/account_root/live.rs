@@ -21,6 +21,9 @@ pub struct AccountRoot {
     contents: Contents,
     // Drop registry/private children before releasing the selected-root lock.
     owner: File,
+    // At-mode selected paths borrow this original parent descriptor. End every
+    // component/root owner before releasing its private parent anchor.
+    parent: Option<File>,
 }
 impl std::fmt::Debug for AccountRoot {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -111,25 +114,89 @@ impl AccountRoot {
         let owner = metadata::open_directory(path.as_ref())?;
         lock(&owner)?;
         let selected = path.as_ref().canonicalize()?;
-        let state = inspect_owned_limited(
-            &selected,
-            &owner,
-            pool,
-            MAX_ACTIVE_PRIVATE_STORES,
-            |_, _| Ok(()),
-        )?;
+        Self::from_owner(selected, owner, None, pool)
+    }
+    /// Open an existing v1 child relative to a trusted original private directory.
+    /// Retain an owned duplicate of that parent, so caller release/parent rename
+    /// cannot invalidate component descriptor paths. No new namespace, v2 layout,
+    /// provisioning, migration, clock reset or file permission is implied.
+    pub fn open_at(parent: &File, name: &str, pool: PasswordPool) -> Result<Self> {
+        Self::validate_leaf(name)?;
+        let parent = parent.try_clone()?;
+        let base = super::descriptor(&parent);
+        metadata::owned_directory(&base, &parent)?;
+        let selected = base.join(name);
+        let owner = metadata::open_directory(&selected)?;
+        lock(&owner)?;
+        Self::from_owner(selected, owner, Some(parent), pool)
+    }
+    /// Verify this original root's current selection under a supplied native
+    /// private parent, without exporting an owner or rebinding any source. Finite check
+    /// only: no common namespace lease, copied authority or permission is issued.
+    pub fn check_directory_at(&self, parent: &File, name: &str) -> Result<()> {
+        Self::validate_leaf(name)?;
+        self.ready()?;
+        let base = super::descriptor(parent);
+        metadata::owned_directory(&base, parent)?;
+        metadata::owned_directory(&base.join(name), &self.owner)?;
+        self.ready()
+    }
+    fn validate_leaf(name: &str) -> Result<()> {
+        if name.is_empty()
+            || matches!(name, "." | "..")
+            || name.as_bytes().contains(&0)
+            || name.len() > 255
+            || name.contains('/')
+        {
+            return Err(Error::Path);
+        }
+        Ok(())
+    }
+    fn from_owner(
+        selected: PathBuf,
+        owner: File,
+        parent: Option<File>,
+        pool: PasswordPool,
+    ) -> Result<Self> {
+        let state = if parent.is_some() {
+            super::inspect_owned_mode(
+                &selected,
+                &owner,
+                pool,
+                MAX_ACTIVE_PRIVATE_STORES,
+                |_, _| Ok(()),
+                true,
+            )
+        } else {
+            inspect_owned_limited(
+                &selected,
+                &owner,
+                pool,
+                MAX_ACTIVE_PRIVATE_STORES,
+                |_, _| Ok(()),
+            )
+        }?;
         // Move the exact inspected owners; do not reopen after validation.
         let result = Self {
             selected,
             owner,
             contents: state.contents,
+            parent,
         };
         result.ready()?;
         super::checkpoint("account_root_service_opened");
         Ok(result)
     }
     fn ready(&self) -> Result<()> {
-        super::check_contents(&self.selected, &self.owner, &self.contents)
+        self.check_parent()?;
+        super::check_contents(&self.selected, &self.owner, &self.contents)?;
+        self.check_parent()
+    }
+    fn check_parent(&self) -> Result<()> {
+        if let Some(parent) = &self.parent {
+            metadata::owned_directory(&super::descriptor(parent), parent)?;
+        }
+        Ok(())
     }
     fn account(&mut self, project: &str, key: &str) -> Result<&mut AccountStore> {
         self.ready()?;

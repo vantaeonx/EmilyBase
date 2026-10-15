@@ -1416,3 +1416,15 @@ Golden/negative/generated/compatibility/CLI and sanitizer checks cover metadata
 integrity only; see [contract](account-file-root-manifest.md). Runtime lock order,
 active resource bounds, coordinated archive/capture/restore, explicit offline adoption
 and current user file authority must still precede live integration.
+
+## Follow-up: retained parent-relative account-root ownership
+
+[ADR0150](adr/0150-retained-parent-relative-account-root-ownership.md) adds bounded
+private-parent/leaf opening for existing v1 roots and readonly original child
+selection checking. Registry paths preserve selected names under retained parents;
+ordinary path opening keeps its rules. Source substitution after admission still
+refuses before original data opening, and physical backup containment handles
+descriptor aliases. Original scopes/locks/routing, sessions, generated models,
+killed readers and affected regressions are exercised; see
+[contract](parent-relative-account-root.md). V2 runtime adoption, coordinated live
+account/file capture/restore and current user file authority remain open.

@@ -400,8 +400,9 @@ impl Worker {
         }
     }
     pub(super) fn kill(mut self) {
+        use std::os::unix::process::ExitStatusExt;
         self.child.kill().unwrap();
-        assert!(!self.child.wait().unwrap().success());
+        assert_eq!(self.child.wait().unwrap().signal(), Some(9));
         self.reader.take().unwrap().join().unwrap();
     }
     pub(super) fn release(&mut self) {
@@ -438,7 +439,19 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if action.starts_with("root-init") {
+    if action == "root-at" {
+        let parent = File::open(source.parent().unwrap()).unwrap();
+        parent.try_lock().unwrap();
+        let root = crate::AccountRoot::open_at(
+            &parent,
+            source.file_name().unwrap().to_str().unwrap(),
+            PasswordPool::new(1).unwrap(),
+        )
+        .unwrap();
+        drop(parent);
+        root.projects().unwrap();
+        durability::checkpoint("account_root_at_read");
+    } else if action.starts_with("root-init") {
         match crate::initialize_account_root(
             &target,
             "synthetic",

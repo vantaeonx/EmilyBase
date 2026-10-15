@@ -257,6 +257,7 @@ fn check_contents(path: &Path, owner: &File, contents: &Contents) -> Result<()> 
         metadata::owned_directory(&root.join("private").join(id), owner)?;
     }
     check_manifest(&root, &contents.manifest_owner, &contents.encoded)?;
+    contents.registry.check_registry_at(owner)?;
     contents.registry.list()?;
     Ok(())
 }
@@ -276,7 +277,17 @@ fn inspect_owned_limited(
     owner: &File,
     pool: PasswordPool,
     private_limit: usize,
+    captured: impl FnMut(&str, &[u8]) -> Result<()>,
+) -> Result<State> {
+    inspect_owned_mode(path, owner, pool, private_limit, captured, false)
+}
+fn inspect_owned_mode(
+    path: &Path,
+    owner: &File,
+    pool: PasswordPool,
+    private_limit: usize,
     mut captured: impl FnMut(&str, &[u8]) -> Result<()>,
+    relative_registry: bool,
 ) -> Result<State> {
     metadata::owned_directory(path, owner)?;
     let root = descriptor(owner);
@@ -306,7 +317,11 @@ fn inspect_owned_limited(
     if names(&private)? != roster {
         return Err(Error::BundleRoot("private entries"));
     }
-    let mut registry = ProjectStore::open_existing(root.join("registry"))?;
+    let mut registry = if relative_registry {
+        ProjectStore::open_existing_relative(&path.join("registry"))?
+    } else {
+        ProjectStore::open_existing(root.join("registry"))?
+    };
     let projects = registry.list()?;
     let ids: BTreeSet<_> = projects.into_iter().map(|p| p.id).collect();
     if names(&root.join("registry"))? != ids || !roster.is_subset(&ids) {

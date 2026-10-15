@@ -5025,3 +5025,36 @@ Ordinary AccountRoot/open/capture/restore remain v1 and deliberately refuse v2.
 This codec settles metadata inspection, not runtime attachment, user permission,
 combined backup/restore, offline upgrade or format stability. Complete local Rust/
 SDK success does not certify a new container, physical power loss or production.
+
+## Retained parent-relative account-root operations
+
+[Parent-relative v1 roots](parent-relative-account-root.md) pass510 affected cases
+per stable1.99/minimum1.89:118 complete account-bundle/root unit cases,28 registry
+integration,39 actual CLI and325 original engine/WAL/transactions/backup. All builds,
+formatting, strict workspace/fuzz lint and minimum fuzz compilation exit0.633 frozen
+source hashes match after every process closes. SDK passes34 unit and12 actual
+local-server/restart tests against this source.
+
+Twelve new root cases include16 generated roster/move models, original parent/root/
+private/registry locks and descriptor return, caller release/moved parent with exact
+SQL routing, scoped selection checks, invalid/missing/busy/nonprivate input, the4/5
+active boundary before registry open, current sessions/time/refresh and physical
+output containment with independent external restore.16 selected-source changes
+and8 later root/registry/project/data changes after admission refuse before data
+opening. Six actual kills span opened/read boundaries, empty and nonempty WAL1/2
+roots. Actual signal9 is checked; history survives and the next credential operation
+works. Original bundle/root worker matrices rerun through the affected suite.
+
+Initial fixture/private-mode and stale canonical-path failures are excluded, as
+are preliminary green subsets and one strict-lint pattern refusal. No runtime
+privacy checks were relaxed. A separate rejected own-registry-FD-only prototype
+fails the late selected-root substitution test:0 passed/1 failed, exit101. That
+private source copy leaves main sources unchanged; derived server artifacts are
+rebuilt before final checks. The final code retains selection-relative paths under
+the original parent, rather than hiding namespace changes behind a component FD.
+See [evidence](measurements/2026-10-15-account-root-at/verification.json).
+
+The full1705-test683359c result belongs to the prior source. This affected matrix
+does not claim a new full workspace, container, sanitizer or power-loss campaign.
+V2 runtime adoption, live combined account/file capture/restore, user file authority
+and production acceptance remain open.
