@@ -197,6 +197,42 @@ pub fn restore_file_archive(
 ) -> Result<FileArchiveReport> {
     restore_with(bytes, project, destination.as_ref(), |_| {})
 }
+
+/// Restore one private child under an original native parent, then run trusted
+/// coordination while the actual prepared owners and every payload remain held.
+/// The child is already selected durably when work starts; the enclosing common
+/// root must remain private until all components have been prepared. Return values
+/// are withheld until final checks. Work errors may be returned as ordinary values;
+/// callers must flatten both result layers. No owner or current user grant escapes.
+/// A later failure is OutcomeUnknown and never removes the selected child.
+pub fn with_restored_file_archive_at<T>(
+    bytes: &[u8],
+    project: ProjectId,
+    parent: &File,
+    name: &str,
+    work: impl FnOnce(&FileArchiveReport) -> T,
+) -> Result<T> {
+    let view = verify_file_archive(bytes, project)?;
+    if name.is_empty()
+        || matches!(name, "." | "..")
+        || name.len() > 255
+        || name.contains('/')
+        || name.as_bytes().contains(&0)
+    {
+        return Err(Error::Destination);
+    }
+    let check_parent = || {
+        let metadata = parent.metadata()?;
+        if !metadata.is_dir() || metadata.mode() & 0o7777 != 0o700 {
+            return Err(Error::Destination);
+        }
+        Ok(())
+    };
+    check_parent()?;
+    let stage = StagedPrivateDirectory::at(parent, name)?;
+    restore_owned(view, stage, |_| {}, check_parent, work)
+}
+
 fn restore_with(
     bytes: &[u8],
     project: ProjectId,
@@ -213,9 +249,20 @@ pub(super) fn restore_checked(
     mut check_input: impl FnMut() -> Result<()>,
 ) -> Result<FileArchiveReport> {
     let view = verify_file_archive(bytes, project)?;
-    let expected = FileArchiveReport::from_verified(&view);
     check_input()?;
     let stage = StagedPrivateDirectory::new(destination)?;
+    restore_owned(view, stage, &mut boundary, &mut check_input, Clone::clone)
+}
+
+fn restore_owned<T>(
+    view: VerifiedFileArchive<'_>,
+    stage: StagedPrivateDirectory,
+    mut boundary: impl FnMut(RestoreBoundary),
+    mut check_input: impl FnMut() -> Result<()>,
+    work: impl FnOnce(&FileArchiveReport) -> T,
+) -> Result<T> {
+    let expected = FileArchiveReport::from_verified(&view);
+    let project = view.project();
     let root = stage.directory().try_clone()?;
     let path = descriptor_path(&root);
     let metadata = emilybase_backup::restore_bytes_at(view.metadata_bytes(), &root, "metadata")?;
@@ -289,7 +336,9 @@ pub(super) fn restore_checked(
         Ok(())
     };
     finish().map_err(|e| Error::OutcomeUnknown(Box::new(e)))?;
-    Ok(expected)
+    let value = work(&expected);
+    finish().map_err(|e| Error::OutcomeUnknown(Box::new(e)))?;
+    Ok(value)
 }
 
 #[cfg(test)]

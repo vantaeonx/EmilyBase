@@ -309,6 +309,10 @@ fn worker() {
     let parent = PathBuf::from(parent);
     let bytes = fs::read(parent.join("archive")).unwrap();
     let phase = std::env::var("EMILYBASE_FILE_RESTORE_TEST_PHASE").unwrap();
+    if phase.starts_with("coordinated-") {
+        coordinated::worker(&parent, &bytes, &phase);
+        return;
+    }
     let ready = || -> ! {
         println!("EB_FILE_RESTORE_READY");
         std::io::stdout().flush().unwrap();
@@ -429,3 +433,6 @@ proptest! {
         let captured=restored.capture().unwrap();prop_assert_eq!(captured.objects().objects().iter().find(|o|o.object()==OBJECT).unwrap().payload(),payload);
     }
 }
+
+#[path = "coordinated_tests.rs"]
+mod coordinated;

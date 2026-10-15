@@ -1491,3 +1491,14 @@ Post-selection failure is explicitly uncertain and preserves files. Readonly
 inspection and count-only account-file-verify bind to actual original input owners.
 See [contract](account-file-archive-publication.md). Common original-owner restore,
 v2 startup/adoption, backup encryption and user-file routes remain open.
+
+## Follow-up: retained native file restore coordination
+
+[ADR0157](adr/0157-retained-native-file-restore-coordination.md) adds explicit
+parent-relative restoration with checked work under the same original prepared
+metadata/object owners and every actual physical reader, including orphans. Nested
+pairs can remain locked through enclosing root selection and final outer checks;
+late substitution withholds values and reports uncertainty without overwriting.
+See [contract](native-file-restore-coordination.md). Complete account/file restore,
+account preparation, aggregate admission and explicit v2 adoption remain open;
+no overall stage or production acceptance is marked complete.

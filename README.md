@@ -216,6 +216,10 @@ The [joined archive publisher](docs/account-file-archive-publication.md) now wri
 a private no-replace file, retains its actual inode through bounded exact readback
 and final file/parent syncs, and reports late uncertainty without destructive retry.
 Readonly account-file-verify emits counts. Common root restore remains open.
+Native [file restore coordination](docs/native-file-restore-coordination.md) now
+retains each prepared pair's original writer owners and all physical readers through
+nested work and an enclosing root selection. Late changes withhold the result and
+report uncertainty. Account preparation and complete joined restore remain open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

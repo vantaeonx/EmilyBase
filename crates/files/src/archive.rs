@@ -11,7 +11,7 @@ mod source;
 pub use initialize::initialize_file_root;
 pub use publication::{FileArchiveReport, inspect_file_archive, publish_file_archive};
 pub use reader::FileArchiveReader;
-pub use restore::restore_file_archive;
+pub use restore::{restore_file_archive, with_restored_file_archive_at};
 pub use source::restore_file_archive_file;
 
 pub const FILE_ARCHIVE_VERSION: u16 = 1;
