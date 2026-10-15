@@ -451,6 +451,19 @@ fn publication_worker() {
         drop(parent);
         root.projects().unwrap();
         durability::checkpoint("account_root_at_read");
+    } else if action == "root-capture" {
+        let parent = File::open(source.parent().unwrap()).unwrap();
+        parent.try_lock().unwrap();
+        let mut root = crate::AccountRoot::open_at(
+            &parent,
+            source.file_name().unwrap().to_str().unwrap(),
+            PasswordPool::new(1).unwrap(),
+        )
+        .unwrap();
+        drop(parent);
+        let snapshot = root.capture().unwrap();
+        assert!(!snapshot.bundle_bytes().is_empty());
+        durability::checkpoint("root_capture_ack");
     } else if action.starts_with("root-init") {
         match crate::initialize_account_root(
             &target,

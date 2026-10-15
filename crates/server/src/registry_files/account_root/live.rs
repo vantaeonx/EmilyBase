@@ -10,6 +10,8 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 mod key_file;
 mod public_user;
+mod snapshot;
+pub use snapshot::AccountRootSnapshot;
 
 /// Active private owner count, not a combined model/heap reservation.
 pub const MAX_ACTIVE_PRIVATE_STORES: usize = 4;
@@ -193,7 +195,10 @@ impl AccountRoot {
         self.check_parent()
     }
     fn check_parent(&self) -> Result<()> {
-        if let Some(parent) = &self.parent {
+        Self::check_parent_owner(self.parent.as_ref())
+    }
+    fn check_parent_owner(parent: Option<&File>) -> Result<()> {
+        if let Some(parent) = parent {
             metadata::owned_directory(&super::descriptor(parent), parent)?;
         }
         Ok(())

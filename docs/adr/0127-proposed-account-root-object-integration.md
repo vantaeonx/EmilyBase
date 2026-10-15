@@ -161,3 +161,11 @@ a new layout. It settles declared private membership and exact native file datab
 binding; comparing actual retained registry/account/file owners and global database
 uniqueness remains necessary. No runtime lock order, combined bundle/restore,
 offline adoption or user-file gate in this proposal closes from codec success.
+
+[ADR0150](0150-retained-parent-relative-account-root-ownership.md) retains existing
+account components under an original private parent. [ADR0151](0151-live-capture-under-original-account-root-owners.md)
+now adds copied v1 account snapshots and an internal checked coordination callback
+that holds all original public/private data owners until work and final checks end.
+This settles an account-side capture lifetime prerequisite. Actual file capture
+inside that boundary, joined bounded encoding/publication/restore, common runtime
+ownership and current user file authority still require implementation and evidence.

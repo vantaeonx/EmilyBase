@@ -120,6 +120,10 @@ combined backup/restore have not adopted it; those runtime gates stay open.
 Native [parent-relative account opening](parent-relative-account-root.md) preserves
 existing v1 owner/selection lifetimes for future common ownership. It does not adopt
 the new manifest or certify coordinated files/users backup or permission.
+Native [live account-root capture](live-account-root-capture.md) now retains every
+original public/private owner through a checked internal coordination callback and
+returns copied sensitive v1 bytes. Actual file capture in that boundary, common
+publication/restore and current user file authority remain release gates.
 
 ## Before publishing an experimental release
 

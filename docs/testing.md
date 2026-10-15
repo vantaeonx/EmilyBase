@@ -5058,3 +5058,39 @@ The full1705-test683359c result belongs to the prior source. This affected matri
 does not claim a new full workspace, container, sanitizer or power-loss campaign.
 V2 runtime adoption, live combined account/file capture/restore, user file authority
 and production acceptance remain open.
+
+## Live v1 capture under every original account-root owner
+
+[Native live capture](live-account-root-capture.md) passes796 affected Rust cases
+per stable1.99/minimum1.89:257 complete server-library cases,147 complete auth cases,
+28 registry integration,39 actual CLI and325 original database/WAL/transactions/
+backup.17 ignored entries are15 parent-invoked child fixtures and2 opt-in corpus
+generators; no new sanitizer run is claimed. Formatting, strict workspace/fuzz lint,
+both server/CLI builds and minimum fuzz compilation exit0. SDK Node22.22.1 passes34
+unit and12 actual local-server/restart cases without external URL/credential/binary
+overrides.635 frozen source hashes match after every process closes.
+
+Eleven new snapshot cases include16 generated independent row/capture/fresh-restore
+models, exact existing v1 bytes/report, source owner/lock lifetimes and descriptor
+return, callback refusal, source/copy write independence and copy-only session
+revocation. Same-byte original WAL replacement, corrupt/nonprivate/hardlinked WAL,
+valid same-inode history with equal final rows and17 structural changes refuse
+without repair/adoption. Four physical abandoned-tail cases are excluded from
+copied history and left untouched. Twelve new actual signal9 kills span original
+checked-capture owner, copied, coordinated and acknowledged boundaries for empty
+and nonempty WAL1/2 roots; exact source history and subsequent credentials survive.
+The owner checkpoint is unique to checked capture, avoiding startup inspection.
+
+Initial WAL identity/privacy failures were reproduced before their fixes and are
+excluded, along with test-only compilation/premise errors and preliminary subsets.
+The core's existing append-history validation correctly rejects a spliced alternate
+history; the final equal-row test uses independently valid ordinary histories.
+No engine privacy rule or file/schema/bundle/credential version was relaxed.
+See [evidence](measurements/2026-10-15-account-root-capture/verification.json).
+
+Prior60747e6 separately passed the complete hosted1717/0/43 workspace per toolchain,
+plus all five jobs, with633 committed blobs matching its local affected proof.
+That prior CI does not certify this later source. This later796-case matrix is not
+a complete workspace/container/power-loss result. Joined account/file runtime
+ownership, capture/publication/restore, current file authority and production remain
+open gates.

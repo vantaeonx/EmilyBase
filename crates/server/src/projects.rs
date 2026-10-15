@@ -4,6 +4,7 @@ use emilybase_auth::{KeyDigest, issue_key, issue_project_id, valid_project_id};
 use emilybase_catalog::Value;
 use emilybase_query::Report;
 use emilybase_transactions::Database;
+use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs::{File, TryLockError};
 use std::io::Write;
@@ -138,6 +139,11 @@ impl ProjectStore {
         let selected = PathBuf::from(format!("/proc/self/fd/{}/registry", parent.as_raw_fd()));
         metadata::owned_directory(&selected, &self.owner)
     }
+    pub(crate) fn directory_identity(&self) -> Result<(u64, u64)> {
+        use std::os::unix::fs::MetadataExt;
+        let metadata = self.owner.metadata()?;
+        Ok((metadata.dev(), metadata.ino()))
+    }
     pub fn list(&self) -> Result<Vec<ProjectInfo>> {
         self.ready()?;
         metadata::owned_directory(&self.root, &self.owner)?;
@@ -160,6 +166,23 @@ impl ProjectStore {
         &mut self,
         accounts: &mut [emilybase_auth::accounts::AccountStore],
     ) -> Result<Vec<u8>> {
+        self.account_bundle_with(accounts, |image, _| Ok(image), false)
+    }
+    // All public data and supplied private owners span this internal readonly
+    // coordination callback. Copied bytes do not grant account/file authority.
+    pub(crate) fn capture_account_bundle_with<T>(
+        &mut self,
+        accounts: &mut [emilybase_auth::accounts::AccountStore],
+        capture: impl FnOnce(Vec<u8>, &mut [emilybase_auth::accounts::AccountStore]) -> Result<T>,
+    ) -> Result<T> {
+        self.account_bundle_with(accounts, capture, true)
+    }
+    fn account_bundle_with<T>(
+        &mut self,
+        accounts: &mut [emilybase_auth::accounts::AccountStore],
+        capture: impl FnOnce(Vec<u8>, &mut [emilybase_auth::accounts::AccountStore]) -> Result<T>,
+        checked: bool,
+    ) -> Result<T> {
         self.ready()?;
         if accounts.len() > MAX_PROJECTS {
             return Err(Error::Limit);
@@ -172,21 +195,42 @@ impl ProjectStore {
                 return Err(Error::BundleFormat("private roster project or duplicate"));
             }
         }
-        self.capture_registry_with(|registry| {
-            let mut private = Vec::with_capacity(accounts.len());
-            let mut total = crate::account_bundle::HEADER
-                .checked_add(registry.len())
-                .filter(|n| *n <= crate::MAX_ACCOUNT_BUNDLE_BYTES)
-                .ok_or(Error::Limit)?;
-            for account in accounts {
-                let image = account.backup_image()?;
-                total = crate::account_bundle::extend_size(total, image.len())?;
-                private.push((account.project().to_owned(), image));
-                #[cfg(test)]
-                crate::durability::checkpoint("bundle_private_prefix_captured");
-            }
-            crate::account_bundle::encode(&registry, private)
-        })
+        self.capture_registry_mode(
+            |registry| {
+                let mut private = Vec::with_capacity(accounts.len());
+                let mut expected = Vec::<[u8; 32]>::new();
+                if checked {
+                    expected
+                        .try_reserve_exact(accounts.len())
+                        .map_err(|_| Error::Limit)?;
+                }
+                let mut total = crate::account_bundle::HEADER
+                    .checked_add(registry.len())
+                    .filter(|n| *n <= crate::MAX_ACCOUNT_BUNDLE_BYTES)
+                    .ok_or(Error::Limit)?;
+                for account in accounts.iter_mut() {
+                    let image = account.backup_image()?;
+                    if checked {
+                        expected.push(Sha256::digest(&image).into());
+                    }
+                    total = crate::account_bundle::extend_size(total, image.len())?;
+                    private.push((account.project().to_owned(), image));
+                    #[cfg(test)]
+                    crate::durability::checkpoint("bundle_private_prefix_captured");
+                }
+                let image = crate::account_bundle::encode(&registry, private)?;
+                let outcome = capture(image, accounts);
+                if checked {
+                    for (account, expected) in accounts.iter_mut().zip(expected) {
+                        if Sha256::digest(account.backup_image()?).as_slice() != expected {
+                            return Err(Error::BundleRoot("private capture history changed"));
+                        }
+                    }
+                }
+                outcome
+            },
+            checked,
+        )
     }
 
     /// Publish a complete sensitive bundle as a private file without replacement.
@@ -209,6 +253,13 @@ impl ProjectStore {
     pub(crate) fn capture_registry_with<T>(
         &mut self,
         capture: impl FnOnce(Vec<u8>) -> Result<T>,
+    ) -> Result<T> {
+        self.capture_registry_mode(capture, false)
+    }
+    fn capture_registry_mode<T>(
+        &mut self,
+        capture: impl FnOnce(Vec<u8>) -> Result<T>,
+        checked: bool,
     ) -> Result<T> {
         self.ready()?;
         if Arc::strong_count(&self.owner) != 1 {
@@ -241,15 +292,44 @@ impl ProjectStore {
         }
         #[cfg(test)]
         crate::durability::checkpoint("registry_capture_owners_locked");
+        #[cfg(test)]
+        if checked {
+            crate::durability::checkpoint("root_capture_owners_locked");
+        }
         let mut bytes = vec![0; crate::registry_archive::HEADER];
+        let mut expected = Vec::<[u8; 32]>::new();
+        if checked {
+            expected
+                .try_reserve_exact(databases.len())
+                .map_err(|_| Error::Limit)?;
+        }
         for ((_, project), database) in self.projects.iter().zip(&mut databases) {
-            let archive = emilybase_backup::encode(&database.committed_wal()?)?;
+            if checked {
+                database.check_directory_at(&project.directory_owner, "data")?;
+            }
+            let wal = database.committed_wal()?;
+            if checked {
+                expected.push(Sha256::digest(&wal).into());
+            }
+            let archive = emilybase_backup::encode(&wal)?;
             crate::registry_archive::append(&mut bytes, &project.metadata, &archive)?;
         }
         crate::registry_archive::finish(&mut bytes, self.projects.len())?;
         crate::inspect_registry_backup_bytes(&bytes)?;
         // Explicit last use makes ownership retention span the whole callback.
         let outcome = capture(bytes);
+        if checked {
+            for ((database, project), expected) in databases
+                .iter_mut()
+                .zip(self.projects.values())
+                .zip(expected)
+            {
+                database.check_directory_at(&project.directory_owner, "data")?;
+                if Sha256::digest(database.committed_wal()?).as_slice() != expected {
+                    return Err(Error::BundleRoot("public capture history changed"));
+                }
+            }
+        }
         self.check_backup_source()?;
         drop(databases);
         outcome

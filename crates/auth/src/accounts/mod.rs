@@ -213,6 +213,15 @@ impl AccountStore {
     pub fn project(&self) -> &str {
         &self.project
     }
+    /// Finite native observation of this exact original directory/WAL under a
+    /// trusted parent. No owner descriptor, user permission or lease is exported.
+    pub fn check_directory_at(
+        &self,
+        parent: &std::fs::File,
+        name: impl AsRef<std::ffi::OsStr>,
+    ) -> Result<()> {
+        Ok(self.database.check_directory_at(parent, name)?)
+    }
 
     pub fn count(&self) -> Result<usize> {
         let mut count = 0;

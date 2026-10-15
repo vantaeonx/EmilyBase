@@ -1,6 +1,6 @@
 use super::*;
 
-fn copy_directory(source: &Path, target: &Path) {
+pub(super) fn copy_directory(source: &Path, target: &Path) {
     fs::DirBuilder::new().mode(0o700).create(target).unwrap();
     for entry in fs::read_dir(source).unwrap() {
         let entry = entry.unwrap();

@@ -193,6 +193,10 @@ CLI grants no runtime attach; current account roots deliberately refuse that lay
 Native [parent-relative account roots](docs/parent-relative-account-root.md) retain
 the original containing directory across existing v1 operations, keeping selected
 names checked while parents move. This is a prerequisite for common file ownership.
+Native [live account-root capture](docs/live-account-root-capture.md) now copies
+the existing sensitive v1 bundle while holding every original public/private owner
+through an internal checked coordination boundary. Copied snapshots retain no
+source owners; combined file capture/restore and user file service remain pending.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

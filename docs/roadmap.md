@@ -1428,3 +1428,13 @@ descriptor aliases. Original scopes/locks/routing, sessions, generated models,
 killed readers and affected regressions are exercised; see
 [contract](parent-relative-account-root.md). V2 runtime adoption, coordinated live
 account/file capture/restore and current user file authority remain open.
+
+## Follow-up: live capture under original account-root owners
+
+[ADR0151](adr/0151-live-capture-under-original-account-root-owners.md) adds copied
+v1 native snapshots and an internal checked coordination boundary that retains
+every original public/private/root owner. Exact selected WAL identity and
+acknowledged history checks surround work; copies hold no source descriptors.
+Existing v1 restore applies without changing the source's sessions. See
+[contract](live-account-root-capture.md). File-capable runtime ownership, actual
+joined capture/publication/restore and current user file authority remain open.

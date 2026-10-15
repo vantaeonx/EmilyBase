@@ -22,7 +22,7 @@ const PREFIX: &str = ".emilybase-account-restore-";
 mod initialize;
 pub use initialize::initialize_account_root;
 mod live;
-pub use live::{AccountRoot, MAX_ACTIVE_PRIVATE_STORES};
+pub use live::{AccountRoot, AccountRootSnapshot, MAX_ACTIVE_PRIVATE_STORES};
 
 /// Experimental root layout metadata, never proof of capture or authorization.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -238,28 +238,80 @@ struct Contents {
 // Shared retained-owner checks also run at the final initialization/restore
 // boundary. Never replace these with a manifest-only final comparison.
 fn check_contents(path: &Path, owner: &File, contents: &Contents) -> Result<()> {
-    metadata::owned_directory(path, owner)?;
-    let root = descriptor(owner);
-    if names(&root)? != ["private".into(), "registry".into(), "root.json".into()].into()
-        || names(&root.join("registry"))? != contents.ids
-        || names(&root.join("private"))?
-            != contents.manifest.private_projects.iter().cloned().collect()
-    {
-        return Err(Error::BundleRoot("service root inventory changed"));
+    Structure {
+        path,
+        owner,
+        private_owner: &contents.private_owner,
+        account_owners: &contents.account_owners,
+        manifest_owner: &contents.manifest_owner,
+        encoded: &contents.encoded,
+        manifest: &contents.manifest,
+        ids: &contents.ids,
+        registry: contents.registry.directory_identity()?,
     }
-    metadata::owned_directory(&root.join("private"), &contents.private_owner)?;
-    for (id, owner) in contents
-        .manifest
-        .private_projects
-        .iter()
-        .zip(&contents.account_owners)
-    {
-        metadata::owned_directory(&root.join("private").join(id), owner)?;
-    }
-    check_manifest(&root, &contents.manifest_owner, &contents.encoded)?;
+    .check()?;
     contents.registry.check_registry_at(owner)?;
     contents.registry.list()?;
     Ok(())
+}
+// Narrow field borrows let capture retain structure checks while the original
+// registry and private models remain mutably borrowed by their checked encoder.
+struct Structure<'a> {
+    path: &'a Path,
+    owner: &'a File,
+    private_owner: &'a File,
+    account_owners: &'a [File],
+    manifest_owner: &'a File,
+    encoded: &'a [u8],
+    manifest: &'a AccountBundleRootManifest,
+    ids: &'a BTreeSet<String>,
+    registry: (u64, u64),
+}
+impl Structure<'_> {
+    fn check_wals(&self) -> Result<()> {
+        let root = descriptor(self.owner);
+        for id in self.ids {
+            metadata::file(&root.join("registry").join(id).join("data/redo.wal"))?;
+        }
+        for id in &self.manifest.private_projects {
+            metadata::file(&root.join("private").join(id).join("redo.wal"))?;
+        }
+        Ok(())
+    }
+    fn check(&self) -> Result<()> {
+        metadata::owned_directory(self.path, self.owner)?;
+        let root = descriptor(self.owner);
+        if names(&root)? != ["private".into(), "registry".into(), "root.json".into()].into()
+            || names(&root.join("registry"))? != *self.ids
+            || names(&root.join("private"))?
+                != self.manifest.private_projects.iter().cloned().collect()
+        {
+            return Err(Error::BundleRoot("service root inventory changed"));
+        }
+        metadata::owned_directory(&root.join("private"), self.private_owner)?;
+        for (id, owner) in self
+            .manifest
+            .private_projects
+            .iter()
+            .zip(self.account_owners)
+        {
+            metadata::owned_directory(&root.join("private").join(id), owner)?;
+        }
+        check_manifest(&root, self.manifest_owner, self.encoded)?;
+        let registry = rustix::fs::statat(
+            self.owner,
+            "registry",
+            rustix::fs::AtFlags::SYMLINK_NOFOLLOW,
+        )
+        .map_err(std::io::Error::from)?;
+        if (registry.st_dev, registry.st_ino) != self.registry
+            || registry.st_mode & 0o170000 != 0o040000
+            || registry.st_mode & 0o077 != 0
+        {
+            return Err(Error::BundleRoot("original registry selection changed"));
+        }
+        Ok(())
+    }
 }
 fn inspect_owned(path: &Path, owner: &File, pool: PasswordPool) -> Result<State> {
     inspect_owned_with(path, owner, pool, |_, _| Ok(()))

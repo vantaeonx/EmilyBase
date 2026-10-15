@@ -90,3 +90,7 @@ The v2 file-capable manifest is still inspection-only and refused by ordinary/at
 startup. Common account/file ownership/capture/restore, user file policies/HTTP,
 signed URLs, resource admission, physical power loss and production gates remain
 open. See [ADR0150](adr/0150-retained-parent-relative-account-root-ownership.md).
+
+The later [live v1 capture API](live-account-root-capture.md) reuses this retained
+parent/selection lifetime while holding every original public/private data owner
+through checked coordination. It does not adopt file-capable v2 runtime metadata.
