@@ -65,6 +65,9 @@ component restores are covered; common atomic restore is still required.
 Current user permissions, file endpoints, whole-process resource reservations,
 deployment and production readiness remain open. Use synthetic data only.
 
+The later [joined archive byte API](account-file-archive-format.md) can encode and
+verify these immutable components. It still publishes/restores no common target.
+
 ## Verification
 
 The [source-bound report](measurements/2026-10-15-component-capture/verification.json)

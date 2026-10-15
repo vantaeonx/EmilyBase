@@ -209,7 +209,7 @@ fn check_database_ids(accounts: &AccountRootSnapshot, files: &[NativeFileRootInf
         .chain(files.iter().map(|p| *p.database_id()));
     unique_ids(ids)
 }
-fn unique_ids(ids: impl Iterator<Item = [u8; 16]>) -> Result<()> {
+pub(crate) fn unique_ids(ids: impl Iterator<Item = [u8; 16]>) -> Result<()> {
     let mut seen = BTreeSet::new();
     for id in ids {
         if !seen.insert(id) {
@@ -220,13 +220,13 @@ fn unique_ids(ids: impl Iterator<Item = [u8; 16]>) -> Result<()> {
     }
     Ok(())
 }
-fn charge(current: usize, additional: usize, limit: usize) -> Result<usize> {
+pub(crate) fn charge(current: usize, additional: usize, limit: usize) -> Result<usize> {
     current
         .checked_add(additional)
         .filter(|&total| total <= limit)
         .ok_or(Error::Limit)
 }
-fn hex(id: &[u8; 16]) -> String {
+pub(crate) fn hex(id: &[u8; 16]) -> String {
     id.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 fn checkpoint(_point: &str) {

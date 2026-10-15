@@ -11,6 +11,7 @@ use std::os::unix::fs::MetadataExt;
 const FILE: FileId = FileId::from_bytes([2; 16]);
 const BLOB: ObjectId = ObjectId::from_bytes([3; 16]);
 const ORPHAN: ObjectId = ObjectId::from_bytes([5; 16]);
+mod archive;
 fn prepare(parent: &Path, count: usize, compact: bool) -> (Restored, PathBuf, Vec<PathBuf>) {
     fs::set_permissions(parent, fs::Permissions::from_mode(0o700)).unwrap();
     let f = restored(parent, count, compact);

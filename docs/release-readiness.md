@@ -16,7 +16,7 @@ for production. A crate version or successful build alone is not a published rel
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
 | Files | Native objects/archives; own-WAL references, CAS/quota, common native root creation, paired backup/restore CLI and bounded account/file component capture | Common runtime adoption, user file HTTP/policies, reclamation and signed URLs |
-| Backup | Verified native database/registry/private-root copies; complete metadata/object paired archives and jointly captured native components | Joined account/file archive/publication/restore, encrypted/incremental backup and upgrade drills |
+| Backup | Verified database/registry/private-root copies; native paired archives, joint capture and joined account/file byte format | Durable joined account/file publication/restore, encrypted/incremental backup and upgrade drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
 | Dashboard | No released administrative web interface | React/TypeScript interface backed by real protected APIs |
@@ -24,7 +24,9 @@ for production. A crate version or successful build alone is not a published rel
 
 Rust implements storage, SQL, server and CLI. TypeScript is a client SDK; it does not
 replace the original engine. Source availability does not publish hosted user data.
-Current root bundles exclude the separate native object directories.
+Existing v1 account-root bundles exclude native object directories. The separate
+joined byte format explicitly carries paired file archives; durable common-root
+publication/restore remains open.
 The [AccountRoot object integration proposal](adr/0127-proposed-account-root-object-integration.md)
 keeps the exact schema, ownership, quota and coordinated-restore gates explicit;
 its proposed status must not be described as a released upload feature.
@@ -138,6 +140,10 @@ copied-image bounds. Caller-selected files must belong to declared private proje
 database identities must remain globally distinct. The copied v2 declaration is
 not installed as a live root. Joined archive/publication/restore, current user file
 permissions and full memory/worker reservations remain release gates.
+The [joined byte format](account-file-archive-format.md) subsequently adds a
+bounded canonical envelope and borrowed encoder over those immutable copies. It
+verifies exact nested scope/roster/identity and aggregate limits. Actual common
+backup publication/restore, filesystem adoption and user routes remain open.
 
 ## Before publishing an experimental release
 

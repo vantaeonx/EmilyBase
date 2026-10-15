@@ -1470,3 +1470,13 @@ the fully rechecked outer operation can return sensitive immutable components.
 See [contract](account-file-component-capture.md). Common filesystem adoption,
 joined archive/publication/restore, whole-process reservations and current user
 file authority remain open; no overall stage is marked complete.
+
+## Follow-up: joined immutable account/file archive format
+
+[ADR0155](adr/0155-joined-immutable-account-file-archive.md) defines a distinct
+canonical envelope around the existing v1 account bundle and paired file archives.
+A borrowed Read/Seek encoder and bounded pure verifier check outer framing/hash,
+exact private/file roster, native scopes, globally distinct database identities and
+aggregate image/object limits. Nested formats and ordinary v1 startup stay intact.
+See [contract](account-file-archive-format.md). Byte verification does not publish
+a backup or restore a common root; those original-owner protocols remain open.

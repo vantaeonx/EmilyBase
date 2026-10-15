@@ -64,6 +64,13 @@ bench = false
 members = ["."]
 
 [[bin]]
+name = "account_file_archive"
+path = "fuzz_targets/account_file_archive.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "file_root_manifest"
 path = "fuzz_targets/file_root_manifest.rs"
 test = false

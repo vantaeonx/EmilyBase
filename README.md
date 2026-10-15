@@ -150,7 +150,7 @@ A standalone [native file catalog](docs/native-file-catalog.md) now owns separat
 original-WAL metadata and scoped objects, with persisted physical quotas and logical
 references. Actual selected-inode retention spans the reference commit; unreferenced
 blobs remain invisible through catalog reads and charged against capacity. This
-operator library is outside current server/CLI and coordinated root backup paths.
+operator library does not enable current user file routes or durable joined root backups.
 Native [reference rename/removal](docs/native-file-mutations.md) uses exact current
 revision CAS and original source retention. Removal hides the reference while the
 surviving immutable blob stays charged; no physical cleanup is inferred.
@@ -196,7 +196,7 @@ names checked while parents move. This is a prerequisite for common file ownersh
 Native [live account-root capture](docs/live-account-root-capture.md) now copies
 the existing sensitive v1 bundle while holding every original public/private owner
 through an internal checked coordination boundary. Copied snapshots retain no
-source owners; combined file capture/restore and user file service remain pending.
+source owners; common file publication/restore and user file service remain pending.
 Native [parent-relative file components](docs/parent-relative-file-root.md) now
 retain a trusted original private parent across caller release/moves, including
 payload streaming and guarded writes. Normal absolute opening keeps its rules.
@@ -207,7 +207,11 @@ The [native account/file component collector](docs/account-file-component-captur
 now captures the existing account bundle and explicitly supplied file roots while
 all original owners remain held. It checks private membership, strict scope order,
 global database identity and aggregate physical-object/copied-image limits. Its
-immutable result adopts no new root layout; joined archive/restore remains open.
+immutable result adopts no new root layout; durable joined publication/restore remains open.
+The [joined account/file byte format](docs/account-file-archive-format.md) now
+encodes those copies through a borrowed reader and validates the complete envelope,
+declared scopes, nested native formats and aggregate bounds. Durable common
+publication/restore and user file authority remain separate gates.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.
