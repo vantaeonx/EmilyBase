@@ -25,6 +25,8 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Inspect an existing native common root under both original owners.
+    FileRootInfo { path: PathBuf, project: String },
     /// Create a fresh standalone private native metadata/object root.
     FileRootInit {
         destination: PathBuf,
@@ -279,6 +281,11 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::FileRootInfo { path, project } => {
+            let project = project.parse::<emilybase_object_storage::ProjectId>()?;
+            let mut root = emilybase_files::NativeFileRoot::open(path, project)?;
+            files::root_report(&root.inspect()?)?;
+        }
         Command::FileRootInit {
             destination,
             project,

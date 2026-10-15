@@ -6,7 +6,7 @@ mod header;
 mod initialize;
 mod publication;
 mod reader;
-mod restore;
+pub(crate) mod restore;
 mod source;
 pub use initialize::initialize_file_root;
 pub use publication::{FileArchiveReport, inspect_file_archive, publish_file_archive};

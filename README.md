@@ -175,6 +175,9 @@ Result output contains counts and identities; existing targets are never replace
 The [native file-root initializer](docs/native-file-root-initialization.md) creates
 a fresh complete pair from the original engine, with explicit persisted quota and
 one common no-replace selection. It grants no server/user file authority.
+The [retained common-root observer](docs/native-file-root-observation.md) checks
+existing root/child/WAL/scope selection around inspection, listing and immutable
+capture. The file-root-info CLI prints identities/quota/counts without private data.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

@@ -1360,3 +1360,14 @@ and both toolchains' complete opt-in suites verify the boundary. The auth parser
 engine, formats and durability are unchanged. Separate hosted9ad9194 evidence now
 records1648 workspace tests on each toolchain; later source acceptance remains
 independent. RSS, accepted archive replay budgets and production gates remain open.
+
+## Follow-up: retained native common-root observation
+
+[ADR0145](adr/0145-retained-native-common-root-observations.md) adds explicit
+original root/child/WAL/scope retention around native inspection, catalog listing
+and immutable coordinated capture. Acknowledged semantic state is compared across
+work; detected source changes poison the wrapper. CLI metadata omits private names,
+owners and payloads. Native admission/read substitutions, owner locks, intact
+abandoned tails, generated restore models and killed readers are exercised; see
+[contract](native-file-root-observation.md). Common-root guarded mutations, AccountRoot
+user file authority and production acceptance remain open.

@@ -11,15 +11,15 @@ use std::os::fd::AsRawFd;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
-pub(super) fn descriptor_path(file: &File) -> PathBuf {
+pub(crate) fn descriptor_path(file: &File) -> PathBuf {
     PathBuf::from(format!("/proc/self/fd/{}", file.as_raw_fd())).join(".")
 }
-pub(super) struct Child {
-    pub(super) directory: File,
+pub(crate) struct Child {
+    pub(crate) directory: File,
     name: &'static str,
 }
 impl Child {
-    pub(super) fn open(root: &File, name: &'static str) -> Result<Self> {
+    pub(crate) fn open(root: &File, name: &'static str) -> Result<Self> {
         let fd = rustix::fs::openat(
             root,
             name,
@@ -34,7 +34,7 @@ impl Child {
         child.check(root)?;
         Ok(child)
     }
-    pub(super) fn check(&self, root: &File) -> Result<()> {
+    pub(crate) fn check(&self, root: &File) -> Result<()> {
         let owned = self.directory.metadata()?;
         let visible = rustix::fs::statat(root, self.name, AtFlags::SYMLINK_NOFOLLOW)
             .map_err(std::io::Error::from)?;
@@ -48,6 +48,36 @@ impl Child {
         }
         Ok(())
     }
+}
+pub(crate) fn check_pair_entries(root: &File) -> Result<()> {
+    let metadata = root.metadata()?;
+    if !metadata.is_dir() || metadata.mode() & 0o777 != 0o700 {
+        return Err(Error::Destination);
+    }
+    let mut seen = 0u8;
+    for (count, entry) in rustix::fs::Dir::read_from(root)
+        .map_err(std::io::Error::from)?
+        .enumerate()
+    {
+        if count >= 4 {
+            return Err(Error::Corrupt);
+        }
+        let entry = entry.map_err(std::io::Error::from)?;
+        let bit = match entry.file_name().to_bytes() {
+            b"." | b".." => continue,
+            b"metadata" => 1,
+            b"objects" => 2,
+            _ => return Err(Error::Corrupt),
+        };
+        if seen & bit != 0 {
+            return Err(Error::Corrupt);
+        }
+        seen |= bit;
+    }
+    if seen != 3 {
+        return Err(Error::Corrupt);
+    }
+    Ok(())
 }
 pub(super) struct PairGuard<'a> {
     root: File,
@@ -85,33 +115,7 @@ impl<'a> PairGuard<'a> {
         Ok(guard)
     }
     pub(super) fn check(&mut self) -> Result<()> {
-        let root = self.root.metadata()?;
-        if !root.is_dir() || root.mode() & 0o777 != 0o700 {
-            return Err(Error::Destination);
-        }
-        let mut seen = 0u8;
-        for (count, entry) in rustix::fs::Dir::read_from(&self.root)
-            .map_err(std::io::Error::from)?
-            .enumerate()
-        {
-            if count >= 4 {
-                return Err(Error::Corrupt);
-            }
-            let entry = entry.map_err(std::io::Error::from)?;
-            let bit = match entry.file_name().to_bytes() {
-                b"." | b".." => continue,
-                b"metadata" => 1,
-                b"objects" => 2,
-                _ => return Err(Error::Corrupt),
-            };
-            if seen & bit != 0 {
-                return Err(Error::Corrupt);
-            }
-            seen |= bit;
-        }
-        if seen != 3 {
-            return Err(Error::Corrupt);
-        }
+        check_pair_entries(&self.root)?;
         self.metadata.check(&self.root)?;
         self.objects.check(&self.root)?;
         unchanged(&self.wal, &self.baseline)?;

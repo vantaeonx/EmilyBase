@@ -1,6 +1,8 @@
 //! Standalone native file references in the original engine; no user authority.
 mod archive;
 mod mutation;
+mod native_root;
+pub use native_root::{NativeFileRoot, NativeFileRootInfo};
 mod quota;
 pub use quota::QuotaState;
 mod records;

@@ -103,6 +103,9 @@ delivery without overwriting the selected root. It grants no user authority.
 Native [fresh file-root creation](native-file-root-initialization.md) now uses the
 original engine and marker publisher, retained actual children and common selection
 with explicit physical quotas. It does not add current user/AccountRoot file routes.
+Native [common-root observation](native-file-root-observation.md) retains the selected
+root, actual children/WAL/scope and both component owners around metadata/capture.
+It preserves abandoned tails and adds no common-root write or user-file authority.
 
 ## Before publishing an experimental release
 
