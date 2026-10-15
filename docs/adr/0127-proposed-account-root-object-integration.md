@@ -143,3 +143,21 @@ Related: [retained root](../retained-account-root.md),
 [user gateway](../user-row-enforcement.md), [object limits](../object-write-limits.md),
 [selected identity](../object-publication-identity.md),
 [root restore](../account-root-restore.md), [release scope](../release-readiness.md).
+
+## Later native prerequisites and remaining integration
+
+[ADR0146](0146-guarded-common-root-blob-and-metadata-publication.md) and
+[ADR0147](0147-guarded-common-root-reference-and-quota-mutations.md) now guard actual
+standalone common-root blob/reference/quota commits under original owners and exact
+acknowledged original WAL readback. [ADR0148](0148-borrowed-common-root-payload-cursors.md)
+retains those common owners and actual objects for bounded native payload streaming.
+Native paired capture/publication/restore and orphan charge are implemented and
+tested separately from account-root capture. They grant no current user permission.
+
+[ADR0149](0149-explicit-file-capable-root-roster.md) defines and implements only
+pure canonical v2 file-capable roster inspection/encoding. Existing account-root
+open/capture/restore deliberately refuse that metadata rather than partially adopting
+a new layout. It settles declared private membership and exact native file database
+binding; comparing actual retained registry/account/file owners and global database
+uniqueness remains necessary. No runtime lock order, combined bundle/restore,
+offline adoption or user-file gate in this proposal closes from codec success.

@@ -25,6 +25,8 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Pure v2 roster inspection from bounded redirected stdin; does not open a root.
+    AccountFileRosterCheck,
     /// Publish redirected binary stdin through a retained native common root.
     FileRootPut(files::PutArguments),
     /// Observe one native reference without printing its name or owner.
@@ -293,6 +295,23 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::AccountFileRosterCheck => {
+            use std::io::IsTerminal;
+            if std::io::stdin().is_terminal() {
+                return Err("manifest input requires redirected stdin".into());
+            }
+            let bytes = objects::input(
+                std::io::stdin().lock(),
+                emilybase_server::MAX_ACCOUNT_FILE_ROOT_MANIFEST_BYTES,
+            )?;
+            let value = emilybase_server::inspect_account_file_root_manifest_bytes(&bytes)?;
+            write_operator_metadata(&serde_json::json!({
+                "format":emilybase_server::ACCOUNT_FILE_ROOT_MANIFEST_VERSION,
+                "private_projects":value.private_projects().len(),
+                "file_stores":value.file_stores().len(),
+                "reset_at":value.reset_at().to_string(),"manifest_bytes":bytes.len()
+            }))?;
+        }
         Command::FileRootPut(arguments) => files::put(arguments)?,
         Command::FileRootStat(arguments) => files::stat(arguments)?,
         Command::FileRootCat(arguments) => files::cat(arguments)?,

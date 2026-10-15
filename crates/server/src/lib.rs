@@ -1,5 +1,10 @@
 //! Bounded HTTP transport over a synchronous isolated-project/key registry.
 mod account_bundle;
+mod file_root_manifest;
+pub use file_root_manifest::{
+    ACCOUNT_FILE_ROOT_MANIFEST_VERSION, AccountFileRootManifest, FileRootBinding,
+    MAX_ACCOUNT_FILE_ROOT_MANIFEST_BYTES, inspect_account_file_root_manifest_bytes,
+};
 mod account_http;
 pub use account_http::{
     PolicyTransportError, SessionRequest, SessionRequestError, USER_ACCESS_HEADER, account_router,
@@ -72,6 +77,10 @@ pub enum Error {
     BundleChecksum,
     #[error("invalid account bundle root: {0}")]
     BundleRoot(&'static str),
+    #[error("invalid file-root manifest: {0}")]
+    FileRootManifest(&'static str),
+    #[error("unsupported file-root manifest version: {0}")]
+    FileRootManifestVersion(u16),
     #[error("private account storage failed")]
     Accounts(#[from] emilybase_auth::accounts::Error),
     #[error("invalid project metadata")]

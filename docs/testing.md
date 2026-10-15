@@ -4991,3 +4991,37 @@ per chunk, while complete hashes/current inventory are verified at admission/ver
 finish; no zero-allocation, atomic-output, new sanitizer, full-workspace source
 acceptance or physical power-loss claim follows. See
 [evidence](measurements/2026-10-15-native-file-root-stream/verification.json).
+
+## File-capable root roster codec and refreshed complete workspace
+
+[The inspection-only v2 roster](account-file-root-manifest.md) passes the complete
+current Rust workspace:1705 tests,0 failures,43 ignored on each stable1.99/minimum1.89.
+The ignored entries are39 parent-invoked fixtures and4 opt-in corpus generators,
+not43 omitted ordinary cases. Both complete builds, workspace/fuzz formatting and
+strict all-target lint, plus minimum all-fuzz compilation exit0.632 frozen source
+hashes match after every process closes. SDK Node22.22.1 passes34 unit and12 actual
+local-server/restart tests with no external URL/credential/binary overrides. This
+full source includes the prior guarded metadata and native streaming increments.
+
+Nine new codec cases include independently checked golden CRC2506296039, explicit
+empty/subset/128 rosters, canonical identity/order/private membership/unique databases,
+16 checksum-repaired semantic refusals and an accepted raw-helper baseline. Every
+truncation/high-bit byte change, invalid/alternate JSON and oversized input refuses.
+Two128-case models cover sorted subsets and arbitrary bounded bytes. Actual live
+v1 root refusal of v2 preserves every other file and creates no file directory;
+restoring the original manifest permits ordinary open. Three CLI cases check
+bounded redirected input, exact counts, no binding/secret output, no root creation
+and failed count receipt delivery.
+
+The dedicated pure metadata target completes1,074,028 ASan runs in46 seconds,
+reported peak RSS371 MiB under512 MiB, max input32769,22 synthetic seed files,
+exit0 and no artifacts/findings. Repaired canonical order/CRC reaches semantic
+validation. Existing211 native process kills rerun per toolchain; no new kill point
+is claimed for this pure codec. The initial mistyped golden CRC assertion is
+excluded; encoder output matched the independent implementation without relaxation.
+See [source-bound report](measurements/2026-10-15-file-root-roster/verification.json).
+
+Ordinary AccountRoot/open/capture/restore remain v1 and deliberately refuse v2.
+This codec settles metadata inspection, not runtime attachment, user permission,
+combined backup/restore, offline upgrade or format stability. Complete local Rust/
+SDK success does not certify a new container, physical power loss or production.

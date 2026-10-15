@@ -114,6 +114,9 @@ physical orphan charging. AccountRoot inclusion and current user routes remain o
 Native [retained payload cursors](native-file-root-stream.md) add bounded logical
 reference reads and raw CLI output under original common owners. Their final
 verification does not imply atomic delivery or current user download authority.
+The [future v2 file-root roster codec](account-file-root-manifest.md) is pure metadata
+inspection with explicit compatibility refusal. Ordinary account-root operation and
+combined backup/restore have not adopted it; those runtime gates stay open.
 
 ## Before publishing an experimental release
 

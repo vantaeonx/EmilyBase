@@ -187,6 +187,9 @@ commands preserve exact revision CAS; removed physical bytes remain charged.
 Native [common-root payload cursors](docs/native-file-root-stream.md) retain the
 original blob and both owners for bounded reads/seeks. The file-root-cat CLI streams
 binary stdout with final verification; later errors can leave partial output.
+The [future file-capable root roster codec](docs/account-file-root-manifest.md)
+checks explicit project/database bindings and canonical v2 metadata. Its inspection
+CLI grants no runtime attach; current account roots deliberately refuse that layout.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.
@@ -198,6 +201,9 @@ drains bounded output during execution, preventing test-harness backpressure
 deadlocks; see [verification](docs/measurements/2026-10-10-cli-pipe/verification.json).
 
 **Early development. Not production-ready. Use synthetic data only.**
+The [current complete local verification](docs/measurements/2026-10-15-file-root-roster/verification.json)
+records1705 Rust tests per supported toolchain,34 SDK unit and12 local-server tests,
+with exact frozen source hashes and separate parser sanitizer evidence.
 The [release scope and evidence index](docs/release-readiness.md) separates current
 features, open platform work and checks required for an experimental release.
 

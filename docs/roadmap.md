@@ -1405,3 +1405,14 @@ stdout and requires final verification/flush. Generated cursor models, selected
 source changes, killed readers and actual blocked-output cases are exercised; see
 [contract](native-file-root-stream.md). AccountRoot/current user file authority and
 production gates remain open.
+
+## Follow-up: explicit future file-capable root roster codec
+
+[ADR0149](adr/0149-explicit-file-capable-root-roster.md) defines a distinct canonical
+v2 private/file roster with exact native file database binding, bounded counts/bytes
+and strict membership/order/uniqueness. Pure codec and count-only stdin inspection
+are implemented. Old/live v1 readers deliberately refuse it without modifying state.
+Golden/negative/generated/compatibility/CLI and sanitizer checks cover metadata
+integrity only; see [contract](account-file-root-manifest.md). Runtime lock order,
+active resource bounds, coordinated archive/capture/restore, explicit offline adoption
+and current user file authority must still precede live integration.
