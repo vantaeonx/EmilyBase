@@ -4,7 +4,7 @@ use std::io::IsTerminal;
 
 mod mutation;
 pub use mutation::{QuotaArguments, ReferenceArguments, RemoveArguments, RenameArguments};
-pub use mutation::{quota, remove, rename, stat};
+pub use mutation::{cat, quota, remove, rename, stat};
 
 #[derive(clap::Args)]
 pub struct PutArguments {

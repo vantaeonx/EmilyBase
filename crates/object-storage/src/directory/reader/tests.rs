@@ -6,6 +6,36 @@ use std::os::unix::fs::{DirBuilderExt, PermissionsExt, symlink};
 
 const PROJECT: ProjectId = ProjectId::from_bytes([1; 16]);
 const OBJECT: ObjectId = ObjectId::from_bytes([2; 16]);
+
+#[test]
+fn finite_selection_check_preserves_cursor_and_poisoned_reader_refuses_all_operations() {
+    let temp = tempfile::tempdir().unwrap();
+    let owner = setup(temp.path(), b"synthetic");
+    let mut reader = owner.reader(OBJECT).unwrap();
+    reader.seek_payload(SeekFrom::Start(2)).unwrap();
+    reader.check_selection().unwrap();
+    assert_eq!(reader.payload_position(), 2);
+    let path = object_path(temp.path());
+    let saved = temp.path().join("saved");
+    fs::rename(&path, &saved).unwrap();
+    fs::copy(&saved, &path).unwrap();
+    assert!(reader.check_selection().is_err());
+    assert_eq!(reader.payload_position(), 2);
+    assert!(matches!(
+        reader.check_selection(),
+        Err(Error::ReaderPoisoned)
+    ));
+    assert!(matches!(reader.verify(), Err(Error::ReaderPoisoned)));
+    let mut bytes = [0x77; 16];
+    assert!(reader.read_payload(&mut bytes).is_err());
+    assert_eq!(&bytes[..7], &[0; 7]);
+    assert_eq!(&bytes[7..], &[0x77; 9]);
+    assert!(matches!(
+        reader.seek_payload(SeekFrom::Start(0)),
+        Err(Error::ReaderPoisoned)
+    ));
+    assert_eq!(fs::read(&path).unwrap(), fs::read(saved).unwrap());
+}
 fn setup(parent: &Path, payload: &[u8]) -> ProjectDirectory {
     let path = parent.join("objects");
     fs::DirBuilder::new().mode(0o700).create(&path).unwrap();

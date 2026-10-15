@@ -4960,3 +4960,34 @@ wrong capacity-wrapper assertion with poisoned dependents are excluded; engine
 capacity rules were not relaxed. No new sanitizer, full-workspace source acceptance
 or physical power-loss result is claimed. See
 [evidence](measurements/2026-10-15-native-file-root-metadata/verification.json).
+
+## Retained native common-root payload streams
+
+[Borrowed native cursors](native-file-root-stream.md) pass661 affected checks per
+stable1.99/minimum1.89:336 storage/native files/CLI and325 original engine/WAL/backup.
+Seven new root cases, one original-object selection case, two compile-fail borrows
+and4 actual CLI cases cover bounded payload streaming without a retained payload
+image.64 generated slice/seek histories match independent cursor/byte models.
+Empty/1/8192/8193/maximum8MiB and readonly payloads preserve exact bytes and chunk
+bounds; invalid arithmetic preserves a healthy cursor.72 selected-source changes,
+8 parent replacements, empty/EOF/pre-read failures and corrupt unrelated orphans
+exercise source refusal, attempted-prefix clearing, unchanged reported position,
+shared poison and preserved changed bytes. Actual original descriptor/both owner
+locks and exact descriptor return are checked.
+
+16 new actual kills span original-object admission, copied bytes, object verified
+before final graph and finish returned, WAL1/2 and empty/8193-byte payloads;195 prior
+native kills rerun per toolchain. Reopen preserves exact history/payload/charge and
+permits an independent next mutation. CLI tests cover raw empty/binary/maximum
+output, relative paths, missing/orphan/malformed/foreign/busy/corrupt sources,
+failed stdout and a4096-byte pipe. Three actual blocked-output substitutions retain
+both owners, preserve exactly the prior8192-byte delivery and refuse the next chunk
+after root/object/WAL replacement. Earlier successful output cannot be retracted.
+
+Formatting, strict workspace/fuzz lint, affected builds and minimum all-fuzz
+compilation exit0;628 frozen hashes match after every process closes. A preliminary
+generated-test moved-value compile failure is excluded. Native selection is checked
+per chunk, while complete hashes/current inventory are verified at admission/verify/
+finish; no zero-allocation, atomic-output, new sanitizer, full-workspace source
+acceptance or physical power-loss claim follows. See
+[evidence](measurements/2026-10-15-native-file-root-stream/verification.json).

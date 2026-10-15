@@ -29,6 +29,8 @@ enum Command {
     FileRootPut(files::PutArguments),
     /// Observe one native reference without printing its name or owner.
     FileRootStat(files::ReferenceArguments),
+    /// Stream original native payload bytes to stdout; no JSON/header envelope.
+    FileRootCat(files::ReferenceArguments),
     /// Rename native display metadata with an exact logical revision.
     FileRootRename(files::RenameArguments),
     /// Remove native logical visibility; immutable bytes remain charged.
@@ -293,6 +295,7 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
         Command::FileRootPut(arguments) => files::put(arguments)?,
         Command::FileRootStat(arguments) => files::stat(arguments)?,
+        Command::FileRootCat(arguments) => files::cat(arguments)?,
         Command::FileRootRename(arguments) => files::rename(arguments)?,
         Command::FileRootRemove(arguments) => files::remove(arguments)?,
         Command::FileRootQuota(arguments) => files::quota(arguments)?,

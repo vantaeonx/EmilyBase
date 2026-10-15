@@ -2,7 +2,7 @@
 mod archive;
 mod mutation;
 mod native_root;
-pub use native_root::{NativeFileRoot, NativeFileRootInfo};
+pub use native_root::{NativeFileReader, NativeFileRoot, NativeFileRootInfo};
 mod quota;
 pub use quota::QuotaState;
 mod records;

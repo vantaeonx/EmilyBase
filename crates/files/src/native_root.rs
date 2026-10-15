@@ -466,6 +466,8 @@ impl NativeFileRoot {
 }
 
 mod mutation;
+mod reader;
+pub use reader::NativeFileReader;
 #[cfg(test)]
 mod publication_tests;
 #[cfg(test)]

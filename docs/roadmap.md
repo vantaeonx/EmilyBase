@@ -1393,3 +1393,15 @@ observations/mutations omit private data; removed bytes remain charged. Source
 substitution, killed writers, generated independent models, paired restore and
 failed receipt delivery are exercised; see [contract](native-file-root-metadata.md).
 AccountRoot/current user file service and production gates remain open.
+
+## Follow-up: borrowed original common-root payload cursor
+
+[ADR0148](adr/0148-borrowed-common-root-payload-cursors.md) retains the actual
+original object and both common owners across bounded payload reads/seeks. Exact
+selection/reference checks surround chunks; full hashes/current graph remain at
+admission and final verification. Explicit failure clearing, shared poison, borrowed
+lifetimes and partial output are documented. Native file-root-cat streams binary
+stdout and requires final verification/flush. Generated cursor models, selected
+source changes, killed readers and actual blocked-output cases are exercised; see
+[contract](native-file-root-stream.md). AccountRoot/current user file authority and
+production gates remain open.

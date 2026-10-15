@@ -71,6 +71,17 @@ impl ObjectReader<'_> {
         self.position
     }
 
+    /// Recheck original scope, selected inode and private stable file metadata
+    /// without rehashing payload bytes. A failure poisons this reader. This is
+    /// a finite native selection check, not content verification or user authority.
+    pub fn check_selection(&mut self) -> Result<()> {
+        let result = self.check_current();
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
+    }
+
     /// Read at most MAX_OBJECT_READ_BYTES, never including the native header.
     /// Empty reads and EOF still validate ownership. On any failed operation the
     /// attempted destination prefix is cleared, the logical cursor is unchanged

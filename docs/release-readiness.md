@@ -111,6 +111,9 @@ blob-first writes with fallible checks at original commit boundaries and same-in
 acknowledged WAL readback. Native [guarded metadata mutations](native-file-root-metadata.md)
 add original reference/quota transactions with exact scoped revision checks and
 physical orphan charging. AccountRoot inclusion and current user routes remain open.
+Native [retained payload cursors](native-file-root-stream.md) add bounded logical
+reference reads and raw CLI output under original common owners. Their final
+verification does not imply atomic delivery or current user download authority.
 
 ## Before publishing an experimental release
 

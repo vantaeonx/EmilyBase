@@ -184,6 +184,9 @@ after ACK. The file-root-put CLI buffers bounded binary input before owner admis
 Native [guarded reference/quota mutations](docs/native-file-root-metadata.md) reuse
 these checks around original metadata commits. Explicit CLI stat/rename/remove/quota
 commands preserve exact revision CAS; removed physical bytes remain charged.
+Native [common-root payload cursors](docs/native-file-root-stream.md) retain the
+original blob and both owners for bounded reads/seeks. The file-root-cat CLI streams
+binary stdout with final verification; later errors can leave partial output.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

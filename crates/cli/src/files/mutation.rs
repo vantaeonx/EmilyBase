@@ -53,6 +53,23 @@ pub fn stat(arguments: ReferenceArguments) -> Result<()> {
     let info = root.file_info(id)?.ok_or(emilybase_files::Error::Missing)?;
     super::file_report(root.inspect()?.project(), &info)
 }
+pub fn cat(arguments: ReferenceArguments) -> Result<()> {
+    use std::io::Write;
+    let (mut root, id) = arguments.open()?;
+    let mut reader = root.reader(id)?;
+    let mut output = std::io::stdout().lock();
+    let mut scratch = [0; emilybase_object_storage::MAX_OBJECT_READ_BYTES];
+    loop {
+        let count = reader.read_payload(&mut scratch)?;
+        if count == 0 {
+            break;
+        }
+        output.write_all(&scratch[..count])?;
+    }
+    reader.finish()?;
+    output.flush()?;
+    Ok(())
+}
 pub fn rename(arguments: RenameArguments) -> Result<()> {
     let (mut root, id) = arguments.mutation.reference.open()?;
     let info = root.rename(id, arguments.mutation.revision, &arguments.name)?;
