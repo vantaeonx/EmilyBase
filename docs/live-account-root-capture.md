@@ -86,3 +86,7 @@ rows and17 selected namespace/manifest/parent changes. Four abandoned-tail cases
 exclude and preserve physical tails. Twelve actual signal9 kills span dedicated
 checked-capture owner, copied, coordinated and acknowledged boundaries for empty
 and nonempty WAL1/2 roots; exact source history survives and credentials work again.
+
+The later [native component collector](account-file-component-capture.md) now nests
+actual file snapshots inside this boundary. It returns immutable components only;
+no common root layout, archive publication or joined restore is installed.

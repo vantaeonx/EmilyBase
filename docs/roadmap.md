@@ -1458,3 +1458,15 @@ withhold values and caller error values preserve healthy sources. Ordinary captu
 keeps its contract. See [contract](native-file-snapshot-coordination.md). Aggregate
 admission, actual account/file collector/format/restore and current user permission
 remain open.
+
+## Follow-up: bounded native account/file component collector
+
+[ADR0154](adr/0154-bounded-account-file-component-capture.md) connects actual live
+account/public/private capture to nested original file roots and payload readers.
+Explicit sorted private membership, global database identities and at most four
+file stores/128 physical objects are admitted. Copied native images plus canonical
+manifest are charged against128MiB, with separate temporary/model overhead. Only
+the fully rechecked outer operation can return sensitive immutable components.
+See [contract](account-file-component-capture.md). Common filesystem adoption,
+joined archive/publication/restore, whole-process reservations and current user
+file authority remain open; no overall stage is marked complete.

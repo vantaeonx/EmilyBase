@@ -1,4 +1,4 @@
-//! Inspection-only v2 roster codec. Ordinary AccountRoot still refuses this layout.
+//! Copied v2 roster codec. Ordinary AccountRoot still refuses this layout.
 use crate::{Error, MAX_PROJECTS, Result};
 use serde::{
     Deserialize, Deserializer, Serialize,
@@ -39,8 +39,8 @@ impl FileRootBinding {
     }
 }
 
-/// Exact declared offline v2 inventory. No ordinary open, migration, capture or
-/// restore accepts it yet. Every parsed value is copied data, never authority.
+/// Exact copied v2 inventory. Native component capture can produce it, but no
+/// ordinary open, migration or common restore adopts the layout. Never authority.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AccountFileRootManifest {
     private_projects: Vec<String>,

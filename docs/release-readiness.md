@@ -15,8 +15,8 @@ for production. A crate version or successful build alone is not a published rel
 | Server | Axum/Tokio adapter over synchronous owned engine, isolated projects, service keys and typed APIs | Broader load/connection/output admission and deployment acceptance |
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
-| Files | Native objects/archives; standalone own-WAL references, CAS/quota, common native root creation and paired backup/restore CLI | AccountRoot coordination, user file HTTP/policies, reclamation and signed URLs |
-| Backup | Verified native database/registry/private-root copies; standalone complete metadata/object paired archives | Coordinated AccountRoot inclusion of objects, encrypted/incremental backup and upgrade drills |
+| Files | Native objects/archives; own-WAL references, CAS/quota, common native root creation, paired backup/restore CLI and bounded account/file component capture | Common runtime adoption, user file HTTP/policies, reclamation and signed URLs |
+| Backup | Verified native database/registry/private-root copies; complete metadata/object paired archives and jointly captured native components | Joined account/file archive/publication/restore, encrypted/incremental backup and upgrade drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
 | Dashboard | No released administrative web interface | React/TypeScript interface backed by real protected APIs |
@@ -132,6 +132,12 @@ Native [snapshot coordination](native-file-snapshot-coordination.md) now retains
 every original payload through nested callback work and final proofs. It closes
 a component lifetime prerequisite, while aggregate admission and the actual joined
 account/file collector/format/restore remain open.
+The [native component collector](account-file-component-capture.md) now closes that
+explicit capture step with original nested owners and aggregate physical-object/
+copied-image bounds. Caller-selected files must belong to declared private projects;
+database identities must remain globally distinct. The copied v2 declaration is
+not installed as a live root. Joined archive/publication/restore, current user file
+permissions and full memory/worker reservations remain release gates.
 
 ## Before publishing an experimental release
 

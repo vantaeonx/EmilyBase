@@ -341,6 +341,9 @@ pub(super) struct Worker {
     reader: Option<std::thread::JoinHandle<()>>,
 }
 impl Worker {
+    pub(super) fn pid(&self) -> u32 {
+        self.child.id()
+    }
     pub(super) fn start(
         source: &Path,
         target: &Path,
@@ -393,7 +396,16 @@ impl Worker {
             let line = self
                 .lines
                 .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-                .unwrap();
+                .unwrap_or_else(|error| {
+                    let mut diagnostic = String::new();
+                    if matches!(error, std::sync::mpsc::RecvTimeoutError::Disconnected)
+                        && let Some(stderr) = self.child.stderr.as_ref()
+                    {
+                        let mut reader = File::from(rustix::io::dup(stderr).unwrap());
+                        std::io::Read::read_to_string(&mut reader, &mut diagnostic).unwrap();
+                    }
+                    panic!("worker did not reach {point}: {error}; {diagnostic}")
+                });
             if line == format!("REGISTRY_BOUNDARY {point}") {
                 break;
             }
@@ -451,6 +463,29 @@ fn publication_worker() {
         drop(parent);
         root.projects().unwrap();
         durability::checkpoint("account_root_at_read");
+    } else if action == "components-capture" {
+        let parent = File::open(source.parent().unwrap()).unwrap();
+        parent.try_lock().unwrap();
+        let mut root = crate::AccountRoot::open_at(
+            &parent,
+            source.file_name().unwrap().to_str().unwrap(),
+            PasswordPool::new(1).unwrap(),
+        )
+        .unwrap();
+        let file_parent = File::open(target).unwrap();
+        let mut files = root
+            .snapshot_manifest()
+            .unwrap()
+            .private_projects
+            .iter()
+            .map(|id| {
+                emilybase_files::NativeFileRoot::open_at(&file_parent, id, id.parse().unwrap())
+                    .unwrap()
+            })
+            .collect::<Vec<_>>();
+        let snapshot = crate::capture_account_file_components(&mut root, &mut files).unwrap();
+        assert!(!snapshot.accounts().bundle_bytes().is_empty());
+        durability::checkpoint("components_ack");
     } else if action == "root-capture" {
         let parent = File::open(source.parent().unwrap()).unwrap();
         parent.try_lock().unwrap();

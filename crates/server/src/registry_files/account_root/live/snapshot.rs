@@ -31,6 +31,11 @@ impl std::fmt::Debug for AccountRootSnapshot {
     }
 }
 impl AccountRoot {
+    pub(crate) fn snapshot_manifest(&self) -> Result<AccountBundleRootManifest> {
+        self.ready()?;
+        Ok(self.contents.manifest.clone())
+    }
+
     /// Trusted native readonly capture under original root/private/public owners.
     /// Returned sensitive v1 bytes are copied data, never user/file authority.
     pub fn capture(&mut self) -> Result<AccountRootSnapshot> {

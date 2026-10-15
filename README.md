@@ -203,6 +203,11 @@ payload streaming and guarded writes. Normal absolute opening keeps its rules.
 Native [snapshot coordination](docs/native-file-snapshot-coordination.md) also
 retains every original payload, including orphans, through caller work and final
 proofs. Nested components cannot return joint copies after source substitution.
+The [native account/file component collector](docs/account-file-component-capture.md)
+now captures the existing account bundle and explicitly supplied file roots while
+all original owners remain held. It checks private membership, strict scope order,
+global database identity and aggregate physical-object/copied-image limits. Its
+immutable result adopts no new root layout; joined archive/restore remains open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

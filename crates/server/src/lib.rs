@@ -1,5 +1,10 @@
 //! Bounded HTTP transport over a synchronous isolated-project/key registry.
 mod account_bundle;
+mod component_snapshot;
+pub use component_snapshot::{
+    AccountFileSnapshot, MAX_COMPONENT_FILE_STORES, MAX_COMPONENT_IMAGE_BYTES,
+    MAX_COMPONENT_OBJECTS, capture_account_file_components,
+};
 mod file_root_manifest;
 pub use file_root_manifest::{
     ACCOUNT_FILE_ROOT_MANIFEST_VERSION, AccountFileRootManifest, FileRootBinding,
@@ -82,6 +87,10 @@ pub enum Error {
     FileRootManifest(&'static str),
     #[error("unsupported file-root manifest version: {0}")]
     FileRootManifestVersion(u16),
+    #[error("invalid account/file component snapshot: {0}")]
+    ComponentSnapshot(&'static str),
+    #[error("native file storage failed")]
+    Files(#[from] emilybase_files::Error),
     #[error("private account storage failed")]
     Accounts(#[from] emilybase_auth::accounts::Error),
     #[error("invalid project metadata")]

@@ -7,6 +7,10 @@ Ordinary AccountRoot/restore/capture continue to accept their existing v1 layout
 they deliberately refuse this new v2 manifest. The codec is functional inspection,
 not a partially enabled live mode. See [ADR0149](adr/0149-explicit-file-capable-root-roster.md).
 
+The later [native component collector](account-file-component-capture.md) produces
+a copied declaration from explicit original account/file owners. It still does
+not install this manifest as a live root or enable common restore/user file routes.
+
 ## Exact metadata representation
 
 The maximum complete input is32768 bytes, checked before JSON decoding. The exact

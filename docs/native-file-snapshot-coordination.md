@@ -82,3 +82,7 @@ orphan FD presence during work versus absence after success, both WAL versions,
 normal/relative mode and empty/8193-byte payloads. Exact source WAL/reopen survives;
 existing227 file-related kills rerun, for243 per toolchain. Initial generic/lint/test
 fixture failures and the composition counterexample are recorded separately.
+
+The subsequent [account/file collector](account-file-component-capture.md) composes
+these original owners with aggregate physical-object and retained-image bounds.
+Whole-process reservations and joined archive/publication/restore remain separate.

@@ -15,6 +15,7 @@ use std::sync::{Arc, Barrier, Mutex};
 const LOGIN: &str = "synthetic_user";
 const PASSWORD: &[u8] = b"synthetic-password";
 mod at;
+mod components;
 mod snapshot;
 fn pool() -> PasswordPool {
     PasswordPool::new(1).unwrap()

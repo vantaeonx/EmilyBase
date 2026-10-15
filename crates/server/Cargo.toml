@@ -11,6 +11,8 @@ emilybase-auth = { path = "../auth" }
 emilybase-backup = { path = "../backup" }
 emilybase-catalog = { path = "../catalog" }
 emilybase-database = { path = "../database" }
+emilybase-files = { path = "../files" }
+emilybase-object-storage = { path = "../object-storage" }
 emilybase-query = { path = "../query" }
 emilybase-transactions = { path = "../transactions" }
 emilybase-transfer = { path = "../transfer" }
