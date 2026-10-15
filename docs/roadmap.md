@@ -1480,3 +1480,14 @@ exact private/file roster, native scopes, globally distinct database identities 
 aggregate image/object limits. Nested formats and ordinary v1 startup stay intact.
 See [contract](account-file-archive-format.md). Byte verification does not publish
 a backup or restore a common root; those original-owner protocols remain open.
+
+## Follow-up: private joined archive publication and inspection
+
+[ADR0156](adr/0156-private-joined-archive-publication.md) reuses the original
+streamed no-replace publisher and retains its actual selected file through exact
+bounded readback, file/parent confirmation syncs and final identity/privacy proofs.
+Trusted native callers choose a private backup directory outside live inventories.
+Post-selection failure is explicitly uncertain and preserves files. Readonly
+inspection and count-only account-file-verify bind to actual original input owners.
+See [contract](account-file-archive-publication.md). Common original-owner restore,
+v2 startup/adoption, backup encryption and user-file routes remain open.

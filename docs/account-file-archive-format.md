@@ -85,3 +85,7 @@ The new ASAN campaign completes699173 runs in46 seconds, with21 initial inputs
 under512MiB and no failure artifacts. New cases include128 arbitrary models and
 16 valid mixed models. This is affected-source evidence; the prior complete0b36669
 workspace/SDK run and earlier full hosted4cc89e2 result are recorded separately.
+
+The later [private file publisher](account-file-archive-publication.md) adds native
+no-replace publication and readonly path-bound verification for these bytes.
+Common root restore remains a separate original-owner protocol.

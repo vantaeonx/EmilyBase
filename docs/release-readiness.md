@@ -16,7 +16,7 @@ for production. A crate version or successful build alone is not a published rel
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
 | Files | Native objects/archives; own-WAL references, CAS/quota, common native root creation, paired backup/restore CLI and bounded account/file component capture | Common runtime adoption, user file HTTP/policies, reclamation and signed URLs |
-| Backup | Verified database/registry/private-root copies; native paired archives, joint capture and joined account/file byte format | Durable joined account/file publication/restore, encrypted/incremental backup and upgrade drills |
+| Backup | Verified database/registry/private-root copies; native paired archives, joint capture, joined format and private no-replace archive publication/inspection | Common original-owner account/file restore, encrypted/incremental backup and upgrade drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
 | Dashboard | No released administrative web interface | React/TypeScript interface backed by real protected APIs |
@@ -25,8 +25,8 @@ for production. A crate version or successful build alone is not a published rel
 Rust implements storage, SQL, server and CLI. TypeScript is a client SDK; it does not
 replace the original engine. Source availability does not publish hosted user data.
 Existing v1 account-root bundles exclude native object directories. The separate
-joined byte format explicitly carries paired file archives; durable common-root
-publication/restore remains open.
+joined format carries paired file archives and supports native private file
+publication. Common root restore and runtime adoption remain open.
 The [AccountRoot object integration proposal](adr/0127-proposed-account-root-object-integration.md)
 keeps the exact schema, ownership, quota and coordinated-restore gates explicit;
 its proposed status must not be described as a released upload feature.
@@ -144,6 +144,10 @@ The [joined byte format](account-file-archive-format.md) subsequently adds a
 bounded canonical envelope and borrowed encoder over those immutable copies. It
 verifies exact nested scope/roster/identity and aggregate limits. Actual common
 backup publication/restore, filesystem adoption and user routes remain open.
+The later [private joined publisher](account-file-archive-publication.md) now adds
+original-inode no-replace file publication, exact readback and explicit uncertain
+late results, plus readonly native/CLI verification. A published archive file does
+not close common root restore, layout adoption or current user-file authorization.
 
 ## Before publishing an experimental release
 

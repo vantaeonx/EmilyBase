@@ -207,11 +207,15 @@ The [native account/file component collector](docs/account-file-component-captur
 now captures the existing account bundle and explicitly supplied file roots while
 all original owners remain held. It checks private membership, strict scope order,
 global database identity and aggregate physical-object/copied-image limits. Its
-immutable result adopts no new root layout; durable joined publication/restore remains open.
+immutable result adopts no new root layout; joined original-owner restore remains open.
 The [joined account/file byte format](docs/account-file-archive-format.md) now
 encodes those copies through a borrowed reader and validates the complete envelope,
-declared scopes, nested native formats and aggregate bounds. Durable common
-publication/restore and user file authority remain separate gates.
+declared scopes, nested native formats and aggregate bounds. Common root restore
+and user file authority remain separate gates.
+The [joined archive publisher](docs/account-file-archive-publication.md) now writes
+a private no-replace file, retains its actual inode through bounded exact readback
+and final file/parent syncs, and reports late uncertainty without destructive retry.
+Readonly account-file-verify emits counts. Common root restore remains open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

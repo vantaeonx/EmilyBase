@@ -463,6 +463,23 @@ fn publication_worker() {
         drop(parent);
         root.projects().unwrap();
         durability::checkpoint("account_root_at_read");
+    } else if action == "joined-publish" {
+        let mut root = crate::AccountRoot::open(&source, PasswordPool::new(1).unwrap()).unwrap();
+        let file_parent = File::open(source.parent().unwrap().join("native-files")).unwrap();
+        let mut files = root
+            .snapshot_manifest()
+            .unwrap()
+            .private_projects
+            .iter()
+            .map(|id| {
+                emilybase_files::NativeFileRoot::open_at(&file_parent, id, id.parse().unwrap())
+                    .unwrap()
+            })
+            .collect::<Vec<_>>();
+        let snapshot = crate::capture_account_file_components(&mut root, &mut files).unwrap();
+        let report = crate::publish_account_file_archive(&snapshot, &target).unwrap();
+        assert!(report.encoded_bytes() > 128);
+        durability::checkpoint("joined_archive_returned");
     } else if action == "components-capture" {
         let parent = File::open(source.parent().unwrap()).unwrap();
         parent.try_lock().unwrap();

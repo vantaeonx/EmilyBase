@@ -4,6 +4,7 @@ use crate::{
 };
 use sha2::{Digest, Sha256};
 use std::io::{Seek, SeekFrom};
+mod publication;
 
 fn encode(snapshot: &crate::AccountFileSnapshot) -> Vec<u8> {
     let mut bytes = Vec::new();

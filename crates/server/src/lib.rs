@@ -2,6 +2,9 @@
 mod account_bundle;
 mod component_archive;
 mod component_snapshot;
+pub use component_archive::publication::{
+    AccountFileArchiveReport, inspect_account_file_archive, publish_account_file_archive,
+};
 pub use component_archive::{
     ACCOUNT_FILE_ARCHIVE_VERSION, AccountFileArchiveReader, MAX_ACCOUNT_FILE_ARCHIVE_BYTES,
     VerifiedAccountFileArchive, verify_account_file_archive,
@@ -100,6 +103,10 @@ pub enum Error {
     ComponentArchiveVersion(u16),
     #[error("account/file archive checksum mismatch")]
     ComponentArchiveChecksum,
+    #[error("joined archive publication outcome is unknown; inspect before retrying")]
+    ComponentPublicationUnknown(#[source] Box<Error>),
+    #[error("native storage publication failed")]
+    Storage(#[from] emilybase_storage::Error),
     #[error("native file storage failed")]
     Files(#[from] emilybase_files::Error),
     #[error("private account storage failed")]

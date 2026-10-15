@@ -599,6 +599,7 @@ dependencies = [
  "emilybase-migrations",
  "emilybase-object-storage",
  "emilybase-query",
+ "emilybase-storage",
  "emilybase-transactions",
  "emilybase-transfer",
  "emilybase-wal",

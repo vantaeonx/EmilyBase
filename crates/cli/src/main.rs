@@ -27,6 +27,8 @@ struct Arguments {
 enum Command {
     /// Pure v2 roster inspection from bounded redirected stdin; does not open a root.
     AccountFileRosterCheck,
+    /// Readonly private joined-archive verification; emits counts, never contents.
+    AccountFileVerify { path: PathBuf },
     /// Publish redirected binary stdin through a retained native common root.
     FileRootPut(files::PutArguments),
     /// Observe one native reference without printing its name or owner.
@@ -295,6 +297,18 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::AccountFileVerify { path } => {
+            let value = emilybase_server::inspect_account_file_archive(path)?;
+            write_operator_metadata(&serde_json::json!({
+                "format":emilybase_server::ACCOUNT_FILE_ARCHIVE_VERSION,
+                "projects":value.accounts().registry.projects.len(),
+                "private_projects":value.manifest().private_projects().len(),
+                "file_stores":value.manifest().file_stores().len(),
+                "references":value.references(),"physical_objects":value.physical_objects(),
+                "copied_bytes":value.copied_bytes(),"archive_bytes":value.encoded_bytes(),
+                "reset_at":value.manifest().reset_at().to_string()
+            }))?;
+        }
         Command::AccountFileRosterCheck => {
             use std::io::IsTerminal;
             if std::io::stdin().is_terminal() {
