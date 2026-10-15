@@ -178,6 +178,9 @@ one common no-replace selection. It grants no server/user file authority.
 The [retained common-root observer](docs/native-file-root-observation.md) checks
 existing root/child/WAL/scope selection around inspection, listing and immutable
 capture. The file-root-info CLI prints identities/quota/counts without private data.
+Native [guarded common-root publication](docs/native-file-root-publication.md) checks
+root selection at actual blob/commit boundaries and revalidates the original WAL
+after ACK. The file-root-put CLI buffers bounded binary input before owner admission.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

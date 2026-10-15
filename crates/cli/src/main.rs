@@ -25,6 +25,8 @@ struct Arguments {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Publish redirected binary stdin through a retained native common root.
+    FileRootPut(files::PutArguments),
     /// Inspect an existing native common root under both original owners.
     FileRootInfo { path: PathBuf, project: String },
     /// Create a fresh standalone private native metadata/object root.
@@ -281,6 +283,7 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::FileRootPut(arguments) => files::put(arguments)?,
         Command::FileRootInfo { path, project } => {
             let project = project.parse::<emilybase_object_storage::ProjectId>()?;
             let mut root = emilybase_files::NativeFileRoot::open(path, project)?;

@@ -145,8 +145,26 @@ impl FileStore {
         owner: [u8; 16],
         name: &str,
         payload: &[u8],
-        mut boundary: impl FnMut(PublishBoundary),
+        boundary: impl FnMut(PublishBoundary),
     ) -> Result<FileInfo> {
+        // Standalone native pairs keep their existing retained-owner checks.
+        // They do not implicitly claim a selected common-root namespace.
+        self.publish_checked_with(id, object, owner, name, payload, (boundary, |_| Ok(())))
+    }
+    pub(crate) fn publish_checked_with(
+        &mut self,
+        id: FileId,
+        object: ObjectId,
+        owner: [u8; 16],
+        name: &str,
+        payload: &[u8],
+        hooks: (
+            impl FnMut(PublishBoundary),
+            impl for<'a> FnMut(crate::write_check::WriteCheck<'a>) -> Result<()>,
+        ),
+    ) -> Result<FileInfo> {
+        use crate::write_check::WriteCheck;
+        let (mut boundary, mut check) = hooks;
         records::validate_name(name)?;
         if payload.len() > emilybase_object_storage::MAX_PAYLOAD_BYTES {
             return Err(emilybase_object_storage::Error::Limit.into());
@@ -161,6 +179,7 @@ impl FileStore {
             .checked_add(1)
             .ok_or(Error::Revision)?;
         let project = self.objects.project();
+        check(WriteCheck::BeforeBlob)?;
         let mut selected = match self
             .objects
             .put_bounded_selected(object, payload, quota.limits()?)
@@ -186,9 +205,11 @@ impl FileStore {
             selected.verify_complete()?;
             let mut tx = self.database.begin()?;
             tx.insert(records::FILES, records::encode(&expected))?;
+            check(WriteCheck::BeforeCommit)?;
             if tx.commit()? != revision {
                 return Err(Error::Corrupt);
             }
+            check(WriteCheck::Committed(&mut self.database))?;
             boundary(PublishBoundary::Metadata);
             let (current_quota, current) = records::metadata(&self.database, project)?;
             if current_quota != quota || !current.contains(&expected) {
@@ -197,6 +218,7 @@ impl FileStore {
             records::graph(current_quota, &current, selected.inventory())?;
             selected.verify_complete()?;
             boundary(PublishBoundary::Verified);
+            check(WriteCheck::Verified)?;
             Ok(expected)
         })();
         if result.is_err() {

@@ -106,6 +106,9 @@ with explicit physical quotas. It does not add current user/AccountRoot file rou
 Native [common-root observation](native-file-root-observation.md) retains the selected
 root, actual children/WAL/scope and both component owners around metadata/capture.
 It preserves abandoned tails and adds no common-root write or user-file authority.
+The following [guarded native publication](native-file-root-publication.md) adds
+blob-first writes with fallible checks at original commit boundaries and same-inode
+acknowledged WAL readback. Other common-root mutations and user routes remain open.
 
 ## Before publishing an experimental release
 

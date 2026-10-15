@@ -8,6 +8,7 @@ pub use quota::QuotaState;
 mod records;
 mod snapshot;
 mod store;
+mod write_check;
 pub use archive::{
     FILE_ARCHIVE_HEADER_BYTES, FILE_ARCHIVE_VERSION, FileArchiveReader, MAX_FILE_ARCHIVE_BYTES,
     VerifiedFileArchive, verify_file_archive,

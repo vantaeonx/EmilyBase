@@ -108,3 +108,8 @@ strict all-target lint, affected builds and minimum fuzz builds pass. Twelve new
 and143 prior native process kills pass per toolchain. All618 source hashes match
 afterward. Parser/header/encoder/capture and lockfiles remain unchanged; no new
 filesystem sanitizer, global resource or full-workspace acceptance is claimed.
+
+Subsequent native [guarded publication](native-file-root-publication.md) adds writes
+with explicit fallible root checks at original blob/metadata boundaries and exact
+acknowledged readback from the retained original WAL. The observation contract above
+remains unchanged; other guarded mutations and user file authority remain open.

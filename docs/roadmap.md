@@ -1371,3 +1371,14 @@ owners and payloads. Native admission/read substitutions, owner locks, intact
 abandoned tails, generated restore models and killed readers are exercised; see
 [contract](native-file-root-observation.md). Common-root guarded mutations, AccountRoot
 user file authority and production acceptance remain open.
+
+## Follow-up: guarded native common-root publication
+
+[ADR0146](adr/0146-guarded-common-root-blob-and-metadata-publication.md) connects
+common-root selection checks to original blob publication and actual metadata WAL
+commit boundaries. Only the retained original WAL's exact acknowledged readback
+advances its checked stamp. Native file-root-put buffers bounded redirected input
+before owner admission and never overwrites IDs. Orphan/commit recovery, source
+changes, generated histories, killed publishers and failed receipt delivery are
+exercised; see [contract](native-file-root-publication.md). Common-root guarded
+rename/removal/quota and AccountRoot/current user file integration remain open.

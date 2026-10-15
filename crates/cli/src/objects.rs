@@ -56,7 +56,7 @@ pub fn archive_report(
         "digest":value.digest.iter().map(|b|format!("{b:02x}")).collect::<String>()
     }))
 }
-fn input(reader: impl Read, maximum: usize) -> Result<Vec<u8>> {
+pub(super) fn input(reader: impl Read, maximum: usize) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
     bytes
         .try_reserve_exact(maximum + 1)

@@ -1,5 +1,48 @@
 //! Count-only native archive reports; no names, owners or payloads on stdout.
 use emilybase_files::FileArchiveReport;
+use std::io::IsTerminal;
+
+#[derive(clap::Args)]
+pub struct PutArguments {
+    path: std::path::PathBuf,
+    project: String,
+    file: String,
+    object: String,
+    /// Trusted native owner metadata, never a current account/session grant.
+    #[arg(long)]
+    owner: String,
+    /// Bounded display text, never a pathname or an HTTP header.
+    #[arg(long)]
+    name: String,
+}
+pub fn put(arguments: PutArguments) -> Result<(), Box<dyn std::error::Error>> {
+    let project = arguments
+        .project
+        .parse::<emilybase_object_storage::ProjectId>()?;
+    let id = arguments.file.parse::<emilybase_files::FileId>()?;
+    let object = arguments
+        .object
+        .parse::<emilybase_object_storage::ObjectId>()?;
+    let owner = arguments
+        .owner
+        .parse::<emilybase_object_storage::ObjectId>()?;
+    if std::io::stdin().is_terminal() {
+        return Err("file input requires redirected stdin".into());
+    }
+    // Complete bounded input buffering before acquiring either native owner.
+    let bytes = super::objects::input(
+        std::io::stdin().lock(),
+        emilybase_object_storage::MAX_PAYLOAD_BYTES,
+    )?;
+    let mut root = emilybase_files::NativeFileRoot::open(arguments.path, project)?;
+    let info = root.publish(id, object, *owner.as_bytes(), &arguments.name, &bytes)?;
+    super::write_operator_metadata(&serde_json::json!({
+        "format":1,"project":project.to_string(),"file":info.id().to_string(),
+        "object":info.object().to_string(),"revision":info.revision().to_string(),
+        "bytes":info.report().payload_bytes,
+        "sha256":info.report().sha256.iter().map(|b|format!("{b:02x}")).collect::<String>()
+    }))
+}
 
 pub fn root_report(
     value: &emilybase_files::NativeFileRootInfo,

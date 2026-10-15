@@ -1,12 +1,15 @@
-//! Native common-root observations under both original component owners.
+//! Native common-root operations under both original component owners.
 use crate::archive::restore::{Child, check_pair_entries, descriptor_path};
-use crate::{Error, FileInfo, FileQuota, FileSnapshot, FileStore, FileUsage, Result};
-use emilybase_object_storage::{Inventory, ProjectDirectory, ProjectId};
+use crate::store::PublishBoundary;
+use crate::write_check::WriteCheck;
+use crate::{Error, FileId, FileInfo, FileQuota, FileSnapshot, FileStore, FileUsage, Result};
+use emilybase_object_storage::{Inventory, ObjectId, ProjectDirectory, ProjectId};
 use emilybase_transactions::Database;
 use rustix::fs::{AtFlags, Mode, OFlags};
 use sha2::{Digest, Sha256};
 use std::ffi::OsString;
 use std::fs::{File, Metadata};
+use std::io::{Read, Seek, SeekFrom};
 use std::os::unix::{ffi::OsStrExt, fs::MetadataExt};
 use std::path::{Path, PathBuf};
 
@@ -47,7 +50,7 @@ impl OriginalFile {
         original.check(parent)?;
         Ok(original)
     }
-    fn check(&self, parent: &File) -> Result<()> {
+    fn selected(&self, parent: &File) -> Result<Metadata> {
         let now = self.file.metadata()?;
         let visible = rustix::fs::statat(parent, self.name, AtFlags::SYMLINK_NOFOLLOW)
             .map_err(std::io::Error::from)?;
@@ -59,26 +62,49 @@ impl OriginalFile {
             || !matches!(visible.st_mode & 0o777, 0o400 | 0o600)
             || visible.st_nlink != 1
             || (visible.st_dev, visible.st_ino) != (self.baseline.dev(), self.baseline.ino())
-            || (
-                now.dev(),
-                now.ino(),
-                now.len(),
-                now.mtime(),
-                now.mtime_nsec(),
-                now.ctime(),
-                now.ctime_nsec(),
-            ) != (
-                self.baseline.dev(),
-                self.baseline.ino(),
-                self.baseline.len(),
-                self.baseline.mtime(),
-                self.baseline.mtime_nsec(),
-                self.baseline.ctime(),
-                self.baseline.ctime_nsec(),
-            )
+            || (now.dev(), now.ino()) != (self.baseline.dev(), self.baseline.ino())
         {
             return Err(Error::Destination);
         }
+        Ok(now)
+    }
+    fn stamp(m: &Metadata) -> (u64, u64, u64, i64, i64, i64, i64) {
+        (
+            m.dev(),
+            m.ino(),
+            m.len(),
+            m.mtime(),
+            m.mtime_nsec(),
+            m.ctime(),
+            m.ctime_nsec(),
+        )
+    }
+    fn check(&self, parent: &File) -> Result<()> {
+        if Self::stamp(&self.selected(parent)?) != Self::stamp(&self.baseline) {
+            return Err(Error::Destination);
+        }
+        Ok(())
+    }
+    fn accept_committed(&mut self, parent: &File, expected: &[u8]) -> Result<()> {
+        let before = self.selected(parent)?;
+        if before.len() != expected.len() as u64 {
+            return Err(Error::Corrupt);
+        }
+        self.file.seek(SeekFrom::Start(0))?;
+        let mut scratch = [0; 8192];
+        for bytes in expected.chunks(scratch.len()) {
+            self.file.read_exact(&mut scratch[..bytes.len()])?;
+            if scratch[..bytes.len()] != *bytes {
+                return Err(Error::Corrupt);
+            }
+        }
+        let after = self.selected(parent)?;
+        if Self::stamp(&before) != Self::stamp(&after) {
+            return Err(Error::Destination);
+        }
+        // Advance only this same retained original inode after exact acknowledged
+        // readback. Another inode or merely valid alternative cannot be adopted.
+        self.baseline = after;
         Ok(())
     }
 }
@@ -141,6 +167,10 @@ impl Selection {
         Ok(selection)
     }
     fn check(&self) -> Result<()> {
+        self.check_topology()?;
+        self.wal.check(&self.metadata.directory)
+    }
+    fn check_topology(&self) -> Result<()> {
         let owned = self.parent.metadata()?;
         let parent = std::fs::symlink_metadata(&self.parent_path)?;
         let root = self.root.metadata()?;
@@ -157,7 +187,6 @@ impl Selection {
         check_pair_entries(&self.root)?;
         self.metadata.check(&self.root)?;
         self.objects.check(&self.root)?;
-        self.wal.check(&self.metadata.directory)?;
         self.scope.check(&self.objects.directory)
     }
 }
@@ -324,7 +353,103 @@ impl NativeFileRoot {
     pub fn capture(&mut self) -> Result<FileSnapshot> {
         self.observe(|store, _| store.capture(), |_| {})
     }
+    /// Publish through the original blob-first/metadata-WAL transaction while
+    /// guarding common-root selection before blob/commit and after ACK/readback.
+    /// The supplied owner is native metadata, not proof of an account permission.
+    /// Blob-stage or later uncertainty preserves data and requires explicit reopen.
+    pub fn publish(
+        &mut self,
+        id: FileId,
+        object: ObjectId,
+        owner: [u8; 16],
+        name: &str,
+        payload: &[u8],
+    ) -> Result<FileInfo> {
+        self.publish_with(id, object, owner, name, payload, |_| {})
+    }
+    fn publish_with(
+        &mut self,
+        id: FileId,
+        object: ObjectId,
+        owner: [u8; 16],
+        name: &str,
+        payload: &[u8],
+        boundary: impl FnMut(PublishBoundary),
+    ) -> Result<FileInfo> {
+        crate::records::validate_name(name)?;
+        if payload.len() > emilybase_object_storage::MAX_PAYLOAD_BYTES {
+            return Err(emilybase_object_storage::Error::Limit.into());
+        }
+        let before = match self.state() {
+            Ok(state) => state,
+            Err(error) => {
+                self.store.poisoned = true;
+                return Err(error);
+            }
+        };
+        let mut source_failed = false;
+        let selection = &mut self.selection;
+        let result = self.store.publish_checked_with(
+            id,
+            object,
+            owner,
+            name,
+            payload,
+            (boundary, |at| {
+                let checked = (|| match at {
+                    WriteCheck::BeforeBlob | WriteCheck::BeforeCommit | WriteCheck::Verified => {
+                        selection.check()
+                    }
+                    WriteCheck::Committed(database) => {
+                        selection.check_topology()?;
+                        database.check_directory_at(&selection.root, "metadata")?;
+                        let wal = database.committed_wal()?;
+                        selection
+                            .wal
+                            .accept_committed(&selection.metadata.directory, &wal)?;
+                        selection.check()
+                    }
+                })();
+                if checked.is_err() {
+                    source_failed = true;
+                }
+                checked
+            }),
+        );
+        if let Err(error) = result {
+            if matches!(
+                error,
+                Error::Objects(emilybase_object_storage::Error::PublicationUnknown)
+            ) {
+                self.store.poisoned = true;
+                return Err(Error::OutcomeUnknown(Box::new(error)));
+            }
+            if source_failed || self.store.poisoned {
+                self.store.poisoned = true;
+                return Err(error);
+            }
+            if !matches!(self.state(),Ok(after) if after==before) {
+                self.store.poisoned = true;
+                return Err(Error::Corrupt);
+            }
+            return Err(error);
+        }
+        let info = result?;
+        let checked = (|| {
+            let after = self.state()?;
+            if after.quota != before.quota || !after.files.contains(&info) {
+                return Err(Error::Corrupt);
+            }
+            Ok(info)
+        })();
+        if checked.is_err() {
+            self.store.poisoned = true;
+        }
+        checked.map_err(|error| Error::OutcomeUnknown(Box::new(error)))
+    }
 }
 
+#[cfg(test)]
+mod publication_tests;
 #[cfg(test)]
 mod tests;
