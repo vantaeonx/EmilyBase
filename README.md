@@ -197,6 +197,9 @@ Native [live account-root capture](docs/live-account-root-capture.md) now copies
 the existing sensitive v1 bundle while holding every original public/private owner
 through an internal checked coordination boundary. Copied snapshots retain no
 source owners; combined file capture/restore and user file service remain pending.
+Native [parent-relative file components](docs/parent-relative-file-root.md) now
+retain a trusted original private parent across caller release/moves, including
+payload streaming and guarded writes. Normal absolute opening keeps its rules.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

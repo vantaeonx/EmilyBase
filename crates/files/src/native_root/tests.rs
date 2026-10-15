@@ -9,6 +9,7 @@ use std::process::{Command, Stdio};
 
 const PROJECT: ProjectId = ProjectId::from_bytes([1; 16]);
 const FILE: FileId = FileId::from_bytes([2; 16]);
+mod at;
 fn fixture(parent: &Path, compacted: bool, payload: &[u8]) -> (PathBuf, Vec<u8>, FileInfo) {
     let path = parent.join("root");
     initialize_file_root(&path, PROJECT, FileQuota::new(8, 32768).unwrap()).unwrap();
@@ -358,14 +359,23 @@ fn worker() {
             std::thread::park();
         }
     };
-    let mut root = NativeFileRoot::open_with(&parent.join("root"), PROJECT, |at| {
+    let boundary = |at| {
         if matches!(
             (phase.as_str(), at),
-            ("metadata", OpenBoundary::Metadata) | ("owned", OpenBoundary::Owned)
+            ("selected", OpenBoundary::Selected)
+                | ("metadata", OpenBoundary::Metadata)
+                | ("owned", OpenBoundary::Owned)
         ) {
             ready();
         }
-    })
+    };
+    let mut root = if std::env::var("EMILYBASE_NATIVE_FILE_ROOT_TEST_AT").as_deref() == Ok("1") {
+        let original = File::open(&parent).unwrap();
+        original.try_lock().unwrap();
+        NativeFileRoot::open_at_with(&original, "root", PROJECT, boundary)
+    } else {
+        NativeFileRoot::open_with(&parent.join("root"), PROJECT, boundary)
+    }
     .unwrap();
     root.inspect().unwrap();
     root.capture().unwrap();
@@ -392,6 +402,7 @@ fn killed_native_readers_release_both_owners_without_changing_committed_source_p
                     ])
                     .env("EMILYBASE_NATIVE_FILE_ROOT_TEST_PARENT", temp.path())
                     .env("EMILYBASE_NATIVE_FILE_ROOT_TEST_PHASE", phase)
+                    .env_remove("EMILYBASE_NATIVE_FILE_ROOT_TEST_AT")
                     .stdin(Stdio::null())
                     .stdout(Stdio::piped())
                     .stderr(Stdio::piped())

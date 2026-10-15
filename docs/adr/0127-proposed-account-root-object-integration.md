@@ -169,3 +169,8 @@ that holds all original public/private data owners until work and final checks e
 This settles an account-side capture lifetime prerequisite. Actual file capture
 inside that boundary, joined bounded encoding/publication/restore, common runtime
 ownership and current user file authority still require implementation and evidence.
+
+[ADR0152](0152-parent-relative-native-file-component-ownership.md) supplies matching
+retained private-parent opening/comparison for original native file pairs, including
+guarded writes and borrowed streams after moves. Actual common runtime/roster
+ownership, joined capture/publication/restore and current user authority remain open.

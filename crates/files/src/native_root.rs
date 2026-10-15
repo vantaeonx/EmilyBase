@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 struct Selection {
     parent: File,
-    parent_path: PathBuf,
+    parent_path: Option<PathBuf>,
     name: OsString,
     root: File,
     metadata: Child,
@@ -131,6 +131,33 @@ impl Selection {
             )
             .map_err(std::io::Error::from)?,
         );
+        Self::from_parent(parent, name, Some(parent_path))
+    }
+    fn leaf(name: &str) -> Result<()> {
+        if name.is_empty()
+            || matches!(name, "." | "..")
+            || name.len() > 255
+            || name.contains('/')
+            || name.as_bytes().contains(&0)
+        {
+            return Err(Error::Destination);
+        }
+        Ok(())
+    }
+    fn private_parent(parent: &File) -> Result<()> {
+        let metadata = parent.metadata()?;
+        if !metadata.is_dir() || metadata.mode() & 0o077 != 0 {
+            return Err(Error::Destination);
+        }
+        Ok(())
+    }
+    fn at(parent: &File, name: &str) -> Result<Self> {
+        Self::leaf(name)?;
+        let parent = parent.try_clone()?;
+        Self::private_parent(&parent)?;
+        Self::from_parent(parent, name.into(), None)
+    }
+    fn from_parent(parent: File, name: OsString, parent_path: Option<PathBuf>) -> Result<Self> {
         let root = File::from(
             rustix::fs::openat(
                 &parent,
@@ -166,6 +193,19 @@ impl Selection {
         selection.check()?;
         Ok(selection)
     }
+    fn check_at(parent: &File, name: &str, expected: (u64, u64)) -> Result<()> {
+        Self::leaf(name)?;
+        Self::private_parent(parent)?;
+        let visible = rustix::fs::statat(parent, name, AtFlags::SYMLINK_NOFOLLOW)
+            .map_err(std::io::Error::from)?;
+        if visible.st_mode & 0o170000 != 0o040000
+            || visible.st_mode & 0o777 != 0o700
+            || (visible.st_dev, visible.st_ino) != expected
+        {
+            return Err(Error::Destination);
+        }
+        Self::private_parent(parent)
+    }
     fn check(&self) -> Result<()> {
         self.check_topology()?;
         self.wal.check(&self.metadata.directory)
@@ -186,13 +226,18 @@ impl Selection {
     }
     fn check_topology(&self) -> Result<()> {
         let owned = self.parent.metadata()?;
-        let parent = std::fs::symlink_metadata(&self.parent_path)?;
+        if let Some(path) = &self.parent_path {
+            let parent = std::fs::symlink_metadata(path)?;
+            if !parent.is_dir() || (parent.dev(), parent.ino()) != (owned.dev(), owned.ino()) {
+                return Err(Error::Destination);
+            }
+        } else {
+            Self::private_parent(&self.parent)?;
+        }
         let root = self.root.metadata()?;
         let visible = rustix::fs::statat(&self.parent, &self.name, AtFlags::SYMLINK_NOFOLLOW)
             .map_err(std::io::Error::from)?;
-        if !parent.is_dir()
-            || (parent.dev(), parent.ino()) != (owned.dev(), owned.ino())
-            || visible.st_mode & 0o170000 != 0o040000
+        if visible.st_mode & 0o170000 != 0o040000
             || visible.st_mode & 0o777 != 0o700
             || (visible.st_dev, visible.st_ino) != (root.dev(), root.ino())
         {
@@ -276,9 +321,29 @@ impl NativeFileRoot {
     fn open_with(
         path: &Path,
         project: ProjectId,
+        boundary: impl FnMut(OpenBoundary),
+    ) -> Result<Self> {
+        Self::from_selection(Selection::open(path)?, project, boundary)
+    }
+    /// Open an existing one-leaf component under a trusted original private
+    /// parent. Retain a duplicate across caller release and parent moves; no
+    /// provisioning, parent lock, absolute namespace lease or permission grant.
+    pub fn open_at(parent: &File, name: &str, project: ProjectId) -> Result<Self> {
+        Self::open_at_with(parent, name, project, |_| {})
+    }
+    fn open_at_with(
+        parent: &File,
+        name: &str,
+        project: ProjectId,
+        boundary: impl FnMut(OpenBoundary),
+    ) -> Result<Self> {
+        Self::from_selection(Selection::at(parent, name)?, project, boundary)
+    }
+    fn from_selection(
+        selection: Selection,
+        project: ProjectId,
         mut boundary: impl FnMut(OpenBoundary),
     ) -> Result<Self> {
-        let selection = Selection::open(path)?;
         boundary(OpenBoundary::Selected);
         selection.check()?;
         let database = Database::open(descriptor_path(&selection.metadata.directory))?;
@@ -292,6 +357,21 @@ impl NativeFileRoot {
         boundary(OpenBoundary::Owned);
         root.state()?;
         Ok(root)
+    }
+    /// Finite original-root comparison under supplied native private metadata.
+    /// Caller comparison failure leaves a healthy source usable; failed original
+    /// source validation still poisons. No owner descriptor or authority escapes.
+    pub fn check_directory_at(&mut self, parent: &File, name: &str) -> Result<()> {
+        Selection::leaf(name)?;
+        Selection::private_parent(parent)?;
+        let original = self.selection.root.metadata()?;
+        let identity = (original.dev(), original.ino());
+        // Keep supplied-metadata refusal inside the value. Only source errors in
+        // observe may poison this original root; a foreign comparison cannot.
+        self.observe(
+            |_, _| Ok(Selection::check_at(parent, name, identity)),
+            |_| {},
+        )?
     }
     fn state(&mut self) -> Result<State> {
         if self.store.poisoned {

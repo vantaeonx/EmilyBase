@@ -1438,3 +1438,13 @@ acknowledged history checks surround work; copies hold no source descriptors.
 Existing v1 restore applies without changing the source's sessions. See
 [contract](live-account-root-capture.md). File-capable runtime ownership, actual
 joined capture/publication/restore and current user file authority remain open.
+
+## Follow-up: parent-relative native file component ownership
+
+[ADR0152](adr/0152-parent-relative-native-file-component-ownership.md) adds retained
+private-parent opening and finite original-root comparison for existing native
+file pairs. Existing blob/metadata/payload/capture operations retain their original
+owners through parent moves. Foreign supplied comparison preserves healthy source;
+actual source failure still poisons. See [contract](parent-relative-file-root.md).
+Account/file runtime ownership, joined publication/restore and current user file
+authority remain open.

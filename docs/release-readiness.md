@@ -124,6 +124,10 @@ Native [live account-root capture](live-account-root-capture.md) now retains eve
 original public/private owner through a checked internal coordination callback and
 returns copied sensitive v1 bytes. Actual file capture in that boundary, common
 publication/restore and current user file authority remain release gates.
+Native [parent-relative file components](parent-relative-file-root.md) likewise
+preserve original metadata/object owners across parent release/moves and check
+supplied root selection without rebinding. This prerequisite adopts no joined
+account/file runtime or backup format and closes no user-file/release gate.
 
 ## Before publishing an experimental release
 

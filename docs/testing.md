@@ -5094,3 +5094,35 @@ That prior CI does not certify this later source. This later796-case matrix is n
 a complete workspace/container/power-loss result. Joined account/file runtime
 ownership, capture/publication/restore, current file authority and production remain
 open gates.
+
+## Parent-relative original native file components
+
+[Retained native file parents](parent-relative-file-root.md) pass673 affected cases
+per stable1.99/minimum1.89:303 storage/object/files,45 actual CLI and325 original
+engine/WAL/transactions/backup.27 ignored entries comprise25 parent-invoked fixtures
+and2 opt-in corpus generators. All builds, formatting, strict workspace/fuzz lint
+and minimum fuzz compilation exit0.636 frozen source hashes match after every
+process closes. Only three frozen native-root implementation/test paths differ
+from ba2c41d;209 server/auth/SDK/fuzz/lock inputs match that prior source. Its SDK34/12
+result remains prior evidence, without claiming a new SDK run.
+
+Twelve new cases cover retained caller parent locks/exact descriptor return, no
+implicit parent lock, input/scope/busy/error refusal, longest255-byte UTF-8 leaf,
+healthy foreign-comparison refusal, actual source poison, six original admission
+moves and independent mutation/capture/restore/stream routing after parent moves.
+Sixteen generated models independently calculate global/logical revisions, names,
+no-ops, payloads and orphan charge while fresh copies remain independent.96 source
+changes at admission and64 around copied results refuse. Six parent privacy changes
+at blob/metadata/final boundaries preserve charged orphans or durable references.
+Sixteen actual signal9 kills span selected/metadata/owned/ACK states, WAL1/2 and
+empty/8193-byte payloads, checking parent/component locks, history and reopen.
+Existing211 file-related native kills rerun, for227 per toolchain.
+
+Initial test compilation refused guessed standard stream methods and a Vec borrow
+comparison; the tests now use the existing bounded native cursor and finish check,
+without extending its8KiB bound. One test fixture namespace correction and focused
+preliminary subsets are excluded. See
+[evidence](measurements/2026-10-15-native-file-root-at/verification.json).
+Normal absolute parent selection remains unchanged. No combined file/account mode,
+new archive version, user file authority, sanitizer/full-workspace/container result
+or production acceptance follows from these affected checks.
