@@ -174,3 +174,9 @@ ownership and current user file authority still require implementation and evide
 retained private-parent opening/comparison for original native file pairs, including
 guarded writes and borrowed streams after moves. Actual common runtime/roster
 ownership, joined capture/publication/restore and current user authority remain open.
+
+[ADR0153](0153-retained-native-file-snapshot-coordination.md) keeps all original
+physical payload readers, including orphans, through native coordination callbacks
+and final proofs. Nested file components can now reject later replacement of an
+earlier source. Aggregate resource admission and actual account/file collection,
+joined format/publication/restore and user authority still require implementation.

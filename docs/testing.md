@@ -5126,3 +5126,44 @@ preliminary subsets are excluded. See
 Normal absolute parent selection remains unchanged. No combined file/account mode,
 new archive version, user file authority, sanitizer/full-workspace/container result
 or production acceptance follows from these affected checks.
+
+## Native payload ownership through coordinated snapshot work
+
+[Checked native snapshot work](native-file-snapshot-coordination.md) passes685
+cases per stable1.99/minimum1.89:315 storage/object/files,45 actual CLI and325 original
+engine/WAL/transactions/backup.27 ignored entries are25 parent-invoked fixtures and
+2 opt-in corpus generators. Formatting, strict workspace/fuzz lint, all builds and
+minimum fuzz compilation exit0.637 frozen source hashes match after all processes
+close. Only four frozen native implementation/test paths change;209 server/auth/
+SDK/fuzz/lock inputs match the prior source. No new SDK/sanitizer/full-workspace/
+container/production acceptance is claimed.
+
+Twelve new cases include32 generated independent payload/revision/orphan/fresh-copy
+models, actual original payload FD lifetime/return, nested distinct projects and
+both result layers, caller error values and source-failed value dropping. Eight
+same-byte referenced/orphan replacements,32 corruption/privacy/link/missing changes
+and30 namespace/private-parent changes refuse. Ten empty/1/8192/8193/8MiB readonly
+cases preserve the ordinary paired archive bytes and fresh restore. Four parent
+moves during work preserve relative selection and ordinary absolute refusal.
+Sixteen actual signal9 kills span during-work/verified-result, normal/relative,
+WAL1/2 and empty/8193-byte payloads. Referenced/orphan FDs remain held during work
+and end before the verified copied result; metadata/object locks remain with root.
+Exact WAL and subsequent coordination survive reopen. Existing227 file-related
+native kills rerun, for243 per toolchain.
+
+The initial capture-then-fresh-inspection prototype fails its longer-lifetime
+expectation:0 passed/1 failed, exit101. Ordinary single capture correctly releases
+its payload owners at return; that failed composition supplies no coordination
+proof. The retained callback passes the actual substitution test. A preliminary
+12-case run has3 passed/9 failed from an insufficient max-payload fixture quota and
+mutex-poison dependents. The corrected test explicitly admits persisted quota and
+publishes bounded input without changing runtime limits. Generic error annotation,
+strict clone-slice lint and focused preliminaries are excluded. The accidental
+poison-only regression is archived privately; previous regressions are untouched.
+See [evidence](measurements/2026-10-15-native-file-root-coordination/verification.json).
+
+Prior52b84b6 has independently retrieved hosted1740/0/43 full-workspace results per
+toolchain and all five jobs successful, with636 committed blobs matching its proof.
+That prior complete result remains source-specific. Aggregate nesting/resource
+admission, actual account/file collector/format/publication/restore and current user
+file permission remain open gates.

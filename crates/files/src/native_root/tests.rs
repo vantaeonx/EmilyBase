@@ -10,6 +10,7 @@ use std::process::{Command, Stdio};
 const PROJECT: ProjectId = ProjectId::from_bytes([1; 16]);
 const FILE: FileId = FileId::from_bytes([2; 16]);
 mod at;
+mod coordinated;
 fn fixture(parent: &Path, compacted: bool, payload: &[u8]) -> (PathBuf, Vec<u8>, FileInfo) {
     let path = parent.join("root");
     initialize_file_root(&path, PROJECT, FileQuota::new(8, 32768).unwrap()).unwrap();
@@ -378,6 +379,18 @@ fn worker() {
     }
     .unwrap();
     root.inspect().unwrap();
+    if matches!(phase.as_str(), "coordinating" | "coordinated") {
+        let snapshot = root
+            .with_snapshot(|snapshot| {
+                if phase == "coordinating" {
+                    ready();
+                }
+                snapshot
+            })
+            .unwrap();
+        assert_eq!(snapshot.files().len(), 1);
+        ready();
+    }
     root.capture().unwrap();
     assert_eq!(phase, "ack");
     ready();

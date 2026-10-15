@@ -1448,3 +1448,13 @@ owners through parent moves. Foreign supplied comparison preserves healthy sourc
 actual source failure still poisons. See [contract](parent-relative-file-root.md).
 Account/file runtime ownership, joined publication/restore and current user file
 authority remain open.
+
+## Follow-up: retained native snapshot coordination
+
+[ADR0153](adr/0153-retained-native-file-snapshot-coordination.md) extends actual
+payload ownership through trusted callback work and final original-source proofs.
+Nested original components and orphan descriptors remain held; source failures
+withhold values and caller error values preserve healthy sources. Ordinary capture
+keeps its contract. See [contract](native-file-snapshot-coordination.md). Aggregate
+admission, actual account/file collector/format/restore and current user permission
+remain open.

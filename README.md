@@ -200,6 +200,9 @@ source owners; combined file capture/restore and user file service remain pendin
 Native [parent-relative file components](docs/parent-relative-file-root.md) now
 retain a trusted original private parent across caller release/moves, including
 payload streaming and guarded writes. Normal absolute opening keeps its rules.
+Native [snapshot coordination](docs/native-file-snapshot-coordination.md) also
+retains every original payload, including orphans, through caller work and final
+proofs. Nested components cannot return joint copies after source substitution.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

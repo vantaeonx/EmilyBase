@@ -66,8 +66,24 @@ impl FileStore {
 
     pub(crate) fn capture_with(
         &mut self,
-        mut boundary: impl FnMut(CaptureBoundary),
+        boundary: impl FnMut(CaptureBoundary),
     ) -> Result<FileSnapshot> {
+        self.capture_mode(boundary, |snapshot| snapshot, false)
+    }
+
+    pub(crate) fn capture_retained<T>(
+        &mut self,
+        work: impl FnOnce(FileSnapshot) -> T,
+    ) -> Result<T> {
+        self.capture_mode(|_| {}, work, true)
+    }
+
+    fn capture_mode<T>(
+        &mut self,
+        mut boundary: impl FnMut(CaptureBoundary),
+        work: impl FnOnce(FileSnapshot) -> T,
+        retained: bool,
+    ) -> Result<T> {
         let (quota, files, inventory) = self.validated()?;
         let project = self.objects.project();
         let database_id = self.database.database_id();
@@ -117,14 +133,26 @@ impl FileStore {
             }
             records::graph(quota, &files, objects.inventory())?;
             self.database.view()?;
-            Ok(FileSnapshot {
+            let value = work(FileSnapshot {
                 project,
                 quota,
                 files,
                 metadata,
                 metadata_report,
                 objects,
-            })
+            });
+            if retained {
+                // These are the original admitted payload descriptors, including
+                // physical orphans. They span caller coordination, not only copy.
+                for reader in &mut readers {
+                    reader.verify()?;
+                }
+                if self.objects.inventory()? != inventory || self.database.committed_wal()? != wal {
+                    return Err(Error::Corrupt);
+                }
+                self.database.view()?;
+            }
+            Ok(value)
         })();
         if result.is_err() {
             self.poisoned = true;

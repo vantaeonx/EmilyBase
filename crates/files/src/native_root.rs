@@ -447,6 +447,33 @@ impl NativeFileRoot {
     pub fn capture(&mut self) -> Result<FileSnapshot> {
         self.observe(|store, _| store.capture(), |_| {})
     }
+    /// Trusted readonly coordination while every actual physical object remains
+    /// retained, including orphans, plus both original component/root owners.
+    /// Sensitive copies and callback values must await the outer verified result
+    /// before publication. A callback error value is not a source failure.
+    /// No common account/file format, user permission or filesystem lease.
+    pub fn with_snapshot<T>(&mut self, work: impl FnOnce(FileSnapshot) -> T) -> Result<T> {
+        let result = (|| {
+            let before = self.state()?;
+            // Narrow borrows retain original selection around coordination while
+            // the store keeps every original payload descriptor through final proof.
+            let selection = &self.selection;
+            let value = self.store.capture_retained(|snapshot| -> Result<T> {
+                selection.check()?;
+                let value = work(snapshot);
+                selection.check()?;
+                Ok(value)
+            })??;
+            if self.state()? != before {
+                return Err(Error::Corrupt);
+            }
+            Ok(value)
+        })();
+        if result.is_err() {
+            self.store.poisoned = true;
+        }
+        result
+    }
     /// Publish through the original blob-first/metadata-WAL transaction while
     /// guarding common-root selection before blob/commit and after ACK/readback.
     /// The supplied owner is native metadata, not proof of an account permission.

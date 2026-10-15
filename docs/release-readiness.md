@@ -128,6 +128,10 @@ Native [parent-relative file components](parent-relative-file-root.md) likewise
 preserve original metadata/object owners across parent release/moves and check
 supplied root selection without rebinding. This prerequisite adopts no joined
 account/file runtime or backup format and closes no user-file/release gate.
+Native [snapshot coordination](native-file-snapshot-coordination.md) now retains
+every original payload through nested callback work and final proofs. It closes
+a component lifetime prerequisite, while aggregate admission and the actual joined
+account/file collector/format/restore remain open.
 
 ## Before publishing an experimental release
 
