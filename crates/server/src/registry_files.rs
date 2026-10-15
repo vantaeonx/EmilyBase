@@ -7,6 +7,8 @@ use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsE
 use std::path::Path;
 
 pub(crate) mod account_root;
+mod coordinated;
+pub use coordinated::with_restored_registry_backup_bytes_at;
 mod pending;
 
 pub fn inspect_registry_backup(path: impl AsRef<Path>) -> Result<RegistryBackupReport> {
@@ -153,6 +155,28 @@ fn restore_decoded(
     archive: registry_archive::Archive<'_>,
     mut pending: pending::Pending,
 ) -> Result<RegistryBackupReport> {
+    prepare_decoded(&archive, &pending)?;
+    {
+        let mut restored = ProjectStore::open(pending.path())?;
+        if restored.backup_image()? != bytes {
+            return Err(Error::RegistryFormat(
+                "restored registry differs from archive",
+            ));
+        }
+    }
+    sync(&pending.owner, "registry_restore_stage_sync")?;
+    checkpoint("registry_restore_stage_synced");
+    pending.publish()?;
+    checkpoint("registry_restore_renamed");
+    pending.finish("registry_restore_parent_sync")?;
+    checkpoint("registry_restore_parent_synced");
+    Ok(archive.report)
+}
+
+fn prepare_decoded(
+    archive: &registry_archive::Archive<'_>,
+    pending: &pending::Pending,
+) -> Result<()> {
     for (entry, report) in archive.entries.iter().zip(&archive.report.projects) {
         let project = pending.path().join(&entry.metadata.id);
         std::fs::DirBuilder::new().mode(0o700).create(&project)?;
@@ -179,21 +203,7 @@ fn restore_decoded(
         sync(&File::open(&project)?, "registry_restore_project_sync")?;
         checkpoint("registry_restore_project_synced");
     }
-    {
-        let mut restored = ProjectStore::open(pending.path())?;
-        if restored.backup_image()? != bytes {
-            return Err(Error::RegistryFormat(
-                "restored registry differs from archive",
-            ));
-        }
-    }
-    sync(&pending.owner, "registry_restore_stage_sync")?;
-    checkpoint("registry_restore_stage_synced");
-    pending.publish()?;
-    checkpoint("registry_restore_renamed");
-    pending.finish("registry_restore_parent_sync")?;
-    checkpoint("registry_restore_parent_synced");
-    Ok(archive.report)
+    Ok(())
 }
 
 pub(crate) fn parent(path: &Path) -> &Path {

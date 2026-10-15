@@ -230,6 +230,7 @@ impl ProjectStore {
                 outcome
             },
             checked,
+            || Ok(()),
         )
     }
 
@@ -254,12 +255,20 @@ impl ProjectStore {
         &mut self,
         capture: impl FnOnce(Vec<u8>) -> Result<T>,
     ) -> Result<T> {
-        self.capture_registry_mode(capture, false)
+        self.capture_registry_mode(capture, false, || Ok(()))
+    }
+    pub(crate) fn capture_registry_checked_with<T>(
+        &mut self,
+        capture: impl FnOnce(Vec<u8>) -> Result<T>,
+        finished: impl FnOnce() -> Result<()>,
+    ) -> Result<T> {
+        self.capture_registry_mode(capture, true, finished)
     }
     fn capture_registry_mode<T>(
         &mut self,
         capture: impl FnOnce(Vec<u8>) -> Result<T>,
         checked: bool,
+        finished: impl FnOnce() -> Result<()>,
     ) -> Result<T> {
         self.ready()?;
         if Arc::strong_count(&self.owner) != 1 {
@@ -331,6 +340,7 @@ impl ProjectStore {
             }
         }
         self.check_backup_source()?;
+        finished()?;
         drop(databases);
         outcome
     }

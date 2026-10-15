@@ -8,6 +8,7 @@ use std::sync::mpsc::{Receiver, channel};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+mod coordinated;
 mod ownership;
 
 fn seed(source: &Path) -> Vec<(String, String)> {
@@ -225,6 +226,7 @@ fn publication_worker() {
             println!("REGISTRY_REFUSED");
         }
         "descriptor-cycles" => ownership::verify_descriptor_cycles(&source, &archive, &target),
+        "coordinated-restore" => coordinated::worker(&archive, &target),
         _ => panic!("invalid archive worker action"),
     }
 }

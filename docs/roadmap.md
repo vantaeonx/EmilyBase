@@ -1502,3 +1502,14 @@ late substitution withholds values and reports uncertainty without overwriting.
 See [contract](native-file-restore-coordination.md). Complete account/file restore,
 account preparation, aggregate admission and explicit v2 adoption remain open;
 no overall stage or production acceptance is marked complete.
+
+## Follow-up: retained public registry restore coordination
+
+[ADR0158](adr/0158-retained-registry-restore-coordination.md) adds checked native
+registry child preparation/selection with every original public writer retained
+through nested work and the final selection observation. Independent original WAL
+readers verify physical identity, exact bytes/length/privacy as well as unchanged
+acknowledged histories, rejecting external unacknowledged tails without changing
+ordinary recovery. Failed stages/selected uncertainty are preserved for inspection.
+See [contract](native-registry-restore-coordination.md). Private account preparation,
+whole account/file restore, aggregate process admission and v2 startup remain open.

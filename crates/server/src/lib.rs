@@ -57,7 +57,9 @@ pub use registry_files::account_root::{
     inspect_account_bundle_root_manifest_bytes, restore_account_bundle,
     restore_account_bundle_bytes,
 };
-pub use registry_files::{inspect_registry_backup, restore_registry_backup};
+pub use registry_files::{
+    inspect_registry_backup, restore_registry_backup, with_restored_registry_backup_bytes_at,
+};
 
 /// Pure, bounded inspection without credentials, filesystem operations or data access.
 pub fn inspect_project_metadata(id: &str, bytes: &[u8]) -> Result<ProjectInfo> {
@@ -105,6 +107,8 @@ pub enum Error {
     ComponentArchiveChecksum,
     #[error("joined archive publication outcome is unknown; inspect before retrying")]
     ComponentPublicationUnknown(#[source] Box<Error>),
+    #[error("prepared registry restore outcome is unknown; inspect before retrying")]
+    RegistryRestoreUnknown(#[source] Box<Error>),
     #[error("native storage publication failed")]
     Storage(#[from] emilybase_storage::Error),
     #[error("native file storage failed")]
