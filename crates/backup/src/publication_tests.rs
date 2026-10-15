@@ -40,6 +40,11 @@ fn publication_worker() {
         let mut db = Database::open(input).unwrap();
         let result = files::create_with(&mut db, &target, synced, published);
         check_worker_result(result);
+    } else if kind == "owned-restore" {
+        #[cfg(target_os = "linux")]
+        crate::owned_restore::tests::worker(&input, &target, &phase);
+        #[cfg(not(target_os = "linux"))]
+        panic!("native prepared owner restore requires Linux");
     } else if kind == "restore-bytes" {
         let bytes = files::read(&input).unwrap();
         let result = restore::restore_prepared_bytes_with(

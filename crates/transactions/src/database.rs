@@ -45,6 +45,25 @@ impl Database {
         crate::journal_replacement::source_selected(&self.ownership, &self.wal)
     }
 
+    /// Compare a trusted native directory descriptor with this actual original
+    /// owner and WAL. Readonly; exports no owner and grants no user permission.
+    /// A foreign supplied comparison never poisons an otherwise healthy database.
+    pub fn check_directory_owner(&self, expected: &File) -> Result<()> {
+        use std::os::unix::fs::MetadataExt;
+        self.ready()?;
+        let actual = self.ownership.metadata()?;
+        let expected = expected.metadata()?;
+        if !actual.is_dir()
+            || !expected.is_dir()
+            || actual.mode() & 0o7777 != 0o700
+            || expected.mode() & 0o7777 != 0o700
+            || (actual.dev(), actual.ino()) != (expected.dev(), expected.ino())
+        {
+            return Err(Error::DirectoryChanged);
+        }
+        crate::journal_replacement::source_selected(&self.ownership, &self.wal)
+    }
+
     pub(crate) fn create_at_with(
         parent: &File,
         name: &std::ffi::OsStr,

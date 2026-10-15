@@ -17,10 +17,10 @@ pub(crate) fn sync_failure(phase: &'static str, after: bool) -> std::io::Result<
     }
 }
 
-struct FailureGuard;
+pub(crate) struct FailureGuard;
 
 impl FailureGuard {
-    fn new(phase: &'static str, after: bool) -> Self {
+    pub(crate) fn new(phase: &'static str, after: bool) -> Self {
         assert!(SYNC_FAILURE.replace(Some((phase, after))).is_none());
         Self
     }

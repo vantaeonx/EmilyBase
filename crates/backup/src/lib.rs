@@ -3,6 +3,7 @@ mod archive;
 mod directory;
 mod files;
 mod header;
+mod owned_restore;
 #[cfg(all(test, target_os = "linux"))]
 mod ownership_tests;
 #[cfg(test)]
@@ -14,6 +15,7 @@ mod restore;
 
 pub use archive::{VerifiedBackup, decode_verified, encode, inspect_bytes};
 pub use files::{create, inspect};
+pub use owned_restore::{PreparedDatabaseOwner, with_prepared_owner_bytes_at};
 pub use restore::{
     PreparedRestoreError, restore, restore_bytes, restore_bytes_at, restore_prepared,
     restore_prepared_bytes,
@@ -54,6 +56,10 @@ pub enum Error {
         "backup was published but durability is uncertain; verify its destination before retrying"
     )]
     PublicationUnknown(#[source] std::io::Error),
+    #[error("retained database restore outcome is unknown; inspect before retrying")]
+    RetainedRestoreUnknown(#[source] Box<Error>),
+    #[error("native private directory publication failed")]
+    Storage(#[from] emilybase_storage::Error),
     #[error("backup path must be a regular file or a real destination directory")]
     Path,
     #[error("backup destination or staged entry changed during publication")]

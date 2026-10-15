@@ -1513,3 +1513,14 @@ acknowledged histories, rejecting external unacknowledged tails without changing
 ordinary recovery. Failed stages/selected uncertainty are preserved for inspection.
 See [contract](native-registry-restore-coordination.md). Private account preparation,
 whole account/file restore, aggregate process admission and v2 startup remain open.
+
+## Follow-up: retained application database preparation
+
+[ADR0159](adr/0159-retained-application-database-preparation.md) adds a trusted owner
+factory over the actual open restored database, preserving original directory/WAL
+identity and source prefix through append preparation, checkpoint, no-replace child
+selection and readonly nested work. A native descriptor comparison rejects foreign
+same-identity copies. Late changes withhold values and preserve uncertain data.
+See [contract](prepared-owner-restore.md). Private adapters must protect application
+storage invariants; private account/session integration, complete joined restore,
+global process admission and v2 runtime adoption remain open.

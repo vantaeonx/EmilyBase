@@ -224,6 +224,10 @@ Native [registry restore coordination](docs/native-registry-restore-coordination
 also holds every public database writer and actual physical WAL through nested work
 and a final child-selection check. Appended unacknowledged tails withhold restored
 receipts while ordinary crash recovery keeps its existing acknowledgment rules.
+Native [prepared owner restoration](docs/prepared-owner-restore.md) now transfers
+the actual open database through trusted application preparation, retaining its
+original WAL and writer through child selection and checked readonly work. Private
+account integration and complete joined restoration remain open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.
