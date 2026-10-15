@@ -18,6 +18,16 @@ fail. The output contains only counts; it does not expose a credential. See
 their documented measurement scopes; this change does not globally isolate every
 existing libtest allocation sample.
 
+Private account archive early-refusal samples now use the standalone opt-in
+`emilybase-private-archive-allocation-check` process. Synthetic input construction,
+the parent harness and JSON output remain outside profiling. Each sample exercises
+1000 iterations/four malformed-scope/envelope refusals and requires exactly zero
+cumulative/peak/live requested bytes and zero blocks. Its `--negative-control`
+retains144 measured bytes/one block and must fail. Controlled background allocations
+in the parent remain excluded, with no tolerance or subtraction. See
+[ADR0144](adr/0144-isolated-private-archive-allocation-sample.md). This does not
+measure accepted private archive replay, RSS or global service memory admission.
+
 ## Reproduce
 
 From the repository root, on Linux with the declared Rust floor or current stable:

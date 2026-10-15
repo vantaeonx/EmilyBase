@@ -86,3 +86,9 @@ lint, affected builds and minimum fuzz builds pass. Twelve new and131 preceding
 native process kills pass per toolchain. The separate hosted allocation-diagnostic
 failure on cc06efe remains under investigation; this matrix does not include that
 opt-in diagnostic or constitute full-workspace production acceptance.
+
+Follow-up2026-10-15: the source-specific hosted9ad9194 run completed successfully,
+including1648 workspace checks on each toolchain. The earlier private-archive
+allocation observation is separately isolated under [ADR0144](adr/0144-isolated-private-archive-allocation-sample.md),
+with controlled background/negative tests and strict zero counters. Neither result
+closes the remaining user-file or production gates.

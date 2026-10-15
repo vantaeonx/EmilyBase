@@ -1350,3 +1350,13 @@ child/WAL/graph checks span common no-replace publication. Native parent/child
 substitution, sync failure, killed initialization, generated quota models and actual
 CLI result delivery are exercised; see [contract](native-file-root-initialization.md).
 AccountRoot/current user file policy and production acceptance remain open.
+
+## Follow-up: isolated private archive allocation observation
+
+[ADR0144](adr/0144-isolated-private-archive-allocation-sample.md) moves the native
+early-refusal measurement out of the test harness without relaxing zero counters.
+A controlled background-allocation regression, strict measured negative control
+and both toolchains' complete opt-in suites verify the boundary. The auth parser,
+engine, formats and durability are unchanged. Separate hosted9ad9194 evidence now
+records1648 workspace tests on each toolchain; later source acceptance remains
+independent. RSS, accepted archive replay budgets and production gates remain open.

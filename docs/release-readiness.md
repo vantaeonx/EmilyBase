@@ -15,8 +15,8 @@ for production. A crate version or successful build alone is not a published rel
 | Server | Axum/Tokio adapter over synchronous owned engine, isolated projects, service keys and typed APIs | Broader load/connection/output admission and deployment acceptance |
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
-| Files | Native objects/archives; standalone own-WAL references, logical CAS mutations and persisted quota administration | AccountRoot coordination, user file HTTP/policies, common backup, reclamation and signed URLs |
-| Backup | Verified native database/registry/private-root copies; standalone object archives | Coordinated inclusion of objects, encrypted/incremental backup and upgrade drills |
+| Files | Native objects/archives; standalone own-WAL references, CAS/quota, common native root creation and paired backup/restore CLI | AccountRoot coordination, user file HTTP/policies, reclamation and signed URLs |
+| Backup | Verified native database/registry/private-root copies; standalone complete metadata/object paired archives | Coordinated AccountRoot inclusion of objects, encrypted/incremental backup and upgrade drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
 | Dashboard | No released administrative web interface | React/TypeScript interface backed by real protected APIs |
@@ -48,6 +48,14 @@ The later [native inspection increment](native-object-inspection.md) has its own
 The following [seekable archive increment](seekable-object-archive-inspection.md)
 has181-check targeted matrices and its own parser comparison; the same broad-result
 boundary applies until a new full source run completes.
+The later [hosted9ad9194 full-source evidence](measurements/2026-10-15-hosted-file-root/verification.json)
+was retrieved and checked on2026-10-15:1648 workspace tests per Rust1.99/1.89,
+39 ignored entries (35 parent-invoked fixtures/four opt-in corpus generators), and
+614 committed source blobs matching the feature evidence. Its stable build, SDK,
+fuzz, opt-in diagnostics, audit and container jobs completed successfully on2026-10-10.
+This is hosted evidence for9ad9194; it is neither a new local container run nor full
+certification of subsequent diagnostic changes. An earlier local dc86d4c minimum
+run has no recovered final result after restart and is excluded.
 The [borrowed encoder](borrowed-object-archive-encoding.md) follows with188-check
 targeted matrices and an expanded actual encoded-reader sanitizer comparison.
 Native backup publication is unchanged in that increment; it closes no release gate.

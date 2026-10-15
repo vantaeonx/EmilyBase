@@ -50,8 +50,9 @@ strings. Names, owner fields, payloads and credentials are omitted.
 Process success requires the final stdout write and flush. If stdout fails after
 durable restoration, the process fails but the selected database remains. Failure
 to receive the report is not permission to overwrite or blindly retry: inspect the
-existing root. The source archive can still be independently verified. This CLI
-does not yet create a new live file catalog or expose an HTTP file service.
+existing root. The source archive can still be independently verified. These archive
+commands restore existing history; [file-root-init](native-file-root-initialization.md)
+separately creates a fresh native catalog. No HTTP file service is exposed.
 
 ## Executed evidence
 

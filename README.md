@@ -444,6 +444,9 @@ quota or parallel-worker bound. Full and streamed fingerprints match, with lower
 allocation traffic on the streamed path. The diagnostic allocator is absent from
 server/CLI runtime dependencies. See [reproduction and actual reports](docs/model-allocation-profiles.md)
 and [ADR 0040](docs/adr/0040-opt-in-model-allocation-diagnostics.md).
+The [private archive early-refusal sample](docs/adr/0144-isolated-private-archive-allocation-sample.md)
+runs in an isolated opt-in process, preserving exact zero counters and detecting
+a measured144-byte negative control without counting parent harness allocations.
 The model has no file/WAL writes or durable acknowledgments; combined budgets and a shared
 durable writer remain pending. See [ADR 0038](docs/adr/0038-staged-table-index-model.md).
 
