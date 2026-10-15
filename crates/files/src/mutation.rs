@@ -10,6 +10,9 @@ pub struct FileRemoval {
     revision: u64,
 }
 impl FileRemoval {
+    pub(crate) fn from_committed(removed: FileInfo, revision: u64) -> Self {
+        Self { removed, revision }
+    }
     pub const fn removed(&self) -> &FileInfo {
         &self.removed
     }
@@ -63,8 +66,22 @@ impl FileStore {
         id: FileId,
         expected_revision: u64,
         name: Option<&str>,
-        mut boundary: impl FnMut(MetadataBoundary),
+        boundary: impl FnMut(MetadataBoundary),
     ) -> Result<(FileInfo, u64)> {
+        self.mutate_checked_with(id, expected_revision, name, (boundary, |_| Ok(())))
+    }
+    pub(crate) fn mutate_checked_with(
+        &mut self,
+        id: FileId,
+        expected_revision: u64,
+        name: Option<&str>,
+        hooks: (
+            impl FnMut(MetadataBoundary),
+            impl for<'a> FnMut(crate::write_check::WriteCheck<'a>) -> Result<()>,
+        ),
+    ) -> Result<(FileInfo, u64)> {
+        use crate::write_check::WriteCheck;
+        let (mut boundary, mut check) = hooks;
         if let Some(name) = name {
             records::validate_name(name)?;
         }
@@ -83,6 +100,7 @@ impl FileStore {
         if name == Some(current.name.as_str()) {
             reader.verify()?;
             self.database.view()?;
+            check(WriteCheck::Verified)?;
             return Ok((current.clone(), current.revision));
         }
         let revision = self
@@ -110,10 +128,12 @@ impl FileStore {
             // commit has been attempted yet.
             reader.verify()?;
             tx.view()?;
+            check(WriteCheck::BeforeCommit)?;
             commit_attempted = true;
             if tx.commit()? != revision {
                 return Err(Error::Corrupt);
             }
+            check(WriteCheck::Committed(&mut self.database))?;
             boundary(MetadataBoundary::Committed);
             let (current_quota, current_files) = records::metadata(&self.database, project)?;
             if current_quota != quota {
@@ -129,6 +149,7 @@ impl FileStore {
             reader.verify()?;
             self.database.view()?;
             boundary(MetadataBoundary::Verified);
+            check(WriteCheck::Verified)?;
             Ok((changed, revision))
         })();
         if result.is_err() {

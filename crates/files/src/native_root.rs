@@ -170,6 +170,20 @@ impl Selection {
         self.check_topology()?;
         self.wal.check(&self.metadata.directory)
     }
+    fn write_check(&mut self, at: WriteCheck<'_>) -> Result<()> {
+        match at {
+            WriteCheck::BeforeBlob | WriteCheck::BeforeCommit | WriteCheck::Verified => {
+                self.check()
+            }
+            WriteCheck::Committed(database) => {
+                self.check_topology()?;
+                database.check_directory_at(&self.root, "metadata")?;
+                let wal = database.committed_wal()?;
+                self.wal.accept_committed(&self.metadata.directory, &wal)?;
+                self.check()
+            }
+        }
+    }
     fn check_topology(&self) -> Result<()> {
         let owned = self.parent.metadata()?;
         let parent = std::fs::symlink_metadata(&self.parent_path)?;
@@ -246,8 +260,8 @@ pub(crate) enum ReadBoundary {
 }
 
 /// Original common root/parent/children plus both independently locked owners.
-/// Trusted native Linux operator only. Read/capture operations check exact root
-/// selection and acknowledged semantic state around work. No raw owner, SQL,
+/// Trusted native Linux operator only. Operations check exact root selection
+/// and acknowledged semantic state around work. No raw owner, SQL,
 /// user permission or writable component is exposed. Reopen after read failure.
 pub struct NativeFileRoot {
     // Component cache paths borrow the retained child descriptor paths below.
@@ -380,13 +394,7 @@ impl NativeFileRoot {
         if payload.len() > emilybase_object_storage::MAX_PAYLOAD_BYTES {
             return Err(emilybase_object_storage::Error::Limit.into());
         }
-        let before = match self.state() {
-            Ok(state) => state,
-            Err(error) => {
-                self.store.poisoned = true;
-                return Err(error);
-            }
-        };
+        let before = self.before_write()?;
         let mut source_failed = false;
         let selection = &mut self.selection;
         let result = self.store.publish_checked_with(
@@ -396,26 +404,36 @@ impl NativeFileRoot {
             name,
             payload,
             (boundary, |at| {
-                let checked = (|| match at {
-                    WriteCheck::BeforeBlob | WriteCheck::BeforeCommit | WriteCheck::Verified => {
-                        selection.check()
-                    }
-                    WriteCheck::Committed(database) => {
-                        selection.check_topology()?;
-                        database.check_directory_at(&selection.root, "metadata")?;
-                        let wal = database.committed_wal()?;
-                        selection
-                            .wal
-                            .accept_committed(&selection.metadata.directory, &wal)?;
-                        selection.check()
-                    }
-                })();
+                let checked = selection.write_check(at);
                 if checked.is_err() {
                     source_failed = true;
                 }
                 checked
             }),
         );
+        self.finish_write(&before, result, source_failed, |after, info| {
+            if after.quota != before.quota || !after.files.contains(info) {
+                return Err(Error::Corrupt);
+            }
+            Ok(())
+        })
+    }
+    fn before_write(&mut self) -> Result<State> {
+        match self.state() {
+            Ok(state) => Ok(state),
+            Err(error) => {
+                self.store.poisoned = true;
+                Err(error)
+            }
+        }
+    }
+    fn finish_write<T>(
+        &mut self,
+        before: &State,
+        result: Result<T>,
+        source_failed: bool,
+        verify: impl FnOnce(&State, &T) -> Result<()>,
+    ) -> Result<T> {
         if let Err(error) = result {
             if matches!(
                 error,
@@ -428,19 +446,17 @@ impl NativeFileRoot {
                 self.store.poisoned = true;
                 return Err(error);
             }
-            if !matches!(self.state(),Ok(after) if after==before) {
+            if !matches!(self.state(),Ok(after) if &after==before) {
                 self.store.poisoned = true;
                 return Err(Error::Corrupt);
             }
             return Err(error);
         }
-        let info = result?;
+        let value = result?;
         let checked = (|| {
             let after = self.state()?;
-            if after.quota != before.quota || !after.files.contains(&info) {
-                return Err(Error::Corrupt);
-            }
-            Ok(info)
+            verify(&after, &value)?;
+            Ok(value)
         })();
         if checked.is_err() {
             self.store.poisoned = true;
@@ -449,6 +465,7 @@ impl NativeFileRoot {
     }
 }
 
+mod mutation;
 #[cfg(test)]
 mod publication_tests;
 #[cfg(test)]

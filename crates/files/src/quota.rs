@@ -59,8 +59,21 @@ impl FileStore {
         &mut self,
         expected: QuotaState,
         quota: FileQuota,
-        mut boundary: impl FnMut(MetadataBoundary),
+        boundary: impl FnMut(MetadataBoundary),
     ) -> Result<QuotaState> {
+        self.set_quota_checked_with(expected, quota, (boundary, |_| Ok(())))
+    }
+    pub(crate) fn set_quota_checked_with(
+        &mut self,
+        expected: QuotaState,
+        quota: FileQuota,
+        hooks: (
+            impl FnMut(MetadataBoundary),
+            impl for<'a> FnMut(crate::write_check::WriteCheck<'a>) -> Result<()>,
+        ),
+    ) -> Result<QuotaState> {
+        use crate::write_check::WriteCheck;
+        let (mut boundary, mut check) = hooks;
         let (current_quota, current_files, inventory) = self.validated()?;
         let project = self.objects.project();
         let database = self.database.database_id();
@@ -74,6 +87,7 @@ impl FileStore {
         records::graph(quota, &current_files, &inventory)?;
         if quota == current_quota {
             self.database.view()?;
+            check(WriteCheck::Verified)?;
             return Ok(QuotaState {
                 project,
                 database,
@@ -110,10 +124,12 @@ impl FileStore {
                 return Err(Error::Corrupt);
             }
             tx.view()?;
+            check(WriteCheck::BeforeCommit)?;
             commit_attempted = true;
             if tx.commit()? != revision {
                 return Err(Error::Corrupt);
             }
+            check(WriteCheck::Committed(&mut self.database))?;
             boundary(MetadataBoundary::Committed);
             let (selected_quota, selected_files) = records::metadata(&self.database, project)?;
             if selected_quota != quota || selected_files != current_files {
@@ -129,6 +145,7 @@ impl FileStore {
             records::graph(quota, &selected_files, &after)?;
             self.database.view()?;
             boundary(MetadataBoundary::Verified);
+            check(WriteCheck::Verified)?;
             Ok(QuotaState {
                 project,
                 database,

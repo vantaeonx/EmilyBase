@@ -4937,3 +4937,26 @@ Existing native25 kill boundaries rerun; no new kill/parser/format is claimed.
 Formatting, strict workspace/fuzz lint, CLI/server builds and minimum all-fuzz
 compilation exit0. See [evidence](measurements/2026-10-10-pager-owner/verification.json).
 The separate older24444bc complete workspace run remains pending.
+
+## Guarded native common-root metadata mutations
+
+[Original metadata transactions](native-file-root-metadata.md) pass647 affected
+checks on each stable1.99/minimum1.89:322 storage/native files/CLI and325 original
+database/WAL/transactions/backup. Seven new native and3 actual CLI cases include32
+generated independent histories, exact no-op WAL equality, stale equal conflicts,
+foreign database CAS, orphan charging, independent reopen/paired restore and exact
+descriptor return.126 selected-source changes,18 parent replacements and48 same-inode
+WAL changes refuse without source adoption/repair.24 new actual kills span3 metadata
+operations,4 staged/ACK/verified/success phases and WAL1/2;171 prior native kills rerun
+per toolchain. Committed updates recover, staged updates disappear, physical objects
+remain and a reopened root accepts another independent update.
+
+Actual CLI stat/rename/remove/quota processes omit private names/owners/payloads,
+require explicit database/global or logical revision, reject malformed/foreign/stale
+inputs and preserve commits after failed receipt delivery. Formatting, strict
+workspace/fuzz lint, affected builds and minimum fuzz compilation exit0.625 frozen
+source hashes match after all checks. A preliminary compile import mistake and
+wrong capacity-wrapper assertion with poisoned dependents are excluded; engine
+capacity rules were not relaxed. No new sanitizer, full-workspace source acceptance
+or physical power-loss result is claimed. See
+[evidence](measurements/2026-10-15-native-file-root-metadata/verification.json).

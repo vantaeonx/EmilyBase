@@ -108,7 +108,9 @@ root, actual children/WAL/scope and both component owners around metadata/captur
 It preserves abandoned tails and adds no common-root write or user-file authority.
 The following [guarded native publication](native-file-root-publication.md) adds
 blob-first writes with fallible checks at original commit boundaries and same-inode
-acknowledged WAL readback. Other common-root mutations and user routes remain open.
+acknowledged WAL readback. Native [guarded metadata mutations](native-file-root-metadata.md)
+add original reference/quota transactions with exact scoped revision checks and
+physical orphan charging. AccountRoot inclusion and current user routes remain open.
 
 ## Before publishing an experimental release
 

@@ -181,6 +181,9 @@ capture. The file-root-info CLI prints identities/quota/counts without private d
 Native [guarded common-root publication](docs/native-file-root-publication.md) checks
 root selection at actual blob/commit boundaries and revalidates the original WAL
 after ACK. The file-root-put CLI buffers bounded binary input before owner admission.
+Native [guarded reference/quota mutations](docs/native-file-root-metadata.md) reuse
+these checks around original metadata commits. Explicit CLI stat/rename/remove/quota
+commands preserve exact revision CAS; removed physical bytes remain charged.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

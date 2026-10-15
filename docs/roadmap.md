@@ -1382,3 +1382,14 @@ before owner admission and never overwrites IDs. Orphan/commit recovery, source
 changes, generated histories, killed publishers and failed receipt delivery are
 exercised; see [contract](native-file-root-publication.md). Common-root guarded
 rename/removal/quota and AccountRoot/current user file integration remain open.
+
+## Follow-up: guarded native reference and physical-quota metadata
+
+[ADR0147](adr/0147-guarded-common-root-reference-and-quota-mutations.md) extends
+common-root selection and exact original acknowledged WAL readback to existing
+rename/removal/quota transactions. Exact logical or scoped global CAS, verified
+no-ops and unchanged physical inventory remain required. Explicit native CLI
+observations/mutations omit private data; removed bytes remain charged. Source
+substitution, killed writers, generated independent models, paired restore and
+failed receipt delivery are exercised; see [contract](native-file-root-metadata.md).
+AccountRoot/current user file service and production gates remain open.

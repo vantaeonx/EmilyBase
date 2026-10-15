@@ -2,6 +2,10 @@
 use emilybase_files::FileArchiveReport;
 use std::io::IsTerminal;
 
+mod mutation;
+pub use mutation::{QuotaArguments, ReferenceArguments, RemoveArguments, RenameArguments};
+pub use mutation::{quota, remove, rename, stat};
+
 #[derive(clap::Args)]
 pub struct PutArguments {
     path: std::path::PathBuf,
@@ -36,6 +40,12 @@ pub fn put(arguments: PutArguments) -> Result<(), Box<dyn std::error::Error>> {
     )?;
     let mut root = emilybase_files::NativeFileRoot::open(arguments.path, project)?;
     let info = root.publish(id, object, *owner.as_bytes(), &arguments.name, &bytes)?;
+    file_report(project, &info)
+}
+fn file_report(
+    project: emilybase_object_storage::ProjectId,
+    info: &emilybase_files::FileInfo,
+) -> Result<(), Box<dyn std::error::Error>> {
     super::write_operator_metadata(&serde_json::json!({
         "format":1,"project":project.to_string(),"file":info.id().to_string(),
         "object":info.object().to_string(),"revision":info.revision().to_string(),

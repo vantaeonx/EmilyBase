@@ -27,6 +27,14 @@ struct Arguments {
 enum Command {
     /// Publish redirected binary stdin through a retained native common root.
     FileRootPut(files::PutArguments),
+    /// Observe one native reference without printing its name or owner.
+    FileRootStat(files::ReferenceArguments),
+    /// Rename native display metadata with an exact logical revision.
+    FileRootRename(files::RenameArguments),
+    /// Remove native logical visibility; immutable bytes remain charged.
+    FileRootRemove(files::RemoveArguments),
+    /// Change physical limits with exact database/global-revision CAS.
+    FileRootQuota(files::QuotaArguments),
     /// Inspect an existing native common root under both original owners.
     FileRootInfo { path: PathBuf, project: String },
     /// Create a fresh standalone private native metadata/object root.
@@ -284,6 +292,10 @@ fn main() -> ExitCode {
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
         Command::FileRootPut(arguments) => files::put(arguments)?,
+        Command::FileRootStat(arguments) => files::stat(arguments)?,
+        Command::FileRootRename(arguments) => files::rename(arguments)?,
+        Command::FileRootRemove(arguments) => files::remove(arguments)?,
+        Command::FileRootQuota(arguments) => files::quota(arguments)?,
         Command::FileRootInfo { path, project } => {
             let project = project.parse::<emilybase_object_storage::ProjectId>()?;
             let mut root = emilybase_files::NativeFileRoot::open(path, project)?;

@@ -9,7 +9,7 @@ use std::process::{Command, Stdio};
 const PROJECT: ProjectId = ProjectId::from_bytes([1; 16]);
 const FRESH: FileId = FileId::from_bytes([6; 16]);
 const OBJECT: ObjectId = ObjectId::from_bytes([7; 16]);
-fn fixture(parent: &Path, compacted: bool) -> PathBuf {
+pub(super) fn fixture(parent: &Path, compacted: bool) -> PathBuf {
     let path = parent.join("root");
     initialize_file_root(&path, PROJECT, FileQuota::new(8, 32768).unwrap()).unwrap();
     let mut database = Database::open(path.join("metadata")).unwrap();
@@ -33,14 +33,14 @@ fn fixture(parent: &Path, compacted: bool) -> PathBuf {
         .unwrap();
     path
 }
-fn components(path: &Path) -> FileStore {
+pub(super) fn components(path: &Path) -> FileStore {
     FileStore::open(
         Database::open(path.join("metadata")).unwrap(),
         ProjectDirectory::open(path.join("objects"), PROJECT).unwrap(),
     )
     .unwrap()
 }
-fn copy_directory(source: &Path, target: &Path) {
+pub(super) fn copy_directory(source: &Path, target: &Path) {
     fs::DirBuilder::new().mode(0o700).create(target).unwrap();
     for entry in fs::read_dir(source).unwrap() {
         let entry = entry.unwrap();
@@ -51,7 +51,7 @@ fn copy_directory(source: &Path, target: &Path) {
         }
     }
 }
-fn changed(path: &Path, saved: &Path, kind: usize) {
+pub(super) fn changed(path: &Path, saved: &Path, kind: usize) {
     match kind {
         0 => {
             fs::rename(path, saved).unwrap();
