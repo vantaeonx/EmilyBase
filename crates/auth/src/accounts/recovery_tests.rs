@@ -60,6 +60,10 @@ fn account_process_kills_preserve_acknowledged_state_and_exclude_staged_changes(
 fn account_kill_worker() {
     let path = std::env::var_os("EMILYBASE_ACCOUNT_KILL_PATH").unwrap();
     let mode = std::env::var("EMILYBASE_ACCOUNT_KILL_MODE").unwrap();
+    if mode.starts_with("retained-restore-") {
+        super::restore::retained::tests::worker(Path::new(&path), &mode);
+        return;
+    }
     if mode.starts_with("private-restore-") {
         let root = Path::new(&path);
         let barrier = || {

@@ -183,3 +183,9 @@ behavior and selected engineering decisions with source/evidence links. It shoul
 name the precise version and distinguish native tools from user-facing services.
 Do not advertise a planned dashboard, realtime or Kotlin SDK as released. Treat
 source line count as a secondary measurement, not a readiness or quality percentage.
+
+The [retained private restore adapter](private-account-restore-coordination.md) now
+prepares copied account sessions under the original database owner. Its borrowed
+source proof catches an observed pre-reset tail before ordinary WAL trimming.
+This closes that component prerequisite; complete account/file root restoration,
+v2 runtime adoption and the release acceptance boxes above remain open.

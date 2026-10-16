@@ -226,8 +226,11 @@ and a final child-selection check. Appended unacknowledged tails withhold restor
 receipts while ordinary crash recovery keeps its existing acknowledgment rules.
 Native [prepared owner restoration](docs/prepared-owner-restore.md) now transfers
 the actual open database through trusted application preparation, retaining its
-original WAL and writer through child selection and checked readonly work. Private
-account integration and complete joined restoration remain open.
+original WAL and writer through child selection and checked readonly work.
+The [private account adapter](docs/private-account-restore-coordination.md) now keeps
+that same owner while durably resetting copied sessions/time and closing v5 admission.
+A source guard refuses observed pre-reset physical changes before writing. Complete
+joined restoration and v2 runtime adoption remain open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

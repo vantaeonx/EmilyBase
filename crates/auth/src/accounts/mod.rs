@@ -23,7 +23,9 @@ mod restore_tests;
 mod session_clock;
 mod sessions;
 pub use archive::{PrivateArchiveReport, inspect_private_account_backup_bytes};
-pub use restore::{restore_private_account_bytes, restore_private_accounts};
+pub use restore::{
+    restore_private_account_bytes, restore_private_accounts, with_restored_private_account_bytes_at,
+};
 #[cfg(test)]
 mod sessions_tests;
 pub use sessions::{IssuedSession, SessionPrincipal};
@@ -114,6 +116,8 @@ pub enum Error {
     Storage(#[from] emilybase_transactions::Error),
     #[error("account backup operation failed")]
     Backup(#[from] emilybase_backup::Error),
+    #[error("private account restore outcome is unknown; inspect before retrying")]
+    RetainedRestoreUnknown(#[source] Box<Error>),
 }
 impl std::fmt::Debug for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -198,6 +202,15 @@ impl AccountStore {
             return Err(Error::Scope);
         }
         let database = Database::open(path)?;
+        Self::from_database(database, project, pool)
+    }
+
+    // Internal adapter only: move the actual original owner into private schema
+    // validation without exposing its mutable database through the public type.
+    fn from_database(database: Database, project: &str, pool: PasswordPool) -> Result<Self> {
+        if !valid_project_id(project) {
+            return Err(Error::Scope);
+        }
         let state =
             archive::validate_snapshot(database.view()?, project, database.last_transaction())?;
         Ok(Self {

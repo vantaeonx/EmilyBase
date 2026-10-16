@@ -2,6 +2,8 @@
 use super::{AccountStore, Error, Result};
 use crate::password::PasswordPool;
 use std::path::Path;
+pub(super) mod retained;
+pub use retained::with_restored_private_account_bytes_at;
 
 /// Restore a separately captured private account archive, not a whole platform.
 /// Validate the expected project and reset session scope/time before publication.

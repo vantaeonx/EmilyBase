@@ -134,3 +134,12 @@ Earlier hosted12a3e1b independently passes1801/0/44 on both complete workspace
 toolchains and all five jobs, with649 committed source hashes checked. Its58
 allocation-diagnostic cases are separate. That earlier complete CI is distinct
 from this native owner-preparation source and its targeted verification.
+
+## Subsequent private integration
+
+The [private account adapter](private-account-restore-coordination.md) now supplies
+the previously separate account preparation. Its additive guarded factory borrows
+a PreparedSourceGuard to prove the untouched original source just before reset,
+preventing ordinary tail trimming from hiding an observed pre-reset append. The
+original factory API/protocol remains available. A guard exports no descriptor and
+cannot acknowledge a preparation commit; final prepared proofs remain mandatory.

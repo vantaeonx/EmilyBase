@@ -1524,3 +1524,15 @@ same-identity copies. Late changes withhold values and preserve uncertain data.
 See [contract](prepared-owner-restore.md). Private adapters must protect application
 storage invariants; private account/session integration, complete joined restore,
 global process admission and v2 runtime adoption remain open.
+
+## Follow-up: private account restore under the original owner
+
+[ADR0160](adr/0160-private-account-owner-restore-coordination.md) adds a private
+AccountStore adapter over the actual restored database, a borrowed source proof
+before its preparation write and report-only nested coordination. One durable reset
+sets a fresh copied session scope/time and closes v5 admission while preserving
+users/verifiers/policies/historical families and original credentials/data. All
+private versions/WAL1/2, physical changes, generated models and dedicated actual
+kills have explicit coverage; final evidence is recorded in the
+[contract](private-account-restore-coordination.md). Complete joined-root restore,
+v2 startup/adoption, global process admission and production acceptance stay open.

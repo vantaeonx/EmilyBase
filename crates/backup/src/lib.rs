@@ -15,7 +15,10 @@ mod restore;
 
 pub use archive::{VerifiedBackup, decode_verified, encode, inspect_bytes};
 pub use files::{create, inspect};
-pub use owned_restore::{PreparedDatabaseOwner, with_prepared_owner_bytes_at};
+pub use owned_restore::{
+    PreparedDatabaseOwner, PreparedSourceGuard, with_guarded_prepared_owner_bytes_at,
+    with_prepared_owner_bytes_at,
+};
 pub use restore::{
     PreparedRestoreError, restore, restore_bytes, restore_bytes_at, restore_prepared,
     restore_prepared_bytes,

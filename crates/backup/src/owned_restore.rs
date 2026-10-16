@@ -121,6 +121,45 @@ pub(crate) enum Boundary {
     Worked,
 }
 
+/// Readonly proof of the original source before an intentional preparation
+/// commit. This borrows the creator's reader, never exports a descriptor or
+/// mutable database, and is valid only while the trusted factory runs.
+pub struct PreparedSourceGuard<'a> {
+    stage: &'a StagedPrivateDirectory,
+    root: &'a File,
+    parent: &'a File,
+    journal: &'a mut Journal,
+    input: &'a [u8],
+}
+impl PreparedSourceGuard<'_> {
+    /// Check the complete original bytes, physical stamp, visible WAL identity,
+    /// stage selection and private parent before writing application metadata.
+    /// After a preparation commit the source has intentionally changed, so this
+    /// proof must not be reused to acknowledge that new history.
+    pub fn check(&mut self) -> Result<()> {
+        private(self.parent)?;
+        private(self.root)?;
+        self.stage.check()?;
+        self.journal.verify(self.root, self.input)?;
+        self.stage.check()?;
+        private(self.parent)
+    }
+}
+
+/// Variant for application factories that must prove the unchanged original
+/// source immediately before their intentional commit. Keep the same supplied
+/// owner and call the borrowed guard after any readonly construction. This is
+/// trusted native coordination, not a sandbox for arbitrary factory code.
+pub fn with_guarded_prepared_owner_bytes_at<O: PreparedDatabaseOwner, T, E>(
+    bytes: &[u8],
+    parent: &File,
+    name: &str,
+    prepare: impl FnOnce(Database, &mut PreparedSourceGuard<'_>) -> std::result::Result<O, E>,
+    work: impl FnOnce(&mut O, &Report) -> T,
+) -> std::result::Result<T, PreparedRestoreError<E>> {
+    with_guarded_boundary(bytes, parent, name, prepare, work, |_| {})
+}
+
 /// Prepare an existing immutable backup through a trusted owner factory, without
 /// closing/reopening its actual database, then select one fresh private child and
 /// run readonly coordination under that same owner. Preparation may append commits;
@@ -143,6 +182,17 @@ fn with_boundary<O: PreparedDatabaseOwner, T, E>(
     parent: &File,
     name: &str,
     prepare: impl FnOnce(Database) -> std::result::Result<O, E>,
+    work: impl FnOnce(&mut O, &Report) -> T,
+    boundary: impl FnMut(Boundary),
+) -> std::result::Result<T, PreparedRestoreError<E>> {
+    with_guarded_boundary(bytes, parent, name, |db, _| prepare(db), work, boundary)
+}
+
+fn with_guarded_boundary<O: PreparedDatabaseOwner, T, E>(
+    bytes: &[u8],
+    parent: &File,
+    name: &str,
+    prepare: impl FnOnce(Database, &mut PreparedSourceGuard<'_>) -> std::result::Result<O, E>,
     work: impl FnOnce(&mut O, &Report) -> T,
     mut boundary: impl FnMut(Boundary),
 ) -> std::result::Result<T, PreparedRestoreError<E>> {
@@ -185,7 +235,17 @@ fn with_boundary<O: PreparedDatabaseOwner, T, E>(
     boundary(Boundary::Source);
     stage.check().map_err(|e| backup(e.into()))?;
     journal.verify(&root, input).map_err(backup)?;
-    let mut owner = prepare(database).map_err(PreparedRestoreError::Preparation)?;
+    let mut owner = prepare(
+        database,
+        &mut PreparedSourceGuard {
+            stage: &stage,
+            root: &root,
+            parent,
+            journal: &mut journal,
+            input,
+        },
+    )
+    .map_err(PreparedRestoreError::Preparation)?;
     owner
         .database()
         .check_directory_owner(&root)

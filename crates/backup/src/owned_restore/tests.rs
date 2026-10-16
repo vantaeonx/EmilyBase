@@ -64,6 +64,37 @@ fn prepare(db: &mut Database, value: i64) {
         .unwrap();
     tx.commit().unwrap();
 }
+
+#[test]
+fn borrowed_source_proof_cannot_acknowledge_a_later_preparation_commit() {
+    let _serial = PROCESS_TESTS.lock().unwrap();
+    for compact in [false, true] {
+        let input = temporary();
+        let output = temporary();
+        let (mut original, bytes) = source(input.path(), compact, false);
+        let before = original.committed_wal().unwrap();
+        let transaction = original.last_transaction();
+        let report = with_guarded_prepared_owner_bytes_at(
+            &bytes,
+            &File::open(output.path()).unwrap(),
+            "copy",
+            |mut database, source| -> Result<Database> {
+                source.check()?;
+                prepare(&mut database, 23);
+                assert!(source.check().is_err());
+                Ok(database)
+            },
+            |database, report| {
+                assert_eq!(database.last_transaction(), transaction + 1);
+                report.clone()
+            },
+        )
+        .unwrap();
+        assert_eq!(report.last_transaction, transaction + 1);
+        released(&output.path().join("copy"), std::process::id());
+        assert_eq!(original.committed_wal().unwrap(), before);
+    }
+}
 fn stage(parent: &Path) -> PathBuf {
     let entries = fs::read_dir(parent)
         .unwrap()
