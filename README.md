@@ -229,8 +229,10 @@ the actual open database through trusted application preparation, retaining its
 original WAL and writer through child selection and checked readonly work.
 The [private account adapter](docs/private-account-restore-coordination.md) now keeps
 that same owner while durably resetting copied sessions/time and closing v5 admission.
-A source guard refuses observed pre-reset physical changes before writing. Complete
-joined restoration and v2 runtime adoption remain open.
+A source guard refuses observed pre-reset physical changes before writing.
+[Offline joined restoration](docs/account-file-root-restore.md) now prepares data,
+accounts and files under one original locked v2 root and verifies retained physical
+readers through the final unwind. A joined CLI and v2 live startup/adoption remain open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

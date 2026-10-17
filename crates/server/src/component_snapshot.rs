@@ -61,7 +61,7 @@ impl std::fmt::Debug for AccountFileSnapshot {
 /// The physical object cap is admitted before any capture readers are retained.
 /// The copied-image cap is checked after each bounded native copy: temporary
 /// component buffers and decoded models are additional memory, not a reservation.
-/// A single common filesystem root, archive encoder and restore are separate work.
+/// Common archive/restore use separate APIs and grant no current user authority.
 pub fn capture_account_file_components(
     accounts: &mut AccountRoot,
     files: &mut [NativeFileRoot],

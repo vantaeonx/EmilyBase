@@ -189,3 +189,9 @@ prepares copied account sessions under the original database owner. Its borrowed
 source proof catches an observed pre-reset tail before ordinary WAL trimming.
 This closes that component prerequisite; complete account/file root restoration,
 v2 runtime adoption and the release acceptance boxes above remain open.
+
+[Explicit offline joined restoration](account-file-root-restore.md) subsequently
+closes the library-level common restore prerequisite. Original readers and a common
+lock span the last proof after component writers unwind. The restored v2 layout
+still requires future explicit live adoption; joined CLI and the acceptance boxes
+above remain open.

@@ -1536,3 +1536,14 @@ private versions/WAL1/2, physical changes, generated models and dedicated actual
 kills have explicit coverage; final evidence is recorded in the
 [contract](private-account-restore-coordination.md). Complete joined-root restore,
 v2 startup/adoption, global process admission and production acceptance stay open.
+
+## Follow-up: explicit offline joined account/file root restoration
+
+[ADR0161](adr/0161-offline-joined-root-restore.md) composes the retained registry,
+private account and file preparations under one original locked v2 root. All
+component writers span common selection; independent original physical readers
+keep exact tree/manifest/name proofs after component unwind. Source data/sessions
+remain unchanged; copied sessions are fresh and v5 admission closes. See the
+[contract](account-file-root-restore.md) for actual mutations, sync faults, models
+and kill boundaries. A joined CLI, v2 live startup/adoption, aggregate process
+admission, user-file authorization and production acceptance remain open.

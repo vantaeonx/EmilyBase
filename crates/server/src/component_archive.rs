@@ -1,4 +1,4 @@
-//! Canonical immutable component envelope; no publication or common restore.
+//! Canonical immutable component envelope; verification grants no service authority.
 use crate::{
     AccountBundleReport, AccountFileRootManifest, Error, MAX_ACCOUNT_BUNDLE_BYTES,
     MAX_ACCOUNT_FILE_ROOT_MANIFEST_BYTES, MAX_COMPONENT_FILE_STORES, MAX_COMPONENT_IMAGE_BYTES,

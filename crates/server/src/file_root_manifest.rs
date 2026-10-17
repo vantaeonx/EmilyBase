@@ -39,8 +39,8 @@ impl FileRootBinding {
     }
 }
 
-/// Exact copied v2 inventory. Native component capture can produce it, but no
-/// ordinary open, migration or common restore adopts the layout. Never authority.
+/// Exact v2 inventory produced by native capture or explicit offline restore.
+/// Ordinary live open/migration still refuses this layout. Never authority.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AccountFileRootManifest {
     private_projects: Vec<String>,

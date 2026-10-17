@@ -58,7 +58,8 @@ pub use registry_files::account_root::{
     restore_account_bundle_bytes,
 };
 pub use registry_files::{
-    inspect_registry_backup, restore_registry_backup, with_restored_registry_backup_bytes_at,
+    AccountFileRootReport, inspect_registry_backup, restore_account_file_archive_bytes_at,
+    restore_registry_backup, with_restored_registry_backup_bytes_at,
 };
 
 /// Pure, bounded inspection without credentials, filesystem operations or data access.
@@ -107,6 +108,8 @@ pub enum Error {
     ComponentArchiveChecksum,
     #[error("joined archive publication outcome is unknown; inspect before retrying")]
     ComponentPublicationUnknown(#[source] Box<Error>),
+    #[error("joined root restore outcome is unknown; inspect before retrying")]
+    ComponentRestoreUnknown(#[source] Box<Error>),
     #[error("prepared registry restore outcome is unknown; inspect before retrying")]
     RegistryRestoreUnknown(#[source] Box<Error>),
     #[error("native storage publication failed")]
