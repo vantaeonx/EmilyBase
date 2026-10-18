@@ -13,6 +13,8 @@ use std::process::{Command, Output, Stdio};
 static CASES: std::sync::Mutex<()> = std::sync::Mutex::new(());
 #[path = "account_file_archive/backup.rs"]
 mod backup;
+#[path = "account_file_archive/live.rs"]
+mod live;
 #[path = "account_file_archive/restore.rs"]
 mod restore;
 fn fixture(parent: &Path, empty: bool, compact: bool) -> (PathBuf, Vec<u8>, Option<String>) {

@@ -1,5 +1,5 @@
 //! Synchronous service ownership. Network admission and policies are separate.
-use super::{Contents, inspect_owned_limited, lock, metadata};
+use super::{Contents, lock, metadata};
 use crate::{CreatedProject, Error, ProjectInfo, Result};
 use emilybase_auth::accounts::{
     AccountInfo, AccountPage, AccountStore, IssuedSession, SessionPrincipal,
@@ -113,16 +113,40 @@ impl AccountRoot {
             .explain(sql, parameters)
     }
     pub fn open(path: impl AsRef<Path>, pool: PasswordPool) -> Result<Self> {
-        let owner = metadata::open_directory(path.as_ref())?;
+        Self::open_layout(path.as_ref(), pool, super::RequestedLayout::V1)
+    }
+    /// Explicit native v2 admission. Retains every declared file root alongside
+    /// account owners; does not migrate, reset sessions or grant file permission.
+    pub fn open_v2(path: impl AsRef<Path>, pool: PasswordPool) -> Result<Self> {
+        Self::open_layout(path.as_ref(), pool, super::RequestedLayout::V2)
+    }
+    fn open_layout(
+        path: &Path,
+        pool: PasswordPool,
+        layout: super::RequestedLayout,
+    ) -> Result<Self> {
+        let owner = metadata::open_directory(path)?;
         lock(&owner)?;
-        let selected = path.as_ref().canonicalize()?;
-        Self::from_owner(selected, owner, None, pool)
+        let selected = path.canonicalize()?;
+        Self::from_owner(selected, owner, None, pool, layout)
     }
     /// Open an existing v1 child relative to a trusted original private directory.
     /// Retain an owned duplicate of that parent, so caller release/parent rename
     /// cannot invalidate component descriptor paths. No new namespace, v2 layout,
     /// provisioning, migration, clock reset or file permission is implied.
     pub fn open_at(parent: &File, name: &str, pool: PasswordPool) -> Result<Self> {
+        Self::open_at_layout(parent, name, pool, super::RequestedLayout::V1)
+    }
+    /// Explicit v2 equivalent under one retained original private parent.
+    pub fn open_v2_at(parent: &File, name: &str, pool: PasswordPool) -> Result<Self> {
+        Self::open_at_layout(parent, name, pool, super::RequestedLayout::V2)
+    }
+    fn open_at_layout(
+        parent: &File,
+        name: &str,
+        pool: PasswordPool,
+        layout: super::RequestedLayout,
+    ) -> Result<Self> {
         Self::validate_leaf(name)?;
         let parent = parent.try_clone()?;
         let base = super::descriptor(&parent);
@@ -130,7 +154,7 @@ impl AccountRoot {
         let selected = base.join(name);
         let owner = metadata::open_directory(&selected)?;
         lock(&owner)?;
-        Self::from_owner(selected, owner, Some(parent), pool)
+        Self::from_owner(selected, owner, Some(parent), pool, layout)
     }
     /// Verify this original root's current selection under a supplied native
     /// private parent, without exporting an owner or rebinding any source. Finite check
@@ -170,25 +194,17 @@ impl AccountRoot {
         owner: File,
         parent: Option<File>,
         pool: PasswordPool,
+        layout: super::RequestedLayout,
     ) -> Result<Self> {
-        let state = if parent.is_some() {
-            super::inspect_owned_mode(
-                &selected,
-                &owner,
-                pool,
-                MAX_ACTIVE_PRIVATE_STORES,
-                |_, _| Ok(()),
-                true,
-            )
-        } else {
-            inspect_owned_limited(
-                &selected,
-                &owner,
-                pool,
-                MAX_ACTIVE_PRIVATE_STORES,
-                |_, _| Ok(()),
-            )
-        }?;
+        let state = super::inspect_owned_layout(
+            &selected,
+            &owner,
+            pool,
+            MAX_ACTIVE_PRIVATE_STORES,
+            |_, _| Ok(()),
+            parent.is_some(),
+            layout,
+        )?;
         // Move the exact inspected owners; do not reopen after validation.
         let result = Self {
             selected,
@@ -197,7 +213,12 @@ impl AccountRoot {
             parent,
         };
         result.ready()?;
-        super::checkpoint("account_root_service_opened");
+        super::checkpoint(if matches!(layout, super::RequestedLayout::V2) {
+            "account_file_root_service_opened"
+        } else {
+            "account_root_service_opened"
+        });
+        result.ready()?;
         Ok(result)
     }
     fn ready(&self) -> Result<()> {

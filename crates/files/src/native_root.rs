@@ -395,6 +395,18 @@ impl NativeFileRoot {
             inventory,
         })
     }
+    /// Finite readonly original directory/scope/WAL selection check. Does not
+    /// rehash payloads or export owners; full native operations validate state.
+    pub fn check_selection(&self) -> Result<()> {
+        if self.store.poisoned {
+            return Err(Error::Poisoned);
+        }
+        self.selection.check()?;
+        self.store
+            .database
+            .check_directory_at(&self.selection.root, "metadata")?;
+        Ok(())
+    }
     /// Readonly destination exclusion. A foreign destination refusal does not
     /// poison a healthy source; original validation errors still do.
     pub fn outside_directory(

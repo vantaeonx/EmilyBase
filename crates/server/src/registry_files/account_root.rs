@@ -19,6 +19,8 @@ use std::path::{Path, PathBuf};
 
 const MANIFEST_LIMIT: usize = 8192;
 const PREFIX: &str = ".emilybase-account-restore-";
+mod layout;
+use layout::{FileOwners, RequestedLayout, RootLayout};
 mod initialize;
 pub use initialize::initialize_account_root;
 mod live;
@@ -180,7 +182,7 @@ fn check_manifest(root: &Path, file: &File, encoded: &[u8]) -> Result<()> {
     let selected = fs::symlink_metadata(root.join("root.json"))?;
     let owned = file.metadata()?;
     if (selected.dev(), selected.ino()) != (owned.dev(), owned.ino())
-        || read_bounded(&root.join("root.json"), MANIFEST_LIMIT)? != encoded
+        || read_bounded(&root.join("root.json"), MANIFEST_LIMIT.max(encoded.len()))? != encoded
     {
         return Err(Error::BundleRoot("prepared manifest changed"));
     }
@@ -232,8 +234,9 @@ struct Contents {
     private_owner: File,
     manifest_owner: File,
     encoded: Vec<u8>,
-    manifest: AccountBundleRootManifest,
+    manifest: RootLayout,
     ids: BTreeSet<String>,
+    files: FileOwners,
 }
 // Shared retained-owner checks also run at the final initialization/restore
 // boundary. Never replace these with a manifest-only final comparison.
@@ -248,6 +251,7 @@ fn check_contents(path: &Path, owner: &File, contents: &Contents) -> Result<()> 
         manifest: &contents.manifest,
         ids: &contents.ids,
         registry: contents.registry.directory_identity()?,
+        files: &contents.files,
     }
     .check()?;
     contents.registry.check_registry_at(owner)?;
@@ -263,9 +267,10 @@ struct Structure<'a> {
     account_owners: &'a [File],
     manifest_owner: &'a File,
     encoded: &'a [u8],
-    manifest: &'a AccountBundleRootManifest,
+    manifest: &'a RootLayout,
     ids: &'a BTreeSet<String>,
     registry: (u64, u64),
+    files: &'a FileOwners,
 }
 impl Structure<'_> {
     fn check_wals(&self) -> Result<()> {
@@ -273,7 +278,7 @@ impl Structure<'_> {
         for id in self.ids {
             metadata::file(&root.join("registry").join(id).join("data/redo.wal"))?;
         }
-        for id in &self.manifest.private_projects {
+        for id in self.manifest.private_projects() {
             metadata::file(&root.join("private").join(id).join("redo.wal"))?;
         }
         Ok(())
@@ -281,23 +286,24 @@ impl Structure<'_> {
     fn check(&self) -> Result<()> {
         metadata::owned_directory(self.path, self.owner)?;
         let root = descriptor(self.owner);
-        if names(&root)? != ["private".into(), "registry".into(), "root.json".into()].into()
+        if names(&root)? != self.manifest.entries()
             || names(&root.join("registry"))? != *self.ids
             || names(&root.join("private"))?
-                != self.manifest.private_projects.iter().cloned().collect()
+                != self.manifest.private_projects().iter().cloned().collect()
         {
             return Err(Error::BundleRoot("service root inventory changed"));
         }
         metadata::owned_directory(&root.join("private"), self.private_owner)?;
         for (id, owner) in self
             .manifest
-            .private_projects
+            .private_projects()
             .iter()
             .zip(self.account_owners)
         {
             metadata::owned_directory(&root.join("private").join(id), owner)?;
         }
         check_manifest(&root, self.manifest_owner, self.encoded)?;
+        self.files.check(self.owner, self.manifest)?;
         let registry = rustix::fs::statat(
             self.owner,
             "registry",
@@ -338,12 +344,31 @@ fn inspect_owned_mode(
     owner: &File,
     pool: PasswordPool,
     private_limit: usize,
+    captured: impl FnMut(&str, &[u8]) -> Result<()>,
+    relative_registry: bool,
+) -> Result<State> {
+    inspect_owned_layout(
+        path,
+        owner,
+        pool,
+        private_limit,
+        captured,
+        relative_registry,
+        RequestedLayout::V1,
+    )
+}
+fn inspect_owned_layout(
+    path: &Path,
+    owner: &File,
+    pool: PasswordPool,
+    private_limit: usize,
     mut captured: impl FnMut(&str, &[u8]) -> Result<()>,
     relative_registry: bool,
+    requested: RequestedLayout,
 ) -> Result<State> {
     metadata::owned_directory(path, owner)?;
     let root = descriptor(owner);
-    let expected_root = BTreeSet::from(["private".into(), "registry".into(), "root.json".into()]);
+    let expected_root = requested.entries();
     if names(&root)? != expected_root {
         return Err(Error::BundleRoot("root entries"));
     }
@@ -357,15 +382,19 @@ fn inspect_owned_mode(
     )
     .map_err(std::io::Error::from)?;
     let mut manifest_owner: File = fd.into();
-    let encoded = super::read_file(&mut manifest_owner, MANIFEST_LIMIT)?;
-    let manifest = inspect_account_bundle_root_manifest_bytes(&encoded)?;
+    let encoded = super::read_file(&mut manifest_owner, requested.limit())?;
+    let manifest = RootLayout::parse(&encoded, requested)?;
     // Service admission occurs before opening any database or registry owner.
-    if manifest.private_projects.len() > private_limit {
+    if manifest.private_projects().len() > private_limit
+        || manifest
+            .v2()
+            .is_some_and(|m| m.file_stores().len() > crate::MAX_COMPONENT_FILE_STORES)
+    {
         return Err(Error::Limit);
     }
     let private = root.join("private");
     let private_owner = metadata::open_directory(&private)?;
-    let roster: BTreeSet<_> = manifest.private_projects.iter().cloned().collect();
+    let roster: BTreeSet<_> = manifest.private_projects().iter().cloned().collect();
     if names(&private)? != roster {
         return Err(Error::BundleRoot("private entries"));
     }
@@ -381,13 +410,17 @@ fn inspect_owned_mode(
     }
     let mut accounts = Vec::with_capacity(roster.len());
     let mut account_owners = Vec::with_capacity(roster.len());
-    for project in &manifest.private_projects {
+    for project in manifest.private_projects() {
         account_owners.push(metadata::open_directory(&private.join(project))?);
         accounts.push(AccountStore::open(
             private.join(project),
             project,
             pool.clone(),
         )?);
+    }
+    let mut files = FileOwners::open(owner, &manifest)?;
+    if manifest.v2().is_some() {
+        checkpoint("account_file_root_components_opened");
     }
     checkpoint("bundle_restore_owners_locked");
     // Every private owner exists before the first data prefix; the registry
@@ -407,7 +440,7 @@ fn inspect_owned_mode(
             if !matches!(inventory.private_version, 3..=5)
                 || inventory
                     .clock_floor
-                    .is_none_or(|floor| floor < manifest.reset_at)
+                    .is_none_or(|floor| floor < manifest.reset_at())
                 || !identities.insert(inventory.database.database_id)
             {
                 return Err(Error::BundleRoot(
@@ -421,8 +454,10 @@ fn inspect_owned_mode(
                 inventory,
             });
         }
+        files.validate(&mut identities)?;
         checkpoint("bundle_restore_inventory_validated");
-        for (project, owner) in manifest.private_projects.iter().zip(&account_owners) {
+        files.check(owner, &manifest)?;
+        for (project, owner) in manifest.private_projects().iter().zip(&account_owners) {
             metadata::owned_directory(&private.join(project), owner)?;
         }
         metadata::owned_directory(path, owner)?;
@@ -431,7 +466,7 @@ fn inspect_owned_mode(
         if names(&root)? != expected_root
             || names(&private)? != roster
             || names(&root.join("registry"))? != ids
-            || read_bounded(&root.join("root.json"), MANIFEST_LIMIT)? != encoded
+            || read_bounded(&root.join("root.json"), requested.limit())? != encoded
         {
             return Err(Error::BundleRoot("root inventory changed"));
         }
@@ -442,7 +477,7 @@ fn inspect_owned_mode(
         report: AccountBundleRootReport {
             registry: crate::inspect_registry_backup_bytes(&image)?,
             private_accounts: reports,
-            reset_at: manifest.reset_at,
+            reset_at: manifest.reset_at(),
         },
         registry: image,
         private_hashes: hashes,
@@ -455,6 +490,7 @@ fn inspect_owned_mode(
             encoded,
             manifest,
             ids,
+            files,
         },
     })
 }

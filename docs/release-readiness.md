@@ -206,3 +206,10 @@ native operator create/verify/restore path. Original source capture spans public
 selected archive identity spans final source unwind. Ancestry preflight refuses output
 inside original source roots before staging. File scopes remain explicit and bounded;
 v2 live adoption and all unfulfilled release acceptance boxes remain open.
+
+The [explicit v2 library opener](explicit-v2-account-root.md) subsequently admits
+retained native file owners with exact scope/identity checks and preserves normal
+account/data operations across reopen. Actual TCP exercises explicitly constructed
+library routing; default server-binary startup remains v1. Complete v2 rebackup and
+explicit binary configuration remain open; old capture paths refuse v2 rather than
+silently drop its file bindings. The release acceptance boxes remain open.

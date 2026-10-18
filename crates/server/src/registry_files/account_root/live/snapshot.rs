@@ -34,11 +34,17 @@ impl AccountRoot {
     /// Copied declared private roster for trusted native maintenance preflight.
     /// This metadata neither discovers file roots nor authorizes a user.
     pub fn private_projects(&self) -> Result<Vec<String>> {
-        Ok(self.snapshot_manifest()?.private_projects)
+        self.ready()?;
+        Ok(self.contents.manifest.private_projects().to_vec())
+    }
+    /// Copied native layout metadata only, not current user/file authority.
+    pub fn file_manifest(&self) -> Result<Option<crate::AccountFileRootManifest>> {
+        self.ready()?;
+        Ok(self.contents.manifest.v2().cloned())
     }
     pub(crate) fn snapshot_manifest(&self) -> Result<AccountBundleRootManifest> {
         self.ready()?;
-        Ok(self.contents.manifest.clone())
+        self.contents.manifest.v1()
     }
 
     /// Trusted native readonly capture under original root/private/public owners.
@@ -54,6 +60,7 @@ impl AccountRoot {
         work: impl FnOnce(AccountRootSnapshot) -> Result<T>,
     ) -> Result<T> {
         self.ready()?;
+        let manifest = self.contents.manifest.v1()?;
         let contents = &mut self.contents;
         let guard = Structure {
             path: &self.selected,
@@ -65,9 +72,9 @@ impl AccountRoot {
             manifest: &contents.manifest,
             ids: &contents.ids,
             registry: contents.registry.directory_identity()?,
+            files: &contents.files,
         };
         let parent = self.parent.as_ref();
-        let manifest = contents.manifest.clone();
         let result = contents.registry.capture_account_bundle_with(
             &mut contents.accounts,
             |image, accounts| {

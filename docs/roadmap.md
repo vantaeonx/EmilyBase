@@ -1571,3 +1571,15 @@ documents complete backup/verify/offline restore, true writer/reader lifetimes,
 late uncertainty, sync failures, actual kills and binary confidentiality checks.
 Explicit live v2 adoption, current user file authorization, aggregate admission,
 encrypted backups, deployment/upgrade drills and production acceptance remain open.
+
+## Follow-up: explicit native v2 account/file root opening
+
+[ADR0164](adr/0164-explicit-v2-account-root-admission.md) adds explicit library
+opening and count-only account-file-root-info. Original native file owners, exact
+file/manifest rosters and cross-component IDs are verified under bounded active
+admission. Existing private/public operations and session-preserving reopen work;
+actual TCP verifies explicit library routing and graceful restart. V1 entry points
+remain v1-only and old capture/backup refuses v2 before staging. The
+[contract](explicit-v2-account-root.md) records source changes, actual kills, models
+and binary behavior. Complete internally owned v2 rebackup, explicit server-binary
+configuration, user-file policies and production acceptance remain open.

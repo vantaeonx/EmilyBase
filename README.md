@@ -237,7 +237,10 @@ now retains the private input file through the last locked proof and emits only 
 The [joined backup CLI](docs/account-file-backup-cli.md) now creates that archive
 inside original component capture, refuses destinations within sources before staging
 and retains the selected archive through final source proofs. File scopes are explicit.
-Explicit v2 live startup/adoption remains open.
+The [explicit v2 library opener](docs/explicit-v2-account-root.md) now retains declared
+native file owners and supports account/data operations without resetting sessions.
+Default v1/binary startup still refuses v2. Complete v2 rebackup and explicit binary
+configuration remain open; old capture paths refuse rather than omit file bindings.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

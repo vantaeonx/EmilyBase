@@ -4,6 +4,7 @@ use emilybase_auth::accounts::IssuedSession;
 use std::io::Write;
 mod backup;
 mod input;
+mod live;
 
 struct Source {
     root: Restored,

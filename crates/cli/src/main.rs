@@ -30,6 +30,8 @@ enum Command {
     AccountFileRosterCheck,
     /// Readonly private joined-archive verification; emits counts, never contents.
     AccountFileVerify { path: PathBuf },
+    /// Explicitly open an existing v2 account/file root; emit private counts only.
+    AccountFileRootInfo { path: PathBuf },
     /// Capture original native account/file owners into one private joined archive.
     AccountFileBackup(account_files::BackupArguments),
     /// Restore a private joined archive to one fresh offline v2 root.
@@ -308,6 +310,18 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::AccountFileRootInfo { path } => {
+            let root = emilybase_server::AccountRoot::open_v2(
+                path,
+                emilybase_auth::password::PasswordPool::new(1)?,
+            )?;
+            let manifest = root.file_manifest()?.ok_or("v2 manifest required")?;
+            write_operator_metadata(&serde_json::json!({
+                "root_format":emilybase_server::ACCOUNT_FILE_ROOT_MANIFEST_VERSION,
+                "projects":root.projects()?.len(),"private_projects":manifest.private_projects().len(),
+                "file_stores":manifest.file_stores().len(),"reset_at":manifest.reset_at().to_string()
+            }))?;
+        }
         Command::AccountFileBackup(arguments) => account_files::backup(arguments)?,
         Command::AccountFileRestore {
             archive,
