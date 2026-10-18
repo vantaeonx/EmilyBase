@@ -2,6 +2,7 @@ use super::*;
 use crate::{AccountFileRootReport, restore_account_file_archive_bytes_at};
 use emilybase_auth::accounts::IssuedSession;
 use std::io::Write;
+mod input;
 
 struct Source {
     root: Restored,

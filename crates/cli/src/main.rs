@@ -29,6 +29,14 @@ enum Command {
     AccountFileRosterCheck,
     /// Readonly private joined-archive verification; emits counts, never contents.
     AccountFileVerify { path: PathBuf },
+    /// Restore a private joined archive to one fresh offline v2 root.
+    AccountFileRestore {
+        archive: PathBuf,
+        target: PathBuf,
+        /// Trusted operator time; copied sessions get a fresh scope.
+        #[arg(long)]
+        time: u64,
+    },
     /// Publish redirected binary stdin through a retained native common root.
     FileRootPut(files::PutArguments),
     /// Observe one native reference without printing its name or owner.
@@ -297,6 +305,27 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::AccountFileRestore {
+            archive,
+            target,
+            time,
+        } => {
+            let value = emilybase_server::restore_account_file_archive(
+                archive,
+                target,
+                emilybase_auth::password::PasswordPool::new(1)?,
+                time,
+            )?;
+            write_operator_metadata(&serde_json::json!({
+                "root_format":emilybase_server::ACCOUNT_FILE_ROOT_MANIFEST_VERSION,
+                "projects":value.registry.projects.len(),
+                "private_projects":value.private_accounts.len(),
+                "file_stores":value.files.len(),
+                "references":value.files.iter().map(|file|file.references()).sum::<usize>(),
+                "physical_objects":value.files.iter().map(|file|file.objects().objects).sum::<usize>(),
+                "reset_at":value.manifest.reset_at().to_string()
+            }))?;
+        }
         Command::AccountFileVerify { path } => {
             let value = emilybase_server::inspect_account_file_archive(path)?;
             write_operator_metadata(&serde_json::json!({

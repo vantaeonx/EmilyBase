@@ -232,7 +232,9 @@ that same owner while durably resetting copied sessions/time and closing v5 admi
 A source guard refuses observed pre-reset physical changes before writing.
 [Offline joined restoration](docs/account-file-root-restore.md) now prepares data,
 accounts and files under one original locked v2 root and verifies retained physical
-readers through the final unwind. A joined CLI and v2 live startup/adoption remain open.
+readers through the final unwind. The [joined restore CLI](docs/account-file-restore-cli.md)
+now retains the private input file through the last locked proof and emits only counts.
+Explicit v2 live startup/adoption remains open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

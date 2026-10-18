@@ -58,8 +58,9 @@ pub use registry_files::account_root::{
     restore_account_bundle_bytes,
 };
 pub use registry_files::{
-    AccountFileRootReport, inspect_registry_backup, restore_account_file_archive_bytes_at,
-    restore_registry_backup, with_restored_registry_backup_bytes_at,
+    AccountFileRootReport, inspect_registry_backup, restore_account_file_archive,
+    restore_account_file_archive_bytes_at, restore_registry_backup,
+    with_restored_registry_backup_bytes_at,
 };
 
 /// Pure, bounded inspection without credentials, filesystem operations or data access.

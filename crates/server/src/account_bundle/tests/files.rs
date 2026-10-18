@@ -451,7 +451,13 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if action == "joined-restore" {
+    if action == "joined-restore-path" {
+        let report =
+            crate::restore_account_file_archive(source, target, PasswordPool::new(1).unwrap(), 40)
+                .unwrap();
+        assert_eq!(report.manifest.reset_at(), 40);
+        durability::checkpoint("joined_restore_path_ack");
+    } else if action == "joined-restore" {
         let parent = File::open(target.parent().unwrap()).unwrap();
         let report = crate::restore_account_file_archive_bytes_at(
             &fs::read(source).unwrap(),

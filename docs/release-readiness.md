@@ -195,3 +195,8 @@ closes the library-level common restore prerequisite. Original readers and a com
 lock span the last proof after component writers unwind. The restored v2 layout
 still requires future explicit live adoption; joined CLI and the acceptance boxes
 above remain open.
+
+The [joined restore CLI](account-file-restore-cli.md) subsequently supplies a path
+from a retained private archive to an offline v2 copy, with source acceptance inside
+the final common lock. It emits bounded counts only and preserves copies on output
+failure. Explicit v2 live adoption and the release acceptance boxes remain open.

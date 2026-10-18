@@ -11,6 +11,8 @@ use std::os::unix::fs::{PermissionsExt, symlink};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 static CASES: std::sync::Mutex<()> = std::sync::Mutex::new(());
+#[path = "account_file_archive/restore.rs"]
+mod restore;
 fn fixture(parent: &Path, empty: bool, compact: bool) -> (PathBuf, Vec<u8>, Option<String>) {
     fs::set_permissions(parent, fs::Permissions::from_mode(0o700)).unwrap();
     let root = parent.join("root");

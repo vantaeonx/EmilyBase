@@ -8,7 +8,9 @@ use std::path::Path;
 
 pub(crate) mod account_root;
 pub(crate) mod joined;
-pub use joined::{AccountFileRootReport, restore_account_file_archive_bytes_at};
+pub use joined::{
+    AccountFileRootReport, restore_account_file_archive, restore_account_file_archive_bytes_at,
+};
 mod coordinated;
 pub use coordinated::with_restored_registry_backup_bytes_at;
 mod pending;

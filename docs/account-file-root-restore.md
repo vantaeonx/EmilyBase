@@ -113,3 +113,10 @@ the reused test worker after the API returns, not inside the production function
 
 Byte parsers/dependencies are unchanged. No fresh sanitizer, SDK, container, deployment,
 v2 live service or production-readiness claim is implied.
+
+## Subsequent operator path
+
+The [retained-file path API and CLI](account-file-restore-cli.md) now supply the
+previously separate operator entry point. Source confirmation occurs inside the
+last common locked proof; the byte API keeps its existing immutable-input contract.
+Explicit live v2 startup/adoption remains open.

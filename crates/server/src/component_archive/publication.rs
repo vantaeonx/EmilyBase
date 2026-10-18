@@ -75,13 +75,13 @@ impl std::fmt::Debug for AccountFileArchiveReport {
     }
 }
 
-struct Target {
+pub(super) struct Target {
     parent: File,
     path: PathBuf,
     name: OsString,
 }
 impl Target {
-    fn new(path: &Path) -> Result<Self> {
+    pub(super) fn new(path: &Path) -> Result<Self> {
         if path.as_os_str().as_bytes().len() > 4096 {
             return Err(Error::Path);
         }
@@ -104,7 +104,7 @@ impl Target {
     fn check(&self) -> Result<()> {
         metadata::owned_directory(&self.path, &self.parent)
     }
-    fn visible(&self, expected: &Metadata) -> Result<()> {
+    pub(super) fn visible(&self, expected: &Metadata) -> Result<()> {
         self.check()?;
         let visible = rustix::fs::statat(&self.parent, &self.name, AtFlags::SYMLINK_NOFOLLOW)
             .map_err(io::Error::from)?;
@@ -117,7 +117,7 @@ impl Target {
         }
         Ok(())
     }
-    fn open(&self) -> Result<File> {
+    pub(super) fn open(&self) -> Result<File> {
         let fd = rustix::fs::openat(
             &self.parent,
             &self.name,
@@ -128,7 +128,7 @@ impl Target {
         Ok(fd.into())
     }
 }
-fn private(file: &File) -> Result<Metadata> {
+pub(super) fn private(file: &File) -> Result<Metadata> {
     let m = file.metadata()?;
     if !m.is_file() || !matches!(m.mode() & 0o7777, 0o600 | 0o400) || m.nlink() != 1 {
         return Err(Error::Path);
@@ -138,7 +138,7 @@ fn private(file: &File) -> Result<Metadata> {
     }
     Ok(m)
 }
-fn unchanged(file: &File, before: &Metadata) -> Result<()> {
+pub(super) fn unchanged(file: &File, before: &Metadata) -> Result<()> {
     let m = private(file)?;
     let key = |m: &Metadata| {
         (
@@ -292,7 +292,7 @@ pub fn inspect_account_file_archive(path: impl AsRef<Path>) -> Result<AccountFil
     target.visible(&before)?;
     Ok(report)
 }
-fn eof(reader: &mut impl Read) -> Result<()> {
+pub(super) fn eof(reader: &mut impl Read) -> Result<()> {
     let mut probe = [0; 1];
     loop {
         match reader.read(&mut probe) {
@@ -311,7 +311,7 @@ fn sync(file: &File, _point: &'static str) -> Result<()> {
     crate::durability::fail(&format!("{_point}_after"))?;
     Ok(())
 }
-fn checkpoint(_point: &str) {
+pub(super) fn checkpoint(_point: &str) {
     #[cfg(test)]
     crate::durability::checkpoint(_point);
 }

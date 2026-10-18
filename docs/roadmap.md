@@ -1547,3 +1547,14 @@ remain unchanged; copied sessions are fresh and v5 admission closes. See the
 [contract](account-file-root-restore.md) for actual mutations, sync faults, models
 and kill boundaries. A joined CLI, v2 live startup/adoption, aggregate process
 admission, user-file authorization and production acceptance remain open.
+
+## Follow-up: retained source-file restoration and operator CLI
+
+[ADR0162](adr/0162-retained-joined-input-and-restore-cli.md) adds the path API and
+account-file-restore with explicit trusted time and redacted count output. Original
+source parent/file/bytes are checked inside preparation and the last common locked
+proof; late changes withhold a selected receipt. Existing targets and changed input
+are preserved. See the [operator contract](account-file-restore-cli.md) for actual
+source mutations/kills and binary type/privacy/output/time cases. Explicit live v2
+adoption, user-file authorization, aggregate admission and production acceptance
+remain open.

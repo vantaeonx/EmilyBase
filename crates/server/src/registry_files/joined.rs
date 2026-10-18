@@ -10,7 +10,9 @@ use emilybase_storage::{PublishedPrivateDirectory, StagedPrivateDirectory};
 use rustix::fs::{AtFlags, Mode, OFlags};
 use std::fs::{File, Metadata};
 use std::io::{Read, Seek, SeekFrom, Write};
+use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::MetadataExt;
+use std::path::Path;
 mod tree;
 
 /// Copied restored inventory, not a service owner or current user permission.
@@ -76,7 +78,7 @@ fn roster(parent: &File, expected: &[&str]) -> Result<()> {
     }
     Ok(())
 }
-struct Restore<'v, 'image> {
+struct Restore<'v, 'image, 'source> {
     view: &'v VerifiedAccountFileArchive<'image>,
     bundle: account_bundle::DecodedBundle<'v>,
     parent: &'v File,
@@ -96,8 +98,9 @@ struct Restore<'v, 'image> {
     now: u64,
     accounts: Vec<BundledAccountReport>,
     file_reports: Vec<FileArchiveReport>,
+    confirm_input: &'source mut dyn FnMut() -> Result<()>,
 }
-impl Restore<'_, '_> {
+impl Restore<'_, '_, '_> {
     fn scope(&mut self) -> Result<()> {
         private(self.parent)?;
         private(&self.root)?;
@@ -243,10 +246,39 @@ impl Restore<'_, '_> {
         Ok(())
     }
     fn check(&mut self) -> Result<()> {
+        (self.confirm_input)()?;
         self.scope()?;
         self.proof.as_mut().ok_or(Error::Path)?.check()?;
-        self.scope()
+        self.scope()?;
+        (self.confirm_input)()
     }
+}
+
+/// Retain the actual bounded private source file through preparation and the
+/// last common locked proof. Source bytes/names/stamps must remain unchanged.
+/// The original destination parent anchors native authority across moves.
+/// A successful offline copy still requires future explicit v2 live adoption.
+pub fn restore_account_file_archive(
+    archive: impl AsRef<Path>,
+    destination: impl AsRef<Path>,
+    pool: PasswordPool,
+    now: u64,
+) -> Result<AccountFileRootReport> {
+    if now > i64::MAX as u64 {
+        return Err(Error::BundleRoot("trusted timestamp"));
+    }
+    let destination = destination.as_ref();
+    if destination.as_os_str().as_bytes().len() > 4096 {
+        return Err(Error::Path);
+    }
+    let name = destination
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or(Error::Path)?;
+    let parent = crate::metadata::open_directory(super::parent(destination))?;
+    crate::component_archive::input::with_retained(archive.as_ref(), |bytes, confirm| {
+        restore_checked(bytes, &parent, name, pool, now, confirm)
+    })
 }
 
 /// Verify a complete sensitive joined archive, prepare all components under one
@@ -260,6 +292,17 @@ pub fn restore_account_file_archive_bytes_at(
     name: &str,
     pool: PasswordPool,
     now: u64,
+) -> Result<AccountFileRootReport> {
+    restore_checked(bytes, parent, name, pool, now, &mut || Ok(()))
+}
+
+fn restore_checked(
+    bytes: &[u8],
+    parent: &File,
+    name: &str,
+    pool: PasswordPool,
+    now: u64,
+    confirm_input: &mut dyn FnMut() -> Result<()>,
 ) -> Result<AccountFileRootReport> {
     if now > i64::MAX as u64 {
         return Err(Error::BundleRoot("trusted timestamp"));
@@ -281,6 +324,8 @@ pub fn restore_account_file_archive_bytes_at(
         return Err(Error::Path);
     }
     private(parent)?;
+    confirm_input()?;
+    checkpoint("joined_restore_input_confirmed");
     let stage = StagedPrivateDirectory::at(parent, name)?;
     let root = stage.directory().try_clone()?;
     root.try_lock().map_err(|e| match e {
@@ -321,6 +366,7 @@ pub fn restore_account_file_archive_bytes_at(
         now,
         accounts: Vec::new(),
         file_reports: Vec::new(),
+        confirm_input,
     };
     let registry = restore.bundle.registry;
     let owner = restore.root.try_clone()?;
