@@ -36,3 +36,7 @@ __pycache__/
 .emilybase-objects
 .emilybase-create-*
 .emilybase-directory-*
+/backups/
+/copies/
+/native-files/
+*.account-file-archive

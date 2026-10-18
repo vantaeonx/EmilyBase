@@ -1558,3 +1558,16 @@ are preserved. See the [operator contract](account-file-restore-cli.md) for actu
 source mutations/kills and binary type/privacy/output/time cases. Explicit live v2
 adoption, user-file authorization, aggregate admission and production acceptance
 remain open.
+
+## Follow-up: coordinated joined backup and complete operator cycle
+
+[ADR0163](adr/0163-coordinated-joined-backup-cli.md) publishes inside original
+component capture and retains the selected archive through final source checks.
+Independent readonly native ancestry guards refuse source-contained output before
+staging and repeat bounded comparisons during publication. CLI account-file-backup
+requires explicit unique file scopes with declared private membership; arbitrary
+directories are never adopted. The [operator contract](account-file-backup-cli.md)
+documents complete backup/verify/offline restore, true writer/reader lifetimes,
+late uncertainty, sync failures, actual kills and binary confidentiality checks.
+Explicit live v2 adoption, current user file authorization, aggregate admission,
+encrypted backups, deployment/upgrade drills and production acceptance remain open.

@@ -16,7 +16,7 @@ for production. A crate version or successful build alone is not a published rel
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
 | Files | Native objects/archives; own-WAL references, CAS/quota, common native root creation, paired backup/restore CLI and bounded account/file component capture | Common runtime adoption, user file HTTP/policies, reclamation and signed URLs |
-| Backup | Verified database/registry/private-root copies; native paired archives, joint capture, joined format and private no-replace archive publication/inspection | Common original-owner account/file restore, encrypted/incremental backup and upgrade drills |
+| Backup | Verified database/registry/private-root copies; native paired and joined archives, coordinated backup and offline v2 restore CLI | Explicit live v2 adoption, encrypted/incremental backup and upgrade drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
 | Dashboard | No released administrative web interface | React/TypeScript interface backed by real protected APIs |
@@ -200,3 +200,9 @@ The [joined restore CLI](account-file-restore-cli.md) subsequently supplies a pa
 from a retained private archive to an offline v2 copy, with source acceptance inside
 the final common lock. It emits bounded counts only and preserves copies on output
 failure. Explicit v2 live adoption and the release acceptance boxes remain open.
+
+The [coordinated backup CLI](account-file-backup-cli.md) subsequently completes the
+native operator create/verify/restore path. Original source capture spans publication;
+selected archive identity spans final source unwind. Ancestry preflight refuses output
+inside original source roots before staging. File scopes remain explicit and bounded;
+v2 live adoption and all unfulfilled release acceptance boxes remain open.

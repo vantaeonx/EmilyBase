@@ -5,6 +5,7 @@ use clap::{Parser, Subcommand};
 use emilybase_catalog::{Key, Row, Schema};
 use emilybase_database::{DATABASE_MARKER, Database};
 use emilybase_storage::{Error, FORMAT_VERSION, PAGE_SIZE, Page, Pager, SlotId};
+mod account_files;
 mod admission;
 mod files;
 mod objects;
@@ -29,6 +30,8 @@ enum Command {
     AccountFileRosterCheck,
     /// Readonly private joined-archive verification; emits counts, never contents.
     AccountFileVerify { path: PathBuf },
+    /// Capture original native account/file owners into one private joined archive.
+    AccountFileBackup(account_files::BackupArguments),
     /// Restore a private joined archive to one fresh offline v2 root.
     AccountFileRestore {
         archive: PathBuf,
@@ -305,6 +308,7 @@ fn main() -> ExitCode {
 
 fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
     match command {
+        Command::AccountFileBackup(arguments) => account_files::backup(arguments)?,
         Command::AccountFileRestore {
             archive,
             target,
@@ -328,15 +332,7 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
         }
         Command::AccountFileVerify { path } => {
             let value = emilybase_server::inspect_account_file_archive(path)?;
-            write_operator_metadata(&serde_json::json!({
-                "format":emilybase_server::ACCOUNT_FILE_ARCHIVE_VERSION,
-                "projects":value.accounts().registry.projects.len(),
-                "private_projects":value.manifest().private_projects().len(),
-                "file_stores":value.manifest().file_stores().len(),
-                "references":value.references(),"physical_objects":value.physical_objects(),
-                "copied_bytes":value.copied_bytes(),"archive_bytes":value.encoded_bytes(),
-                "reset_at":value.manifest().reset_at().to_string()
-            }))?;
+            account_files::report(&value)?;
         }
         Command::AccountFileRosterCheck => {
             use std::io::IsTerminal;

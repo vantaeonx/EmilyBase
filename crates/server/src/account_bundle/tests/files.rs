@@ -481,7 +481,7 @@ fn publication_worker() {
         drop(parent);
         root.projects().unwrap();
         durability::checkpoint("account_root_at_read");
-    } else if action == "joined-publish" {
+    } else if matches!(action.as_str(), "joined-publish" | "joined-backup") {
         let mut root = crate::AccountRoot::open(&source, PasswordPool::new(1).unwrap()).unwrap();
         let file_parent = File::open(source.parent().unwrap().join("native-files")).unwrap();
         let mut files = root
@@ -494,10 +494,18 @@ fn publication_worker() {
                     .unwrap()
             })
             .collect::<Vec<_>>();
-        let snapshot = crate::capture_account_file_components(&mut root, &mut files).unwrap();
-        let report = crate::publish_account_file_archive(&snapshot, &target).unwrap();
+        let report = if action == "joined-backup" {
+            crate::backup_account_file_components(&mut root, &mut files, &target).unwrap()
+        } else {
+            let snapshot = crate::capture_account_file_components(&mut root, &mut files).unwrap();
+            crate::publish_account_file_archive(&snapshot, &target).unwrap()
+        };
         assert!(report.encoded_bytes() > 128);
-        durability::checkpoint("joined_archive_returned");
+        durability::checkpoint(if action == "joined-backup" {
+            "joined_backup_ack"
+        } else {
+            "joined_archive_returned"
+        });
     } else if action == "components-capture" {
         let parent = File::open(source.parent().unwrap()).unwrap();
         parent.try_lock().unwrap();

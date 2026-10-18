@@ -76,7 +76,7 @@ impl std::fmt::Debug for AccountFileArchiveReport {
 }
 
 pub(super) struct Target {
-    parent: File,
+    pub(super) parent: File,
     path: PathBuf,
     name: OsString,
 }
@@ -160,13 +160,13 @@ pub(super) fn unchanged(file: &File, before: &Metadata) -> Result<()> {
 struct Guarded<'a> {
     reader: AccountFileArchiveReader<'a>,
     target: &'a Target,
+    outside: &'a [emilybase_storage::OutsideDirectoryGuard],
     started: bool,
     eof: bool,
 }
 impl Guarded<'_> {
     fn check(&self) -> io::Result<()> {
-        self.target
-            .check()
+        check_target(self.target, self.outside)
             .map_err(|_| io::Error::other("private archive containing directory changed"))
     }
 }
@@ -207,16 +207,50 @@ pub fn publish_account_file_archive(
     path: impl AsRef<Path>,
 ) -> Result<AccountFileArchiveReport> {
     let target = Target::new(path.as_ref())?;
+    Ok(publish_retained(snapshot, &target, &[])?.report)
+}
+pub(super) struct RetainedArchive {
+    file: File,
+    before: Metadata,
+    pub(super) report: AccountFileArchiveReport,
+}
+impl RetainedArchive {
+    pub(super) fn check(
+        &self,
+        target: &Target,
+        outside: &[emilybase_storage::OutsideDirectoryGuard],
+    ) -> Result<()> {
+        check_target(target, outside)?;
+        unchanged(&self.file, &self.before)?;
+        target.visible(&self.before)
+    }
+}
+pub(super) fn check_target(
+    target: &Target,
+    outside: &[emilybase_storage::OutsideDirectoryGuard],
+) -> Result<()> {
+    target.check()?;
+    for guard in outside {
+        guard.check()?;
+    }
+    Ok(())
+}
+pub(super) fn publish_retained(
+    snapshot: &AccountFileSnapshot,
+    target: &Target,
+    outside: &[emilybase_storage::OutsideDirectoryGuard],
+) -> Result<RetainedArchive> {
     let reader = AccountFileArchiveReader::from_snapshot(snapshot)?;
     let length = reader.encoded_bytes();
     let mut source = Guarded {
         reader,
-        target: &target,
+        target,
+        outside,
         started: false,
         eof: false,
     };
     checkpoint("joined_archive_prepared");
-    target.check()?;
+    check_target(target, outside)?;
     let mut file = match emilybase_storage::publish_private_reader_at_retained(
         &target.parent,
         &target.name,
@@ -233,6 +267,7 @@ pub fn publish_account_file_archive(
     (|| {
         let before = private(&file)?;
         checkpoint("joined_archive_selected");
+        check_target(target, outside)?;
         target.visible(&before)?;
         unchanged(&file, &before)?;
         if before.len() != length as u64 {
@@ -257,12 +292,18 @@ pub fn publish_account_file_archive(
         unchanged(&file, &before)?;
         target.visible(&before)?;
         checkpoint("joined_archive_readback");
+        check_target(target, outside)?;
         sync(&file, "joined_archive_file_ack_sync")?;
         sync(&target.parent, "joined_archive_parent_ack_sync")?;
         checkpoint("joined_archive_acked");
+        check_target(target, outside)?;
         unchanged(&file, &before)?;
         target.visible(&before)?;
-        Ok(AccountFileArchiveReport::from_snapshot(snapshot, length))
+        Ok(RetainedArchive {
+            file,
+            before,
+            report: AccountFileArchiveReport::from_snapshot(snapshot, length),
+        })
     })()
     .map_err(|error| Error::ComponentPublicationUnknown(Box::new(error)))
 }

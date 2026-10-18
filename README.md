@@ -150,7 +150,7 @@ A standalone [native file catalog](docs/native-file-catalog.md) now owns separat
 original-WAL metadata and scoped objects, with persisted physical quotas and logical
 references. Actual selected-inode retention spans the reference commit; unreferenced
 blobs remain invisible through catalog reads and charged against capacity. This
-operator library does not enable current user file routes or durable joined root backups.
+operator library does not enable current user file routes; later joined backup work is described below.
 Native [reference rename/removal](docs/native-file-mutations.md) uses exact current
 revision CAS and original source retention. Removal hides the reference while the
 surviving immutable blob stays charged; no physical cleanup is inferred.
@@ -234,6 +234,9 @@ A source guard refuses observed pre-reset physical changes before writing.
 accounts and files under one original locked v2 root and verifies retained physical
 readers through the final unwind. The [joined restore CLI](docs/account-file-restore-cli.md)
 now retains the private input file through the last locked proof and emits only counts.
+The [joined backup CLI](docs/account-file-backup-cli.md) now creates that archive
+inside original component capture, refuses destinations within sources before staging
+and retains the selected archive through final source proofs. File scopes are explicit.
 Explicit v2 live startup/adoption remains open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do

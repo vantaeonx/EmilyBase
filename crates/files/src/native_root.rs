@@ -395,6 +395,17 @@ impl NativeFileRoot {
             inventory,
         })
     }
+    /// Readonly destination exclusion. A foreign destination refusal does not
+    /// poison a healthy source; original validation errors still do.
+    pub fn outside_directory(
+        &mut self,
+        destination: &File,
+    ) -> Result<emilybase_storage::OutsideDirectoryGuard> {
+        let guard =
+            emilybase_storage::OutsideDirectoryGuard::new(&self.selection.root, destination);
+        self.inspect()?;
+        Ok(guard?)
+    }
     fn observe<T>(
         &mut self,
         operation: impl FnOnce(&mut FileStore, &State) -> Result<T>,

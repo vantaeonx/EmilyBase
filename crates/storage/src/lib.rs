@@ -4,6 +4,7 @@ mod creation;
 mod directory_creation;
 mod error;
 pub mod header;
+mod outside_directory;
 mod page;
 mod pager;
 #[cfg(all(test, target_os = "linux"))]
@@ -16,6 +17,7 @@ pub use byte_file::{
 };
 pub use directory_creation::{PublishedPrivateDirectory, StagedPrivateDirectory};
 pub use error::{Error, Result};
+pub use outside_directory::{MAX_DIRECTORY_ANCESTORS, OutsideDirectoryGuard};
 pub use page::{MAX_RECORD_SIZE, Page, SlotId};
 pub use pager::{MAX_PAGES, Pager};
 pub use stream_file::publish_private_reader_at_retained;

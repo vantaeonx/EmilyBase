@@ -31,6 +31,11 @@ impl std::fmt::Debug for AccountRootSnapshot {
     }
 }
 impl AccountRoot {
+    /// Copied declared private roster for trusted native maintenance preflight.
+    /// This metadata neither discovers file roots nor authorizes a user.
+    pub fn private_projects(&self) -> Result<Vec<String>> {
+        Ok(self.snapshot_manifest()?.private_projects)
+    }
     pub(crate) fn snapshot_manifest(&self) -> Result<AccountBundleRootManifest> {
         self.ready()?;
         Ok(self.contents.manifest.clone())

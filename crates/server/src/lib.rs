@@ -7,7 +7,7 @@ pub use component_archive::publication::{
 };
 pub use component_archive::{
     ACCOUNT_FILE_ARCHIVE_VERSION, AccountFileArchiveReader, MAX_ACCOUNT_FILE_ARCHIVE_BYTES,
-    VerifiedAccountFileArchive, verify_account_file_archive,
+    VerifiedAccountFileArchive, backup_account_file_components, verify_account_file_archive,
 };
 pub use component_snapshot::{
     AccountFileSnapshot, MAX_COMPONENT_FILE_STORES, MAX_COMPONENT_IMAGE_BYTES,

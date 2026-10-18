@@ -10,7 +10,8 @@ emilybase account-file-restore ./snapshot.bin ./restored --time "$(date +%s)"
 ```
 
 The input is the existing joined archive produced by the native capture/publisher
-API. Verification alone emits inventory and creates no destination. Restore requires
+API or the subsequent [coordinated backup CLI](account-file-backup-cli.md).
+Verification alone emits inventory and creates no destination. Restore requires
 one fresh destination under an existing private0700 native parent. It never replaces
 an existing file/directory/link. `--time` is mandatory trusted operator Unix time,
 limited to the existing signed timestamp domain; it is never a client clock.

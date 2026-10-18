@@ -4,8 +4,10 @@ The native [object envelope](object-format.md) rejects malformed/corrupt bytes a
 requires trusted expected scope. Checksums do not authenticate images or grant
 user access. Operator-selected paths are not HTTP filenames; filesystem
 administrators and selected ancestors remain trusted. Inspection is a checked
-snapshot, not a retained lease. Object authorization, quotas, signed URLs and
-verified root backup inclusion are not implemented yet.
+snapshot, not a retained lease. Native quotas and verified paired/joined root backup
+inclusion have since been implemented. Current user file authorization, HTTP uploads,
+signed URLs and realtime authorization remain open; see the
+[joined backup contract](account-file-backup-cli.md).
 
 Assets: stored bytes, project boundaries, credentials, objects and backups.
 Inputs: bounded local files, SQL and HTTP now; WebSocket/uploads later.

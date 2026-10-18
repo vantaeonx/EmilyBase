@@ -9,6 +9,8 @@ use crate::{
 use emilybase_files::{FILE_ARCHIVE_HEADER_BYTES, MAX_FILE_ARCHIVE_BYTES, VerifiedFileArchive};
 use emilybase_object_storage::{ARCHIVE_HEADER_BYTES, HEADER_BYTES, ProjectId};
 use sha2::{Digest, Sha256};
+mod backup;
+pub use backup::backup_account_file_components;
 pub(crate) mod input;
 pub(crate) mod publication;
 mod reader;

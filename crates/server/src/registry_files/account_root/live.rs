@@ -154,6 +154,17 @@ impl AccountRoot {
         }
         Ok(())
     }
+    /// Finite destination exclusion against this actual selected source root.
+    /// Returns independent readonly descriptions, never a source owner/lease.
+    pub fn outside_directory(
+        &self,
+        destination: &File,
+    ) -> Result<emilybase_storage::OutsideDirectoryGuard> {
+        self.ready()?;
+        let guard = emilybase_storage::OutsideDirectoryGuard::new(&self.owner, destination);
+        self.ready()?;
+        Ok(guard?)
+    }
     fn from_owner(
         selected: PathBuf,
         owner: File,

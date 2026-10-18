@@ -28,6 +28,7 @@ emilybase-files = { path = "../files" }
 serde = "1"
 serde_json = "1"
 zeroize = { version = "1.9", features = ["alloc"] }
+rustix = { version = "1", features = ["fs"] }
 
 [dev-dependencies]
 proptest = "1"
