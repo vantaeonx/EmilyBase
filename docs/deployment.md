@@ -1,5 +1,11 @@
 # Experimental local containers
 
+Native account/file v2 startup is now available through the exact optional
+EMILYBASE_ACCOUNT_LAYOUT=v2 selector on an existing EMILYBASE_ACCOUNT_ROOT.
+Both account Compose files pass the selector, defaulting to v1 only when unset.
+The [binary startup contract](v2-server-startup.md) distinguishes the executed
+native TCP/recovery tests from the still-open v2 container and upgrade drill.
+
 The image contains the compiled original Rust server and CLI. It requires no
 external database engine, paid service, JavaScript runtime or Python runtime.
 Node and Python are developer tools for optional client/integration checks.

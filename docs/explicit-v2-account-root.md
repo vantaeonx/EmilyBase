@@ -63,8 +63,9 @@ The full v2 manifest/file binding bytes remain unchanged by these account operat
 A native Rust caller may explicitly construct account_router with that owned root.
 Actual TCP tests verify project-key SQL admission, master-key refusal for project SQL,
 acknowledged mutation and graceful restart under both WALs. The ordinary server
-binary has no implicit v2 selection: explicit configuration/admission and a binary
-recovery/container drill remain separate work. User-authorized file routes are absent.
+binary has no implicit v2 selection. The subsequent [explicit binary mode](v2-server-startup.md)
+adds configuration and actual binary recovery tests; a v2 container/upgrade drill
+remains separate. User-authorized file routes are absent.
 
 V1 capture and backup refuse v2 before staging, including the joined backup helper
 when given a v2 root. Returning only its account subset would silently lose file

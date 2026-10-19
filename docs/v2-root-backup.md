@@ -84,6 +84,7 @@ current session survival, independent restored writes, physical source changes,
 selected archive replacement, contained outputs, aggregate admission, parent moves,
 sync errors, generated models, actual signal9 workers and actual CLI roundtrips.
 
-Ordinary server-binary v2 configuration/restart/container/upgrade drills, current
-user file permissions, roles, aggregate network admission, realtime, the dashboard,
-Kotlin, encrypted backups and production acceptance remain separate open gates.
+The subsequent [explicit server mode](v2-server-startup.md) adds binary configuration,
+HTTP/restart/kill tests. V2 container/upgrade drills, current user file permissions,
+roles, aggregate network admission, realtime, the dashboard, Kotlin, encrypted
+backups and production acceptance remain separate open gates.

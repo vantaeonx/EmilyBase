@@ -1595,3 +1595,13 @@ capture. Plain v1 prefix capture preserves its previous suffix-exclusion contrac
 The [contract](v2-root-backup.md) describes original owner/payload lifetimes,
 late uncertainty, bounds and verification. Ordinary binary v2 configuration and
 all remaining release acceptance criteria stay open.
+
+## Follow-up: ordinary binary startup with explicit v2 selection
+
+[ADR0166](adr/0166-explicit-binary-v2-startup.md) adds the strict optional
+EMILYBASE_ACCOUNT_LAYOUT selector. Omission retains v1; invalid/conflicting choices
+refuse before storage work. Actual binary HTTP checks owner exclusion, ACK/restart,
+six real kills, partial unacknowledged bodies, sessions, key boundaries and a second
+independent backup/restore. The [contract](v2-server-startup.md) documents exact
+defaults, Compose configuration and unavailable local Docker verification. Container
+v2 recovery/upgrade and unfulfilled production criteria remain open.

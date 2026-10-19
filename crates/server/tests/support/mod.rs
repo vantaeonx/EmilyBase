@@ -23,22 +23,50 @@ impl Server {
         Self::start_mode(root, master, true)
     }
     fn start_mode(root: &Path, master: &str, private: bool) -> Self {
-        Self::start_source(root, Some(master), None, private)
+        Self::start_source(root, Some(master), None, private, None)
+    }
+    #[allow(
+        dead_code,
+        reason = "Shared fixture also compiles in independent v1 network binaries"
+    )]
+    pub fn start_account_v2(root: &Path, master: &str) -> Self {
+        Self::start_source(root, Some(master), None, true, Some("v2"))
+    }
+    #[allow(
+        dead_code,
+        reason = "Shared fixture also compiles in independent network binaries"
+    )]
+    pub fn start_account_v1(root: &Path, master: &str) -> Self {
+        Self::start_source(root, Some(master), None, true, Some("v1"))
+    }
+    #[allow(
+        dead_code,
+        reason = "Shared fixture also compiles in independent v1 network binaries"
+    )]
+    pub fn start_account_file_v2(root: &Path, key: &Path) -> Self {
+        Self::start_source(root, None, Some(key), true, Some("v2"))
     }
     #[allow(
         dead_code,
         reason = "Shared fixture also compiles in network binaries without file-key cases"
     )]
     pub fn start_file(root: &Path, path: &Path) -> Self {
-        Self::start_source(root, None, Some(path), false)
+        Self::start_source(root, None, Some(path), false, None)
     }
-    fn start_source(root: &Path, master: Option<&str>, path: Option<&Path>, private: bool) -> Self {
+    fn start_source(
+        root: &Path,
+        master: Option<&str>,
+        path: Option<&Path>,
+        private: bool,
+        layout: Option<&str>,
+    ) -> Self {
         let mut command = Command::new(env!("CARGO_BIN_EXE_emilybase-server"));
         command
             .env_remove("EMILYBASE_MASTER_KEY")
             .env_remove("EMILYBASE_MASTER_KEY_FILE")
             .env_remove("EMILYBASE_DATA_DIR")
             .env_remove("EMILYBASE_ACCOUNT_ROOT")
+            .env_remove("EMILYBASE_ACCOUNT_LAYOUT")
             .env(
                 if private {
                     "EMILYBASE_ACCOUNT_ROOT"
@@ -52,6 +80,9 @@ impl Server {
             .stderr(Stdio::piped());
         if let Some(master) = master {
             command.env("EMILYBASE_MASTER_KEY", master);
+        }
+        if let Some(layout) = layout {
+            command.env("EMILYBASE_ACCOUNT_LAYOUT", layout);
         }
         if let Some(path) = path {
             command.env("EMILYBASE_MASTER_KEY_FILE", path);
@@ -112,6 +143,10 @@ impl Server {
         loop {
             if let Some(status) = self.child.try_wait().unwrap() {
                 assert_eq!(status.success(), success);
+                if !success {
+                    use std::os::unix::process::ExitStatusExt;
+                    assert_eq!(status.signal(), Some(9));
+                }
                 break;
             }
             assert!(Instant::now() < deadline, "server shutdown deadline");

@@ -241,8 +241,10 @@ The [explicit v2 library opener](docs/explicit-v2-account-root.md) now retains d
 native file owners and supports account/data operations without resetting sessions.
 The [complete v2 backup](docs/v2-root-backup.md) uses those same internal owners,
 preserves every original binding and supports another independently restored copy.
-Default v1/binary startup still refuses v2; explicit binary configuration remains
-open. Old capture paths continue to refuse rather than omit file bindings.
+Default account startup remains v1; the [explicit binary v2 mode](docs/v2-server-startup.md)
+now admits an existing v2 root and is tested through actual HTTP, restarts and kills.
+Old capture paths continue to refuse rather than omit file bindings. A container v2
+recovery/upgrade drill and production acceptance remain open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

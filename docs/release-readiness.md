@@ -220,3 +220,10 @@ and supports a second independent restore. Joined v1/v2 capture checks the physi
 common tree after reproduced private/public unacknowledged-tail regressions. This closes
 the native v2 rebackup prerequisite, not binary deployment or any unfulfilled
 production acceptance box above.
+
+The [explicit binary v2 mode](v2-server-startup.md) subsequently closes native
+server configuration and actual binary HTTP/restart prerequisites. Both WALs,
+acknowledged mutation, actual kills, incomplete request bodies, session preservation
+and independent rebackup/restore are exercised. Docker is unavailable locally;
+Compose selection is not a claim of completed container v2 recovery/upgrade.
+All unfulfilled production acceptance boxes remain open.

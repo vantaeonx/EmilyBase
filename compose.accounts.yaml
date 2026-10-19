@@ -6,6 +6,7 @@ services:
       target: accounts
     image: emilybase:accounts-local
     environment:
+      EMILYBASE_ACCOUNT_LAYOUT: "${EMILYBASE_ACCOUNT_LAYOUT-v1}"
       EMILYBASE_MASTER_KEY: "${EMILYBASE_MASTER_KEY:?supply a private 64-character lowercase hex master key}"
     ports:
       - "127.0.0.1:${EMILYBASE_PORT:-7000}:7000"

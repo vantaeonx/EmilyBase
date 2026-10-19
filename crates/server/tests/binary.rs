@@ -10,6 +10,7 @@ fn command() -> Command {
         "EMILYBASE_MASTER_KEY_FILE",
         "EMILYBASE_DATA_DIR",
         "EMILYBASE_ACCOUNT_ROOT",
+        "EMILYBASE_ACCOUNT_LAYOUT",
         "EMILYBASE_LISTEN",
     ] {
         command.env_remove(name);
