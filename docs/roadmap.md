@@ -1583,3 +1583,15 @@ remain v1-only and old capture/backup refuses v2 before staging. The
 [contract](explicit-v2-account-root.md) records source changes, actual kills, models
 and binary behavior. Complete internally owned v2 rebackup, explicit server-binary
 configuration, user-file policies and production acceptance remain open.
+
+## Follow-up: complete backup of an active v2 root
+
+[ADR0165](adr/0165-complete-v2-root-backup.md) adds complete capture/publication
+from the root's internally retained file owners and explicit account-file-backup-v2.
+The exact original v2 bindings survive another backup/restore cycle; copied account
+data is a subcomponent rather than a v1 root authority. A reproduced private WAL
+tail-append regression adds bounded original common-tree readers to joined v1/v2
+capture. Plain v1 prefix capture preserves its previous suffix-exclusion contract.
+The [contract](v2-root-backup.md) describes original owner/payload lifetimes,
+late uncertainty, bounds and verification. Ordinary binary v2 configuration and
+all remaining release acceptance criteria stay open.

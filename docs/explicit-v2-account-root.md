@@ -68,10 +68,10 @@ recovery/container drill remain separate work. User-authorized file routes are a
 
 V1 capture and backup refuse v2 before staging, including the joined backup helper
 when given a v2 root. Returning only its account subset would silently lose file
-bindings. Complete rebackup of internally owned v2 components needs a separate
+bindings. The subsequent [complete v2 backup](v2-root-backup.md) supplies a separate
 checked coordinator with real split borrows, preserving original file owners through
-publication. Do not bypass the refusal, close/reopen components or reinterpret the
-v2 manifest as v1 authority. This limitation must close before ordinary v2 deployment.
+publication. The v1 refusal remains: neither reopening components nor projecting
+the v2 manifest into a v1 root authority is a valid workaround.
 
 ## Executed coverage and open gates
 

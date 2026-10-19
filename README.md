@@ -239,8 +239,10 @@ inside original component capture, refuses destinations within sources before st
 and retains the selected archive through final source proofs. File scopes are explicit.
 The [explicit v2 library opener](docs/explicit-v2-account-root.md) now retains declared
 native file owners and supports account/data operations without resetting sessions.
-Default v1/binary startup still refuses v2. Complete v2 rebackup and explicit binary
-configuration remain open; old capture paths refuse rather than omit file bindings.
+The [complete v2 backup](docs/v2-root-backup.md) uses those same internal owners,
+preserves every original binding and supports another independently restored copy.
+Default v1/binary startup still refuses v2; explicit binary configuration remains
+open. Old capture paths continue to refuse rather than omit file bindings.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

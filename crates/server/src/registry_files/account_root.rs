@@ -20,7 +20,7 @@ use std::path::{Path, PathBuf};
 const MANIFEST_LIMIT: usize = 8192;
 const PREFIX: &str = ".emilybase-account-restore-";
 mod layout;
-use layout::{FileOwners, RequestedLayout, RootLayout};
+use layout::{FileOwners, FileTopology, RequestedLayout, RootLayout};
 mod initialize;
 pub use initialize::initialize_account_root;
 mod live;
@@ -241,6 +241,7 @@ struct Contents {
 // Shared retained-owner checks also run at the final initialization/restore
 // boundary. Never replace these with a manifest-only final comparison.
 fn check_contents(path: &Path, owner: &File, contents: &Contents) -> Result<()> {
+    contents.files.check(owner, &contents.manifest)?;
     Structure {
         path,
         owner,
@@ -251,7 +252,7 @@ fn check_contents(path: &Path, owner: &File, contents: &Contents) -> Result<()> 
         manifest: &contents.manifest,
         ids: &contents.ids,
         registry: contents.registry.directory_identity()?,
-        files: &contents.files,
+        files: contents.files.topology(),
     }
     .check()?;
     contents.registry.check_registry_at(owner)?;
@@ -270,7 +271,7 @@ struct Structure<'a> {
     manifest: &'a RootLayout,
     ids: &'a BTreeSet<String>,
     registry: (u64, u64),
-    files: &'a FileOwners,
+    files: FileTopology<'a>,
 }
 impl Structure<'_> {
     fn check_wals(&self) -> Result<()> {

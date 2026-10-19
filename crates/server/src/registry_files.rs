@@ -14,6 +14,7 @@ pub use joined::{
 mod coordinated;
 pub use coordinated::with_restored_registry_backup_bytes_at;
 mod pending;
+mod physical_tree;
 
 pub fn inspect_registry_backup(path: impl AsRef<Path>) -> Result<RegistryBackupReport> {
     crate::inspect_registry_backup_bytes(&read(path.as_ref())?)

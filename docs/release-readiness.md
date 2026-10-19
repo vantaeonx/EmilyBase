@@ -213,3 +213,10 @@ account/data operations across reopen. Actual TCP exercises explicitly construct
 library routing; default server-binary startup remains v1. Complete v2 rebackup and
 explicit binary configuration remain open; old capture paths refuse v2 rather than
 silently drop its file bindings. The release acceptance boxes remain open.
+
+The subsequent [complete v2 backup](v2-root-backup.md) supplies readonly capture
+and publication using internally retained native components, preserves every binding
+and supports a second independent restore. Joined v1/v2 capture checks the physical
+common tree after reproduced private/public unacknowledged-tail regressions. This closes
+the native v2 rebackup prerequisite, not binary deployment or any unfulfilled
+production acceptance box above.

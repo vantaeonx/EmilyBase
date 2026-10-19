@@ -1,5 +1,6 @@
 use super::super::super::super::at::copy_directory;
 use super::*;
+mod backup;
 mod http;
 use crate::{AccountFileRootManifest, FileRootBinding, backup_account_file_components};
 

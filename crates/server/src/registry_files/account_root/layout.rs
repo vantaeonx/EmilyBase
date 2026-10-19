@@ -74,7 +74,41 @@ pub(super) struct FileOwners {
     roots: Vec<NativeFileRoot>,
     parent: Option<File>,
 }
+#[derive(Clone, Copy)]
+pub(super) struct FileTopology<'a> {
+    parent: Option<&'a File>,
+}
+impl FileTopology<'_> {
+    pub(super) fn check(&self, owner: &File, layout: &RootLayout) -> Result<()> {
+        match (layout.v2(), self.parent) {
+            (None, None) => Ok(()),
+            (Some(m), Some(parent)) => {
+                metadata::owned_directory(&descriptor(owner).join("files"), parent)?;
+                if names(&descriptor(parent))?
+                    != m.file_stores().iter().map(|b| b.project().into()).collect()
+                {
+                    return Err(Error::BundleRoot("file inventory changed"));
+                }
+                Ok(())
+            }
+            _ => Err(Error::BundleRoot("file ownership layout")),
+        }
+    }
+}
 impl FileOwners {
+    pub(super) fn topology(&self) -> FileTopology<'_> {
+        FileTopology {
+            parent: self.parent.as_ref(),
+        }
+    }
+    pub(super) fn parts(&mut self) -> (&mut [NativeFileRoot], FileTopology<'_>) {
+        (
+            &mut self.roots,
+            FileTopology {
+                parent: self.parent.as_ref(),
+            },
+        )
+    }
     pub(super) fn open(owner: &File, layout: &RootLayout) -> Result<Self> {
         let mut result = Self {
             roots: Vec::new(),
@@ -110,15 +144,10 @@ impl FileOwners {
         Ok(result)
     }
     pub(super) fn check(&self, owner: &File, layout: &RootLayout) -> Result<()> {
+        self.topology().check(owner, layout)?;
         match (layout.v2(), &self.parent) {
             (None, None) if self.roots.is_empty() => Ok(()),
-            (Some(m), Some(parent)) if m.file_stores().len() == self.roots.len() => {
-                metadata::owned_directory(&descriptor(owner).join("files"), parent)?;
-                if names(&descriptor(parent))?
-                    != m.file_stores().iter().map(|b| b.project().into()).collect()
-                {
-                    return Err(Error::BundleRoot("file inventory changed"));
-                }
+            (Some(m), Some(_)) if m.file_stores().len() == self.roots.len() => {
                 for root in &self.roots {
                     root.check_selection()?;
                 }

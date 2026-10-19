@@ -1,4 +1,5 @@
 //! Explicit offline v2 restoration. Ordinary live startup continues to refuse v2.
+use super::physical_tree as tree;
 use super::{checkpoint, sync};
 use crate::{
     AccountFileRootManifest, BundledAccountReport, Error, RegistryBackupReport, Result,
@@ -13,7 +14,6 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
-mod tree;
 
 /// Copied restored inventory, not a service owner or current user permission.
 #[derive(Debug, Clone, PartialEq, Eq)]

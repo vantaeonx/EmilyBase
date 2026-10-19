@@ -1,9 +1,28 @@
 //! Explicit native component capture; no filesystem roster adoption or user API.
-use crate::{
-    AccountFileRootManifest, AccountRoot, AccountRootSnapshot, Error, FileRootBinding, Result,
-};
+use crate::{AccountFileRootManifest, AccountRoot, Error, FileRootBinding, Result};
 use emilybase_files::{FileSnapshot, NativeFileRoot, NativeFileRootInfo};
 use std::collections::BTreeSet;
+
+/// Sensitive account-bundle subcomponent. Its roster/reset report does not
+/// describe a whole root: only the enclosing v2 manifest carries file bindings.
+pub struct AccountComponentSnapshot {
+    image: Vec<u8>,
+    report: crate::AccountBundleRootReport,
+}
+impl AccountComponentSnapshot {
+    pub(crate) fn new(image: Vec<u8>, report: crate::AccountBundleRootReport) -> Self {
+        Self { image, report }
+    }
+    pub fn bundle_bytes(&self) -> &[u8] {
+        &self.image
+    }
+    pub fn into_bytes(self) -> Vec<u8> {
+        self.image
+    }
+    pub fn report(&self) -> &crate::AccountBundleRootReport {
+        &self.report
+    }
+}
 
 pub const MAX_COMPONENT_FILE_STORES: usize = 4;
 /// Actual physical objects across all components, including every orphan.
@@ -14,7 +33,7 @@ pub const MAX_COMPONENT_IMAGE_BYTES: usize = 128 * 1024 * 1024;
 /// Sensitive immutable component copies. Not a serialized common archive, a
 /// current permission, filesystem authority, publication or restored destination.
 pub struct AccountFileSnapshot {
-    accounts: AccountRootSnapshot,
+    accounts: AccountComponentSnapshot,
     files: Vec<FileSnapshot>,
     manifest: AccountFileRootManifest,
     manifest_bytes: Vec<u8>,
@@ -22,7 +41,7 @@ pub struct AccountFileSnapshot {
     physical_objects: usize,
 }
 impl AccountFileSnapshot {
-    pub fn accounts(&self) -> &AccountRootSnapshot {
+    pub fn accounts(&self) -> &AccountComponentSnapshot {
         &self.accounts
     }
     /// Same strict project order as the manifest and caller's original owners.
@@ -40,6 +59,48 @@ impl AccountFileSnapshot {
     }
     pub const fn physical_objects(&self) -> usize {
         self.physical_objects
+    }
+    pub(crate) fn from_owned(
+        accounts: AccountComponentSnapshot,
+        files: Vec<FileSnapshot>,
+        admitted: &[NativeFileRootInfo],
+        manifest: AccountFileRootManifest,
+    ) -> Result<Self> {
+        if accounts.report().reset_at != manifest.reset_at()
+            || accounts
+                .report()
+                .private_accounts
+                .iter()
+                .map(|p| p.project.as_str())
+                .ne(manifest.private_projects().iter().map(String::as_str))
+            || files.len() != manifest.file_stores().len()
+        {
+            return Err(Error::ComponentSnapshot("account roster changed"));
+        }
+        check_database_ids(&accounts, admitted)?;
+        let manifest_bytes = manifest.to_bytes()?;
+        let mut copied_bytes = charge(
+            accounts.bundle_bytes().len(),
+            manifest_bytes.len(),
+            MAX_COMPONENT_IMAGE_BYTES,
+        )?;
+        let mut physical_objects = 0;
+        for file in &files {
+            copied_bytes = charge_file(copied_bytes, file, MAX_COMPONENT_IMAGE_BYTES)?;
+            physical_objects = charge(
+                physical_objects,
+                file.objects().objects().len(),
+                MAX_COMPONENT_OBJECTS,
+            )?;
+        }
+        Ok(Self {
+            accounts,
+            files,
+            manifest,
+            manifest_bytes,
+            copied_bytes,
+            physical_objects,
+        })
     }
 }
 impl std::fmt::Debug for AccountFileSnapshot {
@@ -121,10 +182,11 @@ pub(crate) fn capture_with_limit(
     )?;
     let manifest_bytes = manifest.to_bytes()?;
     checkpoint("components_admitted");
-    accounts.capture_with(|snapshot| {
+    accounts.capture_physical_with(|snapshot| {
         if snapshot.manifest() != &original_manifest {
             return Err(Error::ComponentSnapshot("account roster changed"));
         }
+        let snapshot = snapshot.into_component();
         check_database_ids(&snapshot, &admitted)?;
         let copied_bytes = charge(
             snapshot.bundle_bytes().len(),
@@ -160,39 +222,45 @@ fn capture_files(
     };
     let expected = &admitted[0];
     root.with_snapshot(|snapshot| -> Result<()> {
-        if snapshot.project() != expected.project()
-            || &snapshot.metadata_report().database_id != expected.database_id()
-            || snapshot.metadata_report().last_transaction != expected.revision()
-            || snapshot.quota() != expected.quota()
-            || snapshot.files().len() != expected.usage().references
-            || snapshot.objects().objects().len() != expected.usage().physical_objects
-            || snapshot.objects().inventory().payload_bytes() != expected.usage().payload_bytes
-        {
-            return Err(Error::ComponentSnapshot(
-                "file component changed since admission",
-            ));
-        }
-        let mut copied_bytes = charge(
-            result.copied_bytes,
-            snapshot.metadata_bytes().len(),
-            image_limit,
-        )?;
-        for object in snapshot.objects().objects() {
-            copied_bytes = charge(
-                copied_bytes,
-                emilybase_object_storage::HEADER_BYTES,
-                image_limit,
-            )?;
-            copied_bytes = charge(copied_bytes, object.payload().len(), image_limit)?;
-        }
-        result.copied_bytes = copied_bytes;
+        check_file(&snapshot, expected)?;
+        result.copied_bytes = charge_file(result.copied_bytes, &snapshot, image_limit)?;
         result.files.push(snapshot);
         capture_files(remaining, &admitted[1..], result, work, image_limit)
     })??;
     Ok(())
 }
+fn check_file(snapshot: &FileSnapshot, expected: &NativeFileRootInfo) -> Result<()> {
+    if snapshot.project() != expected.project()
+        || &snapshot.metadata_report().database_id != expected.database_id()
+        || snapshot.metadata_report().last_transaction != expected.revision()
+        || snapshot.quota() != expected.quota()
+        || snapshot.files().len() != expected.usage().references
+        || snapshot.objects().objects().len() != expected.usage().physical_objects
+        || snapshot.objects().inventory().payload_bytes() != expected.usage().payload_bytes
+    {
+        return Err(Error::ComponentSnapshot(
+            "file component changed since admission",
+        ));
+    }
+    Ok(())
+}
+fn charge_file(current: usize, snapshot: &FileSnapshot, image_limit: usize) -> Result<usize> {
+    let mut copied_bytes = charge(current, snapshot.metadata_bytes().len(), image_limit)?;
+    for object in snapshot.objects().objects() {
+        copied_bytes = charge(
+            copied_bytes,
+            emilybase_object_storage::HEADER_BYTES,
+            image_limit,
+        )?;
+        copied_bytes = charge(copied_bytes, object.payload().len(), image_limit)?;
+    }
+    Ok(copied_bytes)
+}
 
-fn check_database_ids(accounts: &AccountRootSnapshot, files: &[NativeFileRootInfo]) -> Result<()> {
+fn check_database_ids(
+    accounts: &AccountComponentSnapshot,
+    files: &[NativeFileRootInfo],
+) -> Result<()> {
     let ids = accounts
         .report()
         .registry
@@ -208,6 +276,55 @@ fn check_database_ids(accounts: &AccountRootSnapshot, files: &[NativeFileRootInf
         )
         .chain(files.iter().map(|p| *p.database_id()));
     unique_ids(ids)
+}
+// Original native owners and all physical payload readers enclose the account
+// capture, publication and each subsequent source proof. Recursion is capped at4.
+pub(crate) fn with_owned_files<T>(
+    roots: &mut [NativeFileRoot],
+    manifest: &AccountFileRootManifest,
+    work: impl FnOnce(Vec<FileSnapshot>, Vec<NativeFileRootInfo>) -> Result<T>,
+) -> Result<T> {
+    if roots.len() > MAX_COMPONENT_FILE_STORES || roots.len() != manifest.file_stores().len() {
+        return Err(Error::Limit);
+    }
+    let mut admitted = Vec::with_capacity(roots.len());
+    let mut objects = 0;
+    for (root, binding) in roots.iter_mut().zip(manifest.file_stores()) {
+        let info = root.inspect()?;
+        if info.project().to_string() != binding.project()
+            || hex(info.database_id()) != binding.database_id()
+        {
+            return Err(Error::ComponentSnapshot("original file binding changed"));
+        }
+        objects = charge(
+            objects,
+            info.usage().physical_objects,
+            MAX_COMPONENT_OBJECTS,
+        )?;
+        admitted.push(info);
+    }
+    checkpoint("components_admitted");
+    retain_owned(roots, &admitted, Vec::new(), 0, |files| {
+        work(files, admitted.clone())
+    })
+}
+fn retain_owned<T>(
+    roots: &mut [NativeFileRoot],
+    admitted: &[NativeFileRootInfo],
+    mut files: Vec<FileSnapshot>,
+    copied: usize,
+    work: impl FnOnce(Vec<FileSnapshot>) -> Result<T>,
+) -> Result<T> {
+    let Some((root, rest)) = roots.split_first_mut() else {
+        checkpoint("components_retained");
+        return work(files);
+    };
+    root.with_snapshot(|snapshot| {
+        check_file(&snapshot, &admitted[0])?;
+        let copied = charge_file(copied, &snapshot, MAX_COMPONENT_IMAGE_BYTES)?;
+        files.push(snapshot);
+        retain_owned(rest, &admitted[1..], files, copied, work)
+    })?
 }
 pub(crate) fn unique_ids(ids: impl Iterator<Item = [u8; 16]>) -> Result<()> {
     let mut seen = BTreeSet::new();

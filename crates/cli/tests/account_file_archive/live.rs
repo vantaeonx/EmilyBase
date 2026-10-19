@@ -195,3 +195,110 @@ fn maximum_exact_time_and_native_non_utf8_root_names_are_admitted_without_name_o
     assert_eq!(value["reset_at"], i64::MAX.to_string());
     assert_eq!(histories(&native, id.as_deref()), before);
 }
+
+fn backup_v2(path: &Path, target: &Path, stdout: Option<File>) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_emilybase"))
+        .arg("account-file-backup-v2")
+        .arg(path)
+        .arg(target)
+        .stdin(Stdio::null())
+        .stdout(stdout.map(Stdio::from).unwrap_or_else(Stdio::piped))
+        .stderr(Stdio::piped())
+        .output()
+        .unwrap()
+}
+#[test]
+fn actual_v2_backup_verify_restore_roundtrip_preserves_every_binding_and_prints_only_counts() {
+    let _serial = CASES.lock().unwrap();
+    for empty in [false, true] {
+        for compact in [false, true] {
+            let t = tempfile::tempdir().unwrap();
+            let (path, id, _) = prepared(t.path(), empty, compact, 40);
+            let before = histories(&path, id.as_deref());
+            let archive = t.path().join("повторная копия 界");
+            let output = backup_v2(&path, &archive, None);
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(output.stderr.is_empty());
+            let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert_eq!(value.as_object().unwrap().len(), 9);
+            assert_eq!(value["file_stores"], usize::from(!empty));
+            assert_eq!(value["reset_at"], "40");
+            let text = String::from_utf8(output.stdout).unwrap();
+            for secret in [
+                "private-display",
+                "private-payload",
+                "private-project-display",
+                "$argon2id$",
+            ] {
+                assert!(!text.contains(secret));
+            }
+            if let Some(id) = &id {
+                assert!(!text.contains(id));
+            }
+            let checked = run(t.path(), &archive, None);
+            assert!(checked.status.success());
+            assert_eq!(
+                serde_json::from_slice::<Value>(&checked.stdout).unwrap(),
+                value
+            );
+            let report = emilybase_server::inspect_account_file_archive(&archive).unwrap();
+            assert_eq!(report.manifest().to_bytes().unwrap(), before[0]);
+            let target = t.path().join("second");
+            let restored = Command::new(env!("CARGO_BIN_EXE_emilybase"))
+                .arg("account-file-restore")
+                .arg(&archive)
+                .arg(&target)
+                .args(["--time", "60"])
+                .output()
+                .unwrap();
+            assert!(restored.status.success());
+            assert!(info(t.path(), &target, None).status.success());
+            assert_eq!(histories(&path, id.as_deref()), before);
+        }
+    }
+}
+#[test]
+fn actual_v2_backup_refuses_legacy_busy_contained_and_existing_outputs_without_source_changes() {
+    let _serial = CASES.lock().unwrap();
+    let t = tempfile::tempdir().unwrap();
+    let (path, id, _) = prepared(t.path(), false, true, 40);
+    let before = histories(&path, id.as_deref());
+    let absent = t.path().join("absent");
+    refused(backup_v2(&t.path().join("root"), &absent, None));
+    assert!(!absent.exists());
+    let root = AccountRoot::open_v2(&path, PasswordPool::new(1).unwrap()).unwrap();
+    refused(backup_v2(&path, &absent, None));
+    drop(root);
+    let contained = path
+        .join("files")
+        .join(id.as_ref().unwrap())
+        .join("objects/archive");
+    refused(backup_v2(&path, &contained, None));
+    assert!(!contained.exists());
+    fs::write(&absent, b"existing").unwrap();
+    fs::set_permissions(&absent, fs::Permissions::from_mode(0o600)).unwrap();
+    refused(backup_v2(&path, &absent, None));
+    assert_eq!(fs::read(absent).unwrap(), b"existing");
+    assert_eq!(histories(&path, id.as_deref()), before);
+}
+#[test]
+fn failed_actual_v2_backup_stdout_preserves_the_complete_verifiable_archive_and_releases_sources() {
+    let _serial = CASES.lock().unwrap();
+    let t = tempfile::tempdir().unwrap();
+    let (path, id, _) = prepared(t.path(), false, false, 40);
+    let before = histories(&path, id.as_deref());
+    let archive = t.path().join("archive");
+    refused(backup_v2(
+        &path,
+        &archive,
+        Some(File::options().write(true).open("/dev/full").unwrap()),
+    ));
+    let report = emilybase_server::inspect_account_file_archive(&archive).unwrap();
+    assert_eq!(report.manifest().to_bytes().unwrap(), before[0]);
+    assert_eq!(histories(&path, id.as_deref()), before);
+    assert!(AccountRoot::open_v2(&path, PasswordPool::new(1).unwrap()).is_ok());
+}

@@ -1,4 +1,4 @@
-//! Independent original readers for the last common-root proof after child unwind.
+//! Bounded original physical readers for readonly capture and restored-root proofs.
 use crate::{Error, MAX_COMPONENT_IMAGE_BYTES, Result};
 use rustix::fs::{AtFlags, Mode, OFlags};
 use sha2::{Digest, Sha256};

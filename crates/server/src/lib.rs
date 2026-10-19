@@ -7,11 +7,12 @@ pub use component_archive::publication::{
 };
 pub use component_archive::{
     ACCOUNT_FILE_ARCHIVE_VERSION, AccountFileArchiveReader, MAX_ACCOUNT_FILE_ARCHIVE_BYTES,
-    VerifiedAccountFileArchive, backup_account_file_components, verify_account_file_archive,
+    VerifiedAccountFileArchive, backup_account_file_components, backup_account_file_root_v2,
+    verify_account_file_archive,
 };
 pub use component_snapshot::{
-    AccountFileSnapshot, MAX_COMPONENT_FILE_STORES, MAX_COMPONENT_IMAGE_BYTES,
-    MAX_COMPONENT_OBJECTS, capture_account_file_components,
+    AccountComponentSnapshot, AccountFileSnapshot, MAX_COMPONENT_FILE_STORES,
+    MAX_COMPONENT_IMAGE_BYTES, MAX_COMPONENT_OBJECTS, capture_account_file_components,
 };
 mod file_root_manifest;
 pub use file_root_manifest::{

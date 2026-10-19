@@ -451,7 +451,11 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if action == "root-v2-open" {
+    if action == "root-v2-backup" {
+        let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
+        crate::backup_account_file_root_v2(&mut root, target).unwrap();
+        durability::checkpoint("joined_v2_backup_returned");
+    } else if action == "root-v2-open" {
         let root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
         root.file_manifest().unwrap().unwrap();
         durability::checkpoint("account_file_root_returned");

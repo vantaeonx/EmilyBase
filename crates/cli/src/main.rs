@@ -34,6 +34,8 @@ enum Command {
     AccountFileRootInfo { path: PathBuf },
     /// Capture original native account/file owners into one private joined archive.
     AccountFileBackup(account_files::BackupArguments),
+    /// Back up all internal components of an explicitly selected existing v2 root.
+    AccountFileBackupV2 { root: PathBuf, archive: PathBuf },
     /// Restore a private joined archive to one fresh offline v2 root.
     AccountFileRestore {
         archive: PathBuf,
@@ -323,6 +325,15 @@ fn run(command: Command) -> Result<(), Box<dyn std::error::Error>> {
             }))?;
         }
         Command::AccountFileBackup(arguments) => account_files::backup(arguments)?,
+        Command::AccountFileBackupV2 { root, archive } => {
+            let mut root = emilybase_server::AccountRoot::open_v2(
+                root,
+                emilybase_auth::password::PasswordPool::new(1)?,
+            )?;
+            account_files::report(&emilybase_server::backup_account_file_root_v2(
+                &mut root, archive,
+            )?)?;
+        }
         Command::AccountFileRestore {
             archive,
             target,
