@@ -1615,3 +1615,13 @@ after changed sources, including a reproduced equal-byte metadata replacement.
 The [contract](project-file-read-gateway.md) records bounds, owner lifetimes and
 native verification. Common-root mutation admission, user file policies, HTTP/SDK
 file operations and remaining release criteria stay open.
+
+## Follow-up: native checks at actual file write boundaries
+
+[ADR0168](adr/0168-native-file-actual-write-guards.md) adds trusted guarded native
+publish/rename/remove/quota methods at actual blob/WAL phases under original owners
+and relevant payload readers. Refusal, staged poisoning, no-ops and uncertain
+publication retain distinct outcomes; callback unwind poisons before propagation.
+The [contract](native-file-write-guards.md) records both WALs, generated models and
+54 actual signal9 kills per toolchain. Current-key/common-root AccountRoot mutation
+integration and all unfulfilled release criteria remain open.

@@ -9,6 +9,7 @@ use std::process::{Command, Stdio};
 const PROJECT: ProjectId = ProjectId::from_bytes([1; 16]);
 const FRESH: FileId = FileId::from_bytes([6; 16]);
 const OBJECT: ObjectId = ObjectId::from_bytes([7; 16]);
+mod guarded;
 pub(super) fn fixture(parent: &Path, compacted: bool) -> PathBuf {
     let path = parent.join("root");
     initialize_file_root(&path, PROJECT, FileQuota::new(8, 32768).unwrap()).unwrap();
@@ -355,6 +356,22 @@ fn worker() {
         }
     };
     let mut root = NativeFileRoot::open(parent.join("root"), PROJECT).unwrap();
+    if phase == "guard" {
+        let at = std::env::var("EMILYBASE_NATIVE_GUARD_PHASE").unwrap();
+        let kind = std::env::var("EMILYBASE_NATIVE_GUARD_KIND")
+            .unwrap()
+            .parse()
+            .unwrap();
+        guarded::run_with_payload(&mut root, kind, &payload, |phase| {
+            if guarded::label(phase) == at {
+                ready();
+            }
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(at, "returned");
+        ready();
+    }
     root.publish_with(FRESH, OBJECT, [8; 16], "fresh", &payload, |at| {
         if matches!(
             (phase.as_str(), at),

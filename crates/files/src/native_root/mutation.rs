@@ -14,6 +14,57 @@ enum Outcome {
 }
 
 impl NativeFileRoot {
+    /// Trusted outer coordination; this callback is not current user authority.
+    pub fn rename_guarded(
+        &mut self,
+        id: FileId,
+        revision: u64,
+        name: &str,
+        mut guard: impl FnMut(NativeWritePhase) -> Result<()>,
+    ) -> Result<FileInfo> {
+        self.guarded_operation(|root| {
+            match root.edit_with_guard(
+                Operation::Rename(id, revision, name),
+                (|_| {}, Some(&mut guard)),
+            )? {
+                Outcome::Reference(info, _) => Ok(info),
+                Outcome::Quota(_) => Err(Error::Corrupt),
+            }
+        })
+    }
+    pub fn remove_guarded(
+        &mut self,
+        id: FileId,
+        revision: u64,
+        mut guard: impl FnMut(NativeWritePhase) -> Result<()>,
+    ) -> Result<FileRemoval> {
+        self.guarded_operation(|root| {
+            match root
+                .edit_with_guard(Operation::Remove(id, revision), (|_| {}, Some(&mut guard)))?
+            {
+                Outcome::Reference(info, committed) => {
+                    Ok(FileRemoval::from_committed(info, committed))
+                }
+                Outcome::Quota(_) => Err(Error::Corrupt),
+            }
+        })
+    }
+    pub fn set_quota_guarded(
+        &mut self,
+        expected: QuotaState,
+        quota: FileQuota,
+        mut guard: impl FnMut(NativeWritePhase) -> Result<()>,
+    ) -> Result<QuotaState> {
+        self.guarded_operation(|root| {
+            match root.edit_with_guard(
+                Operation::Quota(expected, quota),
+                (|_| {}, Some(&mut guard)),
+            )? {
+                Outcome::Quota(state) => Ok(state),
+                Outcome::Reference(_, _) => Err(Error::Corrupt),
+            }
+        })
+    }
     /// Copied scoped/global CAS state, not a user grant or reservation.
     pub fn quota_state(&mut self) -> Result<QuotaState> {
         self.observe(|store, _| store.quota_state(), |_| {})
@@ -53,20 +104,41 @@ impl NativeFileRoot {
         operation: Operation<'_>,
         boundary: impl FnMut(MetadataBoundary),
     ) -> Result<Outcome> {
+        self.edit_with_guard(operation, (boundary, None))
+    }
+    fn edit_with_guard(
+        &mut self,
+        operation: Operation<'_>,
+        hooks: (impl FnMut(MetadataBoundary), super::guard::Guard<'_>),
+    ) -> Result<Outcome> {
+        let (boundary, mut guard) = hooks;
         if let Operation::Rename(_, _, name) = operation {
             crate::records::validate_name(name)?;
         }
         let before = self.before_write()?;
+        let admitted = guard
+            .as_mut()
+            .map_or(Ok(()), |check| check(NativeWritePhase::BeforeOperation));
         let selection = &mut self.selection;
         let mut source_failed = false;
         let check = |at: WriteCheck<'_>| {
+            let phase = NativeWritePhase::of(&at);
             let result = selection.write_check(at);
             if result.is_err() {
                 source_failed = true;
             }
-            result
+            result?;
+            if let Some(check) = guard.as_mut() {
+                check(phase)?;
+                let selected = selection.check();
+                if selected.is_err() {
+                    source_failed = true;
+                }
+                selected?;
+            }
+            Ok(())
         };
-        let result = match operation {
+        let result = admitted.and_then(|()| match operation {
             Operation::Rename(id, revision, name) => self
                 .store
                 .mutate_checked_with(id, revision, Some(name), (boundary, check))
@@ -79,7 +151,7 @@ impl NativeFileRoot {
                 .store
                 .set_quota_checked_with(expected, quota, (boundary, check))
                 .map(Outcome::Quota),
-        };
+        });
         self.finish_write(&before, result, source_failed, |after, value| {
             if after.inventory != before.inventory {
                 return Err(Error::Corrupt);

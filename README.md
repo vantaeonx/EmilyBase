@@ -249,6 +249,10 @@ The [native project-file read gateway](docs/project-file-read-gateway.md) now ch
 the current service key and retains original project metadata/payload selections
 before returning a bounded complete copy. User file permissions and mutation/API
 integration remain separate gates.
+The [native write coordination](docs/native-file-write-guards.md) now supplies trusted
+checks at actual blob/WAL phases, retains original owners/readers and preserves
+uncertain published state. It is the storage prerequisite for later current-key
+AccountRoot mutations; it grants no user file permission.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

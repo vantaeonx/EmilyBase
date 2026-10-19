@@ -233,3 +233,9 @@ allows original internally owned file observations and complete copied payloads
 under current service keys. It adds per-call original project metadata selection
 after a reproduced equal-byte replacement failure. This supplies readonly native
 integration, not user file policy, a mutation endpoint or a production gate.
+
+The subsequent [native write guards](native-file-write-guards.md) supply trusted
+coordination at actual blob/WAL boundaries while preserving original owners,
+readers, staged refusal and uncertainty. Both WALs and 54 actual signal9 kills per
+toolchain exercise recovered state. This closes a native coordination prerequisite;
+current-key/common-root mutation integration and unfulfilled production boxes remain open.

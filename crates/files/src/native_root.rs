@@ -520,27 +520,54 @@ impl NativeFileRoot {
         payload: &[u8],
         boundary: impl FnMut(PublishBoundary),
     ) -> Result<FileInfo> {
+        self.publish_with_guard(id, object, owner, name, payload, (boundary, None))
+    }
+    fn publish_with_guard(
+        &mut self,
+        id: FileId,
+        object: ObjectId,
+        owner: [u8; 16],
+        name: &str,
+        payload: &[u8],
+        hooks: (impl FnMut(PublishBoundary), guard::Guard<'_>),
+    ) -> Result<FileInfo> {
+        let (boundary, mut guard) = hooks;
         crate::records::validate_name(name)?;
         if payload.len() > emilybase_object_storage::MAX_PAYLOAD_BYTES {
             return Err(emilybase_object_storage::Error::Limit.into());
         }
         let before = self.before_write()?;
+        let admitted = guard
+            .as_mut()
+            .map_or(Ok(()), |check| check(NativeWritePhase::BeforeOperation));
         let mut source_failed = false;
         let selection = &mut self.selection;
-        let result = self.store.publish_checked_with(
-            id,
-            object,
-            owner,
-            name,
-            payload,
-            (boundary, |at| {
-                let checked = selection.write_check(at);
-                if checked.is_err() {
-                    source_failed = true;
-                }
-                checked
-            }),
-        );
+        let result = admitted.and_then(|()| {
+            self.store.publish_checked_with(
+                id,
+                object,
+                owner,
+                name,
+                payload,
+                (boundary, |at| {
+                    let phase = NativeWritePhase::of(&at);
+                    let checked = selection.write_check(at);
+                    if checked.is_err() {
+                        source_failed = true;
+                    }
+                    checked?;
+                    if let Some(check) = guard.as_mut() {
+                        check(phase)?;
+                        let selected = selection.check();
+                        if selected.is_err() {
+                            source_failed = true;
+                        }
+                        selected?;
+                    }
+                    Ok(())
+                }),
+            )
+        });
         self.finish_write(&before, result, source_failed, |after, info| {
             if after.quota != before.quota || !after.files.contains(info) {
                 return Err(Error::Corrupt);
@@ -595,7 +622,9 @@ impl NativeFileRoot {
     }
 }
 
+mod guard;
 mod mutation;
+pub use guard::NativeWritePhase;
 mod reader;
 pub use reader::NativeFileReader;
 #[cfg(test)]

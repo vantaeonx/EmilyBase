@@ -2,7 +2,7 @@
 mod archive;
 mod mutation;
 mod native_root;
-pub use native_root::{NativeFileReader, NativeFileRoot, NativeFileRootInfo};
+pub use native_root::{NativeFileReader, NativeFileRoot, NativeFileRootInfo, NativeWritePhase};
 mod quota;
 pub use quota::QuotaState;
 mod records;
@@ -157,6 +157,8 @@ pub enum Error {
     Revision,
     #[error("native file catalog requires reopen after an uncertain write")]
     Poisoned,
+    #[error("native file coordination guard rejected the operation")]
+    GuardRejected,
     #[error("native file operation may have published data; inspect before retrying")]
     OutcomeUnknown(#[source] Box<Error>),
     #[error("file metadata engine operation failed")]
