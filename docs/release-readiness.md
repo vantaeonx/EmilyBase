@@ -227,3 +227,9 @@ acknowledged mutation, actual kills, incomplete request bodies, session preserva
 and independent rebackup/restore are exercised. Docker is unavailable locally;
 Compose selection is not a claim of completed container v2 recovery/upgrade.
 All unfulfilled production acceptance boxes remain open.
+
+The [native project-service read gateway](project-file-read-gateway.md) subsequently
+allows original internally owned file observations and complete copied payloads
+under current service keys. It adds per-call original project metadata selection
+after a reproduced equal-byte replacement failure. This supplies readonly native
+integration, not user file policy, a mutation endpoint or a production gate.

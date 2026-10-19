@@ -8,9 +8,11 @@ use emilybase_auth::password::PasswordPool;
 use emilybase_catalog::Value;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+mod files;
 mod key_file;
 mod public_user;
 mod snapshot;
+pub use files::{AccountFileRead, MAX_ACCOUNT_FILE_READ_BYTES};
 pub use snapshot::AccountRootSnapshot;
 
 /// Active private owner count, not a combined model/heap reservation.

@@ -451,7 +451,26 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if action == "root-v2-backup" {
+    if matches!(
+        action.as_str(),
+        "root-v2-file-read" | "root-v2-file-read-refuse-race"
+    ) {
+        let key = emilybase_auth::key_file::read_api_key_file(&target).unwrap();
+        let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
+        let result = root.read_project_file(
+            &project,
+            &key,
+            emilybase_files::FileId::from_bytes([2; 16]),
+            crate::MAX_ACCOUNT_FILE_READ_BYTES,
+        );
+        if action == "root-v2-file-read-refuse-race" {
+            assert!(result.is_err());
+            return;
+        }
+        let value = result.unwrap();
+        assert_eq!(value.payload(), b"synthetic-payload");
+        durability::checkpoint("account_file_read_returned");
+    } else if action == "root-v2-backup" {
         let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
         crate::backup_account_file_root_v2(&mut root, target).unwrap();
         durability::checkpoint("joined_v2_backup_returned");

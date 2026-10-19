@@ -2,6 +2,7 @@ use super::super::super::super::at::copy_directory;
 use super::*;
 mod backup;
 mod http;
+mod reads;
 use crate::{AccountFileRootManifest, FileRootBinding, backup_account_file_components};
 
 fn copy(parent: &Path, count: usize, compact: bool) -> (Source, PathBuf) {

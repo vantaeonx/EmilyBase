@@ -12,6 +12,7 @@ use std::os::fd::AsRawFd;
 use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+mod file_key;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ProjectInfo {

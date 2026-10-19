@@ -1605,3 +1605,13 @@ six real kills, partial unacknowledged bodies, sessions, key boundaries and a se
 independent backup/restore. The [contract](v2-server-startup.md) documents exact
 defaults, Compose configuration and unavailable local Docker verification. Container
 v2 recovery/upgrade and unfulfilled production criteria remain open.
+
+## Follow-up: native project-service file reading
+
+[ADR0167](adr/0167-project-key-native-file-read-gateway.md) adds readonly observations
+and bounded complete copies through the actual internally owned file component.
+Current key checks and original project metadata/payload descriptors withhold output
+after changed sources, including a reproduced equal-byte metadata replacement.
+The [contract](project-file-read-gateway.md) records bounds, owner lifetimes and
+native verification. Common-root mutation admission, user file policies, HTTP/SDK
+file operations and remaining release criteria stay open.

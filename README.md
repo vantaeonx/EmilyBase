@@ -245,6 +245,10 @@ Default account startup remains v1; the [explicit binary v2 mode](docs/v2-server
 now admits an existing v2 root and is tested through actual HTTP, restarts and kills.
 Old capture paths continue to refuse rather than omit file bindings. A container v2
 recovery/upgrade drill and production acceptance remain open.
+The [native project-file read gateway](docs/project-file-read-gateway.md) now checks
+the current service key and retains original project metadata/payload selections
+before returning a bounded complete copy. User file permissions and mutation/API
+integration remain separate gates.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

@@ -24,7 +24,10 @@ use layout::{FileOwners, FileTopology, RequestedLayout, RootLayout};
 mod initialize;
 pub use initialize::initialize_account_root;
 mod live;
-pub use live::{AccountRoot, AccountRootSnapshot, MAX_ACTIVE_PRIVATE_STORES};
+pub use live::{
+    AccountFileRead, AccountRoot, AccountRootSnapshot, MAX_ACCOUNT_FILE_READ_BYTES,
+    MAX_ACTIVE_PRIVATE_STORES,
+};
 
 /// Experimental root layout metadata, never proof of capture or authorization.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
