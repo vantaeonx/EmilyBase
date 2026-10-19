@@ -53,7 +53,7 @@ pub use registry_archive::{
 };
 pub use registry_files::account_root::{
     AccountBundleRootManifest, AccountBundleRootReport, AccountFileRead, AccountRoot,
-    AccountRootSnapshot, MAX_ACCOUNT_FILE_READ_BYTES, MAX_ACTIVE_PRIVATE_STORES,
+    AccountRootSnapshot, MAX_ACCOUNT_FILE_READ_BYTES, MAX_ACTIVE_PRIVATE_STORES, ProjectFileUpload,
     backup_account_bundle_root, capture_account_bundle_root, initialize_account_root,
     inspect_account_bundle_root, inspect_account_bundle_root_manifest_bytes,
     restore_account_bundle, restore_account_bundle_bytes,
@@ -118,6 +118,10 @@ pub enum Error {
     Storage(#[from] emilybase_storage::Error),
     #[error("native file storage failed")]
     Files(#[from] emilybase_files::Error),
+    #[error("account file write outcome is unknown; inspect before retrying")]
+    AccountFileWriteUnknown(#[source] Box<Error>),
+    #[error("account/file root requires reopen after an uncertain file write")]
+    AccountFileWritePoisoned,
     #[error("private account storage failed")]
     Accounts(#[from] emilybase_auth::accounts::Error),
     #[error("invalid project metadata")]

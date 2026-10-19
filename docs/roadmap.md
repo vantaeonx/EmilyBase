@@ -1625,3 +1625,13 @@ publication retain distinct outcomes; callback unwind poisons before propagation
 The [contract](native-file-write-guards.md) records both WALs, generated models and
 54 actual signal9 kills per toolchain. Current-key/common-root AccountRoot mutation
 integration and all unfulfilled release criteria remain open.
+
+## Follow-up: native current-key file mutation integration
+
+[ADR0169](adr/0169-current-key-native-file-mutation.md) connects service-key file
+mutations to the same original component/current-key frame used by readonly work.
+The check runs at actual native blob/WAL phases. Late common failure after possible
+publication poisons the whole live root, preserves data and requires explicit reopen.
+The [contract](project-file-write-gateway.md) describes no-ops, CAS/scope, real owner
+lifetimes, late changes, independent backup/restore and 50 actual signal9 kills.
+User file policy, HTTP/SDK endpoints and unfulfilled release criteria remain open.

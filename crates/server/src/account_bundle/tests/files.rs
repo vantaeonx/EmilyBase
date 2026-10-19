@@ -451,7 +451,47 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if matches!(
+    if let Some(kind) = action.strip_prefix("root-v2-file-write-") {
+        let kind: u8 = kind.parse().unwrap();
+        let key = emilybase_auth::key_file::read_api_key_file(&target).unwrap();
+        let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
+        let id = emilybase_files::FileId::from_bytes([2; 16]);
+        match kind {
+            0 => {
+                root.publish_project_file(
+                    &project,
+                    &key,
+                    crate::ProjectFileUpload {
+                        id: emilybase_files::FileId::from_bytes([31; 16]),
+                        object: emilybase_object_storage::ObjectId::from_bytes([32; 16]),
+                        owner: [33; 16],
+                        name: "fresh-name",
+                        payload: b"fresh-payload",
+                    },
+                )
+                .unwrap();
+            }
+            1 => {
+                root.rename_project_file(&project, &key, id, 3, "renamed")
+                    .unwrap();
+            }
+            2 => {
+                root.remove_project_file(&project, &key, id, 3).unwrap();
+            }
+            3 => {
+                let quota = root.project_file_quota(&project, &key).unwrap();
+                root.set_project_file_quota(
+                    &project,
+                    &key,
+                    quota,
+                    emilybase_files::FileQuota::new(8, 32768).unwrap(),
+                )
+                .unwrap();
+            }
+            _ => panic!("invalid synthetic operation"),
+        }
+        durability::checkpoint("account_file_write_returned");
+    } else if matches!(
         action.as_str(),
         "root-v2-file-read" | "root-v2-file-read-refuse-race"
     ) {

@@ -26,7 +26,7 @@ pub use initialize::initialize_account_root;
 mod live;
 pub use live::{
     AccountFileRead, AccountRoot, AccountRootSnapshot, MAX_ACCOUNT_FILE_READ_BYTES,
-    MAX_ACTIVE_PRIVATE_STORES,
+    MAX_ACTIVE_PRIVATE_STORES, ProjectFileUpload,
 };
 
 /// Experimental root layout metadata, never proof of capture or authorization.

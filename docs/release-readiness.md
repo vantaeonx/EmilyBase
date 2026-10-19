@@ -239,3 +239,9 @@ coordination at actual blob/WAL boundaries while preserving original owners,
 readers, staged refusal and uncertainty. Both WALs and 54 actual signal9 kills per
 toolchain exercise recovered state. This closes a native coordination prerequisite;
 current-key/common-root mutation integration and unfulfilled production boxes remain open.
+
+The subsequent [native current-key file mutations](project-file-write-gateway.md)
+connect actual write-phase guards to the owned common root and retained project
+metadata. Late uncertainty closes the whole live root until explicit reopen.
+This closes native backend mutation integration, not user-file permissions,
+HTTP/SDK mutation or any unfulfilled production acceptance box.

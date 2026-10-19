@@ -253,6 +253,10 @@ The [native write coordination](docs/native-file-write-guards.md) now supplies t
 checks at actual blob/WAL phases, retains original owners/readers and preserves
 uncertain published state. It is the storage prerequisite for later current-key
 AccountRoot mutations; it grants no user file permission.
+The [native current-key write gateway](docs/project-file-write-gateway.md) now connects
+those checks to the internally owned component. Late failure preserves possible
+data and closes the entire live root until explicit inspection/reopen. User-file
+policies and HTTP/SDK writes remain separate gates.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

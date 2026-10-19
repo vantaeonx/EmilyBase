@@ -12,7 +12,7 @@ mod files;
 mod key_file;
 mod public_user;
 mod snapshot;
-pub use files::{AccountFileRead, MAX_ACCOUNT_FILE_READ_BYTES};
+pub use files::{AccountFileRead, MAX_ACCOUNT_FILE_READ_BYTES, ProjectFileUpload};
 pub use snapshot::AccountRootSnapshot;
 
 /// Active private owner count, not a combined model/heap reservation.
@@ -23,6 +23,7 @@ pub const MAX_ACTIVE_PRIVATE_STORES: usize = 4;
 pub struct AccountRoot {
     selected: PathBuf,
     contents: Contents,
+    file_write_poisoned: bool,
     // Drop registry/private children before releasing the selected-root lock.
     owner: File,
     // At-mode selected paths borrow this original parent descriptor. End every
@@ -212,6 +213,7 @@ impl AccountRoot {
             selected,
             owner,
             contents: state.contents,
+            file_write_poisoned: false,
             parent,
         };
         result.ready()?;
@@ -224,6 +226,9 @@ impl AccountRoot {
         Ok(result)
     }
     fn ready(&self) -> Result<()> {
+        if self.file_write_poisoned {
+            return Err(Error::AccountFileWritePoisoned);
+        }
         self.check_parent()?;
         super::check_contents(&self.selected, &self.owner, &self.contents)?;
         self.check_parent()

@@ -2,6 +2,8 @@
 use super::super::Structure;
 use super::*;
 use emilybase_files::{FileId, FileInfo, NativeFileRoot, NativeFileRootInfo};
+mod mutation;
+pub use mutation::ProjectFileUpload;
 
 /// Copied output bound; native graph verification has its separate physical caps.
 pub const MAX_ACCOUNT_FILE_READ_BYTES: usize = emilybase_object_storage::MAX_PAYLOAD_BYTES;
@@ -37,10 +39,10 @@ impl AccountRoot {
         project: &str,
         key: &str,
     ) -> Result<NativeFileRootInfo> {
-        self.with_file_read(project, key, |root, _| Ok(root.inspect()?))
+        self.with_file_component(project, key, |root, _| Ok(root.inspect()?))
     }
     pub fn list_project_files(&mut self, project: &str, key: &str) -> Result<Vec<FileInfo>> {
-        self.with_file_read(project, key, |root, _| Ok(root.list()?))
+        self.with_file_component(project, key, |root, _| Ok(root.list()?))
     }
     /// Committed logical reference metadata; a physical orphan remains absent.
     pub fn project_file_info(
@@ -49,7 +51,7 @@ impl AccountRoot {
         key: &str,
         id: FileId,
     ) -> Result<Option<FileInfo>> {
-        self.with_file_read(project, key, |root, _| Ok(root.file_info(id)?))
+        self.with_file_component(project, key, |root, _| Ok(root.file_info(id)?))
     }
     /// Complete bounded copy, withheld until original reader/root/key checks end.
     /// A retained payload reader spans common checks; no partial copy escapes.
@@ -60,7 +62,7 @@ impl AccountRoot {
         id: FileId,
         maximum_bytes: usize,
     ) -> Result<AccountFileRead> {
-        self.with_file_read(project, key, |root, check| {
+        self.with_file_component(project, key, |root, check| {
             if maximum_bytes > MAX_ACCOUNT_FILE_READ_BYTES {
                 return Err(Error::Limit);
             }
@@ -96,7 +98,7 @@ impl AccountRoot {
             Ok(AccountFileRead { info, payload })
         })
     }
-    fn with_file_read<T>(
+    fn with_file_component<T>(
         &mut self,
         project: &str,
         key: &str,

@@ -3,6 +3,7 @@ use super::*;
 mod backup;
 mod http;
 mod reads;
+mod writes;
 use crate::{AccountFileRootManifest, FileRootBinding, backup_account_file_components};
 
 fn copy(parent: &Path, count: usize, compact: bool) -> (Source, PathBuf) {
