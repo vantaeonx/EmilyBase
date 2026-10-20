@@ -251,3 +251,9 @@ supplies strict per-action owner/session rules over genuine borrowed principals
 and exact native scope. Its parser/model checks are a prerequisite. Installed
 private policy authority, owned native user-file enforcement, HTTP/SDK file access
 and all unfulfilled production acceptance boxes remain open.
+
+The subsequent [single-row file-policy codec](file-policy-records.md) specifies and
+validates bounded original typed records, including native scope and revision
+integrity. It performs no schema migration or installation. Current installed
+private policy authority, actual user-file enforcement and all unfulfilled
+production acceptance boxes remain open.

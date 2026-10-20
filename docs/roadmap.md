@@ -1645,3 +1645,13 @@ The [contract](file-policy-decisions.md) records the complete rule matrix, gener
 cases, revocation/restore checks and actual native metadata observations. Installed
 private policy authority, actual user-file enforcement, HTTP/SDK operations and all
 unfulfilled production acceptance criteria remain open.
+
+## Follow-up: bounded file policies in original typed records
+
+[ADR0171](adr/0171-single-row-file-policy-records.md) specifies a complete single-row
+representation using the existing catalog/page format. The
+[contract](file-policy-records.md) binds original document bytes, exact native scope
+and revision metadata with a domain-separated digest. Independent vectors, actual
+page roundtrips, damaged records and a reproduced Debug privacy regression exercise
+the codec. Explicit private migration/current installed proof, actual user-file
+operations and all unfulfilled release acceptance criteria remain open.

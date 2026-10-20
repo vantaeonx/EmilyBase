@@ -180,5 +180,6 @@ fn matches(rule: Rule, owner: &[u8; 16], user: &[u8; 16]) -> bool {
         Rule::Authenticated {} => true,
     }
 }
+pub mod records;
 #[cfg(test)]
 mod tests;

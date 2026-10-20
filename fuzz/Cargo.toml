@@ -9,6 +9,13 @@ license = "Apache-2.0"
 cargo-fuzz = true
 
 [[bin]]
+name = "file_policy_records"
+path = "fuzz_targets/file_policy_records.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "file_policy"
 path = "fuzz_targets/file_policy.rs"
 test = false

@@ -5185,3 +5185,26 @@ reports317MiB peak RSS and no artifacts. This is a bounded grammar/model check.
 See the [report](measurements/2026-10-20-file-policy/verification.json) for exact
 commands, hashes and boundaries. A fresh entire workspace/SDK/container run is
 not claimed. Installed file-policy authority and native user enforcement remain open.
+
+## Single-row file-policy records, 2026-10-20
+
+The [record codec](file-policy-records.md) has final source-bound stable/minimum
+results:178 passed,0 failed,2 optional auth corpus helpers per toolchain. This
+covers complete auth tests/doctests,one real native metadata/principal case and
+one server doctest. Server/CLI builds, workspace/fuzz formatting, strict Clippy and
+minimum-Rust compilation of the new fuzz target pass. All final processes close0
+and688 frozen source/config hashes match afterward.
+
+Nine new cases include independent Python domain/binary vectors,54 maximum-policy
+definitions through a real page,128 generated record cases, exact scope/revisions
+and byte corruption with recomputed-digest semantic checks. A regression first
+fails on ordinary encoded Row Debug exposing synthetic project scope; redacted
+PolicyRecord then passes while preserving both wire vectors. Two test-style lint
+findings are fixed after closing the first attempt; its results remain separate.
+
+A125-file synthetic corpus seeds the ASan target. It completes5,694,018 executions
+in46 seconds, reports316MiB peak RSS and no artifacts. This is a short typed-record
+and grammar smoke run. See [evidence](measurements/2026-10-20-file-policy-records/verification.json).
+The prior complete file-component/registry/archive CLI result belongs to57e6052;
+this change does not claim a new whole-workspace/SDK/container or power-loss run.
+No private migration, current installed policy proof or user-file route is supplied.
