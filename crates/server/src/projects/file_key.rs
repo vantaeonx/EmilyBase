@@ -1,10 +1,10 @@
-//! Per-operation original metadata selection for native project-service file reads.
+//! Original project metadata selection; not user identity or authority.
 use super::*;
 use std::fs::Metadata as FileMetadata;
 use std::io::{Read, Seek, SeekFrom};
 use std::os::unix::fs::MetadataExt;
 
-pub(crate) struct ProjectFileKey<'a> {
+pub(crate) struct ProjectFileMetadata<'a> {
     store: &'a ProjectStore,
     project: &'a Project,
     id: &'a str,
@@ -17,8 +17,20 @@ impl ProjectStore {
         &'a self,
         id: &'a str,
         key: &str,
-    ) -> Result<ProjectFileKey<'a>> {
+    ) -> Result<ProjectFileMetadata<'a>> {
         drop(self.authorize(id, key)?);
+        self.file_metadata_guard(id)
+    }
+    /// Internal owned-project selection only. Callers enforce their service key
+    /// or actual user admission/session/installed policy before file access.
+    pub(crate) fn file_metadata_guard<'a>(
+        &'a self,
+        id: &'a str,
+    ) -> Result<ProjectFileMetadata<'a>> {
+        self.ready()?;
+        if !valid_project_id(id) {
+            return Err(Error::Denied);
+        }
         let project = self.projects.get(id).ok_or(Error::Denied)?;
         self.check_project_directory(id, project)?;
         let mut file = File::from(
@@ -57,7 +69,7 @@ impl ProjectStore {
         {
             return Err(Error::Metadata);
         }
-        let mut guard = ProjectFileKey {
+        let mut guard = ProjectFileMetadata {
             store: self,
             project,
             id,
@@ -82,7 +94,7 @@ fn stamp(m: &FileMetadata) -> (u64, u64, u64, u32, u64, i64, i64, i64, i64) {
         m.ctime_nsec(),
     )
 }
-impl ProjectFileKey<'_> {
+impl ProjectFileMetadata<'_> {
     fn selected(&self) -> Result<()> {
         self.store.ready()?;
         metadata::owned_directory(&self.store.root, &self.store.owner)?;

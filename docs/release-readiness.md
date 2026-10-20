@@ -272,3 +272,10 @@ and trusted unwind preserve possible commits and close the whole live root until
 explicit inspection/reopen. This closes the native operator coordination prerequisite;
 actual user-file enforcement, HTTP/SDK files and all unfulfilled production acceptance
 boxes remain open.
+
+The subsequent [native authenticated user-file reads](native-user-file-reads.md)
+connect current admission, genuine session and installed policy to authoritative
+native metadata/list/payload work under original owners. Complete output is withheld
+through final checks; source/copy session boundaries and trusted clock observations
+remain explicit. This closes native user-file reading only. User-file writes,
+HTTP/SDK file access and every unmet production acceptance box remain open.

@@ -275,6 +275,11 @@ explicit migration and exact policy installation to the original common/private/
 owners. It derives the real file database identity and repeats current-key checks at
 actual private commit phases. Late uncertainty preserves metadata and closes the
 whole live root until explicit inspection/reopen, including trusted callback unwind.
+The [native user-file read gateway](docs/native-user-file-reads.md) now filters
+metadata/list results and authorizes complete bounded payload copies under a genuine
+current session, explicit admission and installed policy. It derives actual native
+ownership without a service key and retains original private/project/file selections.
+User-file writes and HTTP/SDK file endpoints remain separate work.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

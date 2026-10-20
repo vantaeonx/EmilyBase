@@ -88,3 +88,8 @@ private and file owners, with checks at real private commit phases. This supplie
 operator coordination; actual native user-file operations, HTTP/SDK files, roles,
 signed URLs, global admission, container v2 recovery/upgrade and production acceptance
 remain open.
+
+The later [native authenticated user-file reads](native-user-file-reads.md) now
+consume this installed proof for current-user metadata/list/complete payload work
+under actual original private/file owners. User-file mutation, HTTP/SDK file access
+and the remaining release gates stay open.

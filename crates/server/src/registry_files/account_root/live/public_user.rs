@@ -103,7 +103,7 @@ impl AccountRoot {
     }
 }
 
-fn admission(account: &AccountStore) -> Result<()> {
+pub(super) fn admission(account: &AccountStore) -> Result<()> {
     match account.public_admission() {
         Ok(receipt) if receipt.enabled => Ok(()),
         Ok(_) | Err(AccountError::AdmissionSchema) => Err(Error::Denied),

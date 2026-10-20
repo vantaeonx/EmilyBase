@@ -90,3 +90,8 @@ Final results are recorded in the [source-bound report](measurements/2026-10-21-
 This is native operator metadata administration. Actual installed-policy user-file
 execution, HTTP/SDK files, roles, signed URLs, realtime, dashboard and unmet release
 acceptance remain open. Synthetic data only; no production-readiness claim.
+
+The subsequent [native user-file read gateway](native-user-file-reads.md) consumes
+installed policies for authenticated current-user metadata/list/complete reads under
+actual native ownership. Operator metadata methods remain separate. User-file writes
+and HTTP/SDK file access are still pending.

@@ -1676,3 +1676,13 @@ from outcome uncertainty and closes the whole Root after possible publication,
 including returned errors and trusted unwind. The
 [contract](file-policy-write-gateway.md) preserves exact no-op/CAS/restore semantics.
 Actual user-file enforcement and every unfulfilled release criterion remain open.
+
+## Follow-up: native authenticated user-file reads
+
+[ADR0174](adr/0174-native-user-file-reads.md) adds current-session file metadata,
+filtered lists and complete bounded reads without a service key. The actual original
+frame requires current public admission and installed policy, derives nativeDB and
+consumes the actual reader owner. Original metadata/private WAL checks span forward
+clock observation and final output handling. The [contract](native-user-file-reads.md)
+records owner isolation, lifecycle, replacement and actual worker/recovery coverage.
+User-file writes, HTTP/SDK file access and all unmet release criteria remain open.

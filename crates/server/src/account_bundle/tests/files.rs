@@ -451,7 +451,28 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if let Some(rest) = action.strip_prefix("root-v2-file-policy-") {
+    if matches!(
+        action.as_str(),
+        "root-v2-user-file-read" | "root-v2-user-file-read-refuse-race"
+    ) {
+        // Trusted synthetic child-test input; no production credential loader.
+        let access = zeroize::Zeroizing::new(fs::read_to_string(&target).unwrap());
+        let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
+        let result = root.public_read_file(
+            &project,
+            &access,
+            101,
+            emilybase_files::FileId::from_bytes([2; 16]),
+            32,
+        );
+        if action.ends_with("refuse-race") {
+            assert!(result.is_err());
+            return;
+        }
+        let value = result.unwrap();
+        assert_eq!(value.payload(), b"synthetic-payload");
+        durability::checkpoint("account_user_file_returned");
+    } else if let Some(rest) = action.strip_prefix("root-v2-file-policy-") {
         let (kind, expected) = rest.split_once('-').unwrap();
         let expected = expected.parse().unwrap();
         let key = emilybase_auth::key_file::read_api_key_file(&target).unwrap();

@@ -5271,3 +5271,45 @@ GitHub54ece14 baseline has all five jobs successful,1983/0/44 tests per Rust and
 separate diagnostic checks,verified from raw logs. The new commit's hosted run is
 tracked separately. Native v2 container recovery/upgrade and production acceptance
 remain open. See the [source-bound report](measurements/2026-10-21-file-policy-write-guards/verification.json).
+
+
+## Native authenticated user-file reads, 2026-10-21
+
+The [native user-only gateway](native-user-file-reads.md) has final stable1.99.0 and
+minimum1.89.0 results:91 passed,0 failed,0 ignored per toolchain. All67 native v2 live
+component cases,one server doctest and23 actual CLI account-file-archive integrations
+are fresh,plus server/CLI builds. Workspace/fuzz formatting and strict all-target/bin
+lint and minimum private-account-archive fuzz compilation pass. All five final tool
+processes/runners closed0;696 frozen source/config inputs were checked afterward and
+against committed Git blobs before publication claims. This is not a fresh full
+workspace/SDK/all offline component/auth suite. All48 auth source/manifest hashes
+match15dcfd7,whose192 auth tests/2 ignored helpers are separate prior evidence.
+
+Thirteen new native cases use real users/two projects,actual native owner metadata,
+owner/authenticated/deny rules,current admission and genuine access without service
+keys. Policy replacement and independent service-key rotation need no replacement
+user token. Logout/refresh,password epoch,disable/reenable and expiry deny old access.
+Context is checked for missing/empty results. Orphans remain absent;payload limits
+and zero-length payloads use the shared complete-copy implementation without partial
+output. A twelve-case generated model checks visibility against an independent
+native owner inventory. V1/unbound/invalid project inputs refuse without provisioning
+or private schema upgrade.
+
+Each Rust executes48 metadata replacement cases and6 replacements while the actual
+payload reader is retained. Twelve bounded real workers cover FIFO,symlink,hardlink
+and broad-mode changes to project metadata(WAL2),private WAL(WAL1) and native WAL(WAL2).
+Fourteen actual signal9 kills span both WALs and authenticated/principal/retained/
+copied/verified/result/caller-return boundaries;the parent asserts signal9. Reopen
+preserves exact sources and allows a new independent write. A retained-parent move
+and independent restore preserve file/policy/user binding,close copy admission and
+revoke old copy sessions. Source sessions/data remain unchanged.
+
+The first negative regression accepted an equal-byte project-metadata replacement
+at the authenticated checkpoint because its descriptor was acquired later. That
+failure was reproduced before moving original selection ahead of authentication.
+Private WAL selection is retained before forward clock observation;the exact
+original native LSN increments once despite two session verifications. Denied forward
+authentication persists its observation,backward time refuses after restart,and
+closed admission never advances that clock. No parser/format/dependency changed and
+no new sanitizer campaign is claimed. User-file writes,HTTP/SDK files and unfulfilled
+production acceptance remain open. See [evidence](measurements/2026-10-21-user-file-reads/verification.json).

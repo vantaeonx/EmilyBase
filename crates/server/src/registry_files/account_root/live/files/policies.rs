@@ -1,12 +1,11 @@
 //! Operator metadata under actual original file/private/common owners.
+use super::private_wal::PrivateWal;
 use super::*;
 use emilybase_auth::{
     accounts::{FilePolicyReceipt, FilePolicyWritePhase},
     file_policy::StoreContext,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
-mod private_wal;
-use private_wal::PrivateWal;
 
 impl AccountRoot {
     /// Explicit private v5 -> v6 migration; never changes public admission.
