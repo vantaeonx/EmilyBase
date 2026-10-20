@@ -2,6 +2,7 @@ use super::super::super::super::at::copy_directory;
 use super::*;
 mod backup;
 mod file_policy;
+mod file_policy_admin;
 mod http;
 mod reads;
 mod writes;

@@ -451,7 +451,19 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if let Some(kind) = action.strip_prefix("root-v2-file-write-") {
+    if let Some(rest) = action.strip_prefix("root-v2-file-policy-") {
+        let (kind, expected) = rest.split_once('-').unwrap();
+        let expected = expected.parse().unwrap();
+        let key = emilybase_auth::key_file::read_api_key_file(&target).unwrap();
+        let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
+        if kind == "0" {
+            root.enable_file_policy_catalog(&project, &key).unwrap();
+        } else {
+            root.install_project_file_policy(&project, &key, expected,
+                br#"{"version":1,"read":{"kind":"deny"},"create":{"kind":"deny"},"rename":{"kind":"deny"},"remove":{"kind":"deny"}}"#).unwrap();
+        }
+        durability::checkpoint("account_file_policy_returned");
+    } else if let Some(kind) = action.strip_prefix("root-v2-file-write-") {
         let kind: u8 = kind.parse().unwrap();
         let key = emilybase_auth::key_file::read_api_key_file(&target).unwrap();
         let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();

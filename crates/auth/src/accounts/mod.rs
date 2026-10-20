@@ -1,7 +1,11 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod archive;
 mod file_policies;
-pub use file_policies::{FilePolicyPrincipal, FilePolicyReceipt, MAX_FILE_POLICIES};
+pub use file_policies::{
+    FilePolicyPrincipal, FilePolicyReceipt, FilePolicyWritePhase, MAX_FILE_POLICIES,
+};
+#[cfg(test)]
+mod file_policy_guard_tests;
 #[cfg(test)]
 mod file_policy_tests;
 mod page;
@@ -86,6 +90,10 @@ pub enum Error {
     FilePolicyCapacity,
     #[error("file policy is not installed")]
     FilePolicyDenied,
+    #[error("trusted file policy write guard refused")]
+    FilePolicyGuardRejected,
+    #[error("file policy committed but enclosing coordination failed; inspect before retrying")]
+    FilePolicyWriteUnknown(#[source] Box<Error>),
     #[error("invalid file policy input")]
     FilePolicy(#[source] crate::file_policy::PolicyError),
     #[error("public admission catalog is not enabled")]
@@ -248,6 +256,11 @@ impl AccountStore {
         name: impl AsRef<std::ffi::OsStr>,
     ) -> Result<()> {
         Ok(self.database.check_directory_at(parent, name)?)
+    }
+    /// Finite comparison with a trusted original private directory and WAL.
+    /// No owner or permission is exported; a foreign comparison grants nothing.
+    pub fn check_directory_owner(&self, expected: &std::fs::File) -> Result<()> {
+        Ok(self.database.check_directory_owner(expected)?)
     }
 
     pub fn count(&self) -> Result<usize> {

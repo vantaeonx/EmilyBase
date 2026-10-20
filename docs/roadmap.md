@@ -1666,3 +1666,13 @@ and closes copy admission. Both WALs,24 generated models,15 damaged engine image
 12 actual signal9 kills and native common-root v6 compatibility exercise the
 [contract](file-policy-catalog.md). Actual user-file operations and all unfulfilled
 release acceptance criteria remain open.
+
+## Follow-up: current-key private file-policy writes
+
+[ADR0173](adr/0173-private-file-policy-write-guards.md) connects guarded original
+private migration/install to the existing actual native/current-key frame. The
+adapter derives nativeDB, retains original owners, distinguishes precommit refusal
+from outcome uncertainty and closes the whole Root after possible publication,
+including returned errors and trusted unwind. The
+[contract](file-policy-write-gateway.md) preserves exact no-op/CAS/restore semantics.
+Actual user-file enforcement and every unfulfilled release criterion remain open.

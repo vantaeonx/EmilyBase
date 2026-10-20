@@ -5232,3 +5232,42 @@ ASan completes35,311 full archive/semantic-oracle executions in46 seconds, repor
 campaign or security audit. See [evidence](measurements/2026-10-20-file-policy-catalog/verification.json).
 This is not a fresh whole-workspace/full-file-component/SDK/container run. Native
 current-key file-policy administration and actual user-file enforcement remain open.
+
+
+## Current-key private file-policy write guards, 2026-10-21
+
+The [native operator gateway](file-policy-write-gateway.md) has final results from
+Rust1.99.0 and minimum1.89.0:270 passed,0 failed,2 ignored helper/corpus entries on
+each toolchain. This includes the entire auth suite/doctests192,all54 native v2 live
+component cases,one server doctest and23 actual CLI account-file-archive integrations,
+plus server/CLI builds. Workspace/fuzz format and strict all-target/bin lint and
+minimum private-account-archive fuzz compilation pass. All five final tool processes
+and their runners closed successfully;694 frozen source/config hashes were checked
+afterward and are verified against committed Git blobs before publication claims.
+This is not a fresh entire-workspace,all offline component or SDK run.
+
+Thirteen new cases cover5 auth/8 Root tests. Each toolchain executes78 new real
+signal9 kills:30 private guarded boundaries and48 common-root boundaries across both
+WALs and migration/install/replacement. Parents assert signal9 specifically. The144
+replacement cases cover both WALs,three actions,six phases and four altered files:
+common manifest,key metadata,native WAL and private WAL. There are36 Root phase
+unwinds plus6 after accepted BeforeCommit,and48 private refusal/unwind combinations.
+Committed metadata survives;late failure withholds output and poisons the entire
+Root until explicit inspection/reopen. Exact no-op/CAS/invalid input preserves WAL.
+Current-key rotation,cross-project/token refusal,real original descriptors,retained
+parent movement,undeclared/v1 refusal and independent backup/restore are exercised.
+
+Two negative regressions were first reproduced:late native-WAL selection checking
+and writing an unselected private journal after replacement. The adapter now checks
+the actual native selection and retains an actual original private WAL descriptor
+through final common checks. Native ctime checks stay strict even if the inode is
+restored. The existing v2 file-binding/private-membership rule remains unchanged.
+Earlier partial freezes were superseded while completing those regressions;their
+incomplete processes are excluded from final passing evidence.
+
+No parser,codec or format changed and no new sanitizer campaign is claimed. The
+previous catalog's bounded ASan result remains separate evidence. The completed
+GitHub54ece14 baseline has all five jobs successful,1983/0/44 tests per Rust and58
+separate diagnostic checks,verified from raw logs. The new commit's hosted run is
+tracked separately. Native v2 container recovery/upgrade and production acceptance
+remain open. See the [source-bound report](measurements/2026-10-21-file-policy-write-guards/verification.json).

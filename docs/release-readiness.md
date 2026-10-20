@@ -264,3 +264,11 @@ proof with genuine sessions. Migration remains explicit. Private/common restore
 preserves policies and closes admission while revoking copied sessions. This closes
 the installed-policy prerequisite; actual native user-file enforcement, HTTP/SDK
 files and all unfulfilled production acceptance boxes remain open.
+
+The subsequent [current-key file-policy gateway](file-policy-write-gateway.md)
+adds native operator metadata administration under actual original file/private/common
+owners and current key checks at real private commit phases. Late returned errors
+and trusted unwind preserve possible commits and close the whole live root until
+explicit inspection/reopen. This closes the native operator coordination prerequisite;
+actual user-file enforcement, HTTP/SDK files and all unfulfilled production acceptance
+boxes remain open.

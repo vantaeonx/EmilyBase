@@ -9,6 +9,30 @@ use emilybase_database::Snapshot;
 
 pub const MAX_FILE_POLICIES: usize = 128;
 
+/// Trusted coordination at actual native phases, never user authority.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FilePolicyWritePhase {
+    BeforeOperation,
+    BeforeCommit,
+    Committed,
+    Verified,
+}
+type Guard<'a> = Option<&'a mut dyn FnMut(FilePolicyWritePhase) -> Result<()>>;
+fn check(guard: &mut Guard<'_>, phase: FilePolicyWritePhase) -> Result<()> {
+    if let Some(guard) = guard {
+        guard(phase)?;
+    }
+    Ok(())
+}
+fn committed_checks(guard: &mut Guard<'_>) -> Result<()> {
+    for phase in [
+        FilePolicyWritePhase::Committed,
+        FilePolicyWritePhase::Verified,
+    ] {
+        check(guard, phase).map_err(|error| Error::FilePolicyWriteUnknown(Box::new(error)))?;
+    }
+    Ok(())
+}
 /// Copied operator observations; this is not an authorization or reservation.
 #[derive(Clone, PartialEq, Eq)]
 pub struct FilePolicyReceipt {
@@ -121,17 +145,33 @@ impl AccountStore {
     pub fn enable_file_policy_catalog(&mut self) -> Result<()> {
         self.enable_file_policy_catalog_with(|| {})
     }
+    /// A refusal after successful commit withholds output and reports uncertainty.
+    /// The enclosing coordinator must preserve committed data and inspect before retry.
+    pub fn enable_file_policy_catalog_guarded(
+        &mut self,
+        mut guard: impl FnMut(FilePolicyWritePhase) -> Result<()>,
+    ) -> Result<()> {
+        self.enable_file_policy_catalog_inner(|| {}, Some(&mut guard))
+    }
     pub(super) fn enable_file_policy_catalog_with(
         &mut self,
         before_commit: impl FnOnce(),
     ) -> Result<()> {
+        self.enable_file_policy_catalog_inner(before_commit, None)
+    }
+    fn enable_file_policy_catalog_inner(
+        &mut self,
+        before_commit: impl FnOnce(),
+        mut guard: Guard<'_>,
+    ) -> Result<()> {
+        check(&mut guard, FilePolicyWritePhase::BeforeOperation)?;
         let state = super::archive::validate_snapshot(
             self.database.view()?,
             &self.project,
             self.database.last_transaction(),
         )?;
         if state.version == 6 {
-            return Ok(());
+            return check(&mut guard, FilePolicyWritePhase::Verified);
         }
         if state.version != 5 {
             return Err(Error::FilePolicySchema);
@@ -148,8 +188,9 @@ impl AccountStore {
         tx.create_table(records::schema())?;
         tx.update(SCOPE, &Key::Integer(1), scope)?;
         before_commit();
+        check(&mut guard, FilePolicyWritePhase::BeforeCommit)?;
         tx.commit()?;
-        Ok(())
+        committed_checks(&mut guard)
     }
     pub fn file_policy_receipts(&self) -> Result<Vec<FilePolicyReceipt>> {
         enabled(self.database.view()?)?;
@@ -168,6 +209,17 @@ impl AccountStore {
     ) -> Result<FilePolicyReceipt> {
         self.install_file_policy_with(context, expected, document, || {})
     }
+    /// Actual private commit phases under the original owner. Native commit errors
+    /// retain their typed cause; an accepted BeforeCommit may precede a write attempt.
+    pub fn install_file_policy_guarded(
+        &mut self,
+        context: StoreContext<'_>,
+        expected: u64,
+        document: &[u8],
+        mut guard: impl FnMut(FilePolicyWritePhase) -> Result<()>,
+    ) -> Result<FilePolicyReceipt> {
+        self.install_file_policy_inner(context, expected, document, || {}, Some(&mut guard))
+    }
     pub(super) fn install_file_policy_with(
         &mut self,
         context: StoreContext<'_>,
@@ -175,6 +227,17 @@ impl AccountStore {
         document: &[u8],
         before_commit: impl FnOnce(),
     ) -> Result<FilePolicyReceipt> {
+        self.install_file_policy_inner(context, expected, document, before_commit, None)
+    }
+    fn install_file_policy_inner(
+        &mut self,
+        context: StoreContext<'_>,
+        expected: u64,
+        document: &[u8],
+        before_commit: impl FnOnce(),
+        mut guard: Guard<'_>,
+    ) -> Result<FilePolicyReceipt> {
+        check(&mut guard, FilePolicyWritePhase::BeforeOperation)?;
         enabled(self.database.view()?)?;
         if context.project != self.project {
             return Err(Error::ScopeMismatch);
@@ -185,6 +248,7 @@ impl AccountStore {
             if previous.document() == document
                 && (expected == previous.revision() || expected == previous.previous())
             {
+                check(&mut guard, FilePolicyWritePhase::Verified)?;
                 return Ok(FilePolicyReceipt::from(previous));
             }
             if expected != previous.revision() {
@@ -218,7 +282,9 @@ impl AccountStore {
             tx.insert(&schema.name, encoded.into_row())?;
         }
         before_commit();
+        check(&mut guard, FilePolicyWritePhase::BeforeCommit)?;
         tx.commit()?;
+        committed_checks(&mut guard)?;
         Ok(receipt)
     }
     /// The borrow excludes policy/credential replacement in the same store.

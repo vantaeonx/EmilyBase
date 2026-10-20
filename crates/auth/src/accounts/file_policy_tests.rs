@@ -10,7 +10,7 @@ pub(super) fn context() -> StoreContext<'static> {
         database: [3; 16],
     }
 }
-fn create(path: &Path, version: u16, compact: bool) -> AccountStore {
+pub(super) fn create(path: &Path, version: u16, compact: bool) -> AccountStore {
     raw_store(path, vec![fixture_record("synthetic", [7; 16], 2).encode()]);
     let mut store = AccountStore::open(path, PROJECT, PasswordPool::new(1).unwrap()).unwrap();
     if version == 2 {

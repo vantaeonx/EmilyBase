@@ -120,6 +120,8 @@ pub enum Error {
     Files(#[from] emilybase_files::Error),
     #[error("account file write outcome is unknown; inspect before retrying")]
     AccountFileWriteUnknown(#[source] Box<Error>),
+    #[error("account file-policy write outcome is unknown; inspect before retrying")]
+    AccountFilePolicyWriteUnknown(#[source] Box<Error>),
     #[error("account/file root requires reopen after an uncertain file write")]
     AccountFileWritePoisoned,
     #[error("private account storage failed")]

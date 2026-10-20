@@ -82,5 +82,9 @@ v6 records with an independent acceptance oracle, while raw inputs still reach
 complete backup validation. No password proof or fabricated principal is fuzzed.
 
 See the source-bound [verification report](measurements/2026-10-20-file-policy-catalog/verification.json).
-Actual native user-file operations, HTTP/SDK files, roles, signed URLs, global
-admission, container v2 recovery/upgrade and production acceptance remain open.
+The subsequent [current-key file-policy gateway](file-policy-write-gateway.md)
+connects native operator migration/installation to the actual original common,
+private and file owners, with checks at real private commit phases. This supplies
+operator coordination; actual native user-file operations, HTTP/SDK files, roles,
+signed URLs, global admission, container v2 recovery/upgrade and production acceptance
+remain open.

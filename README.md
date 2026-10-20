@@ -270,6 +270,11 @@ persists those records with actual commit revisions, exact retries and current
 borrowed policy/session proofs. Verified restore preserves policies while revoking
 copy sessions and closing copy admission. Actual native user-file enforcement and
 HTTP/SDK file operations remain separate work.
+The [current-key file-policy gateway](docs/file-policy-write-gateway.md) connects
+explicit migration and exact policy installation to the original common/private/native
+owners. It derives the real file database identity and repeats current-key checks at
+actual private commit phases. Late uncertainty preserves metadata and closes the
+whole live root until explicit inspection/reopen, including trusted callback unwind.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

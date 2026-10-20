@@ -112,6 +112,9 @@ fn account_kill_worker() {
     }
     let mut store =
         AccountStore::open(Path::new(&path), PROJECT, PasswordPool::new(1).unwrap()).unwrap();
+    if mode.starts_with("file-policy-guarded-") {
+        super::file_policy_guard_tests::worker(&mut store, &mode);
+    }
     if mode.starts_with("file-policy-") {
         use super::file_policy_tests::{DENY, context};
         let barrier = || {

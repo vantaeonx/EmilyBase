@@ -3,6 +3,7 @@ use super::super::Structure;
 use super::*;
 use emilybase_files::{FileId, FileInfo, NativeFileRoot, NativeFileRootInfo};
 mod mutation;
+mod policies;
 pub use mutation::ProjectFileUpload;
 
 /// Copied output bound; native graph verification has its separate physical caps.
@@ -104,6 +105,20 @@ impl AccountRoot {
         key: &str,
         work: impl FnOnce(&mut NativeFileRoot, &mut dyn FnMut() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
+        self.with_file_component_accounts(project, key, |native, _, check| work(native, check))
+    }
+    // Lend disjoint original owners in the same current-key/common-root frame.
+    // Missing private ownership never implicitly provisions an account store.
+    fn with_file_component_accounts<T>(
+        &mut self,
+        project: &str,
+        key: &str,
+        work: impl FnOnce(
+            &mut NativeFileRoot,
+            Option<(&mut AccountStore, &File)>,
+            &mut dyn FnMut() -> Result<()>,
+        ) -> Result<T>,
+    ) -> Result<T> {
         self.ready()?;
         drop(self.contents.registry.authorize(project, key)?);
         let index = self
@@ -118,6 +133,19 @@ impl AccountRoot {
         let native = roots
             .get_mut(index)
             .ok_or(Error::BundleRoot("file ownership layout"))?;
+        let account = contents
+            .accounts
+            .iter_mut()
+            .find(|a| a.project() == project)
+            .and_then(|account| {
+                contents
+                    .manifest
+                    .private_projects()
+                    .iter()
+                    .position(|id| id == project)
+                    .and_then(|index| contents.account_owners.get(index))
+                    .map(|owner| (account, owner))
+            });
         let registry = &contents.registry;
         let mut authority = registry.file_key_guard(project, key)?;
         let guard = Structure {
@@ -144,7 +172,7 @@ impl AccountRoot {
         };
         let result = (|| {
             check()?;
-            let value = work(native, &mut check);
+            let value = work(native, account, &mut check);
             check()?;
             value
         })();
