@@ -1655,3 +1655,14 @@ and revision metadata with a domain-separated digest. Independent vectors, actua
 page roundtrips, damaged records and a reproduced Debug privacy regression exercise
 the codec. Explicit private migration/current installed proof, actual user-file
 operations and all unfulfilled release acceptance criteria remain open.
+
+## Follow-up: explicit private v6 file-policy catalog
+
+[ADR0172](adr/0172-private-file-policy-catalog.md) adds explicit atomic migration
+from v5, bounded complete file-policy inventory, actual native revision/CAS and
+exact retry behavior. Current installed data and genuine private session share an
+original owner borrow. Verified restore preserves policies, revokes copy sessions
+and closes copy admission. Both WALs,24 generated models,15 damaged engine images,
+12 actual signal9 kills and native common-root v6 compatibility exercise the
+[contract](file-policy-catalog.md). Actual user-file operations and all unfulfilled
+release acceptance criteria remain open.

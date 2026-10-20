@@ -78,7 +78,7 @@ pub(super) fn version(snapshot: &Snapshot) -> Result<i64> {
     }
 }
 fn enabled(snapshot: &Snapshot) -> Result<()> {
-    if !matches!(version(snapshot)?, 4 | 5) {
+    if !matches!(version(snapshot)?, 4..=6) {
         return Err(Error::PolicySchema);
     }
     Ok(())
@@ -115,7 +115,12 @@ pub(super) fn validate(
 ) -> Result<Vec<PolicyReceipt>> {
     let header_schema = records::header_schema();
     let chunk_schema = records::chunk_schema();
-    if snapshot.table_count() != if version(snapshot)? == 5 { 8 } else { 7 }
+    if snapshot.table_count()
+        != match version(snapshot)? {
+            4 => 7,
+            5 => 8,
+            _ => 9,
+        }
         || snapshot
             .schema(&header_schema.name)
             .map_err(|_| Error::Corrupt)?
@@ -187,7 +192,7 @@ impl AccountStore {
             &self.project,
             self.database.last_transaction(),
         )?;
-        if matches!(state.version, 4 | 5) {
+        if matches!(state.version, 4..=6) {
             return Ok(());
         }
         if state.version != 3 {

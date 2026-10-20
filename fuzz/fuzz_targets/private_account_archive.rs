@@ -1,6 +1,7 @@
 #![no_main]
 #![forbid(unsafe_code)]
 use emilybase_auth::accounts::inspect_private_account_backup_bytes;
+use emilybase_auth::file_policy::{StoreContext, records as file_records};
 use emilybase_auth::row_policy::{TableContext, records};
 use emilybase_catalog::{Column, DataType, Schema, Value};
 use emilybase_database::{Event, EventKind, Snapshot};
@@ -69,7 +70,7 @@ fuzz_target!(|bytes: &[u8]| {
             ],
         )),
     );
-    let version = i64::from(bytes[0] % 6);
+    let version = i64::from(bytes[0] % 7);
     let wrong_project = bytes[0] & 8 != 0;
     let bad_dummy = bytes[0] & 16 != 0;
     let mut dummy = verifier();
@@ -93,7 +94,7 @@ fuzz_target!(|bytes: &[u8]| {
             Value::Bytes(dummy),
         ]),
     );
-    let mut valid = matches!(version, 1 | 4 | 5) && !wrong_project && !bad_dummy;
+    let mut valid = matches!(version, 1 | 4..=6) && !wrong_project && !bad_dummy;
     if version >= 4 {
         event(
             &mut image,
@@ -202,7 +203,7 @@ fuzz_target!(|bytes: &[u8]| {
         }
         valid &= defect == 0;
     }
-    if version == 5 {
+    if version >= 5 {
         event(
             &mut image,
             8,
@@ -242,6 +243,36 @@ fuzz_target!(|bytes: &[u8]| {
             );
         }
         valid &= defect <= 1;
+    }
+    if version == 6 {
+        let defect = bytes.get(3).copied().unwrap_or(0) % 8;
+        if defect != 6 {
+            event(&mut image, 9, EventKind::Create(file_records::schema()));
+        }
+        if !matches!(defect, 6 | 7) {
+            let context = StoreContext {
+                project: PROJECT,
+                database: [3; 16],
+            };
+            let document = br#"{"version":1,"read":{"kind":"deny"},"create":{"kind":"deny"},"rename":{"kind":"deny"},"remove":{"kind":"deny"}}"#;
+            let mut row = file_records::encode(
+                context,
+                if defect == 1 { u64::MAX } else { 42 },
+                0,
+                document,
+            )
+            .unwrap()
+            .into_row();
+            match defect {
+                2 => row[7] = Value::Bytes(vec![0; 32]),
+                3 => row[2] = Value::Text("22222222222222222222222222222222".into()),
+                4 => row[6] = Value::Bytes(b"{}".to_vec()),
+                5 => row[0] = Value::Text("not-canonical".into()),
+                _ => {}
+            }
+            event(&mut image, 9, EventKind::Insert(row));
+        }
+        valid &= matches!(defect, 0 | 7);
     }
     let mut identities = BTreeSet::new();
     let mut count = 0;

@@ -44,9 +44,19 @@ fn activate(store: &mut AccountStore, version: u16) {
             )
             .unwrap();
     }
-    if version == 5 {
+    if version >= 5 {
         let receipt = store.enable_public_admission_catalog().unwrap();
         store.set_public_admission(receipt.revision, true).unwrap();
+    }
+    if version == 6 {
+        store.enable_file_policy_catalog().unwrap();
+        store
+            .install_file_policy(
+                super::super::super::file_policy_tests::context(),
+                0,
+                super::super::super::file_policy_tests::OWN,
+            )
+            .unwrap();
     }
 }
 fn source(
@@ -193,7 +203,7 @@ fn historical_v2_families_remain_records_without_gaining_the_new_clock_scope() {
 fn every_private_version_and_wal_preserves_users_verifiers_policies_and_resets_only_copy_sessions()
 {
     let _serial = TEST_IO.lock().unwrap();
-    for version in 1..=5 {
+    for version in 1..=6 {
         for compact in [false, true] {
             let input = temporary();
             let output = temporary();
@@ -252,9 +262,15 @@ fn every_private_version_and_wal_preserves_users_verifiers_policies_and_resets_o
             if let Some(policies) = policies {
                 assert_eq!(copy.row_policy_receipts().unwrap(), policies);
             }
-            if version == 5 {
+            if version >= 5 {
                 assert!(!copy.public_admission().unwrap().enabled);
                 assert!(original.public_admission().unwrap().enabled);
+            }
+            if version == 6 {
+                assert_eq!(
+                    copy.file_policy_receipts().unwrap(),
+                    original.file_policy_receipts().unwrap()
+                );
             }
             if let Some(token) = token {
                 assert!(copy.verify_access(token.access.expose(), 100).is_err());

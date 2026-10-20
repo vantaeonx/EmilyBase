@@ -1,6 +1,7 @@
 use super::tests::{PROJECT, fixture_record, raw_store};
 use super::*;
 use std::io::{BufRead, BufReader, Write};
+use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::time::Duration;
@@ -111,6 +112,34 @@ fn account_kill_worker() {
     }
     let mut store =
         AccountStore::open(Path::new(&path), PROJECT, PasswordPool::new(1).unwrap()).unwrap();
+    if mode.starts_with("file-policy-") {
+        use super::file_policy_tests::{DENY, context};
+        let barrier = || {
+            println!("{READY}");
+            std::io::stdout().flush().unwrap();
+            loop {
+                std::thread::park();
+            }
+        };
+        let before = || {
+            if mode.ends_with("stage") {
+                barrier();
+            }
+        };
+        if mode.contains("-migrate-") {
+            store.enable_file_policy_catalog_with(before).unwrap();
+        } else {
+            let expected = if mode.contains("-replace-") {
+                store.file_policy_receipts().unwrap()[0].revision
+            } else {
+                0
+            };
+            store
+                .install_file_policy_with(context(), expected, DENY, before)
+                .unwrap();
+        }
+        barrier();
+    }
     if mode.starts_with("public-admission-") {
         let barrier = || {
             println!("{READY}");
@@ -432,5 +461,5 @@ pub(super) fn kill_worker_with_input(path: &Path, mode: &str, input: &str) {
     reader.join().unwrap();
     assert!(ready.unwrap(), "worker did not reach requested boundary");
     killed.unwrap();
-    assert!(!stopped.unwrap().success());
+    assert_eq!(stopped.unwrap().signal(), Some(9));
 }

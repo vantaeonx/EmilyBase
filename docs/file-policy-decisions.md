@@ -83,5 +83,7 @@ with no fabricated principals, filesystem access or credential hashing.
 
 The source-bound [verification report](measurements/2026-10-20-file-policy/verification.json)
 records executed checks and their limits. No persisted schema/format or recovery
-rule changes. Policy installation, actual user-file enforcement, HTTP/SDK file
-access, roles, signed URLs and production acceptance remain open.
+rule changes. The subsequent [private catalog](file-policy-catalog.md) supplies
+explicit installation and a current private borrowed proof. Actual user-file
+enforcement, HTTP/SDK file access, roles, signed URLs and production acceptance
+remain open.

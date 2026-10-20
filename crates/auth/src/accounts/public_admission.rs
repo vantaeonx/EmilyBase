@@ -50,7 +50,12 @@ fn canonical(value: &str) -> Result<u64> {
     Ok(parsed)
 }
 pub(super) fn validate(snapshot: &Snapshot, last: u64) -> Result<PublicAdmissionReceipt> {
-    if snapshot.table_count() != 8
+    if snapshot.table_count()
+        != if super::policy_catalog::version(snapshot)? == 6 {
+            9
+        } else {
+            8
+        }
         || snapshot.schema(TABLE).map_err(|_| Error::Corrupt)? != &schema()
     {
         return Err(Error::Corrupt);
@@ -101,7 +106,7 @@ fn next(last: u64, enabled: bool, previous: u64) -> Result<PublicAdmissionReceip
 }
 /// Prepare closure in the same transaction that replaces the session incarnation.
 pub(super) fn close_for_reset(snapshot: &Snapshot, last: u64) -> Result<Option<Vec<Value>>> {
-    if super::policy_catalog::version(snapshot)? != 5 {
+    if !matches!(super::policy_catalog::version(snapshot)?, 5 | 6) {
         return Ok(None);
     }
     let current = validate(snapshot, last)?;
@@ -114,7 +119,7 @@ impl AccountStore {
     /// Current internal schema metadata, not a request grant or migration.
     pub fn private_schema_version(&self) -> Result<u16> {
         let version = super::policy_catalog::version(self.database.view()?)?;
-        if !(1..=5).contains(&version) {
+        if !(1..=6).contains(&version) {
             return Err(Error::Corrupt);
         }
         Ok(version as u16)
@@ -132,7 +137,7 @@ impl AccountStore {
             &self.project,
             self.database.last_transaction(),
         )?;
-        if state.version == 5 {
+        if matches!(state.version, 5 | 6) {
             return self.public_admission();
         }
         if state.version != 4 {
@@ -158,7 +163,7 @@ impl AccountStore {
     /// Current metadata from this exclusive private owner, not a request grant.
     pub fn public_admission(&self) -> Result<PublicAdmissionReceipt> {
         let snapshot = self.database.view()?;
-        if super::policy_catalog::version(snapshot)? != 5 {
+        if !matches!(super::policy_catalog::version(snapshot)?, 5 | 6) {
             return Err(Error::AdmissionSchema);
         }
         validate(snapshot, self.database.last_transaction())

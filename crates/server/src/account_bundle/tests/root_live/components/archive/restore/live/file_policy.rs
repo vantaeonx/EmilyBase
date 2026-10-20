@@ -143,3 +143,108 @@ fn native_file_owner_bytes_and_database_context_match_real_private_principals_wi
         verify_source(&s);
     }
 }
+
+#[test]
+fn explicit_private_v6_catalog_survives_native_v2_reopen_capture_and_independent_common_restore() {
+    let _serial = durability::PROCESS_TESTS.blocking_lock();
+    for compact in [false, true] {
+        let t = tempfile::tempdir().unwrap();
+        let (s, path) = copy(t.path(), 2, compact);
+        let (id, key) = &s.root.credentials[0];
+        let mut root = AccountRoot::open_v2(&path, pool()).unwrap();
+        let native = root.inspect_project_files(id, key).unwrap();
+        let database = *native.database_id();
+        drop(root);
+        // Explicit offline native migration after the real common owner closes.
+        let private_path = path.join("private").join(id);
+        let mut private =
+            emilybase_auth::accounts::AccountStore::open(&private_path, id, pool()).unwrap();
+        private.enable_row_policy_catalog().unwrap();
+        let admission = private.enable_public_admission_catalog().unwrap();
+        let opened = private
+            .set_public_admission(admission.revision, true)
+            .unwrap();
+        private.enable_file_policy_catalog().unwrap();
+        let context = StoreContext {
+            project: id,
+            database,
+        };
+        let document = serde_json::to_vec(&Definition {
+            version: 1,
+            read: Rule::Owner {},
+            create: CreateRule::SelfOwned {},
+            rename: Rule::Deny {},
+            remove: Rule::Deny {},
+        })
+        .unwrap();
+        let installed = private.install_file_policy(context, 0, &document).unwrap();
+        let source_session = private.sign_in(LOGIN, PASSWORD, 101).unwrap();
+        drop(private);
+        let before = copied_history(&s, &path);
+        let mut root = AccountRoot::open_v2(&path, pool()).unwrap();
+        assert_eq!(root.private_schema_version(id, key).unwrap(), 6);
+        assert_eq!(root.public_admission(id, key).unwrap(), opened);
+        root.with_access(id, key, source_session.access.expose(), 101, |_| ())
+            .unwrap();
+        let snapshot = root.capture_v2().unwrap();
+        let bytes = encode(&snapshot);
+        assert_eq!(copied_history(&s, &path), before);
+        let target = path.parent().unwrap().join("independent-v6");
+        let report = crate::restore_account_file_archive_bytes_at(
+            &bytes,
+            &File::open(path.parent().unwrap()).unwrap(),
+            "independent-v6",
+            pool(),
+            50,
+        )
+        .unwrap();
+        assert_eq!(
+            report
+                .private_accounts
+                .iter()
+                .find(|p| p.project == *id)
+                .unwrap()
+                .inventory
+                .private_version,
+            6
+        );
+        let mut second = AccountRoot::open_v2(&target, pool()).unwrap();
+        assert_eq!(
+            *second.inspect_project_files(id, key).unwrap().database_id(),
+            database
+        );
+        assert!(!second.public_admission(id, key).unwrap().enabled);
+        assert!(
+            second
+                .with_access(id, key, source_session.access.expose(), 50, |_| ())
+                .is_err()
+        );
+        let fresh = second.sign_in(id, key, LOGIN, PASSWORD, 50).unwrap();
+        second
+            .with_access(id, key, fresh.access.expose(), 50, |_| ())
+            .unwrap();
+        drop(second);
+        let mut private = emilybase_auth::accounts::AccountStore::open(
+            target.join("private").join(id),
+            id,
+            pool(),
+        )
+        .unwrap();
+        assert_eq!(private.file_policy_receipts().unwrap(), vec![installed]);
+        let proof = private
+            .verify_file_policy_access(fresh.access.expose(), 50, context)
+            .unwrap();
+        proof
+            .authorize(
+                context,
+                Change::Read {
+                    owner: proof.account_id(),
+                },
+            )
+            .unwrap();
+        drop(proof);
+        assert_eq!(copied_history(&s, &path), before);
+        drop(root);
+        verify_source(&s);
+    }
+}

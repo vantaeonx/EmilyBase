@@ -1,5 +1,9 @@
 //! Separate private account storage; not attached to the server's public SQL database.
 mod archive;
+mod file_policies;
+pub use file_policies::{FilePolicyPrincipal, FilePolicyReceipt, MAX_FILE_POLICIES};
+#[cfg(test)]
+mod file_policy_tests;
 mod page;
 mod public_admission;
 pub use public_admission::PublicAdmissionReceipt;
@@ -74,6 +78,16 @@ pub enum Error {
     Exists,
     #[error("row policy catalog is not enabled")]
     PolicySchema,
+    #[error("file policy catalog is not enabled")]
+    FilePolicySchema,
+    #[error("file policy revision does not match")]
+    FilePolicyConflict,
+    #[error("file policy catalog capacity exhausted")]
+    FilePolicyCapacity,
+    #[error("file policy is not installed")]
+    FilePolicyDenied,
+    #[error("invalid file policy input")]
+    FilePolicy(#[source] crate::file_policy::PolicyError),
     #[error("public admission catalog is not enabled")]
     AdmissionSchema,
     #[error("public admission revision does not match")]

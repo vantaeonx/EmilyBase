@@ -260,11 +260,16 @@ policies and HTTP/SDK writes remain separate gates.
 The [bounded file-policy decision library](docs/file-policy-decisions.md) now checks
 explicit owner/current-session rules against exact project/database context and
 genuine borrowed private principals. All four actions are explicit; creation is
-self-owned only. Policy installation and actual user-file enforcement remain open.
+self-owned only. This pure model supplies no installed authority on its own.
 The [bounded file-policy record codec](docs/file-policy-records.md) also preserves
 one complete original document in an existing typed row, with exact native scope,
 revision metadata, a domain-separated checksum and redacted encoded/decoded Debug.
-Its future private schema is specified; no on-disk catalog is installed yet.
+The codec specifies its private schema without creating it on disk.
+The subsequent [explicit private v6 catalog](docs/file-policy-catalog.md) now
+persists those records with actual commit revisions, exact retries and current
+borrowed policy/session proofs. Verified restore preserves policies while revoking
+copy sessions and closing copy admission. Actual native user-file enforcement and
+HTTP/SDK file operations remain separate work.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

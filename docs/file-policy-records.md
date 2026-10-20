@@ -71,5 +71,6 @@ test pass while preserving the independent wire vectors. No real secrets were us
 
 The source-bound [verification report](measurements/2026-10-20-file-policy-records/verification.json)
 records actual stable/minimum checks, generated cases, independent vectors and
-bounded ASan evidence. Installed private catalog, explicit migration, actual user
-file enforcement, HTTP/SDK operations, roles and production acceptance remain open.
+bounded ASan evidence. The subsequent [private v6 catalog](file-policy-catalog.md)
+supplies explicit migration and current installed data. Actual user file
+enforcement, HTTP/SDK operations, roles and production acceptance remain open.

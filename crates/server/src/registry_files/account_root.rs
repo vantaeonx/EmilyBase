@@ -441,7 +441,7 @@ fn inspect_owned_layout(
             let bytes = account.backup_image()?;
             total = account_bundle::extend_size(total, bytes.len())?;
             let inventory = inspect_private_account_backup_bytes(&bytes, account.project())?;
-            if !matches!(inventory.private_version, 3..=5)
+            if !matches!(inventory.private_version, 3..=6)
                 || inventory
                     .clock_floor
                     .is_none_or(|floor| floor < manifest.reset_at())

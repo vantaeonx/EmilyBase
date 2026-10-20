@@ -344,7 +344,7 @@ fn private_archive_corpus() {
     let output = std::env::var_os("EMILYBASE_PRIVATE_CORPUS").unwrap();
     let output = Path::new(&output);
     std::fs::create_dir_all(output).unwrap();
-    for version in [1, 2, 3, 4] {
+    for version in [1, 2, 3, 4, 5, 6] {
         for compacted in [false, true] {
             let dir = tempfile::tempdir().unwrap();
             let mut store = original(&dir.path().join("source"));
@@ -353,13 +353,26 @@ fn private_archive_corpus() {
             } else if version >= 3 {
                 store.enable_session_clock(100).unwrap();
             }
-            if version == 4 {
+            if version >= 4 {
                 store.enable_row_policy_catalog().unwrap();
                 let schema = super::policy_catalog_tests::schema();
                 let mut document = super::policy_catalog_tests::OWN.to_vec();
                 document.resize(16_384, b' ');
                 store
                     .install_row_policy(super::policy_catalog_tests::context(&schema), 0, &document)
+                    .unwrap();
+            }
+            if version >= 5 {
+                store.enable_public_admission_catalog().unwrap();
+            }
+            if version == 6 {
+                store.enable_file_policy_catalog().unwrap();
+                store
+                    .install_file_policy(
+                        super::file_policy_tests::context(),
+                        0,
+                        super::file_policy_tests::OWN,
+                    )
                     .unwrap();
             }
             if compacted {

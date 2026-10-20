@@ -5208,3 +5208,27 @@ and grammar smoke run. See [evidence](measurements/2026-10-20-file-policy-record
 The prior complete file-component/registry/archive CLI result belongs to57e6052;
 this change does not claim a new whole-workspace/SDK/container or power-loss run.
 No private migration, current installed policy proof or user-file route is supplied.
+
+## Explicit private v6 file-policy catalog, 2026-10-20
+
+The [installed catalog](file-policy-catalog.md) has final stable/minimum results:
+308 passed,0 failed,2 optional auth corpus/harness entries per toolchain. Complete
+auth tests/doctests,2 native file-policy root cases,60 account HTTP cases,13 public
+owner cases,one server doctest and45 actual CLI archive/policy/admission/root cases
+pass. Server/CLI builds, workspace/fuzz format and strict Clippy, plus minimum Rust
+fuzz compilation, also pass. All processes close0 and690 frozen hashes match.
+
+New coverage includes10 auth cases,one v6 common-root case,one borrow compile-fail,
+24 generated CAS models,15 semantically damaged engine-valid private images and
+12 actual signal9 kills across WAL1/2, migration/install/replacement and staged/
+caller-received boundaries. Retained restoration now covers private1..6 and actual
+original owners. Existing runtime counts, row/admission catalogs and reset semantics
+remain compatible; old schemas are never implicitly upgraded.
+
+The optional private corpus helper is explicitly run separately and creates12
+verified synthetic archives spanning1..6 and both WALs. With2240 structured inputs,
+ASan completes35,311 full archive/semantic-oracle executions in46 seconds, reports
+462MiB peak RSS and no artifacts. This bounded smoke run is not a sustained fuzz
+campaign or security audit. See [evidence](measurements/2026-10-20-file-policy-catalog/verification.json).
+This is not a fresh whole-workspace/full-file-component/SDK/container run. Native
+current-key file-policy administration and actual user-file enforcement remain open.

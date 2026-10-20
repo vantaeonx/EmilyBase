@@ -78,7 +78,7 @@ impl DecodedPolicy {
 fn invalid<T>() -> Result<T> {
     Err(PolicyError::Document)
 }
-fn key(database: &[u8; 16]) -> String {
+pub(crate) fn key(database: &[u8; 16]) -> String {
     database.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 fn revision(revision: u64, previous: u64) -> Result<()> {

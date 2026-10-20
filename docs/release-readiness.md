@@ -257,3 +257,10 @@ validates bounded original typed records, including native scope and revision
 integrity. It performs no schema migration or installation. Current installed
 private policy authority, actual user-file enforcement and all unfulfilled
 production acceptance boxes remain open.
+
+The subsequent [explicit private v6 file-policy catalog](file-policy-catalog.md)
+persists validated native-scoped records and constructs a current private borrowed
+proof with genuine sessions. Migration remains explicit. Private/common restore
+preserves policies and closes admission while revoking copied sessions. This closes
+the installed-policy prerequisite; actual native user-file enforcement, HTTP/SDK
+files and all unfulfilled production acceptance boxes remain open.
