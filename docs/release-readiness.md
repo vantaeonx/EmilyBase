@@ -245,3 +245,9 @@ connect actual write-phase guards to the owned common root and retained project
 metadata. Late uncertainty closes the whole live root until explicit reopen.
 This closes native backend mutation integration, not user-file permissions,
 HTTP/SDK mutation or any unfulfilled production acceptance box.
+
+The subsequent [bounded file-policy decision library](file-policy-decisions.md)
+supplies strict per-action owner/session rules over genuine borrowed principals
+and exact native scope. Its parser/model checks are a prerequisite. Installed
+private policy authority, owned native user-file enforcement, HTTP/SDK file access
+and all unfulfilled production acceptance boxes remain open.

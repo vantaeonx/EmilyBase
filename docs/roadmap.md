@@ -1635,3 +1635,13 @@ publication poisons the whole live root, preserves data and requires explicit re
 The [contract](project-file-write-gateway.md) describes no-ops, CAS/scope, real owner
 lifetimes, late changes, independent backup/restore and 50 actual signal9 kills.
 User file policy, HTTP/SDK endpoints and unfulfilled release criteria remain open.
+
+## Follow-up: bounded file-policy decisions
+
+[ADR0170](adr/0170-bounded-file-policy-decisions.md) adds a synchronous1024-byte
+versioned decision language with explicit per-action rules and exact native scope.
+Genuine borrowed private principals supply identity; creation requires self ownership.
+The [contract](file-policy-decisions.md) records the complete rule matrix, generated
+cases, revocation/restore checks and actual native metadata observations. Installed
+private policy authority, actual user-file enforcement, HTTP/SDK operations and all
+unfulfilled production acceptance criteria remain open.

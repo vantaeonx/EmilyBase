@@ -5167,3 +5167,21 @@ toolchain and all five jobs successful, with636 committed blobs matching its pro
 That prior complete result remains source-specific. Aggregate nesting/resource
 admission, actual account/file collector/format/publication/restore and current user
 file permission remain open gates.
+
+## Bounded file-policy decisions, 2026-10-20
+
+The [decision library](file-policy-decisions.md) has source-bound stable/minimum
+verification:300 passed,0 failed,3 named optional corpus/harness entries per
+toolchain. This covers the complete auth crate,93 native file-component root
+cases,16 registry integrations,one server doctest and23 actual archive CLI cases.
+Both server/CLI builds, workspace/fuzz formatting and strict Clippy pass; the new
+fuzz target also compiles on minimum Rust. All final processes close successfully
+and685 frozen input hashes match afterward.
+
+New coverage includes9 auth cases,one real native-metadata case,one compile-fail
+example,864 independent matrix decisions and256 generated cases per toolchain.
+A67-seed AddressSanitizer smoke run completes6,059,859 executions in46 seconds,
+reports317MiB peak RSS and no artifacts. This is a bounded grammar/model check.
+See the [report](measurements/2026-10-20-file-policy/verification.json) for exact
+commands, hashes and boundaries. A fresh entire workspace/SDK/container run is
+not claimed. Installed file-policy authority and native user enforcement remain open.

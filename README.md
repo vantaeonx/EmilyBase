@@ -257,6 +257,10 @@ The [native current-key write gateway](docs/project-file-write-gateway.md) now c
 those checks to the internally owned component. Late failure preserves possible
 data and closes the entire live root until explicit inspection/reopen. User-file
 policies and HTTP/SDK writes remain separate gates.
+The [bounded file-policy decision library](docs/file-policy-decisions.md) now checks
+explicit owner/current-session rules against exact project/database context and
+genuine borrowed private principals. All four actions are explicit; creation is
+self-owned only. Policy installation and actual user-file enforcement remain open.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

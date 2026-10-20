@@ -8,6 +8,13 @@ license = "Apache-2.0"
 [package.metadata]
 cargo-fuzz = true
 
+[[bin]]
+name = "file_policy"
+path = "fuzz_targets/file_policy.rs"
+test = false
+doc = false
+bench = false
+
 [dependencies]
 libfuzzer-sys = "0.4"
 crc32fast = "1.5"
