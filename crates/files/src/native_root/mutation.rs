@@ -1,6 +1,8 @@
 use super::*;
 use crate::QuotaState;
 use crate::mutation::{FileRemoval, MetadataBoundary};
+mod checked;
+pub use checked::NativeMutationCheck;
 
 #[derive(Clone, Copy)]
 enum Operation<'a> {
@@ -111,30 +113,55 @@ impl NativeFileRoot {
         operation: Operation<'_>,
         hooks: (impl FnMut(MetadataBoundary), super::guard::Guard<'_>),
     ) -> Result<Outcome> {
+        let (boundary, guard) = hooks;
+        match guard {
+            Some(guard) => self.edit_with_checks(
+                operation,
+                (
+                    boundary,
+                    Some(&mut |event| match event {
+                        NativeMutationCheck::Selected(_) => Ok(()),
+                        NativeMutationCheck::Phase(phase) => guard(phase),
+                    }),
+                ),
+            ),
+            None => self.edit_with_checks(operation, (boundary, None)),
+        }
+    }
+    fn edit_with_checks(
+        &mut self,
+        operation: Operation<'_>,
+        hooks: (impl FnMut(MetadataBoundary), checked::MutationGuard<'_>),
+    ) -> Result<Outcome> {
         let (boundary, mut guard) = hooks;
         if let Operation::Rename(_, _, name) = operation {
             crate::records::validate_name(name)?;
         }
         let before = self.before_write()?;
-        let admitted = guard
-            .as_mut()
-            .map_or(Ok(()), |check| check(NativeWritePhase::BeforeOperation));
+        let admitted = guard.as_mut().map_or(Ok(()), |check| {
+            check(NativeMutationCheck::Phase(
+                NativeWritePhase::BeforeOperation,
+            ))
+        });
         let selection = &mut self.selection;
         let mut source_failed = false;
         let check = |at: WriteCheck<'_>| {
-            let phase = NativeWritePhase::of(&at);
+            let event = NativeMutationCheck::of(&at);
             let result = selection.write_check(at);
             if result.is_err() {
                 source_failed = true;
             }
             result?;
             if let Some(check) = guard.as_mut() {
-                check(phase)?;
+                // Check the selected namespace even when the callback refuses.
+                // A callback error must not conceal a substituted source.
+                let admitted = check(event);
                 let selected = selection.check();
                 if selected.is_err() {
                     source_failed = true;
                 }
                 selected?;
+                admitted?;
             }
             Ok(())
         };

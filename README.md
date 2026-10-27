@@ -280,6 +280,10 @@ metadata/list results and authorizes complete bounded payload copies under a gen
 current session, explicit admission and installed policy. It derives actual native
 ownership without a service key and retains original private/project/file selections.
 User-file writes and HTTP/SDK file endpoints remain separate work.
+The [selection-aware native mutation checks](docs/selected-file-mutations.md)
+provide the next building block: rename/removal can check the actual selected
+reference before revision comparison or staging. This trusted library hook does
+not yet connect user sessions/policies to writes.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

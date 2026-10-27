@@ -1,5 +1,30 @@
 # Experimental local containers
 
+## Free hosting choice (checked 2026-10-27)
+
+The immediate zero-hosting-fee option is an existing Linux machine with its own
+local persistent disk. Electricity/internet are still operator costs; the host
+must stay running for remote access. Keep synthetic development local until the
+deployment and recovery checks below are complete. Open-source code does not
+publish any operator database or make project records public.
+
+For a separate free cloud VM, [Oracle Always Free infrastructure](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)
+provides eligible compute and 200 GB total boot/block storage in the account's
+home region. Use only explicitly Always Free resources within current limits.
+Capacity can be unavailable and idle VMs can be reclaimed. Its
+[registration FAQ](https://www.oracle.com/cloud/free/faq/) requires valid card
+verification and explains that free services have no SLA. No account, machine,
+paid upgrade or billing commitment is created by this project.
+
+[Render's free web services](https://render.com/docs/free) lose local filesystem
+changes on restart/redeploy/spin-down and cannot attach persistent disks. They
+are unsuitable for durable EmilyBase storage. A provider's external PostgreSQL
+offer cannot replace this project's own database engine. Cloud deployment has
+not been executed; current test evidence describes local/hosted checks, not a
+running public EmilyBase service.
+
+## Current deployment boundary
+
 Native account/file v2 startup is now available through the exact optional
 EMILYBASE_ACCOUNT_LAYOUT=v2 selector on an existing EMILYBASE_ACCOUNT_ROOT.
 Both account Compose files pass the selector, defaulting to v1 only when unset.

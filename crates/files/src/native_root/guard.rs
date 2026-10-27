@@ -11,12 +11,13 @@ pub enum NativeWritePhase {
     Verified,
 }
 impl NativeWritePhase {
-    pub(super) fn of(check: &WriteCheck<'_>) -> Self {
+    pub(super) fn of(check: &WriteCheck<'_>) -> Option<Self> {
         match check {
-            WriteCheck::BeforeBlob => Self::BeforeBlob,
-            WriteCheck::BeforeCommit => Self::BeforeCommit,
-            WriteCheck::Committed(_) => Self::Committed,
-            WriteCheck::Verified => Self::Verified,
+            WriteCheck::Selected(_) => None,
+            WriteCheck::BeforeBlob => Some(Self::BeforeBlob),
+            WriteCheck::BeforeCommit => Some(Self::BeforeCommit),
+            WriteCheck::Committed(_) => Some(Self::Committed),
+            WriteCheck::Verified => Some(Self::Verified),
         }
     }
 }

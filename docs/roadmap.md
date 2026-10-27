@@ -1686,3 +1686,13 @@ consumes the actual reader owner. Original metadata/private WAL checks span forw
 clock observation and final output handling. The [contract](native-user-file-reads.md)
 records owner isolation, lifecycle, replacement and actual worker/recovery coverage.
 User-file writes, HTTP/SDK file access and all unmet release criteria remain open.
+
+## Follow-up: selected native mutation checks
+
+[ADR0175](adr/0175-selected-native-file-mutation-checks.md) adds trusted synchronous
+rename/removal checks against the actual selected reference, before CAS/no-op or
+staging. Original native owners span selection, commit and readback; denial cannot
+hide a changed source. Both WAL formats, actual process termination, unwind,
+independent restore and generated histories exercise the
+[contract](selected-file-mutations.md). The AccountRoot current-user write gateway,
+HTTP/SDK writes and all unmet release criteria remain open.

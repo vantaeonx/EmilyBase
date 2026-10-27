@@ -212,9 +212,10 @@ impl Selection {
     }
     fn write_check(&mut self, at: WriteCheck<'_>) -> Result<()> {
         match at {
-            WriteCheck::BeforeBlob | WriteCheck::BeforeCommit | WriteCheck::Verified => {
-                self.check()
-            }
+            WriteCheck::Selected(_)
+            | WriteCheck::BeforeBlob
+            | WriteCheck::BeforeCommit
+            | WriteCheck::Verified => self.check(),
             WriteCheck::Committed(database) => {
                 self.check_topology()?;
                 database.check_directory_at(&self.root, "metadata")?;
@@ -556,7 +557,7 @@ impl NativeFileRoot {
                         source_failed = true;
                     }
                     checked?;
-                    if let Some(check) = guard.as_mut() {
+                    if let (Some(check), Some(phase)) = (guard.as_mut(), phase) {
                         check(phase)?;
                         let selected = selection.check();
                         if selected.is_err() {
@@ -625,6 +626,7 @@ impl NativeFileRoot {
 mod guard;
 mod mutation;
 pub use guard::NativeWritePhase;
+pub use mutation::NativeMutationCheck;
 mod reader;
 pub use reader::NativeFileReader;
 #[cfg(test)]

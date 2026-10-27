@@ -90,6 +90,9 @@ impl FileStore {
             .into_iter()
             .find(|info| info.id == id)
             .ok_or(Error::Missing)?;
+        // Authorize this validated reference before revealing CAS/no-op results
+        // or opening/staging a write. An earlier copied owner is not sufficient.
+        check(WriteCheck::Selected(&current))?;
         if current.revision != expected_revision {
             return Err(Error::Conflict);
         }

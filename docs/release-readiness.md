@@ -15,8 +15,8 @@ for production. A crate version or successful build alone is not a published rel
 | Server | Axum/Tokio adapter over synchronous owned engine, isolated projects, service keys and typed APIs | Broader load/connection/output admission and deployment acceptance |
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
-| Files | Native objects/archives; own-WAL references, CAS/quota, common native root creation, paired backup/restore CLI and bounded account/file component capture | Common runtime adoption, user file HTTP/policies, reclamation and signed URLs |
-| Backup | Verified database/registry/private-root copies; native paired and joined archives, coordinated backup and offline v2 restore CLI | Explicit live v2 adoption, encrypted/incremental backup and upgrade drills |
+| Files | Native objects/archives, own-WAL reference CAS/quota, live v2 backend file operations, installed policies and native authenticated reads; selected mutation checks | User write gateway, HTTP/SDK files, reclamation and signed URLs |
+| Backup | Verified database/registry/private-root copies; native paired/joined archives, live coordinated capture and offline v2 restore CLI | Encrypted/incremental backup and wider restore/upgrade/container-v2 drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
 | Dashboard | No released administrative web interface | React/TypeScript interface backed by real protected APIs |
@@ -26,7 +26,8 @@ Rust implements storage, SQL, server and CLI. TypeScript is a client SDK; it doe
 replace the original engine. Source availability does not publish hosted user data.
 Existing v1 account-root bundles exclude native object directories. The separate
 joined format carries paired file archives and supports native private file
-publication. Common root restore and runtime adoption remain open.
+publication. Explicit v2 runtime opens declared native bindings; its container
+upgrade/recovery drills remain open.
 The [AccountRoot object integration proposal](adr/0127-proposed-account-root-object-integration.md)
 keeps the exact schema, ownership, quota and coordinated-restore gates explicit;
 its proposed status must not be described as a released upload feature.
@@ -279,3 +280,10 @@ native metadata/list/payload work under original owners. Complete output is with
 through final checks; source/copy session boundaries and trusted clock observations
 remain explicit. This closes native user-file reading only. User-file writes,
 HTTP/SDK file access and every unmet production acceptance box remain open.
+
+The subsequent [selected native mutation checks](selected-file-mutations.md)
+provide a trusted hook over the actual current reference before CAS/no-op/staging.
+Original source checks surround callbacks including refusal; actual killed writers,
+unwind, reused IDs and independent restore exercise native behavior. This closes
+only the selected-reference coordination prerequisite. It does not implement the
+AccountRoot current-user write gateway or complete any unmet release gate.
