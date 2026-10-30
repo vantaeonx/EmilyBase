@@ -33,7 +33,7 @@ fn policy(root: &mut AccountRoot, id: &str, key: &str, rule: Rule) {
     root.install_project_file_policy(id, key, expected, &bytes)
         .unwrap();
 }
-fn activate(root: &mut AccountRoot, id: &str, key: &str, rule: Rule) -> IssuedSession {
+pub(super) fn activate(root: &mut AccountRoot, id: &str, key: &str, rule: Rule) -> IssuedSession {
     root.enable_file_policy_catalog(id, key).unwrap();
     policy(root, id, key, rule);
     let admission = root.public_admission(id, key).unwrap();
@@ -67,7 +67,7 @@ fn publish(
     )
     .unwrap();
 }
-fn setup(
+pub(super) fn setup(
     root: &mut AccountRoot,
     id: &str,
     key: &str,

@@ -6,6 +6,8 @@ access session, current explicit public admission and an installed file policy.
 Their arguments contain no project service key. Existing native backend methods
 continue to require the current service key and retain their separate authority.
 No HTTP/SDK file route or user upload/rename/remove command is added in this step.
+Subsequent [native user metadata edits](native-user-file-edits.md) connect
+rename/removal to this same original current-user frame.
 
 ## Actual owned admission and current policy
 
@@ -90,6 +92,6 @@ metadata encoding domain were not weakened. V1, undeclared file bindings and inv
 project paths refuse without creating components or upgrading private catalogs.
 
 Final scope and frozen inputs are recorded in the [verification report](measurements/2026-10-21-user-file-reads/verification.json).
-No file/schema/record version or dependency changes. Actual user file writes,
+No file/schema/record version or dependency changes in the read increment. User uploads,
 HTTP/SDK access, roles, signed URLs, realtime, dashboard, container v2 upgrade/recovery
 and unmet production acceptance remain open. Synthetic data only.

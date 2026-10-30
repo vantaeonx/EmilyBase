@@ -451,7 +451,18 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if matches!(
+    if let Some(kind) = action.strip_prefix("root-v2-user-file-edit-") {
+        let access = zeroize::Zeroizing::new(fs::read_to_string(&target).unwrap());
+        let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
+        let file = emilybase_files::FileId::from_bytes([2; 16]);
+        let result = match kind {
+            "rename" => root.public_rename_file(&project, &access, 101, file, 3, "user-renamed"),
+            "remove" => root.public_remove_file(&project, &access, 101, file, 3),
+            _ => panic!("unknown synthetic edit worker"),
+        };
+        assert_eq!(result.unwrap().revision(), 4);
+        durability::checkpoint("account_user_file_write_returned");
+    } else if matches!(
         action.as_str(),
         "root-v2-user-file-read" | "root-v2-user-file-read-refuse-race"
     ) {

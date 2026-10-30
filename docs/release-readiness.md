@@ -15,7 +15,7 @@ for production. A crate version or successful build alone is not a published rel
 | Server | Axum/Tokio adapter over synchronous owned engine, isolated projects, service keys and typed APIs | Broader load/connection/output admission and deployment acceptance |
 | Accounts | Original private account/session stores, password hashing, rotation, epoch revocation and admitted sign-in | Public signup, roles, broader account policy and independent review |
 | Rows | Current installed-policy enforcement, typed CRUD and filtered user pages | Broader policy/role orchestration and independent side-channel review |
-| Files | Native objects/archives, own-WAL reference CAS/quota, live v2 backend file operations, installed policies and native authenticated reads; selected mutation checks | User write gateway, HTTP/SDK files, reclamation and signed URLs |
+| Files | Native objects/archives, own-WAL reference CAS/quota, live v2 backend file operations, installed policies, native authenticated reads and user rename/removal | User uploads, HTTP/SDK files, reclamation and signed URLs |
 | Backup | Verified database/registry/private-root copies; native paired/joined archives, live coordinated capture and offline v2 restore CLI | Encrypted/incremental backup and wider restore/upgrade/container-v2 drills |
 | SDK | Experimental TypeScript service client and explicit user client | Kotlin SDK, packaging and broader compatibility coverage |
 | Realtime | No released committed-change subscription service | Journal-to-subscription integration, resumption and authorization |
@@ -287,3 +287,10 @@ Original source checks surround callbacks including refusal; actual killed write
 unwind, reused IDs and independent restore exercise native behavior. This closes
 only the selected-reference coordination prerequisite. It does not implement the
 AccountRoot current-user write gateway or complete any unmet release gate.
+
+The subsequent [native user edit gateway](native-user-file-edits.md) connects
+selected rename/removal to current installed policy and genuine private sessions.
+Minimal logical receipts preserve independent ReadDeny, and late uncertainty or
+unwind closes the whole Root without deleting possible commits. This closes
+native user rename/removal only. Uploads, HTTP/SDK file methods and every unmet
+release/security gate remain open.

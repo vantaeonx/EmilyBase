@@ -279,11 +279,15 @@ The [native user-file read gateway](docs/native-user-file-reads.md) now filters
 metadata/list results and authorizes complete bounded payload copies under a genuine
 current session, explicit admission and installed policy. It derives actual native
 ownership without a service key and retains original private/project/file selections.
-User-file writes and HTTP/SDK file endpoints remain separate work.
+The [native user-file edit gateway](docs/native-user-file-edits.md) now checks
+rename/removal against the actual selected owner and current installed action
+rule. Its minimal result exposes logical ID/revisions only, including under
+ReadDeny. Possible commit or late failure closes the whole Root until explicit
+inspection/reopen. User uploads and HTTP/SDK file endpoints remain separate work.
 The [selection-aware native mutation checks](docs/selected-file-mutations.md)
-provide the next building block: rename/removal can check the actual selected
-reference before revision comparison or staging. This trusted library hook does
-not yet connect user sessions/policies to writes.
+provide its native building block: rename/removal check the actual selected
+reference before revision comparison or staging. The trusted hook itself is not
+user authority; the edit gateway supplies the current private proof.
 The base [Pager owner guard](docs/pager-owner-lock-lifetime.md) explicitly ends its
 lock lifetime across success/error paths, so unexposed duplicate descriptions do
 not keep a completed owner busy or release a later independently opened owner.

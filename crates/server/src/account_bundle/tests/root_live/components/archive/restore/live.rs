@@ -5,6 +5,7 @@ mod file_policy;
 mod file_policy_admin;
 mod http;
 mod reads;
+mod user_edits;
 mod user_files;
 mod writes;
 use crate::{AccountFileRootManifest, FileRootBinding, backup_account_file_components};

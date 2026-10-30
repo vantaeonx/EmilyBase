@@ -1704,3 +1704,14 @@ dependency-audit regression and minimal patched ctutils/Tokio updates in both
 lockfiles. No advisory is ignored or check disabled. Existing password/account
 and HTTP compatibility checks exercise the update on supported Rust toolchains.
 User-file write integration and all unmet release criteria remain open.
+
+## Follow-up: native authenticated user file edits
+
+[ADR0176](adr/0176-native-user-file-edits.md) connects current admission/session/
+installed policy to the actual selected owner during native rename/removal.
+Independent action rules permit edits under ReadDeny without exposing sensitive
+native receipts. Accepted commit admission, native uncertainty, final outer
+errors and trusted unwind preserve data and close the whole Root. The
+[contract](native-user-file-edits.md) records exact CAS/no-op, orphan retention,
+current-session, actual kill and independent restore boundaries. User uploads,
+HTTP/SDK files and all unmet release criteria remain open.

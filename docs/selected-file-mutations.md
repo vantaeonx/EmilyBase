@@ -3,7 +3,8 @@
 [ADR0175](adr/0175-selected-native-file-mutation-checks.md) adds synchronous
 `NativeFileRoot::rename_with_checks` and `remove_with_checks`. These are trusted
 native library operations, not public user endpoints or an installed policy
-implementation. The existing AccountRoot user gateway supports reads only.
+implementation. The later [AccountRoot user edit gateway](native-user-file-edits.md)
+connects these hooks to current installed policy and genuine user sessions.
 
 ## Callback and ordering
 
@@ -73,5 +74,5 @@ namespace and in-place WAL substitutions, independent verified restore, generate
 histories and real process termination at each callback and caller-return boundary.
 
 No parser, stored format, migration, dependency or durability acknowledgement is
-changed. User uploads/edits, HTTP/SDK file endpoints, complete container v2 drills
+changed in this native increment. User uploads, HTTP/SDK file endpoints, complete container v2 drills
 and all unmet release/security criteria remain open. Fixtures are synthetic.

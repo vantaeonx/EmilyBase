@@ -52,11 +52,12 @@ pub use registry_archive::{
     RegistryProjectReport, inspect_registry_backup_bytes,
 };
 pub use registry_files::account_root::{
-    AccountBundleRootManifest, AccountBundleRootReport, AccountFileRead, AccountRoot,
-    AccountRootSnapshot, MAX_ACCOUNT_FILE_READ_BYTES, MAX_ACTIVE_PRIVATE_STORES, ProjectFileUpload,
-    backup_account_bundle_root, capture_account_bundle_root, initialize_account_root,
-    inspect_account_bundle_root, inspect_account_bundle_root_manifest_bytes,
-    restore_account_bundle, restore_account_bundle_bytes,
+    AccountBundleRootManifest, AccountBundleRootReport, AccountFileRead, AccountFileWrite,
+    AccountRoot, AccountRootSnapshot, MAX_ACCOUNT_FILE_READ_BYTES, MAX_ACTIVE_PRIVATE_STORES,
+    ProjectFileUpload, backup_account_bundle_root, capture_account_bundle_root,
+    initialize_account_root, inspect_account_bundle_root,
+    inspect_account_bundle_root_manifest_bytes, restore_account_bundle,
+    restore_account_bundle_bytes,
 };
 pub use registry_files::{
     AccountFileRootReport, inspect_registry_backup, restore_account_file_archive,
