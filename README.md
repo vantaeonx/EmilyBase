@@ -306,6 +306,9 @@ Build/test requirements: Linux and Rust 1.89 or newer. The locked workspace is
 tested on Rust 1.89.0 and current stable; CI checks both. Nightly is needed only
 for optional sanitizer fuzzing. Docker uses pinned Rust 1.99.0 to build the
 original server/CLI. Other operating systems remain unverified.
+The [security register](docs/security-audit.md) records the reproduced dependency
+audit failure and patched ctutils/Tokio versions in both committed lockfiles.
+Keep dependency audit warnings enabled when checking later updates.
 
 The synchronous engine supports named tables, validated schemas, primary-key
 uniqueness and typed CRUD. Values are booleans, signed i64, finite f64, UTF-8

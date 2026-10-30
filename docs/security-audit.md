@@ -7,6 +7,17 @@ recovery, backup and security acceptance gates.
 
 ## Implemented controls with executed evidence
 
+- [x] Reproduced the published dependency-audit failure on 2026-10-30 in both
+  locked graphs before updating them. The Argon2 dependency chain selected
+  ctutils0.4.3, affected by [RUSTSEC-2026-0385](https://rustsec.org/advisories/RUSTSEC-2026-0385.html).
+  Both graphs now select patched ctutils0.4.4 and Tokio1.53.3, resolving the
+  separately denied [Tokio I/O-safety advisory](https://rustsec.org/advisories/RUSTSEC-2026-0386.html).
+  The same freshly fetched database and cargo-audit0.22.2 report zero known
+  vulnerabilities/warnings with warnings denied. No advisory is ignored and no
+  audit gate is weakened. Source-bound checks are recorded in the
+  [dependency verification](measurements/2026-10-30-security-dependencies/verification.json).
+  This is an upstream patch update, not an independent constant-time audit.
+
 - [x] Original synchronous engine, without a ready database engine dependency.
   Locked workspace metadata inspected on 2026-10-03: 11 Apache-2.0 workspace
   crates; no SQLite/PostgreSQL/MySQL/DuckDB/MongoDB/RocksDB/sled/redb/LevelDB

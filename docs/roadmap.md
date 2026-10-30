@@ -1696,3 +1696,11 @@ hide a changed source. Both WAL formats, actual process termination, unwind,
 independent restore and generated histories exercise the
 [contract](selected-file-mutations.md). The AccountRoot current-user write gateway,
 HTTP/SDK writes and all unmet release criteria remain open.
+
+## Follow-up: patched cryptography and async runtime dependencies
+
+The 2026-10-30 [security register](security-audit.md) records the reproduced
+dependency-audit regression and minimal patched ctutils/Tokio updates in both
+lockfiles. No advisory is ignored or check disabled. Existing password/account
+and HTTP compatibility checks exercise the update on supported Rust toolchains.
+User-file write integration and all unmet release criteria remain open.
