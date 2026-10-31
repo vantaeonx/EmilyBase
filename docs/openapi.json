@@ -6804,6 +6804,355 @@
           }
         }
       }
+    },
+    "/v1/projects/{id}/user/files/list": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          }
+        }
+      ],
+      "post": {
+        "operationId": "user_files_list",
+        "summary": "Current-user file list",
+        "description": "Account-root native v2 only. Exactly one current Bearer access credential and current installed read policy; no service/master/refresh/query credential fallback. Shared original peer/project/worker budgets. Strict JSON body <=4096 bytes/5 seconds. Admission rechecked after body/root waits before decode/time; actual native session/policy proof and complete original source checks precede output. Metadata omits owner/object/digest. maximum_bytes is0..8388608. Full binary only; no Range, signed URL or future grant. All results no-store/no-cache. See docs/public-file-read-http.md.",
+        "security": [
+          {
+            "UserAccess": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Complete current policy-visible result; hidden/missing info is null. Binary read is full200, never a partial checked stream.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserFileList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "file_request_rejected: strict object-only request refused.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "file_read_rejected: hidden/missing payload, missing installed policy, or admission closed after a wait.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "body_limit or file_read_limit: no payload prefix is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "file_read_unavailable or existing static storage/clock/worker failure. No underlying errors are returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/user/files/info": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          }
+        }
+      ],
+      "post": {
+        "operationId": "user_files_info",
+        "summary": "Current-user file info",
+        "description": "Account-root native v2 only. Exactly one current Bearer access credential and current installed read policy; no service/master/refresh/query credential fallback. Shared original peer/project/worker budgets. Strict JSON body <=4096 bytes/5 seconds. Admission rechecked after body/root waits before decode/time; actual native session/policy proof and complete original source checks precede output. Metadata omits owner/object/digest. maximum_bytes is0..8388608. Full binary only; no Range, signed URL or future grant. All results no-store/no-cache. See docs/public-file-read-http.md.",
+        "security": [
+          {
+            "UserAccess": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserFileIdentityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Complete current policy-visible result; hidden/missing info is null. Binary read is full200, never a partial checked stream.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserFileFound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "file_request_rejected: strict object-only request refused.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "file_read_rejected: hidden/missing payload, missing installed policy, or admission closed after a wait.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "body_limit or file_read_limit: no payload prefix is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "file_read_unavailable or existing static storage/clock/worker failure. No underlying errors are returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}/user/files/read": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          }
+        }
+      ],
+      "post": {
+        "operationId": "user_files_read",
+        "summary": "Current-user file read",
+        "description": "Account-root native v2 only. Exactly one current Bearer access credential and current installed read policy; no service/master/refresh/query credential fallback. Shared original peer/project/worker budgets. Strict JSON body <=4096 bytes/5 seconds. Admission rechecked after body/root waits before decode/time; actual native session/policy proof and complete original source checks precede output. Metadata omits owner/object/digest. maximum_bytes is0..8388608. Full binary only; no Range, signed URL or future grant. All results no-store/no-cache. See docs/public-file-read-http.md.",
+        "security": [
+          {
+            "UserAccess": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserFileReadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Complete current policy-visible result; hidden/missing info is null. Binary read is full200, never a partial checked stream.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "const": "no-cache"
+                }
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "const": "nosniff"
+                }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "file_request_rejected: strict object-only request refused.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "file_read_rejected: hidden/missing payload, missing installed policy, or admission closed after a wait.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "body_limit or file_read_limit: no payload prefix is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "file_read_unavailable or existing static storage/clock/worker failure. No underlying errors are returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TransferError401"
+          },
+          "408": {
+            "$ref": "#/components/responses/TransferError408"
+          },
+          "415": {
+            "$ref": "#/components/responses/TransferError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/TransferError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/TransferError500"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8373,6 +8722,111 @@
             "maxLength": 1024,
             "writeOnly": true,
             "description": "Exact UTF-8 bytes1..1024, original Argon2id policy; returned success revokes every older user family."
+          }
+        }
+      },
+      "UserFileIdentityRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          }
+        }
+      },
+      "UserFileReadRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "maximum_bytes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "maximum_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8388608
+          }
+        }
+      },
+      "UserFileMetadata": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "payload_bytes",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Display metadata, at most256 UTF-8 bytes; never a filesystem path or response header."
+          },
+          "payload_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8388608
+          },
+          "revision": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "maxLength": 20,
+            "description": "Exact native u64 revision as decimal text, never user authority."
+          }
+        }
+      },
+      "UserFileList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "files"
+        ],
+        "properties": {
+          "files": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "$ref": "#/components/schemas/UserFileMetadata"
+            }
+          }
+        }
+      },
+      "UserFileFound": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file"
+        ],
+        "properties": {
+          "file": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserFileMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       }

@@ -287,7 +287,9 @@ inspection/reopen. The [native user upload gateway](docs/native-user-file-upload
 now derives ownership exclusively from the current session and enforces installed
 create policy before immutable object/WAL publication. Ordinary quota/collision
 refusal preserves a healthy root; uncertain publication preserves charged blobs
-and closes the whole Root. HTTP/SDK file endpoints remain separate work.
+and closes the whole Root. The [current-user HTTP file read adapter](docs/public-file-read-http.md)
+now exposes bounded policy-filtered list/info and complete binary downloads under
+current access credentials. HTTP file mutations and SDK methods remain separate work.
 The [selection-aware native mutation checks](docs/selected-file-mutations.md)
 provide its native building block: rename/removal check the actual selected
 reference before revision comparison or staging. The trusted hook itself is not

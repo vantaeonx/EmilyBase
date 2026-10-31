@@ -38,6 +38,18 @@ pub(super) fn routes(app: App) -> Router<App> {
             "/v1/projects/{id}/user/rows/write",
             post(super::public_rows::write),
         )
+        .route(
+            "/v1/projects/{id}/user/files/list",
+            post(super::public_files::list),
+        )
+        .route(
+            "/v1/projects/{id}/user/files/info",
+            post(super::public_files::info),
+        )
+        .route(
+            "/v1/projects/{id}/user/files/read",
+            post(super::public_files::read),
+        )
         .route_layer(middleware::from_fn_with_state(app, guard))
 }
 async fn guard(State(app): State<App>, request: Request, next: Next) -> Response {
@@ -85,6 +97,9 @@ async fn authorize(app: &App, request: Request, route: &str) -> ApiResult<Reques
             | "/v1/projects/{id}/user/rows/get"
             | "/v1/projects/{id}/user/rows/page"
             | "/v1/projects/{id}/user/rows/write"
+            | "/v1/projects/{id}/user/files/list"
+            | "/v1/projects/{id}/user/files/info"
+            | "/v1/projects/{id}/user/files/read"
     ) {
         let token = first
             .and_then(|value| value.to_str().ok())

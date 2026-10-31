@@ -1728,3 +1728,14 @@ late uncertain outcomes preserve physical charge and close the whole Root. The
 checks, actual signal9 recovery, source replacement, unwind and verified restore.
 This closes native user creation only. HTTP/SDK file access, signed URLs, roles,
 realtime, dashboard, Kotlin and all unmet release/security gates remain open.
+
+
+## Follow-up: access-only file read HTTP
+
+[ADR0178](adr/0178-public-file-read-http.md) connects native user list/info/read to
+three admitted HTTP routes under shared peer/project/worker budgets. Strict bounded
+JSON and fresh current native proof precede complete binary output; a small metadata
+DTO omits physical IDs/owners/digests. The [contract](public-file-read-http.md) covers
+wait-time revocation, timeout/cancellation, exact binaries, graceful restart and
+independent restore. HTTP mutations, SDK files, signed URLs and all unmet
+release/security/aggregate-admission/container-v2 gates remain open.

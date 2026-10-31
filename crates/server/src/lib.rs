@@ -21,7 +21,8 @@ pub use file_root_manifest::{
 };
 mod account_http;
 pub use account_http::{
-    PolicyTransportError, SessionRequest, SessionRequestError, USER_ACCESS_HEADER, account_router,
+    FileReadRequest, FileReadRequestError, PolicyTransportError, SessionRequest,
+    SessionRequestError, USER_ACCESS_HEADER, account_router, validate_file_read_request,
     validate_policy_install_request, validate_session_request,
 };
 #[cfg(test)]

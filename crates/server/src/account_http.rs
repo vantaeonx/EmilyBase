@@ -19,6 +19,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use zeroize::{Zeroize, Zeroizing};
 
+mod public_files;
+pub use public_files::{FileReadRequest, FileReadRequestError, validate_file_read_request};
 mod public_rows;
 mod public_sessions;
 mod requests;

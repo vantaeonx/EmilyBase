@@ -303,3 +303,11 @@ refusal differs from uncertain publication; possible blobs/commits survive with
 their charge and the whole Root closes on late failure or admitted-attempt unwind.
 This closes native user file creation only. HTTP/SDK file methods and all unmet
 release/security/aggregate-admission/container-v2 acceptance gates remain open.
+
+
+The subsequent [current-user HTTP file read adapter](public-file-read-http.md)
+exposes policy-filtered list/info and complete bounded binary payloads through
+the existing shared admitted-user transport. Genuine sessions/policies are checked
+after waits under original owners, and errors never return partial payloads.
+This closes only HTTP file reading. HTTP mutations, SDK file methods, signed URLs
+and every unmet security/resource/container-v2/release gate remain open.

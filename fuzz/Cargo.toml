@@ -496,3 +496,10 @@ path = "fuzz_targets/object_archive.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "file_read_requests"
+path = "fuzz_targets/file_read_requests.rs"
+test = false
+doc = false
+bench = false
