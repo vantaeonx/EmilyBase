@@ -451,7 +451,26 @@ fn publication_worker() {
     let target = PathBuf::from(std::env::var_os("EMILYBASE_BUNDLE_FILE_TARGET").unwrap());
     let project = std::env::var("EMILYBASE_BUNDLE_FILE_PROJECT").unwrap();
     let action = std::env::var("EMILYBASE_BUNDLE_FILE_ACTION").unwrap();
-    if let Some(kind) = action.strip_prefix("root-v2-user-file-edit-") {
+    if action == "root-v2-user-file-upload" {
+        let access = zeroize::Zeroizing::new(fs::read_to_string(&target).unwrap());
+        let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
+        let receipt = root
+            .public_publish_file(
+                &project,
+                &access,
+                101,
+                crate::AccountFileUpload {
+                    id: emilybase_files::FileId::from_bytes([91; 16]),
+                    object: emilybase_object_storage::ObjectId::from_bytes([92; 16]),
+                    name: "user-upload",
+                    payload: b"user-upload-payload",
+                },
+            )
+            .unwrap();
+        assert_eq!(receipt.revision(), 4);
+        assert_eq!(receipt.previous_revision(), 0);
+        durability::checkpoint("account_user_file_upload_returned");
+    } else if let Some(kind) = action.strip_prefix("root-v2-user-file-edit-") {
         let access = zeroize::Zeroizing::new(fs::read_to_string(&target).unwrap());
         let mut root = crate::AccountRoot::open_v2(source, PasswordPool::new(1).unwrap()).unwrap();
         let file = emilybase_files::FileId::from_bytes([2; 16]);

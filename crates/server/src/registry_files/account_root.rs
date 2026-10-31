@@ -25,7 +25,7 @@ mod initialize;
 pub use initialize::initialize_account_root;
 mod live;
 pub use live::{
-    AccountFileRead, AccountFileWrite, AccountRoot, AccountRootSnapshot,
+    AccountFileRead, AccountFileUpload, AccountFileWrite, AccountRoot, AccountRootSnapshot,
     MAX_ACCOUNT_FILE_READ_BYTES, MAX_ACTIVE_PRIVATE_STORES, ProjectFileUpload,
 };
 

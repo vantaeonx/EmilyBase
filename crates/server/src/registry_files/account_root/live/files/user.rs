@@ -5,7 +5,7 @@ use emilybase_auth::{
     file_policy::{Change, PolicyError, StoreContext},
 };
 mod mutation;
-pub use mutation::AccountFileWrite;
+pub use mutation::{AccountFileUpload, AccountFileWrite};
 
 fn readable(
     proof: &FilePolicyPrincipal<'_>,

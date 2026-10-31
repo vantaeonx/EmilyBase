@@ -7,7 +7,7 @@ mod policies;
 mod private_wal;
 mod user;
 pub use mutation::ProjectFileUpload;
-pub use user::AccountFileWrite;
+pub use user::{AccountFileUpload, AccountFileWrite};
 
 /// Copied output bound; native graph verification has its separate physical caps.
 pub const MAX_ACCOUNT_FILE_READ_BYTES: usize = emilybase_object_storage::MAX_PAYLOAD_BYTES;

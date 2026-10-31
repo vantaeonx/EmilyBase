@@ -2,10 +2,13 @@
 use super::*;
 use emilybase_files::{NativeMutationCheck, NativeWritePhase};
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+mod upload;
+pub use upload::AccountFileUpload;
 
 /// Copied logical write result, never a current grant, payload or owner disclosure.
 /// Equal revisions describe a verified rename no-op. Removal's revision is the
 /// actual commit, while previous_revision describes the removed logical row.
+/// Creation returns previous_revision zero for absence at this publication.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct AccountFileWrite {
     id: FileId,

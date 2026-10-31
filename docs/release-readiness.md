@@ -294,3 +294,12 @@ Minimal logical receipts preserve independent ReadDeny, and late uncertainty or
 unwind closes the whole Root without deleting possible commits. This closes
 native user rename/removal only. Uploads, HTTP/SDK file methods and every unmet
 release/security gate remain open.
+
+
+The subsequent [native user upload gateway](native-user-file-uploads.md) derives
+owner from the genuine current session, enforces installed create policy and
+publishes through the original immutable object/WAL pair. Clean quota/collision
+refusal differs from uncertain publication; possible blobs/commits survive with
+their charge and the whole Root closes on late failure or admitted-attempt unwind.
+This closes native user file creation only. HTTP/SDK file methods and all unmet
+release/security/aggregate-admission/container-v2 acceptance gates remain open.

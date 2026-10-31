@@ -7,6 +7,7 @@ mod http;
 mod reads;
 mod user_edits;
 mod user_files;
+mod user_upload;
 mod writes;
 use crate::{AccountFileRootManifest, FileRootBinding, backup_account_file_components};
 

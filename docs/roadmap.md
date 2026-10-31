@@ -1715,3 +1715,16 @@ errors and trusted unwind preserve data and close the whole Root. The
 [contract](native-user-file-edits.md) records exact CAS/no-op, orphan retention,
 current-session, actual kill and independent restore boundaries. User uploads,
 HTTP/SDK files and all unmet release criteria remain open.
+
+
+## Follow-up: native authenticated self-owned uploads
+
+[ADR0177](adr/0177-native-user-file-uploads.md) adds current-user native publication
+with owner derived from the genuine borrowed session and independent create/read
+rules. The adapter distinguishes an admitted object attempt from actual possible
+publication: ordinary quota/collision refusal is clean, while object-only or
+late uncertain outcomes preserve physical charge and close the whole Root. The
+[contract](native-user-file-uploads.md) records minimal receipts, current session
+checks, actual signal9 recovery, source replacement, unwind and verified restore.
+This closes native user creation only. HTTP/SDK file access, signed URLs, roles,
+realtime, dashboard, Kotlin and all unmet release/security gates remain open.

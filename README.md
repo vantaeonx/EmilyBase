@@ -283,7 +283,11 @@ The [native user-file edit gateway](docs/native-user-file-edits.md) now checks
 rename/removal against the actual selected owner and current installed action
 rule. Its minimal result exposes logical ID/revisions only, including under
 ReadDeny. Possible commit or late failure closes the whole Root until explicit
-inspection/reopen. User uploads and HTTP/SDK file endpoints remain separate work.
+inspection/reopen. The [native user upload gateway](docs/native-user-file-uploads.md)
+now derives ownership exclusively from the current session and enforces installed
+create policy before immutable object/WAL publication. Ordinary quota/collision
+refusal preserves a healthy root; uncertain publication preserves charged blobs
+and closes the whole Root. HTTP/SDK file endpoints remain separate work.
 The [selection-aware native mutation checks](docs/selected-file-mutations.md)
 provide its native building block: rename/removal check the actual selected
 reference before revision comparison or staging. The trusted hook itself is not
